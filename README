@@ -1,0 +1,88 @@
+Bellagio OpenMAX Integration Layer  1.0 project 
+
+This is an opensource implementation of the OpenMAX Integration Layer (IL) API, specified
+by the Khronos group (see http://www.khronos.org/openmax).
+
+This package includes the libomxil shared library together with the following OpenMAX 
+components (built as separate shared objects and loaded at runtime):
+- OMX reference component
+- OMX alsa sink component
+- OMX mp3 decoder component (requires ffmpeg and ffmpeg-devel libraries, not part of this package)
+
+The following simple test applications are provided:
+
+test/components/alsasink/omxalsasinktest
+test/components/reference/omxreferencetest
+
+Check the distribution build:
+
+./configure
+make
+make install
+make check
+
+Before attempting to run any test, the OMX components *must* be registered
+with the command:
+
+/usr/local/bin/omxregister
+
+that will create a file .omxregistry in the $HOME directory that will
+contain all the components installed by default in
+/usr/local/lib/omxcomponents
+If the components are installed in a different directory, the omxregister 
+command should be called as follows:
+/usr/local/bin/omxregister component_installation_path
+
+Now, run the tests:
+
+The alsasink plays a PCM file, at 44100 Hz, stereo
+
+test/components/alsasink/omxalsasinktest somepcmfile.pcm
+
+The reference component takes a PCM input file and simply forwards it directly to the output.
+
+test/components/reference/omxreferencetest any_file > any_file_replicated
+
+The reference component is basically used as a boilerplate to develop new components.
+In the next releases, an inheritance mechanism will be introduced, by means of which
+new OMX components can be created based on the reference component, avoiding code duplication.
+
+The MP3 decoder component test is a simple MP3 player which uses OpenMAX data tunneling
+between the OMX MP3 decoder component and the OMX alsa sink component.
+
+test/components/ffmpeg/omxmp3dectest somemp3file.mp3
+
+HOW TO ADD A NEW COMPONENT
+-Add, in the src/components directory, a directory that will contain your component.
+-Put your source and header files in there.
+-Edit the configure.in file and add new rules according to your needs.
+ In particular, you may want to add some library dependencies that are
+ needed by the src/Makefile.am
+ Also, remember to add the path of your Makefile in the AC_OUTPUT directive.
+-Edit the src/components/Makefile.am file and add rules for building your component.
+-Edit the src/Makefile.am file and add rules for building your component.
+-Create a src/components/yourcomponentdirectory/Makefile.am file.
+
+-Test building with
+ ./configure
+ ./make
+ ./make install
+
+-If you have some test programs, put their sources into the 'test' directory.
+ Edit the test/Makefile.am file to add rules for building them.
+-Check correct building of your tests with:
+ make check
+-To build RPM:
+ make dist
+ cp libomxil-0.1.tar.gz /usr/src/redhat/SOURCES/
+ rpmbuild -ba libomxil-0.1.spec
+
+This version has been tested on:
+FC2 (with ffmpeg-0.4.8), 
+FC4 (with ffmpeg-0.4.9),
+Mandriva 2006.0,
+Ubuntu 5.10,
+CentOS 4.1.
+
+Last modified: Feb 9th, 2006.
+

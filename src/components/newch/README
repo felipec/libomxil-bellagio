@@ -1,0 +1,15 @@
+This folder contains the start of the new component hierarchy.
+
+The goal is to provide a component base class or base classes that can be quickly 
+used for creating new OpenMAX IL Components.
+
+This is very much under construction and currently it doesn't yet work.
+
+By default the compilation of these is not included in the build. To enable,
+run in the top folder:
+
+./reconf
+./configure --enable-newch
+./make
+
+Remove this file after the hierarchy becomes usable.

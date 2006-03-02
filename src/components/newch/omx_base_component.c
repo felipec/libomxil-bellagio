@@ -2348,35 +2348,27 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 	OMX_IN  OMX_U32 nTunneledPort,
 	OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup)
 {
-	OMX_ERRORTYPE err=OMX_ErrorNone;
+	OMX_ERRORTYPE err = OMX_ErrorNone;
 	OMX_PARAM_PORTDEFINITIONTYPE param;
 	OMX_PARAM_BUFFERSUPPLIERTYPE pSupplier;
 
 	stComponentType* stComponent = (stComponentType*)hComp;
-	
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 
-	if (pTunnelSetup == NULL || hTunneledComp == 0) {
-        /* cancel previous tunnel */
-		if (nPort == 0) {
-       		base_component_Private->inputPort.hTunneledComponent = 0;
-			base_component_Private->inputPort.nTunneledPort = 0;
-			base_component_Private->inputPort.nTunnelFlags = 0;
-			base_component_Private->inputPort.eBufferSupplier=OMX_BufferSupplyUnspecified;
-		}
-		else if (nPort == 1) {
-			base_component_Private->outputPort.hTunneledComponent = 0;
-			base_component_Private->outputPort.nTunneledPort = 0;
-			base_component_Private->outputPort.nTunnelFlags = 0;
-			base_component_Private->outputPort.eBufferSupplier=OMX_BufferSupplyUnspecified;
-		}
-		else {
-			return OMX_ErrorBadPortIndex;
-		}
-		return err;
-    }
+  if (nPort >= stComponent->nports) {
+  	return OMX_ErrorBadPortIndex;
+  }
 
-	if (nPort == 0) {
+	if (pTunnelSetup == NULL || hTunneledComp == 0) {
+    /* cancel previous tunnel */
+	 	base_component_Private->ports[nPort]->hTunneledComponent = 0;
+		base_component_Private->ports[nPort]->nTunneledPort = 0;
+		base_component_Private->ports[nPort]->nTunnelFlags = 0;
+		base_component_Private->ports[nPort]->eBufferSupplier=OMX_BufferSupplyUnspecified;
+		return OMX_ErrorNone;
+  }
+
+	if (base_component_Private->ports[nPort]->sPortParam.eDir == OMX_DirInput) {
 		/* Get Port Definition of the Tunnelled Component*/
 		param.nPortIndex=nTunneledPort;
 		err = OMX_GetParameter(hTunneledComp, OMX_IndexParamPortDefinition, &param);
@@ -2386,7 +2378,7 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 			return OMX_ErrorPortsNotCompatible;
 		}
 
-		base_component_Private->inputPort.nNumTunnelBuffer=param.nBufferCountMin;
+		base_component_Private->ports[nPort]->nNumTunnelBuffer=param.nBufferCountMin;
 
 		DEBUG(DEB_LEV_SIMPLE_SEQ,"Tunneled port domain=%d\n",param.eDomain);
 		if(param.eDomain!=OMX_PortDomainAudio)
@@ -2408,36 +2400,29 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 		}
 
 		// store the current callbacks, if defined
-		base_component_Private->inputPort.hTunneledComponent = hTunneledComp;
-		base_component_Private->inputPort.nTunneledPort = nTunneledPort;
-		base_component_Private->inputPort.nTunnelFlags = 0;
+		base_component_Private->ports[nPort]->hTunneledComponent = hTunneledComp;
+		base_component_Private->ports[nPort]->nTunneledPort = nTunneledPort;
+		base_component_Private->ports[nPort]->nTunnelFlags = 0;
 		// Negotiation
 		if (pTunnelSetup->nTunnelFlags & OMX_PORTTUNNELFLAG_READONLY) {
 			// the buffer provider MUST be the output port provider
 			pTunnelSetup->eSupplier = OMX_BufferSupplyInput;
-			base_component_Private->inputPort.nTunnelFlags |= TUNNEL_IS_SUPPLIER;	
-			base_component_Private->inputPort.eBufferSupplier=OMX_BufferSupplyInput;
+			base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_IS_SUPPLIER;	
+			base_component_Private->ports[nPort]->eBufferSupplier=OMX_BufferSupplyInput;
 		} else {
 			if (pTunnelSetup->eSupplier == OMX_BufferSupplyInput) {
-				base_component_Private->inputPort.nTunnelFlags |= TUNNEL_IS_SUPPLIER;
-				base_component_Private->inputPort.eBufferSupplier=OMX_BufferSupplyInput;
+				base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_IS_SUPPLIER;
+				base_component_Private->ports[nPort]->eBufferSupplier=OMX_BufferSupplyInput;
 			} else if (pTunnelSetup->eSupplier == OMX_BufferSupplyUnspecified) {
 				pTunnelSetup->eSupplier = OMX_BufferSupplyInput;
-				base_component_Private->inputPort.nTunnelFlags |= TUNNEL_IS_SUPPLIER;
-				base_component_Private->inputPort.eBufferSupplier=OMX_BufferSupplyInput;
+				base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_IS_SUPPLIER;
+				base_component_Private->ports[nPort]->eBufferSupplier=OMX_BufferSupplyInput;
 			}
 		}
-		base_component_Private->inputPort.nTunnelFlags |= TUNNEL_ESTABLISHED;
-	} else if (nPort == 1) {
+		base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_ESTABLISHED;
+	} else /*if (base_component_Private->ports[nPort]->sPortParam.eDir == OMX_DirOutput)*/ {
 		// output port
 		// all the consistency checks are under other component responsibility
-		// check if it is a tunnel deletion request
-		if (hTunneledComp == NULL) {
-			base_component_Private->outputPort.hTunneledComponent = NULL;
-			base_component_Private->outputPort.nTunneledPort = 0;
-			base_component_Private->outputPort.nTunnelFlags = 0;
-			return OMX_ErrorNone;
-		}
 
 		/* Get Port Definition of the Tunnelled Component*/
 		param.nPortIndex=nTunneledPort;
@@ -2448,17 +2433,15 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 			return OMX_ErrorPortsNotCompatible;
 		}
 
-		base_component_Private->outputPort.nNumTunnelBuffer=param.nBufferCountMin;
+		base_component_Private->ports[nPort]->nNumTunnelBuffer=param.nBufferCountMin;
 
-		base_component_Private->outputPort.hTunneledComponent = hTunneledComp;
-		base_component_Private->outputPort.nTunneledPort = nTunneledPort;
+		base_component_Private->ports[nPort]->hTunneledComponent = hTunneledComp;
+		base_component_Private->ports[nPort]->nTunneledPort = nTunneledPort;
 		pTunnelSetup->eSupplier = OMX_BufferSupplyOutput;
-		base_component_Private->outputPort.nTunnelFlags |= TUNNEL_IS_SUPPLIER;
-		base_component_Private->outputPort.nTunnelFlags |= TUNNEL_ESTABLISHED;
+		base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_IS_SUPPLIER;
+		base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_ESTABLISHED;
 
-		base_component_Private->outputPort.eBufferSupplier=OMX_BufferSupplyOutput;
-	} else {
-		return OMX_ErrorBadPortIndex;
+		base_component_Private->ports[nPort]->eBufferSupplier=OMX_BufferSupplyOutput;
 	}
 	return OMX_ErrorNone;
 }

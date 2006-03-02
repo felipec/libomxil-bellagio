@@ -692,12 +692,8 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 destinationState)
 {
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
-//	tsem_t* pInputSem = base_component_Private->inputPort.pBufferSem;
-//	tsem_t* pOutputSem = base_component_Private->outputPort.pBufferSem;
 	pthread_mutex_t* executingMutex = &base_component_Private->executingMutex;
 	pthread_cond_t* executingCondition = &base_component_Private->executingCondition;
-//	pthread_mutex_t *pInmutex=&base_component_Private->inputPort.mutex;
-//	pthread_mutex_t *pOutmutex=&base_component_Private->outputPort.mutex;
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
 	OMX_BUFFERHEADERTYPE* pOutputBuffer;
 	OMX_BUFFERHEADERTYPE* pInputBuffer;

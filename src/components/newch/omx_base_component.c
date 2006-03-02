@@ -98,7 +98,7 @@ stComponentType* base_component_CreateComponentStruct() {
 	  base_component->omx_component.nVersion.s.nRevision = SPECREVISION;
 	  base_component->omx_component.nVersion.s.nStep = SPECSTEP;
 	}
-	return base_component;	
+	return base_component;
 }
 
 /** 
@@ -158,20 +158,19 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 	//base_component_Private->sPortTypesParam.nStartPortNumber = 0;
 	
 	// create ports, but only if the subclass hasn't done it
-	if (base_component_Private->sPortTypesParam.nPorts && 
-			!base_component_Private->ports) {
-		base_component_Private->ports = calloc(base_component_Private->sPortTypesParam.nPorts,
+	if (stComponent->nports && !base_component_Private->ports) {
+		base_component_Private->ports = calloc(stComponent->nports,
 																			sizeof (base_component_PortType *));
-																			
+
 		if (!base_component_Private->ports) return OMX_ErrorInsufficientResources;																			
 		
-		for (i=0; i < base_component_Private->sPortTypesParam.nPorts; i++) {
+		for (i=0; i < stComponent->nports; i++) {
 			base_component_Private->ports[i] = calloc(1, sizeof(base_component_PortType));
 			if (!base_component_Private->ports[i]) return OMX_ErrorInsufficientResources;																			
 
 			base_component_Private->ports[i]->transientState = OMX_StateMax;
 			setHeader(&base_component_Private->ports[i]->sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
-			base_component_Private->ports[i]->sPortParam.nPortIndex = i + base_component_Private->sPortTypesParam.nStartPortNumber;
+			base_component_Private->ports[i]->sPortParam.nPortIndex = i;
 			
 			base_component_Private->ports[i]->pBufferSem = malloc(sizeof(tsem_t));
 			if(base_component_Private->ports[i]->pBufferSem==NULL) return OMX_ErrorInsufficientResources;
@@ -226,15 +225,17 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
  * Assumes sanity checked input
  * fixme params
  */
-void base_component_SetPortFlushFlag(base_component_PrivateType* base_component_Private, int index, OMX_BOOL value) {
+void base_component_SetPortFlushFlag(stComponentType* stComponent, int index, OMX_BOOL value) {
+	base_component_PrivateType* base_component_Private;	
 	int i;
 	if (index == -1) {
-		for (i = 0; i < base_component_Private->sPortTypesParam.nPorts; i++) {
+		for (i = 0; i < stComponent->nports; i++) {
 			base_component_Private->ports[i]->bIsPortFlushed = value;
 		}		
 	} else {
-		base_component_Private->ports[index - base_component_Private->sPortTypesParam.nStartPortNumber]->bIsPortFlushed = value;
+		base_component_Private->ports[index]->bIsPortFlushed = value;
 	}
+
 }
 
 /** This is called by the OMX core in its message processing
@@ -1301,7 +1302,7 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 		}
 		else {
 			if(pSem->semval>0)
-				//FIXME DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is not supplier port still has some buffer %d\n",
+				;//FIXME DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is not supplier port still has some buffer %d\n",
 				//__func__,pInputSem->semval);
 			if(pSem->semval==0 && base_component_Private->ports[portIndex]->bBufferUnderProcess==OMX_FALSE) {
 				base_component_Private->ports[portIndex]->hTunneledComponent=NULL;
@@ -1329,15 +1330,14 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 	*/
 OMX_ERRORTYPE base_component_DisablePort(stComponentType* stComponent, OMX_U32 portIndex)
 {
-	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	int i;
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 
 	if (portIndex != -1) {
 		base_component_DisableSinglePort(stComponent, portIndex);
-	} else {
-		for (i = 0; i < base_component_Private->sPortTypesParam.nPorts; i++) {
+	} else { 
+		for (i = 0; i < stComponent->nports; i++) {
 			base_component_DisableSinglePort(stComponent, i);
 		}
 	}
@@ -1393,7 +1393,6 @@ void base_component_EnableSinglePort(stComponentType* stComponent, OMX_U32 portI
 	*/
 OMX_ERRORTYPE base_component_EnablePort(stComponentType* stComponent, OMX_U32 portIndex)
 {
-	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	int i;
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -1401,7 +1400,7 @@ OMX_ERRORTYPE base_component_EnablePort(stComponentType* stComponent, OMX_U32 po
 	if (portIndex != -1) {
 		base_component_EnableSinglePort(stComponent, portIndex);
 	} else {
-		for (i = 0; i < base_component_Private->sPortTypesParam.nPorts; i++) {
+		for (i = 0; i < stComponent->nports; i++) {
 			base_component_EnableSinglePort(stComponent, i);
 		}
 	}

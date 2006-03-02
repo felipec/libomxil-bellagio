@@ -2332,24 +2332,15 @@ OMX_ERRORTYPE base_component_FreeBuffer(
 	OMX_BOOL foundBuffer;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
-	if(nPortIndex == 0) {
-		base_component_Port = &base_component_Private->inputPort;
-		if (pBuffer->nInputPortIndex != 0) {
-			DEBUG(DEB_LEV_ERR, "In %s: wrong port code for this operation\n", __func__);
-			return OMX_ErrorBadParameter;
-		}
-	} else if(nPortIndex == 1) {
-		base_component_Port = &base_component_Private->outputPort;
-		if (pBuffer->nOutputPortIndex != 1) {
-			DEBUG(DEB_LEV_ERR, "In %s: wrong port code for this operation\n", __func__);
-			return OMX_ErrorBadParameter;
-		}
-	} else {
+	
+	if (nPortIndex >= stComponent->nports) {
 		return OMX_ErrorBadPortIndex;
 	}
+
+	base_component_Port = base_component_Private->ports[nPortIndex];
+		
 	if ((base_component_Port->nTunnelFlags & TUNNEL_ESTABLISHED) && 
 		(base_component_Port->nTunnelFlags & TUNNEL_IS_SUPPLIER)){
-		//return OMX_ErrorBadPortIndex;
 		return OMX_ErrorNone;
 	}
 	DEBUG(DEB_LEV_PARAMS,"\nIn %s bEnabled=%d,bPopulated=%d state=%d,transientState=%d\n",

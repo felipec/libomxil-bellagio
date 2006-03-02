@@ -1982,13 +1982,6 @@ OMX_ERRORTYPE base_component_SetParameter(
 			base_component_Private->nGroupPriority = pPrioMgmt->nGroupPriority;
 			base_component_Private->nGroupID = pPrioMgmt->nGroupID;
 		break;
-		case OMX_IndexParamAudioInit:
-			if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-				return OMX_ErrorIncorrectStateOperation;
-			}
-			err = OMX_ErrorBadParameter;
-		break;
 		case OMX_IndexParamPortDefinition: {
 			pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
 			portIndex = pPortDef->nPortIndex;

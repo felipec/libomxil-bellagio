@@ -760,7 +760,7 @@ LOOP2:
  */
 OMX_ERRORTYPE base_component_Init(stComponentType* stComponent)
 {
-
+	OMX_S32 i;
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -771,27 +771,17 @@ OMX_ERRORTYPE base_component_Init(stComponentType* stComponent)
 	}
 	base_component_Private->bIsInit = OMX_TRUE;
 
-	/*re-intialize buffer semaphore and allocation semaphore*/
-	tsem_init(base_component_Private->outputPort.pBufferSem, 0);
-	tsem_init(base_component_Private->inputPort.pBufferSem, 0);
+	for (i=0; i < stComponent->nports; i++) {
+		tsem_init(base_component_Private->ports[i]->pBufferSem, 0);
+		tsem_init(base_component_Private->ports[i]->pFullAllocationSem, 0);
+		tsem_init(base_component_Private->ports[i]->pFlushSem, 0);
+		queue_init(base_component_Private->ports[i]->pBufferQueue);
+		pthread_mutex_init(&base_component_Private->ports[i]->mutex, NULL);
 
-	tsem_init(base_component_Private->outputPort.pFullAllocationSem, 0);
-	tsem_init(base_component_Private->inputPort.pFullAllocationSem, 0);
+		base_component_Private->ports[i]->bBufferUnderProcess=OMX_FALSE;
+		base_component_Private->ports[i]->bWaitingFlushSem=OMX_FALSE;
+	}
 
-	/** initialize/reinitialize input and output queues */
-	queue_init(base_component_Private->outputPort.pBufferQueue);
-	queue_init(base_component_Private->inputPort.pBufferQueue);
-
-	tsem_init(base_component_Private->outputPort.pFlushSem, 0);
-	tsem_init(base_component_Private->inputPort.pFlushSem, 0);
-	
-	base_component_Private->outputPort.bBufferUnderProcess=OMX_FALSE;
-	base_component_Private->inputPort.bBufferUnderProcess=OMX_FALSE;
-	base_component_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
-	base_component_Private->outputPort.bWaitingFlushSem=OMX_FALSE;
-	pthread_mutex_init(&base_component_Private->inputPort.mutex, NULL);
-	pthread_mutex_init(&base_component_Private->outputPort.mutex, NULL);
-	
 	pthread_cond_init(&base_component_Private->executingCondition, NULL);
 	pthread_mutex_init(&base_component_Private->executingMutex, NULL);
 	

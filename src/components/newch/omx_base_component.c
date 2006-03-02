@@ -1860,6 +1860,7 @@ OMX_ERRORTYPE base_component_GetParameter(
 	OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
 	OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
 	OMX_PORT_PARAM_TYPE* pPortDomains;
+	OMX_U32 portIndex;
 	
 	stComponentType* stComponent = (stComponentType*)hComponent;
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
@@ -1876,8 +1877,6 @@ OMX_ERRORTYPE base_component_GetParameter(
 			pPrioMgmt->nGroupID = base_component_Private->nGroupID;
 		break;
 		case OMX_IndexParamAudioInit:
-			memcpy(ComponentParameterStructure, &base_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
-			break;
 		case OMX_IndexParamVideoInit:
 		case OMX_IndexParamImageInit:
 		case OMX_IndexParamOtherInit:
@@ -1888,74 +1887,38 @@ OMX_ERRORTYPE base_component_GetParameter(
 		break;		
 		case OMX_IndexParamPortDefinition:
 			pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
-			if (pPortDef ->nPortIndex == 0) {
-				memcpy(pPortDef , &base_component_Private->inputPort.sPortParam, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-			} else if (pPortDef ->nPortIndex == 1) {
-				memcpy(pPortDef , &base_component_Private->outputPort.sPortParam, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-			} else {
+			portIndex = pPortDef->nPortIndex;
+			if (portIndex >= stComponent->nports) {
 				return OMX_ErrorBadPortIndex;
 			}
+			memcpy(pPortDef, &base_component_Private->ports[portIndex]->sPortParam, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
 		break;
 		case OMX_IndexParamCompBufferSupplier:
 			pBufSupply = (OMX_PARAM_BUFFERSUPPLIERTYPE*)ComponentParameterStructure;
-			if (pBufSupply->nPortIndex == 0) {
-				setHeader(pBufSupply, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
-				if (base_component_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER) {
+			portIndex = pBufSupply->nPortIndex;
+			if (portIndex >= stComponent->nports) {
+				return OMX_ErrorBadPortIndex;
+			}
+			setHeader(pBufSupply, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
+			
+			if (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirInput) {
+				if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER) {
 					pBufSupply->eBufferSupplier = OMX_BufferSupplyInput;	
-				} else if (base_component_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) {
+				} else if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) {
 					pBufSupply->eBufferSupplier = OMX_BufferSupplyOutput;	
-				} else {
-					pBufSupply->eBufferSupplier = OMX_BufferSupplyUnspecified;	
-				}
-			} else if (pBufSupply->nPortIndex == 1) {
-				setHeader(pBufSupply, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
-				if (base_component_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER) {
-					pBufSupply->eBufferSupplier = OMX_BufferSupplyOutput;	
-				} else if (base_component_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) {
-					pBufSupply->eBufferSupplier = OMX_BufferSupplyInput;	
 				} else {
 					pBufSupply->eBufferSupplier = OMX_BufferSupplyUnspecified;	
 				}
 			} else {
-				return OMX_ErrorBadPortIndex;
+				setHeader(pBufSupply, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
+				if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER) {
+					pBufSupply->eBufferSupplier = OMX_BufferSupplyOutput;	
+				} else if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) {
+					pBufSupply->eBufferSupplier = OMX_BufferSupplyInput;	
+				} else {
+					pBufSupply->eBufferSupplier = OMX_BufferSupplyUnspecified;	
+				}
 			}
-
-		break;
-		case OMX_IndexParamAudioPortFormat:
-		pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-		if (pAudioPortFormat->nPortIndex == 0) {
-			memcpy(pAudioPortFormat, &base_component_Private->inputPort.sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-		} else if (pAudioPortFormat->nPortIndex == 1) {
-			memcpy(pAudioPortFormat, &base_component_Private->outputPort.sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-		} else {
-				return OMX_ErrorBadPortIndex;
-		}
-		break;
-		case OMX_IndexParamAudioPcm:
-			pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-			setHeader(pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-			if (pAudioPcmMode->nPortIndex != 1) {
-				return OMX_ErrorBadPortIndex;
-			}
-			pAudioPcmMode->nChannels = 2;
-			pAudioPcmMode->eNumData = OMX_NumericalDataSigned;
-			pAudioPcmMode->eEndian = OMX_EndianBig;
-			pAudioPcmMode->bInterleaved = OMX_TRUE;
-			pAudioPcmMode->nBitPerSample = 16;
-			pAudioPcmMode->nSamplingRate = 0;
-			pAudioPcmMode->ePCMMode = OMX_AUDIO_PCMModeLinear;
-		break;
-		case OMX_IndexParamAudioMp3:
-			pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
-			setHeader(pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
-			if (pAudioMp3->nPortIndex != 0) {
-				return OMX_ErrorBadPortIndex;
-			}
-			pAudioMp3->nChannels = 2;
-			pAudioMp3->nBitRate = 0;
-			pAudioMp3->nSampleRate = 0;
-			pAudioMp3->nAudioBandWidth = 0;
-			pAudioMp3->eChannelMode = OMX_AUDIO_ChannelModeStereo;
 		break;
 		default:
 			return OMX_ErrorUnsupportedIndex;

@@ -2103,6 +2103,7 @@ OMX_ERRORTYPE base_component_SendCommand(
 	stComponentType* stComponent = (stComponentType*)hComponent;
 	base_component_PrivateType* base_component_Private = (base_component_PrivateType*)omxComponent->pComponentPrivate;
 	OMX_ERRORTYPE err = OMX_ErrorNone;
+	OMX_U32 i;
 	
 	queue_t* messageQueue;
 	tsem_t* messageSem;
@@ -2138,23 +2139,20 @@ OMX_ERRORTYPE base_component_SendCommand(
 							__func__,err);
 						return OMX_ErrorInsufficientResources;
 					}
-					if (base_component_Private->inputPort.sPortParam.bEnabled)
-						base_component_Private->inputPort.transientState = OMX_StateIdle;
-					if (base_component_Private->outputPort.sPortParam.bEnabled)
-						base_component_Private->outputPort.transientState = OMX_StateIdle;
+					for (i = 0; i < stComponent->nports; i++) {
+						base_component_Private->ports[i]->transientState = OMX_StateIdle;
+					}
 			} else if ((nParam == OMX_StateLoaded) && (stComponent->state == OMX_StateIdle)) {
-				tsem_reset(base_component_Private->inputPort.pFullAllocationSem);
-				tsem_reset(base_component_Private->outputPort.pFullAllocationSem);
-					if (base_component_Private->inputPort.sPortParam.bEnabled)
-						base_component_Private->inputPort.transientState = OMX_StateLoaded;
-					if (base_component_Private->outputPort.sPortParam.bEnabled)
-						base_component_Private->outputPort.transientState = OMX_StateLoaded;
-			}
-			else if (nParam == OMX_StateInvalid) {
-					if (base_component_Private->inputPort.sPortParam.bEnabled)
-						base_component_Private->inputPort.transientState = OMX_StateInvalid;
-					if (base_component_Private->outputPort.sPortParam.bEnabled)
-						base_component_Private->outputPort.transientState = OMX_StateInvalid;
+					for (i = 0; i < stComponent->nports; i++) {
+						tsem_reset(base_component_Private->ports[i]->pFullAllocationSem);
+						if (base_component_Private->ports[i]->sPortParam.bEnabled)						
+							base_component_Private->ports[i]->transientState = OMX_StateLoaded;
+					}
+			}	else if (nParam == OMX_StateInvalid) {
+					for (i = 0; i < stComponent->nports; i++) {
+						if (base_component_Private->ports[i]->sPortParam.bEnabled)						
+							base_component_Private->ports[i]->transientState = OMX_StateInvalid;
+					}
 			}
 			/*
 			else if(base_component_Private->inputPort.transientState == OMX_StateIdle && 
@@ -2169,16 +2167,16 @@ OMX_ERRORTYPE base_component_SendCommand(
 				break;
 
 			}
-			if (nParam == 0) {
-				base_component_Private->inputPort.bIsPortFlushed=OMX_TRUE;
-			}
-			else if (nParam == 1) {
-				base_component_Private->outputPort.bIsPortFlushed=OMX_TRUE;
-			} else if (nParam == -1) {
-				base_component_Private->inputPort.bIsPortFlushed=OMX_TRUE;
-				base_component_Private->outputPort.bIsPortFlushed=OMX_TRUE;
-			}else
+			if (nParam == -1) {
+					for (i = 0; i < stComponent->nports; i++) {
+						base_component_Private->ports[i]->bIsPortFlushed=OMX_TRUE;
+					}
+			} else if (nParam >= stComponent->nports) {
 				return OMX_ErrorBadPortIndex;
+			} else {
+				base_component_Private->ports[nParam]->bIsPortFlushed=OMX_TRUE;
+			}
+			
 			message = malloc(sizeof(coreMessage_t));
 			message->stComponent = stComponent;
 			message->messageType = SENDCOMMAND_MSG_TYPE;
@@ -2187,35 +2185,33 @@ OMX_ERRORTYPE base_component_SendCommand(
 			message->pCmdData=pCmdData;
 		break;
 		case OMX_CommandPortDisable:
-			tsem_reset(base_component_Private->inputPort.pFullAllocationSem);
-			tsem_reset(base_component_Private->outputPort.pFullAllocationSem);
+			if (nParam >= stComponent->nports) {
+				return OMX_ErrorBadPortIndex;
+			}
+			
+			for (i = 0; i < stComponent->nports; i++) {
+				tsem_reset(base_component_Private->ports[i]->pFullAllocationSem);
+			}
+
 			DEBUG(DEB_LEV_SIMPLE_SEQ, "In OMX_CommandPortDisable state is %i\n", stComponent->state);
-			if (nParam == 0) {
-				if (base_component_Private->inputPort.sPortParam.bEnabled == OMX_FALSE) {
-					err = OMX_ErrorIncorrectStateOperation;
-					break;
-				} else {
-					base_component_Private->inputPort.transientState = OMX_StateLoaded;
-				}
-			} else if (nParam == 1) {
-				if (base_component_Private->outputPort.sPortParam.bEnabled == OMX_FALSE) {
-					err = OMX_ErrorIncorrectStateOperation;
-					break;
-				} else {
-					base_component_Private->outputPort.transientState = OMX_StateLoaded;
-				}
-			} else if (nParam == -1) {
-				if ((base_component_Private->inputPort.sPortParam.bEnabled == OMX_FALSE) || (base_component_Private->outputPort.sPortParam.bEnabled == OMX_FALSE)){
-					err = OMX_ErrorIncorrectStateOperation;
-					break;
-				} else {
-					base_component_Private->inputPort.transientState = OMX_StateLoaded;
-					base_component_Private->outputPort.transientState = OMX_StateLoaded;
+			if (nParam == -1) {
+				for (i = 0; i < stComponent->nports; i++) {
+					if (base_component_Private->ports[i]->sPortParam.bEnabled == OMX_FALSE) {
+						err = OMX_ErrorIncorrectStateOperation;
+						break;
+					} else {
+						base_component_Private->ports[i]->transientState = OMX_StateLoaded;
+					}
 				}
 			} else {
-				err = OMX_ErrorUnsupportedIndex;
-					break;
+					if (base_component_Private->ports[nParam]->sPortParam.bEnabled == OMX_FALSE) {
+						err = OMX_ErrorIncorrectStateOperation;
+						break;
+					} else {
+						base_component_Private->ports[nParam]->transientState = OMX_StateLoaded;
+					}				
 			}
+
 			message = malloc(sizeof(coreMessage_t));
 			message->stComponent = stComponent;
 			if (err == OMX_ErrorNone) {
@@ -2229,35 +2225,33 @@ OMX_ERRORTYPE base_component_SendCommand(
 			message->pCmdData=pCmdData;
 		break;
 		case OMX_CommandPortEnable:
-			tsem_reset(base_component_Private->inputPort.pFullAllocationSem);
-			tsem_reset(base_component_Private->outputPort.pFullAllocationSem);
+			if (nParam >= stComponent->nports) {
+				return OMX_ErrorBadPortIndex;
+			}		
+			for (i = 0; i < stComponent->nports; i++) {
+				tsem_reset(base_component_Private->ports[i]->pFullAllocationSem);
+			}
+			
 			DEBUG(DEB_LEV_SIMPLE_SEQ, "In OMX_CommandPortEnable state is %i\n", stComponent->state);
-			if (nParam == 0) {
-				if (base_component_Private->inputPort.sPortParam.bEnabled == OMX_TRUE) {
-					err = OMX_ErrorIncorrectStateOperation;
-					break;
-				} else {
-					base_component_Private->inputPort.transientState = OMX_StateIdle;
-				}
-			} else if (nParam == 1) {
-				if (base_component_Private->outputPort.sPortParam.bEnabled == OMX_TRUE) {
-					err = OMX_ErrorIncorrectStateOperation;
-					break;
-				} else {
-					base_component_Private->outputPort.transientState = OMX_StateIdle;
-				}
-			} else if (nParam == -1) {
-				if ((base_component_Private->inputPort.sPortParam.bEnabled == OMX_TRUE) || (base_component_Private->outputPort.sPortParam.bEnabled == OMX_TRUE)){
-					err = OMX_ErrorIncorrectStateOperation;
-					break;
-				} else {
-					base_component_Private->inputPort.transientState = OMX_StateIdle;
-					base_component_Private->outputPort.transientState = OMX_StateIdle;
+			
+			if (nParam == -1) {
+				for (i = 0; i < stComponent->nports; i++) {
+					if (base_component_Private->ports[i]->sPortParam.bEnabled == OMX_TRUE) {
+						err = OMX_ErrorIncorrectStateOperation;
+						break;
+					} else {
+						base_component_Private->ports[i]->transientState = OMX_StateIdle;
+					}
 				}
 			} else {
-				err = OMX_ErrorUnsupportedIndex;
-				break;
-			}
+					if (base_component_Private->ports[nParam]->sPortParam.bEnabled == OMX_TRUE) {
+						err = OMX_ErrorIncorrectStateOperation;
+						break;
+					} else {
+						base_component_Private->ports[nParam]->transientState = OMX_StateIdle;
+					}				
+			}			
+			
 			message = malloc(sizeof(coreMessage_t));
 			message->stComponent = stComponent;
 			if (err == OMX_ErrorNone) {

@@ -959,8 +959,10 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 			free(base_component_Private->ports[i]->pFlushSem);
 			DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing output pFlushSem semaphore\n");
 		}
+		free(base_component_Private->ports[i]);
 	}
-
+	free(base_component_Private->ports);
+	
 	stComponent->state = OMX_StateInvalid;
 	
 	free(stComponent->omx_component.pComponentPrivate);

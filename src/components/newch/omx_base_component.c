@@ -236,6 +236,26 @@ void base_component_SetPortFlushFlag(stComponentType* stComponent, int index, OM
 
 }
 
+/**
+ * FIXME comment
+ */
+OMX_ERRORTYPE base_component_ParameterSanityCheck(OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_U32 nPortIndex,
+	OMX_IN  OMX_PTR pStructure,
+	OMX_IN  size_t size)
+{
+	stComponentType* stComponent = (stComponentType*)hComponent;
+	
+	if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
+		return OMX_ErrorIncorrectStateOperation;
+	}
+	if (nPortIndex >= stComponent->nports) {
+		return OMX_ErrorBadPortIndex;
+	}
+	return checkHeader(pStructure , size);
+} 
+
 /** This is called by the OMX core in its message processing
  * thread context upon a component request. A request is made
  * by the component when some asynchronous services are needed:
@@ -1939,6 +1959,7 @@ OMX_ERRORTYPE base_component_SetParameter(
 	OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
 	OMX_AUDIO_PARAM_PCMMODETYPE* pAudioPcmMode;
 	OMX_PARAM_PORTDEFINITIONTYPE *pPortDef ;
+	OMX_U32 portIndex;
 
 	/* Check which structure we are being fed and make control its header */
 	stComponentType* stComponent = (stComponentType*)hComponent;
@@ -1970,109 +1991,62 @@ OMX_ERRORTYPE base_component_SetParameter(
 		break;
 		case OMX_IndexParamPortDefinition: {
 			pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
-			if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-				return OMX_ErrorIncorrectStateOperation;
-			}
+			portIndex = pPortDef->nPortIndex;
 			
-			if ((err = checkHeader(pPortDef , sizeof(OMX_PARAM_PORTDEFINITIONTYPE))) != OMX_ErrorNone) {
+			err = base_component_ParameterSanityCheck(hComponent, portIndex, pPortDef, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
+			if (err != OMX_ErrorNone)
 				return err;
-			}
-			if (pPortDef ->nPortIndex > 1) {
-				return OMX_ErrorBadPortIndex;
-			}
-			if (pPortDef ->nPortIndex == 0) {
-					base_component_Private->inputPort.sPortParam.nBufferCountActual = pPortDef ->nBufferCountActual;
-			} else {
-					base_component_Private->outputPort.sPortParam.nBufferCountActual = pPortDef ->nBufferCountActual;
-			}
-										   }
-		break;
-		case OMX_IndexParamAudioPortFormat:
-			if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-				return OMX_ErrorIncorrectStateOperation;
-			}
-			pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-			if ((err = checkHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
-				return err;
-			}
+				
+			base_component_Private->ports[portIndex]->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
+    }
 		break;
 		case OMX_IndexParamCompBufferSupplier:
 			pBufSupply = (OMX_PARAM_BUFFERSUPPLIERTYPE*)ComponentParameterStructure;
+			portIndex = pBufSupply->nPortIndex;
+			
+			err = base_component_ParameterSanityCheck(hComponent, portIndex, pPortDef, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
+			if (err != OMX_ErrorNone)
+				return err;
 
-			if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
-				if ((pBufSupply->nPortIndex == 0) && (base_component_Private->inputPort.sPortParam.bEnabled==OMX_TRUE)) {
-					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-					return OMX_ErrorIncorrectStateOperation;
-				}
-				else if ((pBufSupply->nPortIndex == 1) && (base_component_Private->outputPort.sPortParam.bEnabled==OMX_TRUE)) {
-					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-					return OMX_ErrorIncorrectStateOperation;
-				}
-			}
-
-			if (pBufSupply->nPortIndex > 1) {
-				return OMX_ErrorBadPortIndex;
-			}
 			if (pBufSupply->eBufferSupplier == OMX_BufferSupplyUnspecified) {
 				return OMX_ErrorNone;
 			}
-			if ((base_component_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) == 0) {
+			if ((base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) == 0) {
 				return OMX_ErrorNone;
 			}
-			if((err = checkHeader(pBufSupply, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE))) != OMX_ErrorNone){
-				return err;
-			}
-			if ((pBufSupply->eBufferSupplier == OMX_BufferSupplyInput) && (pBufSupply->nPortIndex == 0)) {
+
+			if ((pBufSupply->eBufferSupplier == OMX_BufferSupplyInput) && 
+				  (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirInput)) {
 				/** These two cases regard the first stage of client override */
-				if (base_component_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER) {
+				if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER) {
 					err = OMX_ErrorNone;
 					break;
 				}
-				base_component_Private->inputPort.nTunnelFlags |= TUNNEL_IS_SUPPLIER;
-				err = OMX_SetParameter(base_component_Private->inputPort.hTunneledComponent, OMX_IndexParamCompBufferSupplier, pBufSupply);
-			} else if ((pBufSupply->eBufferSupplier == OMX_BufferSupplyOutput) && (pBufSupply->nPortIndex == 0)) {
-				if (base_component_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER) {
-					base_component_Private->inputPort.nTunnelFlags &= ~TUNNEL_IS_SUPPLIER;
-					err = OMX_SetParameter(base_component_Private->inputPort.hTunneledComponent, OMX_IndexParamCompBufferSupplier, pBufSupply);
+				base_component_Private->ports[portIndex]->nTunnelFlags |= TUNNEL_IS_SUPPLIER;
+				err = OMX_SetParameter(base_component_Private->ports[portIndex]->hTunneledComponent, OMX_IndexParamCompBufferSupplier, pBufSupply);
+			} else if ((pBufSupply->eBufferSupplier == OMX_BufferSupplyOutput) && 
+			           (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirInput)) {
+				if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER) {
+					base_component_Private->ports[portIndex]->nTunnelFlags &= ~TUNNEL_IS_SUPPLIER;
+					err = OMX_SetParameter(base_component_Private->ports[portIndex]->hTunneledComponent, OMX_IndexParamCompBufferSupplier, pBufSupply);
 					break;
 				}
 				err = OMX_ErrorNone;
-			} else if ((pBufSupply->eBufferSupplier == OMX_BufferSupplyOutput) && (pBufSupply->nPortIndex == 1)) {
+			} else if ((pBufSupply->eBufferSupplier == OMX_BufferSupplyOutput) && 
+								 (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirOutput)) {
 				/** these two cases regard the second stage of client override */
-				if (base_component_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER) {
+				if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER) {
 					err = OMX_ErrorNone;
 					break;
 				}
-				base_component_Private->outputPort.nTunnelFlags |= TUNNEL_IS_SUPPLIER;
+				base_component_Private->ports[portIndex]->nTunnelFlags |= TUNNEL_IS_SUPPLIER;
 			} else {
-				if (base_component_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER) {
-					base_component_Private->outputPort.nTunnelFlags &= ~TUNNEL_IS_SUPPLIER;
+				if (base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER) {
+					base_component_Private->ports[portIndex]->nTunnelFlags &= ~TUNNEL_IS_SUPPLIER;
 					err = OMX_ErrorNone;
 					break;
 				}
 				err = OMX_ErrorNone;
-			}
-		break;
-		case OMX_IndexParamAudioPcm:
-			if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-				return OMX_ErrorIncorrectStateOperation;
-			}
-			pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-			if((err = checkHeader(pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) {
-				return err;
-			}
-		break;
-		case OMX_IndexParamAudioMp3:
-			if (stComponent->state != OMX_StateLoaded && stComponent->state != OMX_StateWaitForResources) {
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x lineno=%d\n",__func__,stComponent->state,__LINE__);
-				return OMX_ErrorIncorrectStateOperation;
-			}
-			pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
-			if((err = checkHeader(pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE))) != OMX_ErrorNone) {
-				return err;
 			}
 		break;
 		default:
@@ -2080,7 +2054,6 @@ OMX_ERRORTYPE base_component_SetParameter(
 		break;
 	}
 	
-	/* If we are not asked two ports give error */
 	if (err != OMX_ErrorNone) {
 		DEBUG(DEB_LEV_ERR, "   Error during %s = %i\n", __func__, err);
 	}

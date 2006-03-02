@@ -2259,13 +2259,12 @@ OMX_ERRORTYPE base_component_AllocateBuffer(
 	base_component_PortType* base_component_Port;
 	OMX_S32 i;
 
-	if(nPortIndex == 0) {
-		base_component_Port = &base_component_Private->inputPort;
-	} else if(nPortIndex == 1) {
-		base_component_Port = &base_component_Private->outputPort;
-	} else {
+	if (nPortIndex >= stComponent->nports) {
 		return OMX_ErrorBadPortIndex;
 	}
+
+	base_component_Port = base_component_Private->ports[nPortIndex];
+	
 	if ((base_component_Port->nTunnelFlags & TUNNEL_ESTABLISHED) && 
 		(base_component_Port->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 		return OMX_ErrorBadPortIndex;

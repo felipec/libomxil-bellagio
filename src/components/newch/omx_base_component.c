@@ -813,56 +813,60 @@ OMX_ERRORTYPE base_component_Init(stComponentType* stComponent)
 OMX_ERRORTYPE base_component_Deinit(stComponentType* stComponent)
 {
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = base_component_Private->inputPort.pBufferSem;
-	tsem_t* pOutputSem = base_component_Private->outputPort.pBufferSem;
+	tsem_t* pSem;
 	OMX_S32 ret;
-	OMX_BUFFERHEADERTYPE* pOutputBuffer;
-	OMX_BUFFERHEADERTYPE* pInputBuffer;
+	OMX_U32 i;
+	OMX_BUFFERHEADERTYPE* pBuffer;
 	
 	DEBUG(DEB_LEV_FULL_SEQ, "In %s\n", __func__);
 	base_component_Private->bIsInit = OMX_FALSE;
 	
 	/** Trash buffer mangement thread.
 	 */
-
 	pthread_mutex_lock(&base_component_Private->exit_mutex);
 	base_component_Private->bExit_buffer_thread=OMX_TRUE;
 	pthread_mutex_unlock(&base_component_Private->exit_mutex);
-	
+
+	// FIXME all the DEBUGs in this function
+
+/*
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s ibsemval=%d, bup=%d \n",__func__,
 		pInputSem->semval, 
 		base_component_Private->inputPort.bBufferUnderProcess);
-
-	if(pInputSem->semval == 0 && 
-		base_component_Private->inputPort.bBufferUnderProcess==OMX_FALSE) {
-		tsem_up(pInputSem);
-	}
-
+*/
+/*
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s obsemval=%d, bup=%d\n",__func__,
 		pOutputSem->semval, 
 		base_component_Private->outputPort.bBufferUnderProcess);
-	if(pOutputSem->semval == 0 && 
-		base_component_Private->outputPort.bBufferUnderProcess==OMX_FALSE) {
-		tsem_up(pOutputSem);
+		*/
+
+	for (i = 0; i < stComponent->nports; i++) {
+		pSem = base_component_Private->ports[i]->pBufferSem;
+		if(pSem->semval == 0 && 
+	 		 base_component_Private->ports[i]->bBufferUnderProcess==OMX_FALSE) {
+			tsem_up(pSem);
+	  }
 	}
 
 	DEBUG(DEB_LEV_FULL_SEQ,"All buffers flushed!\n");
+	/*
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s obsemval=%d, ibsemval=%d\n",__func__,
 		pOutputSem->semval, 
 		pInputSem->semval);
+		*/
 	ret=pthread_join(base_component_Private->bufferMgmtThread,NULL);
-
+/*
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s obsemval=%d, ibsemval=%d\n",__func__,
 		pOutputSem->semval, 
 		pInputSem->semval);
-
-	while(pInputSem->semval>0 ) {
-		tsem_down(pInputSem);
-		pInputBuffer=dequeue(base_component_Private->inputPort.pBufferQueue);
-	}
-	while(pOutputSem->semval>0) {
-		tsem_down(pOutputSem);
-		pInputBuffer=dequeue(base_component_Private->outputPort.pBufferQueue);
+*/
+	for (i = 0; i < stComponent->nports; i++) {
+		pSem = base_component_Private->ports[i]->pBufferSem;
+		while(pSem->semval > 0) {
+			tsem_down(pSem);
+			pBuffer=dequeue(base_component_Private->ports[i]->pBufferQueue);
+		}
+		pthread_mutex_destroy(&base_component_Private->ports[i]->mutex);
 	}
 
 
@@ -876,9 +880,6 @@ OMX_ERRORTYPE base_component_Deinit(stComponentType* stComponent)
 	pthread_mutex_destroy(&base_component_Private->executingMutex);
 	DEBUG(DEB_LEV_FULL_SEQ,"Deinitialize mutexes and conditional variables\n");
 	
-	pthread_mutex_destroy(&base_component_Private->inputPort.mutex);
-	pthread_mutex_destroy(&base_component_Private->outputPort.mutex);
-
 	pthread_cond_signal(&base_component_Private->exit_condition);
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"Returning from %s \n",__func__);

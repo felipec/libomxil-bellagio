@@ -692,15 +692,16 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 destinationState)
 {
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = base_component_Private->inputPort.pBufferSem;
-	tsem_t* pOutputSem = base_component_Private->outputPort.pBufferSem;
+//	tsem_t* pInputSem = base_component_Private->inputPort.pBufferSem;
+//	tsem_t* pOutputSem = base_component_Private->outputPort.pBufferSem;
 	pthread_mutex_t* executingMutex = &base_component_Private->executingMutex;
 	pthread_cond_t* executingCondition = &base_component_Private->executingCondition;
-	pthread_mutex_t *pInmutex=&base_component_Private->inputPort.mutex;
-	pthread_mutex_t *pOutmutex=&base_component_Private->outputPort.mutex;
+//	pthread_mutex_t *pInmutex=&base_component_Private->inputPort.mutex;
+//	pthread_mutex_t *pOutmutex=&base_component_Private->outputPort.mutex;
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
 	OMX_BUFFERHEADERTYPE* pOutputBuffer;
 	OMX_BUFFERHEADERTYPE* pInputBuffer;
+	OMX_U32 i;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s changing state from %i to %i\n", __func__, stComponent->state, (OMX_S32)destinationState);
 
@@ -716,61 +717,37 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 				return OMX_ErrorSameState;
 				break;
 			case OMX_StateIdle:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s:  input enabled %i ,  input populated %i\n", __func__, base_component_Private->inputPort.sPortParam.bEnabled, base_component_Private->inputPort.sPortParam.bPopulated);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: output enabled %i , output populated %i\n", __func__, base_component_Private->outputPort.sPortParam.bEnabled, base_component_Private->outputPort.sPortParam.bPopulated);
-				if ((base_component_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
-						(base_component_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					/* Freeing here the buffers allocated for the tunneling:*/
-					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: IN TUNNEL!!!! semval=%d\n",__func__,pInputSem->semval);
-					eError=base_component_freeTunnelBuffers(&base_component_Private->inputPort);
-				} 
-				else if ((base_component_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
-						!(base_component_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					tsem_down(base_component_Private->inputPort.pFullAllocationSem);
-				}
-				else {
-					/** Wait until all the buffers assigned to the input port have been de-allocated
-						*/
-					if ((base_component_Private->inputPort.sPortParam.bEnabled) && 
-							(base_component_Private->inputPort.sPortParam.bPopulated)) {
-						tsem_down(base_component_Private->inputPort.pFullAllocationSem);
-						base_component_Private->inputPort.sPortParam.bPopulated = OMX_FALSE;
-						base_component_Private->inputPort.transientState = OMX_StateMax;
+				for (i = 0; i < stComponent->nports; i++) {
+						DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s:  port enabled %i,  port populated %i\n", __func__, base_component_Private->ports[i]->sPortParam.bEnabled, base_component_Private->ports[i]->sPortParam.bPopulated);					
+					if ((base_component_Private->ports[i]->nTunnelFlags & TUNNEL_ESTABLISHED) &&
+							(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+						/* Freeing here the buffers allocated for the tunneling:*/
+//FIXME						DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: IN TUNNEL!!!! semval=%d\n",__func__,pInputSem->semval);
+						eError=base_component_freeTunnelBuffers(base_component_Private->ports[i]);
+					} 
+					else if ((base_component_Private->ports[i]->nTunnelFlags & TUNNEL_ESTABLISHED) &&
+							!(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+						tsem_down(base_component_Private->ports[i]->pFullAllocationSem);
 					}
-					else if ((base_component_Private->inputPort.sPortParam.bEnabled == OMX_FALSE) && 
-						(base_component_Private->inputPort.sPortParam.bPopulated == OMX_FALSE)) {
-						if(base_component_Private->inputPort.pFullAllocationSem->semval>0)
-							tsem_down(base_component_Private->inputPort.pFullAllocationSem);
+					else {
+						/** Wait until all the buffers assigned to the port have been de-allocated
+							*/
+						if ((base_component_Private->ports[i]->sPortParam.bEnabled) && 
+								(base_component_Private->ports[i]->sPortParam.bPopulated)) {
+							tsem_down(base_component_Private->ports[i]->pFullAllocationSem);
+							base_component_Private->ports[i]->sPortParam.bPopulated = OMX_FALSE;
+							base_component_Private->ports[i]->transientState = OMX_StateMax;
+						}
+						else if ((base_component_Private->ports[i]->sPortParam.bEnabled == OMX_FALSE) && 
+							(base_component_Private->ports[i]->sPortParam.bPopulated == OMX_FALSE)) {
+							//FIXME Pankaj/Giulio, PLEASE comment the following if-statement
+							if(base_component_Private->ports[i]->pFullAllocationSem->semval>0)
+								tsem_down(base_component_Private->ports[i]->pFullAllocationSem);
+						}
 					}
+					//FIXME I wouldn't mind having a proper comment here either
+					tsem_reset(base_component_Private->ports[i]->pFullAllocationSem);
 				}
-				if ((base_component_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
-						(base_component_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					/* Freeing here the buffers allocated for the tunneling:*/
-					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: OUT TUNNEL!!!!\n",__func__);
-					eError=base_component_freeTunnelBuffers(&base_component_Private->outputPort);
-				} else if ((base_component_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
-						!(base_component_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s waiting for the supplier to free the buffer %d\n",
-						__func__,base_component_Private->outputPort.pFullAllocationSem->semval);
-					tsem_down(base_component_Private->outputPort.pFullAllocationSem);
-				}
-				else {
-					/** Wait until all the buffers assigned to the output port have been de-allocated
-						*/
-					if ((base_component_Private->outputPort.sPortParam.bEnabled) && 
-							(base_component_Private->outputPort.sPortParam.bPopulated)) {
-						tsem_down(base_component_Private->outputPort.pFullAllocationSem);
-						base_component_Private->outputPort.sPortParam.bPopulated = OMX_FALSE;
-						base_component_Private->outputPort.transientState = OMX_StateMax;
-					}
-					else if ((base_component_Private->outputPort.sPortParam.bEnabled == OMX_FALSE) && 
-						(base_component_Private->outputPort.sPortParam.bPopulated == OMX_FALSE)) {
-						if(base_component_Private->outputPort.pFullAllocationSem->semval>0)
-							tsem_down(base_component_Private->outputPort.pFullAllocationSem);
-					}
-				}
-				tsem_reset(base_component_Private->inputPort.pFullAllocationSem);
-				tsem_reset(base_component_Private->outputPort.pFullAllocationSem);
 
 				stComponent->state = OMX_StateLoaded;
 				base_component_Deinit(stComponent);
@@ -810,62 +787,38 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 				stComponent->state = OMX_StateIdle;
 				break;
 			case OMX_StateLoaded:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s:  input enabled %i ,  input populated %i\n", __func__, base_component_Private->inputPort.sPortParam.bEnabled, base_component_Private->inputPort.sPortParam.bPopulated);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: output enabled %i , output populated %i\n", __func__, base_component_Private->outputPort.sPortParam.bEnabled, base_component_Private->outputPort.sPortParam.bPopulated);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%x output flags 0x%x \n", 
-					(OMX_S32)base_component_Private->inputPort.nTunnelFlags, 
-					(OMX_S32)base_component_Private->outputPort.nTunnelFlags);
-
-				if ((base_component_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
-						(base_component_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					/** Allocate here the buffers needed for the tunneling:
-						*/
-					eError=base_component_allocateTunnelBuffers(&base_component_Private->inputPort, 0, INTERNAL_IN_BUFFER_SIZE);
-					base_component_Private->inputPort.transientState = OMX_StateMax;
-				} else {
-					/** Wait until all the buffers needed have been allocated
-						*/
-					if ((base_component_Private->inputPort.sPortParam.bEnabled == OMX_TRUE) && 
-							(base_component_Private->inputPort.sPortParam.bPopulated == OMX_FALSE)) {
-						DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. input enabled %i ,  input populated %i\n", __func__, base_component_Private->inputPort.sPortParam.bEnabled, base_component_Private->inputPort.sPortParam.bPopulated);
-						tsem_down(base_component_Private->inputPort.pFullAllocationSem);
-						base_component_Private->inputPort.sPortParam.bPopulated = OMX_TRUE;
-						base_component_Private->inputPort.transientState = OMX_StateMax;
+				for (i = 0; i < stComponent->nports; i++) {
+					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s:  port enabled %i ,  port populated %i\n", __func__, base_component_Private->ports[i]->sPortParam.bEnabled, base_component_Private->ports[i]->sPortParam.bPopulated);					
+					if ((base_component_Private->ports[i]->nTunnelFlags & TUNNEL_ESTABLISHED) &&
+							(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+						/** Allocate here the buffers needed for the tunneling:
+							*/
+						eError=base_component_allocateTunnelBuffers(base_component_Private->ports[i], i, INTERNAL_IN_BUFFER_SIZE);
+						base_component_Private->ports[i]->transientState = OMX_StateMax;
+					} else {
+						/** Wait until all the buffers needed have been allocated
+							*/
+						if ((base_component_Private->ports[i]->sPortParam.bEnabled == OMX_TRUE) && 
+								(base_component_Private->ports[i]->sPortParam.bPopulated == OMX_FALSE)) {
+							DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. port enabled %i,  port populated %i\n", __func__, base_component_Private->ports[i]->sPortParam.bEnabled, base_component_Private->ports[i]->sPortParam.bPopulated);
+							tsem_down(base_component_Private->ports[i]->pFullAllocationSem);
+							base_component_Private->ports[i]->sPortParam.bPopulated = OMX_TRUE;
+							base_component_Private->ports[i]->transientState = OMX_StateMax;
+						}
+						else if ((base_component_Private->ports[i]->sPortParam.bEnabled == OMX_TRUE) && 
+							(base_component_Private->ports[i]->sPortParam.bPopulated == OMX_TRUE)) {
+							//FIXME Pankaj/Giulio, PLEASE comment the following if-statement								
+							if(base_component_Private->ports[i]->pFullAllocationSem->semval>0)
+								tsem_down(base_component_Private->ports[i]->pFullAllocationSem);
+						}
 					}
-					else if ((base_component_Private->inputPort.sPortParam.bEnabled == OMX_TRUE) && 
-						(base_component_Private->inputPort.sPortParam.bPopulated == OMX_TRUE)) {
-						if(base_component_Private->inputPort.pFullAllocationSem->semval>0)
-						tsem_down(base_component_Private->inputPort.pFullAllocationSem);
-					}
-				}
-				if ((base_component_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
-						(base_component_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					/** Allocate here the buffers needed for the tunneling:
-						*/
-					eError=base_component_allocateTunnelBuffers(&base_component_Private->outputPort, 1, INTERNAL_OUT_BUFFER_SIZE);
-					base_component_Private->outputPort.transientState = OMX_StateMax;
-				} else {
-					/** Wait until all the buffers needed have been allocated
-						*/
-					if ((base_component_Private->outputPort.sPortParam.bEnabled == OMX_TRUE) && 
-							(base_component_Private->outputPort.sPortParam.bPopulated == OMX_FALSE)) {
-						DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. output enabled %i , output populated %i\n", __func__, base_component_Private->outputPort.sPortParam.bEnabled, base_component_Private->outputPort.sPortParam.bPopulated);
-						tsem_down(base_component_Private->outputPort.pFullAllocationSem);
-						base_component_Private->outputPort.sPortParam.bPopulated = OMX_TRUE;
-						base_component_Private->outputPort.transientState = OMX_StateMax;
-					}
-					else if ((base_component_Private->outputPort.sPortParam.bEnabled == OMX_TRUE) && 
-						(base_component_Private->outputPort.sPortParam.bPopulated == OMX_TRUE)) {
-						if(base_component_Private->outputPort.pFullAllocationSem->semval>0)
-						tsem_down(base_component_Private->outputPort.pFullAllocationSem);
-					}
+					//FIXME I wouldn't mind having a proper comment here either
+					tsem_reset(base_component_Private->ports[i]->pFullAllocationSem);					
 				}
 				stComponent->state = OMX_StateIdle;
-				tsem_reset(base_component_Private->inputPort.pFullAllocationSem);
-				tsem_reset(base_component_Private->outputPort.pFullAllocationSem);
 				
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%x\n", (OMX_S32)base_component_Private->inputPort.nTunnelFlags);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "                     output flags 0x%x\n", (OMX_S32)base_component_Private->outputPort.nTunnelFlags);
+//FIXME				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%x\n", (OMX_S32)base_component_Private->inputPort.nTunnelFlags);
+//FIXME				DEBUG(DEB_LEV_SIMPLE_SEQ, "                     output flags 0x%x\n", (OMX_S32)base_component_Private->outputPort.nTunnelFlags);
 				break;
 				
 			case OMX_StateIdle:
@@ -874,14 +827,16 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 				
 			case OMX_StateExecuting:
 			case OMX_StatePause:
-				DEBUG(DEB_LEV_ERR, "In %s: state transition exe/pause to idle asgn ibfr=%d , obfr=%d\n", __func__,
+/*FIXME				DEBUG(DEB_LEV_ERR, "In %s: state transition exe/pause to idle asgn ibfr=%d , obfr=%d\n", __func__,
 					base_component_Private->inputPort.nNumTunnelBuffer,
-					base_component_Private->outputPort.nNumTunnelBuffer);
-				base_component_Private->inputPort.bIsPortFlushed=OMX_TRUE;
-				base_component_Private->outputPort.bIsPortFlushed=OMX_TRUE;
+					base_component_Private->outputPort.nNumTunnelBuffer); */
+				for (i = 0; i < stComponent->nports; i++) {
+					base_component_Private->ports[i]->bIsPortFlushed=OMX_TRUE;
+				}
 				base_component_FlushPort(stComponent, -1);
-				base_component_Private->inputPort.bIsPortFlushed=OMX_FALSE;
-				base_component_Private->outputPort.bIsPortFlushed=OMX_FALSE;
+				for (i = 0; i < stComponent->nports; i++) {
+					base_component_Private->ports[i]->bIsPortFlushed=OMX_FALSE;
+				}
 				stComponent->state = OMX_StateIdle;
 				break;
 			default:

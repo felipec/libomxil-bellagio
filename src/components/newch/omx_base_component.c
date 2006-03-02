@@ -830,13 +830,9 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 /*FIXME				DEBUG(DEB_LEV_ERR, "In %s: state transition exe/pause to idle asgn ibfr=%d , obfr=%d\n", __func__,
 					base_component_Private->inputPort.nNumTunnelBuffer,
 					base_component_Private->outputPort.nNumTunnelBuffer); */
-				for (i = 0; i < stComponent->nports; i++) {
-					base_component_Private->ports[i]->bIsPortFlushed=OMX_TRUE;
-				}
+				base_component_SetPortFlushFlag(stComponent, -1, OMX_TRUE);
 				base_component_FlushPort(stComponent, -1);
-				for (i = 0; i < stComponent->nports; i++) {
-					base_component_Private->ports[i]->bIsPortFlushed=OMX_FALSE;
-				}
+				base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
 				stComponent->state = OMX_StateIdle;
 				break;
 			default:
@@ -2054,15 +2050,10 @@ OMX_ERRORTYPE base_component_SendCommand(
 				break;
 
 			}
-			if (nParam == -1) {
-					for (i = 0; i < stComponent->nports; i++) {
-						base_component_Private->ports[i]->bIsPortFlushed=OMX_TRUE;
-					}
-			} else if (nParam >= stComponent->nports) {
+			if (nParam >= stComponent->nports) {
 				return OMX_ErrorBadPortIndex;
-			} else {
-				base_component_Private->ports[nParam]->bIsPortFlushed=OMX_TRUE;
 			}
+			base_component_SetPortFlushFlag(stComponent, nParam, OMX_TRUE);
 			
 			message = malloc(sizeof(coreMessage_t));
 			message->stComponent = stComponent;

@@ -270,7 +270,7 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 	base_component_PrivateType* base_component_Private;
 	OMX_BOOL waitFlag=OMX_FALSE;
 	OMX_COMPONENTTYPE* pHandle=&stComponent->omx_component;
-	
+	OMX_U32 i;
 	OMX_ERRORTYPE err;
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -326,21 +326,16 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 							NULL);
 				} else {
 					if(message->messageParam2==-1){ /*Flush all port*/
-						(*(stComponent->callbacks->EventHandler))
-							(pHandle,
-								stComponent->callbackData,
-								OMX_EventCmdComplete, /* The command was completed */
-								OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
-								0, /* The state has been changed in message->messageParam2 */
-								NULL);
-						(*(stComponent->callbacks->EventHandler))
-							(pHandle,
-								stComponent->callbackData,
-								OMX_EventCmdComplete, /* The command was completed */
-								OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
-								1, /* The state has been changed in message->messageParam2 */
-								NULL);
-					}else {/*Flush input/output port*/
+						for (i = 0; i < stComponent->nports; i++) {
+							(*(stComponent->callbacks->EventHandler))
+								(pHandle,
+									stComponent->callbackData,
+									OMX_EventCmdComplete, /* The command was completed */
+									OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
+									i, /* The state has been changed in message->messageParam2 */
+									NULL);
+						}		
+					} else {/*Flush input/output port*/
 						(*(stComponent->callbacks->EventHandler))
 							(pHandle,
 								stComponent->callbackData,
@@ -364,30 +359,25 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 							0, /* The state has been changed in message->messageParam2 */
 							NULL);
 				} else {
-					if ((message->messageParam2 == 0) || (message->messageParam2 == 1)){
-					(*(stComponent->callbacks->EventHandler))
-						(pHandle,
-							stComponent->callbackData,
-							OMX_EventCmdComplete, /* The command was completed */
-							OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-							message->messageParam2, /* The state has been changed in message->messageParam2 */
-							NULL);
+					if(message->messageParam2==-1){ /*Disable all ports*/
+						for (i = 0; i < stComponent->nports; i++) {
+							(*(stComponent->callbacks->EventHandler))
+								(pHandle,
+									stComponent->callbackData,
+									OMX_EventCmdComplete, /* The command was completed */
+									OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
+									i, /* The state has been changed in message->messageParam2 */
+									NULL);
+						}
 					} else {
-					(*(stComponent->callbacks->EventHandler))
-						(pHandle,
-							stComponent->callbackData,
-							OMX_EventCmdComplete, /* The command was completed */
-							OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-							0, /* The state has been changed in message->messageParam2 */
-							NULL);
-					(*(stComponent->callbacks->EventHandler))
-						(pHandle,
-							stComponent->callbackData,
-							OMX_EventCmdComplete, /* The command was completed */
-							OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-							1, /* The state has been changed in message->messageParam2 */
-							NULL);
-					}
+						(*(stComponent->callbacks->EventHandler))
+							(pHandle,
+								stComponent->callbackData,
+								OMX_EventCmdComplete, /* The command was completed */
+								OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
+								message->messageParam2, /* The state has been changed in message->messageParam2 */
+								NULL);
+					} 					
 				}
 			break;
 			case OMX_CommandPortEnable:
@@ -410,20 +400,15 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 							message->messageParam2, /* The state has been changed in message->messageParam2 */
 							NULL);
 					else {
-						(*(stComponent->callbacks->EventHandler))
-							(pHandle,
-								stComponent->callbackData,
-								OMX_EventCmdComplete, /* The command was completed */
-								OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
-								0, /* The state has been changed in message->messageParam2 */
-								NULL);
-						(*(stComponent->callbacks->EventHandler))
-							(pHandle,
-								stComponent->callbackData,
-								OMX_EventCmdComplete, /* The command was completed */
-								OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
-								1, /* The state has been changed in message->messageParam2 */
-								NULL);
+						for (i = 0; i < stComponent->nports; i++) {
+							(*(stComponent->callbacks->EventHandler))
+								(pHandle,
+									stComponent->callbackData,
+									OMX_EventCmdComplete, /* The command was completed */
+									OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
+									i, /* The state has been changed in message->messageParam2 */
+									NULL);							
+						}
 					}
 				}
 			break;
@@ -443,60 +428,7 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 	} else if (message->messageType == WARNING_MSG_TYPE) {
 		DEBUG(DEB_LEV_ERR, "In %s: Warning message. Useless operation but do not affect environment %i\n", __func__, message->messageParam1);
 		switch(message->messageParam1){
-			case OMX_CommandPortEnable:
-				(*(stComponent->callbacks->EventHandler))
-					(pHandle,
-						stComponent->callbackData,
-						OMX_EventCmdComplete, /* The command was completed */
-						OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
-						0, /* The state has been changed in message->messageParam2 */
-						NULL);
-				(*(stComponent->callbacks->EventHandler))
-					(pHandle,
-						stComponent->callbackData,
-						OMX_EventCmdComplete, /* The command was completed */
-						OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
-						1, /* The state has been changed in message->messageParam2 */
-						NULL);
-			break;
-			case OMX_CommandPortDisable:
-				if (message->messageParam2 == 0) {
-					base_component_Private->inputPort.sPortParam.bEnabled = OMX_FALSE;
-				(*(stComponent->callbacks->EventHandler))
-					(pHandle,
-						stComponent->callbackData,
-						OMX_EventCmdComplete, /* The command was completed */
-						OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-						0, /* The state has been changed in message->messageParam2 */
-						NULL);
-				} else if (message->messageParam2 == 1) {
-					base_component_Private->outputPort.sPortParam.bEnabled = OMX_FALSE;
-				(*(stComponent->callbacks->EventHandler))
-					(pHandle,
-						stComponent->callbackData,
-						OMX_EventCmdComplete, /* The command was completed */
-						OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-						1, /* The state has been changed in message->messageParam2 */
-						NULL);
-				} else if (message->messageParam2 == -1) {
-					base_component_Private->inputPort.sPortParam.bEnabled = OMX_FALSE;
-					base_component_Private->outputPort.sPortParam.bEnabled = OMX_FALSE;
-				(*(stComponent->callbacks->EventHandler))
-					(pHandle,
-						stComponent->callbackData,
-						OMX_EventCmdComplete, /* The command was completed */
-						OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-						0, /* The state has been changed in message->messageParam2 */
-						NULL);
-				(*(stComponent->callbacks->EventHandler))
-					(pHandle,
-						stComponent->callbackData,
-						OMX_EventCmdComplete, /* The command was completed */
-						OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-						1, /* The state has been changed in message->messageParam2 */
-						NULL);
-				}
-			break;
+			//FIXME
 			default:	
 				DEBUG(DEB_LEV_ERR, "In %s: Unrecognized command %i\n", __func__, message->messageParam1);
 			break;

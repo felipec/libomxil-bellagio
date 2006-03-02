@@ -1077,9 +1077,6 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 	
 	//FIXME DEBUG(DEB_LEV_FULL_SEQ, "In %s flush buffers\n", __func__);
 	
-	while(pSem->semval < 0) {
-		tsem_up(pSem);
-	}
 	//FIXME DEBUG(DEB_LEV_FULL_SEQ, "In %s wait for buffer to be de-allocated\n", __func__);
 	tsem_reset(base_component_Private->ports[portIndex]->pFullAllocationSem);	
 }
@@ -1167,6 +1164,13 @@ OMX_ERRORTYPE base_component_EnablePort(stComponentType* stComponent, OMX_U32 po
 	}
 
 	return OMX_ErrorNone;
+}
+
+OMX_ERRORTYPE base_component_FlushSinglePort(stComponentType* stComponent, OMX_U32 portIndex)
+{
+	OMX_COMPONENTTYPE* pHandle = &stComponent->omx_component;
+	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
+	
 }
 
 /** Flushes all the buffers under processing by the given port. 

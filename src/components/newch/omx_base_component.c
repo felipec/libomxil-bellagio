@@ -69,7 +69,7 @@ stComponentType* base_component_CreateComponentStruct() {
 	  base_component->state = OMX_StateLoaded;
 	  base_component->callbacks = NULL;
 	  base_component->callbackData = NULL;
-	  base_component->nports = 2;
+	  base_component->nports = 0;
 		base_component->coreDescriptor = NULL;
 	  base_component->constructor = base_component_Constructor;
 	  base_component->destructor = base_component_Destructor;
@@ -154,19 +154,17 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 	/** generic parameter NOT related to a specific port */
 	setHeader(&base_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
 	//subclasses define the port count (default is 0)	
-	//base_component_Private->sPortTypesParam.nPorts = 2;
-	//base_component_Private->sPortTypesParam.nStartPortNumber = 0;
 	
 	// create ports, but only if the subclass hasn't done it
 	if (stComponent->nports && !base_component_Private->ports) {
 		base_component_Private->ports = calloc(stComponent->nports,
 																			sizeof (base_component_PortType *));
 
-		if (!base_component_Private->ports) return OMX_ErrorInsufficientResources;																			
+		if (!base_component_Private->ports) return OMX_ErrorInsufficientResources;
 		
 		for (i=0; i < stComponent->nports; i++) {
 			base_component_Private->ports[i] = calloc(1, sizeof(base_component_PortType));
-			if (!base_component_Private->ports[i]) return OMX_ErrorInsufficientResources;																			
+			if (!base_component_Private->ports[i]) return OMX_ErrorInsufficientResources;
 
 			base_component_Private->ports[i]->transientState = OMX_StateMax;
 			setHeader(&base_component_Private->ports[i]->sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
@@ -2178,14 +2176,13 @@ OMX_ERRORTYPE base_component_UseBuffer(
 	/** There should be some mechanism to indicate whether the buffer is application allocated or component. And 
 	component need to track that. so the fill buffer done call back need not to be called and IL client will
 	pull the buffer from the output port*/
-	
-	if(nPortIndex == 0) {
-		base_component_Port = &base_component_Private->inputPort;
-	} else if(nPortIndex == 1) {
-		base_component_Port = &base_component_Private->outputPort;
-	} else {
+
+	if (nPortIndex >= stComponent->nports) {
 		return OMX_ErrorBadPortIndex;
 	}
+
+	base_component_Port = base_component_Private->ports[nPortIndex];
+	
 	if ((base_component_Port->nTunnelFlags & TUNNEL_ESTABLISHED) && 
 		(base_component_Port->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 		return OMX_ErrorNone;
@@ -2199,6 +2196,7 @@ OMX_ERRORTYPE base_component_UseBuffer(
 		return OMX_ErrorIncorrectStateTransition;
 	}
 	
+	//fixme MAX_BUFFER is not dynamic
 	for(i=0;i<MAX_BUFFERS;i++){
 		DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s i=%i Buffer state=%x\n",__func__,i,base_component_Port->nBufferState[i]);
 		if(!(base_component_Port->nBufferState[i] & BUFFER_ALLOCATED) && 
@@ -2216,19 +2214,20 @@ OMX_ERRORTYPE base_component_UseBuffer(
 			base_component_Port->pBuffer[i]->nTickCount = 0;
 			base_component_Port->pBuffer[i]->nTimeStamp = 0;
 			*ppBufferHdr = base_component_Port->pBuffer[i];
-			if (nPortIndex == 0) {
-				base_component_Port->pBuffer[i]->nInputPortIndex = 0;
-				if(base_component_Private->inputPort.nTunnelFlags)
-					base_component_Port->pBuffer[i]->nOutputPortIndex = base_component_Private->inputPort.nTunneledPort;
+			if (base_component_Port->sPortParam.eDir == OMX_DirInput) {
+//			if (nPortIndex == 0) {
+				base_component_Port->pBuffer[i]->nInputPortIndex = nPortIndex;
+				if(base_component_Port->nTunnelFlags)
+					base_component_Port->pBuffer[i]->nOutputPortIndex = base_component_Port->nTunneledPort;
 				else 
 					base_component_Port->pBuffer[i]->nOutputPortIndex = stComponent->nports; // here is assigned a non-valid port index
-			} else {
-				
-				if(base_component_Private->outputPort.nTunnelFlags)
-					base_component_Port->pBuffer[i]->nInputPortIndex = base_component_Private->outputPort.nTunneledPort;
+			} else {				
+				base_component_Port->pBuffer[i]->nOutputPortIndex = nPortIndex;				
+				if(base_component_Port->nTunnelFlags)
+					base_component_Port->pBuffer[i]->nInputPortIndex = base_component_Port->nTunneledPort;
 				else 
 					base_component_Port->pBuffer[i]->nInputPortIndex = stComponent->nports; // here is assigned a non-valid port index
-				base_component_Port->pBuffer[i]->nOutputPortIndex = 1;
+
 			}
 			base_component_Port->nBufferState[i] |= BUFFER_ASSIGNED;
 			base_component_Port->nBufferState[i] |= HEADER_ALLOCATED;

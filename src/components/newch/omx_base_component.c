@@ -896,6 +896,7 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_BOOL exit_thread=OMX_FALSE,cmdFlag=OMX_FALSE;
 	OMX_U32 ret;
+	OMX_U32 i;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s instance=%d\n", __func__,noRefInstance);
 	if (base_component_Private->bIsInit != OMX_FALSE) {
 		base_component_Deinit(stComponent);
@@ -936,57 +937,28 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing pCmdSem semaphore\n");
 	}
 
-	/*Destroying and Freeing input semaphore */
-	if(base_component_Private->inputPort.pBufferSem!=NULL)  {
-	tsem_deinit(base_component_Private->inputPort.pBufferSem);
-	free(base_component_Private->inputPort.pBufferSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing input semaphore\n");
-	}
-	/*Destroying and Freeing output semaphore */
-	if(base_component_Private->outputPort.pBufferSem!=NULL) {
-	tsem_deinit(base_component_Private->outputPort.pBufferSem);
-	free(base_component_Private->outputPort.pBufferSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing output semaphore\n");
-	}
-
-	/*Destroying and Freeing input queue */
-	if(base_component_Private->inputPort.pBufferQueue!=NULL) {
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"deiniting base_component input queue\n");
-	queue_deinit(base_component_Private->inputPort.pBufferQueue);
-	free(base_component_Private->inputPort.pBufferQueue);
-	base_component_Private->inputPort.pBufferQueue=NULL;
-	}
-	/*Destroying and Freeing output queue */
-	if(base_component_Private->outputPort.pBufferQueue!=NULL) {
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"deiniting base_component output queue\n");
-	queue_deinit(base_component_Private->outputPort.pBufferQueue);
-	free(base_component_Private->outputPort.pBufferQueue);
-	base_component_Private->outputPort.pBufferQueue=NULL;
-	}
-
-	/*Destroying and Freeing input semaphore */
-	if(base_component_Private->inputPort.pFullAllocationSem!=NULL)  {
-	tsem_deinit(base_component_Private->inputPort.pFullAllocationSem);
-	free(base_component_Private->inputPort.pFullAllocationSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing input pFullAllocationSem semaphore\n");
-	}
-	/*Destroying and Freeing output semaphore */
-	if(base_component_Private->outputPort.pFullAllocationSem!=NULL) {
-	tsem_deinit(base_component_Private->outputPort.pFullAllocationSem);
-	free(base_component_Private->outputPort.pFullAllocationSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing output pFullAllocationSem semaphore\n");
-	}
-
-	if(base_component_Private->outputPort.pFlushSem!=NULL) {
-	tsem_deinit(base_component_Private->outputPort.pFlushSem);
-	free(base_component_Private->outputPort.pFlushSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing output pFlushSem semaphore\n");
-	}
-
-	if(base_component_Private->inputPort.pFlushSem!=NULL) {
-	tsem_deinit(base_component_Private->inputPort.pFlushSem);
-	free(base_component_Private->inputPort.pFlushSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing input pFlushSem semaphore\n");
+	for (i = 0; i < stComponent->nports; i++) {
+		if(base_component_Private->ports[i]->pBufferSem != NULL)  {
+			tsem_deinit(base_component_Private->ports[i]->pBufferSem);
+			free(base_component_Private->ports[i]->pBufferSem);	
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing pBufferSemaphore\n");		
+		}
+		if(base_component_Private->ports[i]->pBufferQueue!=NULL) {
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"deiniting base_component queue\n");
+			queue_deinit(base_component_Private->ports[i]->pBufferQueue);
+			free(base_component_Private->ports[i]->pBufferQueue);
+			base_component_Private->ports[i]->pBufferQueue=NULL;
+		}
+		if(base_component_Private->ports[i]->pFullAllocationSem!=NULL)  {
+			tsem_deinit(base_component_Private->ports[i]->pFullAllocationSem);
+			free(base_component_Private->ports[i]->pFullAllocationSem);
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing pFullAllocationSem semaphore\n");
+		}
+		if(base_component_Private->ports[i]->pFlushSem!=NULL) {
+			tsem_deinit(base_component_Private->ports[i]->pFlushSem);
+			free(base_component_Private->ports[i]->pFlushSem);
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing output pFlushSem semaphore\n");
+		}
 	}
 
 	stComponent->state = OMX_StateInvalid;

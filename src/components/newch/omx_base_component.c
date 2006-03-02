@@ -2569,16 +2569,20 @@ OMX_ERRORTYPE base_component_EmptyThisBuffer(
 {
 	stComponentType* stComponent = (stComponentType*)hComponent;
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = base_component_Private->inputPort.pBufferSem;
-	queue_t* pInputQueue = base_component_Private->inputPort.pBufferQueue;
+	OMX_U32 portIndex;
+	tsem_t* pInputSem;
+	queue_t* pInputQueue;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
 
-	/* The input port code is not valid
-	*/
-	if (pBuffer->nInputPortIndex != 0) {
+ 	portIndex = pBuffer->nOutputPortIndex;
+	if (portIndex >= stComponent->nports ||
+			base_component_Private->ports[portIndex]->sPortParam.eDir != OMX_DirInput) {
 		DEBUG(DEB_LEV_ERR, "In %s: wrong port code for this operation\n", __func__);
 		return OMX_ErrorBadPortIndex;
 	}
+	
+	pInputSem = base_component_Private->ports[portIndex]->pBufferSem;
+	pInputQueue = base_component_Private->ports[portIndex]->pBufferQueue;
 	/* We are not accepting buffers if not in executing or
 	 * paused state
 	 */
@@ -2592,7 +2596,7 @@ OMX_ERRORTYPE base_component_EmptyThisBuffer(
 		return OMX_ErrorIncorrectStateOperation;
 	}
 
-	if(base_component_Private->inputPort.sPortParam.bEnabled==OMX_FALSE)
+	if(base_component_Private->ports[portIndex]->sPortParam.bEnabled==OMX_FALSE)
 		return OMX_ErrorIncorrectStateOperation;
 
 	if ((err = checkHeader(pBuffer, sizeof(OMX_BUFFERHEADERTYPE))) != OMX_ErrorNone) {
@@ -2617,17 +2621,22 @@ OMX_ERRORTYPE base_component_FillThisBuffer(
 {
 	stComponentType* stComponent = (stComponentType*)hComponent;
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
-
-	tsem_t* pOutputSem = base_component_Private->outputPort.pBufferSem;
-	queue_t* pOutputQueue = base_component_Private->outputPort.pBufferQueue;
+	OMX_U32 portIndex;
+	
+	tsem_t* pOutputSem;
+	queue_t* pOutputQueue;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
  
-	/* The output port code is not valid
-	*/
-	if (pBuffer->nOutputPortIndex != 1) {
+ 	portIndex = pBuffer->nOutputPortIndex;
+	if (portIndex >= stComponent->nports ||
+			base_component_Private->ports[portIndex]->sPortParam.eDir != OMX_DirOutput) {
 		DEBUG(DEB_LEV_ERR, "In %s: wrong port code for this operation\n", __func__);
 		return OMX_ErrorBadPortIndex;
 	}
+	
+	pOutputSem = base_component_Private->ports[portIndex]->pBufferSem;
+	pOutputQueue = base_component_Private->ports[portIndex]->pBufferQueue;
+		 	
 	/* We are not accepting buffers if not in executing or
 	 * paused or idle state
 	 */
@@ -2638,7 +2647,7 @@ OMX_ERRORTYPE base_component_FillThisBuffer(
 		return OMX_ErrorInvalidState;
 	}
 
-	if(base_component_Private->outputPort.sPortParam.bEnabled==OMX_FALSE)
+	if(base_component_Private->ports[portIndex]->sPortParam.bEnabled==OMX_FALSE)
 		return OMX_ErrorIncorrectStateOperation;
 
 	if ((err = checkHeader(pBuffer, sizeof(OMX_BUFFERHEADERTYPE))) != OMX_ErrorNone) {

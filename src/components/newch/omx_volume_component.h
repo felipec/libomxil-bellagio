@@ -22,7 +22,7 @@ typedef struct omx_volume_component_PrivateType{
 /* Component private entry points declaration */
 OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType*);
 
-void omx_volume_BufferMgmtCallback(
+void omx_volume_component_BufferMgmtCallback(
 	stComponentType* stComponent,
 	OMX_BUFFERHEADERTYPE* inputbuffer,
 	OMX_BUFFERHEADERTYPE* outputbuffer);

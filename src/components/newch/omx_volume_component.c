@@ -48,6 +48,7 @@ OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 	omx_volume_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
 	
 	omx_volume_component_Private->gain = 100.0f; // default gain
+	omx_volume_component_Private->BufferMgmtCallback = omx_volume_component_BufferMgmtCallback;
 	return err;
 }
 

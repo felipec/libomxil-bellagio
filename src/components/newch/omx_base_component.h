@@ -26,6 +26,8 @@
 	2006/02/08:  OpenMAX base_component component version 0.1
 
 */
+#ifndef _OMX_BASE_COMPONENT_H_
+#define _OMX_BASE_COMPONENT_H_
 
 #include <pthread.h>
 
@@ -43,10 +45,38 @@
 
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_base_component_INSTANCES 10
+
+/**
+ * This is a convenience #define for derived structs, 
+ * it allows them to use this define in their derived struct instead
+ * of having a struct inside a struct.
+ */
+#define BASE_COMPONENT_PORTTYPE_FIELDS \
+	OMX_BUFFERHEADERTYPE *pBuffer[MAX_BUFFERS]; \
+	OMX_U32 nBufferState[MAX_BUFFERS]; \
+	OMX_U32 nNumAssignedBuffers; \
+	queue_t* pBufferQueue; \
+	tsem_t* pBufferSem; \
+	tsem_t* pFullAllocationSem; \
+	OMX_STATETYPE transientState; \
+	tsem_t* pFlushSem; \
+	OMX_BOOL bWaitingFlushSem; \
+	OMX_BOOL bBufferUnderProcess; \
+	pthread_mutex_t mutex; \
+	OMX_PARAM_PORTDEFINITIONTYPE sPortParam; \
+	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; \
+	OMX_HANDLETYPE hTunneledComponent; \
+	OMX_U32 nTunneledPort; \
+	OMX_U32 nTunnelFlags; \
+	OMX_BUFFERSUPPLIERTYPE eBufferSupplier; \
+	OMX_U32 nNumTunnelBuffer; \
+	OMX_BOOL bIsPortFlushed;
+
+
 /**
  * The structure for port Type.
+ * KEEP the above #define in synch!
  */
-
 typedef struct base_component_PortType{
 	/// @param pBuffer An array of pointers to buffer headers. 
 	OMX_BUFFERHEADERTYPE *pBuffer[MAX_BUFFERS];
@@ -93,8 +123,48 @@ typedef struct base_component_PortType{
 	OMX_BOOL bIsPortFlushed;
 }base_component_PortType;
 
+	/*/// @param ports The ports of the component */
+//	base_component_PortType **ports; \
+	/* @param bIsInit Indicate whether component has been already initialized */
+//	OMX_BOOL bIsInit; \
+
+/**
+ * This is a convenience #define for derived structs, 
+ * it allows them to use this define in their derived struct instead
+ * of having a struct inside a struct.
+ */
+#define BASE_COMPONENT_PRIVATETYPE_FIELDS \
+	base_component_PortType **ports; \
+	OMX_BOOL bIsInit; \
+	OMX_PORT_PARAM_TYPE sPortTypesParam; \
+	pthread_t bufferMgmtThread; \
+	OMX_S32 bufferMgmtThreadID; \
+	pthread_mutex_t executingMutex; \
+	pthread_cond_t executingCondition; \
+	OMX_BOOL bExit_buffer_thread; \
+	pthread_mutex_t exit_mutex; \
+	pthread_cond_t exit_condition; \
+	pthread_mutex_t cmd_mutex; \
+	tsem_t* pCmdSem; \
+	OMX_U32 nGroupPriority; \
+	OMX_U32 nGroupID; \
+	OMX_MARKTYPE *pMark; \
+	OMX_BOOL bCmdUnderProcess; \
+	OMX_BOOL bWaitingForCmdToFinish; \
+	OMX_U32 inbuffer; \
+	OMX_U32 inbuffercb; \
+	OMX_U32 outbuffer; \
+	OMX_U32 outbuffercb; \
+	OMX_ERRORTYPE (*Init)(stComponentType* stComponent); \
+	OMX_ERRORTYPE (*Deinit)(stComponentType* stComponent); \
+	OMX_ERRORTYPE (*DoStateSet)(stComponentType*, OMX_U32); \
+	OMX_ERRORTYPE (*AllocateTunnelBuffers)(base_component_PortType*, OMX_U32, OMX_U32);	\
+	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*);	\
+	void* (*BufferMgmtFunction)(void* param);
+
 /**
  * Components Private Structure
+ * KEEP the above #define in synch!
  */
 typedef struct base_component_PrivateType{
 	/// @param ports The ports of the component
@@ -154,6 +224,10 @@ typedef struct base_component_PrivateType{
 	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*);		
 	void* (*BufferMgmtFunction)(void* param);
 } base_component_PrivateType;
+/**
+ * FIXME comment
+ */
+stComponentType* base_component_CreateComponentStruct(void);
 
 /** 
  * This function takes care of constructing the instance of the component.
@@ -345,3 +419,4 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 	OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup);
 
 
+#endif // _OMX_BASE_COMPONENT_H_

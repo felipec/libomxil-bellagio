@@ -97,10 +97,7 @@ typedef struct base_component_PortType{
  * Components Private Structure
  */
 typedef struct base_component_PrivateType{
-	/// @param inputPort Input port of the component
-	base_component_PortType inputPort;
-	/// @param outputPort Output port of the component
-	base_component_PortType outputPort;
+	/// @param ports The ports of the component
 	base_component_PortType **ports;
 
 	/// @param bIsInit Indicate whether component has been already initialized

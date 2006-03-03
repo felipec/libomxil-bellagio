@@ -789,6 +789,7 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 							(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 						/** Allocate here the buffers needed for the tunneling:
 							*/
+						//FIXME buffer size shall be dynamic
 						eError=base_component_allocateTunnelBuffers(base_component_Private->ports[i], i, INTERNAL_IN_BUFFER_SIZE);
 						base_component_Private->ports[i]->transientState = OMX_StateMax;
 					} else {
@@ -1010,6 +1011,7 @@ void base_component_EnableSinglePort(stComponentType* stComponent, OMX_U32 portI
 			DEBUG(DEB_LEV_FULL_SEQ,"I/p Port buffer sem =%x \n",
 				pSem->semval);
 				//FIXME check the port index given for allocateTunnelBuffer; why always zero?
+				//FIXME buffer sizes shall be dynamic
 			if (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirInput)
 				base_component_allocateTunnelBuffers(base_component_Private->ports[portIndex], 0, INTERNAL_IN_BUFFER_SIZE);
 			else
@@ -1687,7 +1689,7 @@ OMX_ERRORTYPE base_component_AllocateBuffer(
 		DEBUG(DEB_LEV_FULL_SEQ, "In %s: The port is not allowed to receive buffers\n", __func__);
 		return OMX_ErrorIncorrectStateTransition;
 	}
-	
+	//fixme MAX_BUFFER is not dynamic	
 	for(i=0;i<MAX_BUFFERS;i++){
 		if(!(base_component_Port->nBufferState[i] & BUFFER_ALLOCATED) && 
 			!(base_component_Port->nBufferState[i] & BUFFER_ASSIGNED)){
@@ -1771,7 +1773,7 @@ OMX_ERRORTYPE base_component_FreeBuffer(
 				nPortIndex, /* The state has been changed in message->messageParam2 */
 				NULL);
 	}
-
+	//fixme MAX_BUFFER is not dynamic
 	for(i=0;i<MAX_BUFFERS;i++){
 		if((base_component_Port->nBufferState[i] & BUFFER_ALLOCATED) &&
 			(base_component_Port->pBuffer[i]->pBuffer == pBuffer->pBuffer)){

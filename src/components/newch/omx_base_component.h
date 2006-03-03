@@ -150,6 +150,8 @@ typedef struct base_component_PrivateType{
 	OMX_ERRORTYPE (*Init)(stComponentType* stComponent);
 	OMX_ERRORTYPE (*Deinit)(stComponentType* stComponent);
 	OMX_ERRORTYPE (*DoStateSet)(stComponentType*, OMX_U32);
+	OMX_ERRORTYPE (*AllocateTunnelBuffers)(base_component_PortType*, OMX_U32, OMX_U32);	
+	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*);		
 	void* (*BufferMgmtFunction)(void* param);
 } base_component_PrivateType;
 
@@ -200,6 +202,11 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message);
  */
 OMX_ERRORTYPE base_component_Init(stComponentType* stComponent);
 
+/** FIXME comment this
+ * 
+ */
+OMX_ERRORTYPE base_component_Deinit(stComponentType* stComponent);
+
 /** Changes the state of a component taking proper actions depending on
  * the transiotion requested
  * \param stComponent the ST component which state is to be changed
@@ -234,7 +241,7 @@ OMX_ERRORTYPE base_component_FlushPort(stComponentType* stComponent, OMX_U32 por
 	* @param portIndex index of the port to be tunneled
 	* @param bufferSize Size of the buffers to be allocated
 	*/
-OMX_ERRORTYPE base_component_allocateTunnelBuffers(base_component_PortType* base_component_Port, OMX_U32 portIndex, OMX_U32 bufferSize);
+OMX_ERRORTYPE base_component_AllocateTunnelBuffers(base_component_PortType* base_component_Port, OMX_U32 portIndex, OMX_U32 bufferSize);
 
 /** Free buffer in case of a tunneled port.
 	* The operations performed are:
@@ -242,7 +249,7 @@ OMX_ERRORTYPE base_component_allocateTunnelBuffers(base_component_PortType* base
 	*  - Free the MAX number of buffers for that port, with the specified size.
 	* @param base_component_Port the port of the alsa component on which tunnel buffers must be released
 	*/
-OMX_ERRORTYPE base_component_freeTunnelBuffers(base_component_PortType* base_component_Port);
+OMX_ERRORTYPE base_component_FreeTunnelBuffers(base_component_PortType* base_component_Port);
 
 /** Set Callbacks. It stores in the component private structure the pointers to the user application callbacs
 	* @param hComponent the handle of the component

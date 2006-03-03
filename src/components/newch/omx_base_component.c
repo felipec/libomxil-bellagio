@@ -151,6 +151,11 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 	base_component_Private->bCmdUnderProcess=OMX_FALSE;
 	base_component_Private->bWaitingForCmdToFinish=OMX_FALSE;
 
+	base_component_Private->Init = &base_component_Init;
+	base_component_Private->Deinit = &base_component_Deinit;
+	base_component_Private->DoStateSet = &base_component_DoStateSet;
+	base_component_Private->BufferMgmtFunction = &base_component_BufferMgmtFunction;
+	
 	/** generic parameter NOT related to a specific port */
 	setHeader(&base_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
 	//subclasses define the port count (default is 0)	
@@ -290,7 +295,7 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 		switch(message->messageParam1){
 			case OMX_CommandStateSet:
 				/* Do the actual state change */
-				err = base_component_DoStateSet(stComponent, message->messageParam2);
+				err = (*(base_component_Private->DoStateSet))(stComponent, message->messageParam2);				
 				if (err != OMX_ErrorNone) {
 					(*(stComponent->callbacks->EventHandler))
 						(pHandle,
@@ -503,7 +508,7 @@ OMX_ERRORTYPE base_component_Init(stComponentType* stComponent)
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Hey, starting threads!\n");
 	base_component_Private->bufferMgmtThreadID = pthread_create(&base_component_Private->bufferMgmtThread,
 		NULL,
-		base_component_BufferMgmtFunction,
+		base_component_Private->BufferMgmtFunction,
 		stComponent);	
 
 	if(base_component_Private->bufferMgmtThreadID < 0){
@@ -609,7 +614,7 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 	OMX_U32 i;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s instance=%d\n", __func__,noRefInstance);
 	if (base_component_Private->bIsInit != OMX_FALSE) {
-		base_component_Deinit(stComponent);
+		(*(base_component_Private->Deinit))(stComponent);		
 	} 
 
 	pthread_mutex_lock(&base_component_Private->exit_mutex);
@@ -719,7 +724,7 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 							(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 						/* Freeing here the buffers allocated for the tunneling:*/
 //FIXME						DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: IN TUNNEL!!!! semval=%d\n",__func__,pInputSem->semval);
-						eError=base_component_freeTunnelBuffers(base_component_Private->ports[i]);
+						eError = (*(base_component_Private->FreeTunnelBuffers))(base_component_Private->ports[i]);
 					} 
 					else if ((base_component_Private->ports[i]->nTunnelFlags & TUNNEL_ESTABLISHED) &&
 							!(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
@@ -746,7 +751,7 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 				}
 
 				stComponent->state = OMX_StateLoaded;
-				base_component_Deinit(stComponent);
+				(*(base_component_Private->Deinit))(stComponent);				
 				break;
 				
 			default:
@@ -790,7 +795,7 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 						/** Allocate here the buffers needed for the tunneling:
 							*/
 						//FIXME buffer size shall be dynamic
-						eError=base_component_allocateTunnelBuffers(base_component_Private->ports[i], i, INTERNAL_IN_BUFFER_SIZE);
+						eError=(*(base_component_Private->AllocateTunnelBuffers))(base_component_Private->ports[i], i, INTERNAL_IN_BUFFER_SIZE);						
 						base_component_Private->ports[i]->transientState = OMX_StateMax;
 					} else {
 						/** Wait until all the buffers needed have been allocated
@@ -891,13 +896,13 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 			default:
 			stComponent->state = OMX_StateInvalid;
 			if (base_component_Private->bIsInit != OMX_FALSE) {
-			base_component_Deinit(stComponent);
+				(*(base_component_Private->Deinit))(stComponent);									
 			}
 			break;
 			}
 		
 		if (base_component_Private->bIsInit != OMX_FALSE) {
-			base_component_Deinit(stComponent);
+				(*(base_component_Private->Deinit))(stComponent);							
 		}
 		return OMX_ErrorInvalidState;
 		// Free all the resources!!!!
@@ -936,7 +941,7 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 					tsem_down(pSem);
 					pBuffer=dequeue(pQueue);
 				}
-				base_component_freeTunnelBuffers(base_component_Private->ports[portIndex]);
+				(*(base_component_Private->FreeTunnelBuffers))(base_component_Private->ports[portIndex]);				
 				base_component_Private->ports[portIndex]->hTunneledComponent=NULL;
 				base_component_Private->ports[portIndex]->nTunnelFlags=0;
 			}
@@ -1013,9 +1018,9 @@ void base_component_EnableSinglePort(stComponentType* stComponent, OMX_U32 portI
 				//FIXME check the port index given for allocateTunnelBuffer; why always zero?
 				//FIXME buffer sizes shall be dynamic
 			if (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirInput)
-				base_component_allocateTunnelBuffers(base_component_Private->ports[portIndex], 0, INTERNAL_IN_BUFFER_SIZE);
+				(*(base_component_Private->AllocateTunnelBuffers))(base_component_Private->ports[portIndex], 0, INTERNAL_IN_BUFFER_SIZE);
 			else
-				base_component_allocateTunnelBuffers(base_component_Private->ports[portIndex], 0, INTERNAL_OUT_BUFFER_SIZE);
+				(*(base_component_Private->AllocateTunnelBuffers))(base_component_Private->ports[portIndex], 0, INTERNAL_OUT_BUFFER_SIZE);
 				
 			base_component_Private->ports[portIndex]->sPortParam.bPopulated = OMX_TRUE;
 		}
@@ -1232,7 +1237,7 @@ OMX_ERRORTYPE base_component_FlushPort(stComponentType* stComponent, OMX_U32 por
 	* @param portIndex index of the port to be tunneled
 	* @param bufferSize Size of the buffers to be allocated
 	*/
-OMX_ERRORTYPE base_component_allocateTunnelBuffers(base_component_PortType* base_component_Port, OMX_U32 portIndex, OMX_U32 bufferSize) {
+OMX_ERRORTYPE base_component_AllocateTunnelBuffers(base_component_PortType* base_component_Port, OMX_U32 portIndex, OMX_U32 bufferSize) {
 	OMX_S32 i;
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
 	OMX_U8* pBuffer=NULL;
@@ -1281,7 +1286,7 @@ OMX_ERRORTYPE base_component_allocateTunnelBuffers(base_component_PortType* base
 	*  - Free the MAX number of buffers for that port, with the specified size.
 	* @param base_component_Port the port of the alsa component on which tunnel buffers must be released
 	*/
-OMX_ERRORTYPE base_component_freeTunnelBuffers(base_component_PortType* base_component_Port) {
+OMX_ERRORTYPE base_component_FreeTunnelBuffers(base_component_PortType* base_component_Port) {
 	OMX_S32 i;
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -1873,7 +1878,7 @@ OMX_ERRORTYPE base_component_SendCommand(
 				* change state to loaded --. deallocate buffers
 				*/
 			if ((nParam == OMX_StateIdle) && (stComponent->state == OMX_StateLoaded)) {
-					err=base_component_Init(stComponent);
+					err=(*(base_component_Private->Init))(stComponent);
 					if(err!=OMX_ErrorNone) {
 						DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s  base_component_Init returned error %i\n",
 							__func__,err);
@@ -2030,11 +2035,12 @@ OMX_ERRORTYPE base_component_ComponentDeInit(
 	OMX_IN  OMX_HANDLETYPE hComponent)
 {
 	stComponentType* stComponent = (stComponentType*)hComponent;
+	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Tearing down component...\n");
 
 	/* Take care of tearing down resources if not in loaded state */
 	if(stComponent->state != OMX_StateLoaded)
-		base_component_Deinit(stComponent);
+		(*(base_component_Private->Deinit))(stComponent);
 
 	return OMX_ErrorNone;
 }

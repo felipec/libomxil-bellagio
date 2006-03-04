@@ -12,6 +12,7 @@
 
 #define OMX_TWOPORT_COMPONENT_FIELDS \
 	BASE_COMPONENT_PRIVATETYPE_FIELDS \
+/** @param BufferMgmtCallback function pointer for algorithm callback */ \
 	void (*BufferMgmtCallback)(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer);
 
 /** Twoport component private structure.

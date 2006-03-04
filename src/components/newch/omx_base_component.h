@@ -1,5 +1,5 @@
 /**
-	@file src/components/base_component/omx_base_component.h
+	@file src/components/newch/omx_base_component.h
 	
 	OpenMax base_component component. This component does not perform any multimedia
 	processing.	It is used as a base_component for new components development.
@@ -45,184 +45,122 @@
 
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_base_component_INSTANCES 10
-
 /**
  * This is a convenience #define for derived structs, 
  * it allows them to use this define in their derived struct instead
  * of having a struct inside a struct.
  */
 #define BASE_COMPONENT_PORTTYPE_FIELDS \
+	/** @param pBuffer An array of pointers to buffer headers. */ \
 	OMX_BUFFERHEADERTYPE *pBuffer[MAX_BUFFERS]; \
+	/** @param nBufferState The State of the Buffer whether assigned or allocated */ \
 	OMX_U32 nBufferState[MAX_BUFFERS]; \
+	/** @param nNumAssignedBuffers Number of buffer assigned on each port */ \
 	OMX_U32 nNumAssignedBuffers; \
+	/** @param pBufferQueue queue for buffer to be processed by the port */ \
 	queue_t* pBufferQueue; \
+	/** @param pBufferSem Semaphore for buffer queue access synchronization */ \
 	tsem_t* pBufferSem; \
+	/** @param pFullAllocationSem Semaphore used to hold the state transition until the all the buffers needed have been allocated */ \
 	tsem_t* pFullAllocationSem; \
+	/** @param transientState A state transition between Loaded to Idle or Ilde to Loaded */ \
 	OMX_STATETYPE transientState; \
+	/** @param pFlushSem Semaphore that locks the execution until the buffers have been flushed, if needed */ \
 	tsem_t* pFlushSem; \
+	/** @param bWaitingFlushSem  Boolean variables indicate whether flush sem is down */ \
 	OMX_BOOL bWaitingFlushSem; \
+	/** @param bBufferUnderProcess  Boolean variables indicate whether the port is processing any buffer */ \
 	OMX_BOOL bBufferUnderProcess; \
+	/** @param mutex Mutex used for access synchronization to the processing thread */ \
 	pthread_mutex_t mutex; \
+	/** @param sPortParam General OpenMAX port parameter */ \
 	OMX_PARAM_PORTDEFINITIONTYPE sPortParam; \
+	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
 	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; \
+	/** @param hTunneledComponent Handle to the tunnelled component */ \
 	OMX_HANDLETYPE hTunneledComponent; \
+	/** @param nTunneledPort Tunnelled port number */ \
 	OMX_U32 nTunneledPort; \
+	/** @param nTunnelFlags Tunnelling flag */ \
 	OMX_U32 nTunnelFlags; \
+	/** @param eBufferSupplier the type of supplier in case of tunneling */ \
 	OMX_BUFFERSUPPLIERTYPE eBufferSupplier; \
+	/** @param nNumTunnelBuffer Number of buffer to be tunnelled */ \
 	OMX_U32 nNumTunnelBuffer; \
+	/** @param bIsPortFlushed Boolean variables indicate whether the port is flushed */ \
 	OMX_BOOL bIsPortFlushed;
 
 
 /**
  * The structure for port Type.
- * KEEP the above #define in synch!
  */
 typedef struct base_component_PortType{
-	/// @param pBuffer An array of pointers to buffer headers. 
-	OMX_BUFFERHEADERTYPE *pBuffer[MAX_BUFFERS];
-	/// @param nBufferState The State of the Buffer whether assigned or allocated
-	OMX_U32 nBufferState[MAX_BUFFERS];
-	/// @param nNumAssignedBuffers Number of buffer assigned on each port
-	OMX_U32 nNumAssignedBuffers;
-	/** buffer queue descriptors */
-	/// @param pBufferQueue queue for buffer to be processed by the port
-	queue_t* pBufferQueue;
-	/** Data flow control semaphore
-	 * Buffer processing thread will wait until
-	 * buffers are available on the port */
-	/// @param pBufferSem Semaphore for buffer queue access synchronization
-	tsem_t* pBufferSem;
-	/// @param pFullAllocationSem Semaphore used to hold the state transition until the all the buffers needed have been allocated
-	tsem_t* pFullAllocationSem;
-	/// @param transientState A state transition between Loaded to Idle or Ilde to Loaded 
-	OMX_STATETYPE transientState;
-	/// @param pFlushSem Semaphore that locks the execution until the buffers have been flushed, if needed
-	tsem_t* pFlushSem;
-	/// @param bWaitingFlushSem  Boolean variables indicate whether flush sem is down
-	OMX_BOOL bWaitingFlushSem;
-	/// @param bBufferUnderProcess  Boolean variables indicate whether the port is processing any buffer
-	OMX_BOOL bBufferUnderProcess;
-	/// @param mutex Mutex used for access synchronization to the processing thread
-	pthread_mutex_t mutex;
-	
-	/// @param sPortParam General OpenMAX port parameter
-	OMX_PARAM_PORTDEFINITIONTYPE sPortParam;
-	/// @param sAudioParam Domain specific (audio) OpenMAX port parameter
-	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam;
-	/// @param hTunneledComponent Handle to the tunnelled component
-	OMX_HANDLETYPE hTunneledComponent;
-	/// @param nTunneledPort Tunnelled port number
-	OMX_U32 nTunneledPort;
-	/// @param nTunnelFlags Tunnelling flag
-	OMX_U32 nTunnelFlags;
-	/// @param eBufferSupplier the type of supplier in case of tunneling
-	OMX_BUFFERSUPPLIERTYPE eBufferSupplier;
-	/// @param nNumTunnelBuffer Number of buffer to be tunnelled
-	OMX_U32 nNumTunnelBuffer;
-	/// @param bIsPortFlushed Boolean variables indicate whether the port is flushed
-	OMX_BOOL bIsPortFlushed;
+	BASE_COMPONENT_PORTTYPE_FIELDS
 }base_component_PortType;
 
-	/*/// @param ports The ports of the component */
-//	base_component_PortType **ports; \
-	/* @param bIsInit Indicate whether component has been already initialized */
-//	OMX_BOOL bIsInit; \
 
-/**
- * This is a convenience #define for derived structs, 
- * it allows them to use this define in their derived struct instead
- * of having a struct inside a struct.
- */
 #define BASE_COMPONENT_PRIVATETYPE_FIELDS \
+/** @param ports The ports of the component */ \
 	base_component_PortType **ports; \
+/** @param bIsInit Indicate whether component has been already initialized */ \
 	OMX_BOOL bIsInit; \
+/** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
 	OMX_PORT_PARAM_TYPE sPortTypesParam; \
+/** @param bufferMgmtThread The main component thread that receives input buffers and sends it to the output device */ \
 	pthread_t bufferMgmtThread; \
+/** @param bufferMgmtThreadID The main component thread ID */ \
 	OMX_S32 bufferMgmtThreadID; \
+/** @param executingMutex The mutex that synchronizes the start of the main thread and the state transition of the component to Executing */ \
 	pthread_mutex_t executingMutex; \
+/** @param executingCondition The executing mutex condition */ \
 	pthread_cond_t executingCondition; \
+/** @param bExit_buffer_thread boolean flag for the exit condition from the main component thread */ \
 	OMX_BOOL bExit_buffer_thread; \
+/** @param exit_mutex mutex for the exit condition from the main component thread */ \
 	pthread_mutex_t exit_mutex; \
+/** @param The exit mutex condition */ \
 	pthread_cond_t exit_condition; \
+/** @param cmd_mutex Mutex uses for message access synchronization */ \
 	pthread_mutex_t cmd_mutex; \
+/** @param pCmdSem Semaphore for message handling completion signaling */ \
 	tsem_t* pCmdSem; \
+/** @param nGroupPriority Resource management field: component priority (common to a group of components) */ \
 	OMX_U32 nGroupPriority; \
+/** @param nGroupID ID of a group of components that share the same logical chain */ \
 	OMX_U32 nGroupID; \
+/** @param pMark This field holds the private data associated with a mark request, if any */ \
 	OMX_MARKTYPE *pMark; \
+/** @param bCmdUnderProcess Boolean variable indicates whether command under process */ \
 	OMX_BOOL bCmdUnderProcess; \
+/** @param bWaitingForCmdToFinish Boolean variable indicates whether cmdSem is waiting for command to finish */ \
 	OMX_BOOL bWaitingForCmdToFinish; \
+/** @param inbuffer Counter of input buffers. Only for debug */ \
 	OMX_U32 inbuffer; \
+/** @param inbuffercb Counter of input buffers. Only for debug */ \
 	OMX_U32 inbuffercb; \
+/** @param outbuffer Counter of output buffers. Only for debug */ \
 	OMX_U32 outbuffer; \
+/** @param outbuffercb Counter of output buffers. Only for debug */ \
 	OMX_U32 outbuffercb; \
+/** @param Init Counter of output buffers. Only for debug */ \
 	OMX_ERRORTYPE (*Init)(stComponentType* stComponent); \
+/** @param Deinit Counter of output buffers. Only for debug */ \
 	OMX_ERRORTYPE (*Deinit)(stComponentType* stComponent); \
+/** @param DoStateSet Counter of output buffers. Only for debug */ \
 	OMX_ERRORTYPE (*DoStateSet)(stComponentType*, OMX_U32); \
-	OMX_ERRORTYPE (*AllocateTunnelBuffers)(base_component_PortType*, OMX_U32, OMX_U32);	\
-	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*);	\
+/** @param AllocateTunnelBuffers Counter of output buffers. Only for debug */ \
+	OMX_ERRORTYPE (*AllocateTunnelBuffers)(base_component_PortType*, OMX_U32, OMX_U32);	 \
+/** @param FreeTunnelBuffers Counter of output buffers. Only for debug */ \
+	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*); \
+/** @param BufferMgmtFunction Counter of output buffers. Only for debug */ \
 	void* (*BufferMgmtFunction)(void* param);
+/** End of BASE_COMPONENT_PRIVATETYPE_FIELDS */ \
 
 /**
  * Components Private Structure
- * KEEP the above #define in synch!
  */
 typedef struct base_component_PrivateType{
-	/// @param ports The ports of the component
-	base_component_PortType **ports;
-
-	/// @param bIsInit Indicate whether component has been already initialized
-	OMX_BOOL bIsInit;
-	/// @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports
-	OMX_PORT_PARAM_TYPE sPortTypesParam;
-	
-	/// @param bufferMgmtThread The main component thread that receives input buffers and sends it to the output device
-	pthread_t bufferMgmtThread;
-	/// @param bufferMgmtThreadID The main component thread ID
-	OMX_S32 bufferMgmtThreadID;
-	
-	/// @param executingMutex The mutex that synchronizes the start of the main thread and the state transition of the component to Executing
-	pthread_mutex_t executingMutex;
-	/// @param executingCondition The executing mutex condition
-	pthread_cond_t executingCondition;
-	/// @param bExit_buffer_thread boolean flag for the exit condition from the main component thread
-	OMX_BOOL bExit_buffer_thread;
-	/// @param exit_mutex mutex for the exit condition from the main component thread
-	pthread_mutex_t exit_mutex;
-	/// @param The exit mutex condition
-	pthread_cond_t exit_condition;
-	/// @param cmd_mutex Mutex uses for message access synchronization
-	pthread_mutex_t cmd_mutex;
-	/// @param pCmdSem Semaphore for message handling completion signaling
-	tsem_t* pCmdSem;
-
-	/// @param nGroupPriority Resource management field: component priority (common to a group of components)
-	OMX_U32 nGroupPriority;
-	/// @param nGroupID ID of a group of components that share the same logical chain
-	OMX_U32 nGroupID;
-
-	/// @param pMark This field holds the private data associated with a mark request, if any
-	OMX_MARKTYPE *pMark;
-
-	/// @param bCmdUnderProcess Boolean variable indicates whether command under process
-	OMX_BOOL bCmdUnderProcess;
-	/// @param bWaitingForCmdToFinish Boolean variable indicates whether cmdSem is waiting for command to finish
-	OMX_BOOL bWaitingForCmdToFinish;
-
-	/// @param inbuffer Counter of input buffers. Only for debug
-	OMX_U32 inbuffer;
-	/// @param inbuffercb Counter of input buffers. Only for debug
-	OMX_U32 inbuffercb;
-	/// @param outbuffer Counter of output buffers. Only for debug
-	OMX_U32 outbuffer;
-	/// @param outbuffercb Counter of output buffers. Only for debug
-	OMX_U32 outbuffercb;
-
-	OMX_ERRORTYPE (*Init)(stComponentType* stComponent);
-	OMX_ERRORTYPE (*Deinit)(stComponentType* stComponent);
-	OMX_ERRORTYPE (*DoStateSet)(stComponentType*, OMX_U32);
-	OMX_ERRORTYPE (*AllocateTunnelBuffers)(base_component_PortType*, OMX_U32, OMX_U32);	
-	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*);		
-	void* (*BufferMgmtFunction)(void* param);
+	BASE_COMPONENT_PRIVATETYPE_FIELDS
 } base_component_PrivateType;
 /**
  * FIXME comment

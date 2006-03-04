@@ -9,8 +9,8 @@ void __attribute__ ((constructor)) omx_twoport_component_register_template() {
 	stComponentType *component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
 	component->name = "OMX.twoport.component";
-  component->constructor = omx_twoport_component_Constructor;
-  // port count must be set for the base class constructor (if we call it, and we will)
+	component->constructor = omx_twoport_component_Constructor;
+	// port count must be set for the base class constructor (if we call it, and we will)
 	component->nports = 2;
   
   register_template(component);

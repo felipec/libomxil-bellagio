@@ -8,16 +8,15 @@
 #include <omx_twoport_component.h>
 
 
-#define OMX_VOLUME_COMPONENT_FIELDS \
-	OMX_TWOPORT_COMPONENT_FIELDS \
-	float gain;
 
 /** Twoport component private structure.
  * see the define above
  */
-typedef struct omx_volume_component_PrivateType{
-	OMX_VOLUME_COMPONENT_FIELDS
-}omx_volume_component_PrivateType;
+DERIVEDCLASS(omx_volume_component_PrivateType, omx_twoport_component_PrivateType)
+#define omx_volume_component_PrivateType_FIELDS omx_twoport_component_PrivateType_FIELDS \
+	/** @param gain the volume gain value */ \
+	float gain;
+ENDCLASS(omx_volume_component_PrivateType)
 
 /* Component private entry points declaration */
 OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType*);

@@ -10,17 +10,14 @@
 #define OMX_TWOPORT_INPUTPORT_INDEX 0
 #define OMX_TWOPORT_OUTPUTPORT_INDEX 1
 
-#define OMX_TWOPORT_COMPONENT_FIELDS \
-	BASE_COMPONENT_PRIVATETYPE_FIELDS \
-/** @param BufferMgmtCallback function pointer for algorithm callback */ \
-	void (*BufferMgmtCallback)(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer);
 
 /** Twoport component private structure.
- * see the define above
  */
-typedef struct omx_twoport_component_PrivateType{
-	OMX_TWOPORT_COMPONENT_FIELDS
-}omx_twoport_component_PrivateType;
+DERIVEDCLASS(omx_twoport_component_PrivateType, base_component_PrivateType)
+#define omx_twoport_component_PrivateType_FIELDS base_component_PrivateType_FIELDS \
+	/** @param BufferMgmtCallback function pointer for algorithm callback */ \
+	void (*BufferMgmtCallback)(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer);
+ENDCLASS(omx_twoport_component_PrivateType)
 
 /* Component private entry points declaration */
 OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType*);

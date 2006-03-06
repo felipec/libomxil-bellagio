@@ -1,3 +1,26 @@
+/**
+ * @file src/components/newch/omx_volume_component.c
+ * 
+ * Copyright (C) 2006  Nokia and STMicroelectronics
+ * @author Ukri NIEMIMUUKKO, Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+ * 
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301  USA
+ */
+
+
 #include <omxcore.h>
 #include <omx_volume_component.h>
 
@@ -57,7 +80,7 @@ void omx_volume_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 	int sampleCount = inputbuffer->nFilledLen / 2; // signed 16 bit samples assumed
 
 	omx_volume_component_PrivateType* omx_volume_component_Private = stComponent->omx_component.pComponentPrivate;
-	
+
 	for (i = 0; i < sampleCount; i++) {
 		((OMX_S16*) outputbuffer->pBuffer)[i] = (OMX_S16)
 			(((OMX_S16*) inputbuffer->pBuffer)[i] * (omx_volume_component_Private->gain / 100.0f));

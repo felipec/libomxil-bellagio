@@ -4,9 +4,9 @@
 	OpenMax base_component component. This component does not perform any multimedia
 	processing.	It is used as a base_component for new components development.
 	
-	Copyright (C) 2006  STMicroelectronics
+	Copyright (C) 2006  STMicroelectronics and Nokia
 
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI, Ukri NIEMIMUUKKO
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free

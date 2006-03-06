@@ -4,7 +4,7 @@
  * @file src/components/newch/omx_classmagic.h
  * 
  * Copyright (C) 2006  Nokia
- * @author Ukri Niemimuukko
+ * @author Ukri NIEMIMUUKKO
  * 
  * This file contains class handling helper macros
  * It is left as an exercise to the reader how they do the magic (FIXME)

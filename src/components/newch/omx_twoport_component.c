@@ -64,7 +64,7 @@ OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType* stComponent) {
 	omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.bEnabled = OMX_TRUE;
 	omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.bPopulated = OMX_FALSE;
 
-	omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.eDir = OMX_DirInput;
+	omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.eDir = OMX_DirOutput;
 	omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.nBufferCountActual = 1;
 	omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.nBufferCountMin = 1;
 	omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.nBufferSize = 0;

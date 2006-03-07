@@ -2056,7 +2056,7 @@ OMX_ERRORTYPE base_component_EmptyThisBuffer(
 	queue_t* pInputQueue;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
 
- 	portIndex = pBuffer->nOutputPortIndex;
+ 	portIndex = pBuffer->nInputPortIndex;
 	if (portIndex >= stComponent->nports ||
 			base_component_Private->ports[portIndex]->sPortParam.eDir != OMX_DirInput) {
 		DEBUG(DEB_LEV_ERR, "In %s: wrong port code for this operation\n", __func__);

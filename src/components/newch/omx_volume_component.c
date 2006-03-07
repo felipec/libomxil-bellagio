@@ -105,6 +105,7 @@ OMX_ERRORTYPE omx_volume_component_SetConfig(
 		default: // delegate to superclass
 			return base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
 	}
+	return OMX_ErrorNone;
 }
 
 OMX_ERRORTYPE omx_volume_component_GetConfig(
@@ -140,6 +141,7 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
 		default:
 			return base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
+	return OMX_ErrorNone;
 }
 
 OMX_ERRORTYPE omx_volume_component_GetParameter(
@@ -190,4 +192,5 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
 		default:
 			return base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
+	return OMX_ErrorNone;
 }

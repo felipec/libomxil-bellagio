@@ -61,5 +61,6 @@ AC_OUTPUT([
 	test/components/Makefile	\
 	test/components/alsasink/Makefile \
 	test/components/reference/Makefile \
+	test/components/newch/Makefile \
 	test/components/ffmpeg/Makefile
 ])

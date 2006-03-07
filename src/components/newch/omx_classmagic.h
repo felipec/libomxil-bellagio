@@ -81,7 +81,7 @@ DERIVEDCLASS(B2,A)
 ENDCLASS(B2)
 
 /**
- * Class C is an even nicer derived class
+ * Class C is an even nicer derived class.
  */
 DERIVEDCLASS(C,B)
 #define C_FIELDS B_FIELDS \

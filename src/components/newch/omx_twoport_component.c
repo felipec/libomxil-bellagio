@@ -129,7 +129,7 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 		pInputBuffer = dequeue(pInputQueue);
 		if(pInputBuffer == NULL){
 			DEBUG(DEB_LEV_ERR, "What the hell!! had NULL input buffer!!\n");
-			reference_Panic();
+			base_component_Panic();
 		}
 		nFlags=pInputBuffer->nFlags;
 		if(nFlags==OMX_BUFFERFLAG_EOS) {
@@ -171,7 +171,7 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 			pOutputBuffer = dequeue(pOutputQueue);
 			if(pOutputBuffer == NULL){
 				DEBUG(DEB_LEV_ERR, "What the hell!! had NULL output buffer!!\n");
-				reference_Panic();
+				base_component_Panic();
 			}
 
 			if(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->bIsPortFlushed==OMX_TRUE) {

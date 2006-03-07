@@ -54,7 +54,7 @@ OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 	
 	// we could create our own port structures here
 	// fixme maybe the base class could use a "port factory" function pointer?	
-	err = twoport_component_Constructor(stComponent);
+	err = omx_twoport_component_Constructor(stComponent);
 
 	/* here we can override whatever defaults the base_component constructor set
 	 * e.g. we can override the function pointers in the private struct  */
@@ -113,7 +113,7 @@ OMX_ERRORTYPE omx_volume_component_GetConfig(
 	OMX_INOUT OMX_PTR pComponentConfigStructure)
 {
 	//fixme
-	return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
+	return base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
 }
 
 OMX_ERRORTYPE omx_volume_component_SetParameter(
@@ -138,7 +138,7 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
 	switch(nParamIndex) {
 		//fixme
 		default:
-			return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+			return base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
 }
 
@@ -188,6 +188,6 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
 			pAudioPcmMode->ePCMMode = OMX_AUDIO_PCMModeLinear;
 		break;
 		default:
-			return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+			return base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
 }

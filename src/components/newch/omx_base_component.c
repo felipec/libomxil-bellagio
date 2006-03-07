@@ -350,7 +350,7 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 								NULL);
 					}
 				}
-				setPortFlushFlag(base_component_Private, -1, OMX_FALSE);
+				base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
 			break;
 			case OMX_CommandPortDisable:
 				/** This condition is added to pass the tests, it is not significant for the environment */

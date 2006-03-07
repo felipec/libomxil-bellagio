@@ -229,7 +229,7 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
  * fixme params
  */
 void base_component_SetPortFlushFlag(stComponentType* stComponent, int index, OMX_BOOL value) {
-	base_component_PrivateType* base_component_Private;	
+	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	int i;
 	if (index == -1) {
 		for (i = 0; i < stComponent->nports; i++) {

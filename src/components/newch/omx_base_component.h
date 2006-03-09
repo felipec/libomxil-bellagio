@@ -46,6 +46,10 @@
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_base_component_INSTANCES 10
 
+
+//UN command processing changes
+#define UN_CPC
+
 /**
  * The structure for port Type.
  */
@@ -122,6 +126,8 @@ CLASS(base_component_PrivateType)
 	pthread_mutex_t cmd_mutex; \
 	/** @param pCmdSem Semaphore for message handling completion signaling */ \
 	tsem_t* pCmdSem; \
+	/** @param pCmdQueue Component command queue */ \
+	queue_t *pCmdQueue; \
 	/** @param nGroupPriority Resource management field: component priority (common to a group of components) */ \
 	OMX_U32 nGroupPriority; \
 	/** @param nGroupID ID of a group of components that share the same logical chain */ \

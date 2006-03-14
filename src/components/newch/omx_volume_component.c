@@ -26,21 +26,21 @@
 
 
 void __attribute__ ((constructor)) omx_volume_component_register_template() {
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);	
-  
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);	
+	  
 	stComponentType *component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
 	component->name = "OMX.volume.component";
-  component->constructor = omx_volume_component_Constructor;
-  component->omx_component.SetConfig = omx_volume_component_SetConfig;
-  component->omx_component.GetConfig = omx_volume_component_GetConfig;
-  component->omx_component.SetParameter = omx_volume_component_SetParameter;
-  component->omx_component.GetParameter = omx_volume_component_GetParameter;
-  
-  // port count must be set for the base class constructor (if we call it, and we will)
+	component->constructor = omx_volume_component_Constructor;
+	component->omx_component.SetConfig = omx_volume_component_SetConfig;
+	component->omx_component.GetConfig = omx_volume_component_GetConfig;
+	component->omx_component.SetParameter = omx_volume_component_SetParameter;
+	component->omx_component.GetParameter = omx_volume_component_GetParameter;
+	  
+	// port count must be set for the base class constructor (if we call it, and we will)
 	component->nports = 2;
   
-  register_template(component);
+ 	register_template(component);
 }
 
 OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {

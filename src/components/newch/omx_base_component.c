@@ -103,19 +103,6 @@ stComponentType* base_component_CreateComponentStruct() {
 }
 
 /** 
- * Component template registration function
- *
- * This is the component entry point which is called at library
- * initialization for each OMX component. It provides the OMX core with
- * the component template.
- */
-void __attribute__ ((constructor)) base_component_register_template()
-{
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);
-  register_template(base_component_CreateComponentStruct());
-}
-
-/** 
  * This function takes care of constructing the instance of the component.
  * It is executed upon a getHandle() call.
  * For the base_component component, the following is done:
@@ -202,11 +189,6 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 	base_component_Private->pCmdSem = malloc(sizeof(tsem_t));
 	if(base_component_Private->pCmdSem==NULL) return OMX_ErrorInsufficientResources;
 	tsem_init(base_component_Private->pCmdSem, 0);
-#ifdef UN_CPC
-	base_component_Private->pCmdQueue = malloc(sizeof(queue_t));
-	if(base_component_Private->pCmdQueue==NULL) return OMX_ErrorInsufficientResources;
-	queue_init(base_component_Private->pCmdQueue);
-#endif	
 
 	pthread_mutex_lock(&base_component_Private->exit_mutex);
 	base_component_Private->bExit_buffer_thread=OMX_FALSE;
@@ -292,11 +274,9 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 	 * -messageParam2 contains the parameter of the command
 	 *  (destination state in case of a state change command).
 	 */
-#ifndef UN_CPC
 	pthread_mutex_lock(&base_component_Private->cmd_mutex);
 	base_component_Private->bCmdUnderProcess=OMX_TRUE;
 	pthread_mutex_unlock(&base_component_Private->cmd_mutex);
-#endif	
 	
 	if(message->messageType == SENDCOMMAND_MSG_TYPE){
 		switch(message->messageParam1){
@@ -447,7 +427,7 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 		}		
 	}
 
-#ifndef UN_CPC
+
 	pthread_mutex_lock(&base_component_Private->cmd_mutex);
 	base_component_Private->bCmdUnderProcess=OMX_FALSE;
 	waitFlag=base_component_Private->bWaitingForCmdToFinish;
@@ -457,7 +437,7 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: Signalling command finish condition \n", __func__);
 		tsem_up(base_component_Private->pCmdSem);
 	}
-#endif	
+
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Returning from %s: \n", __func__);
 
 	return OMX_ErrorNone;
@@ -1865,13 +1845,9 @@ OMX_ERRORTYPE base_component_SendCommand(
 	coreMessage_t* message;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
-#ifndef UN_CPC	
+
 	messageQueue = stComponent->coreDescriptor->messageQueue;
 	messageSem = stComponent->coreDescriptor->messageSem;
-#else
-	messageQueue = stComponent->coreDescriptor->messageQueue;
-	messageSem = base_component_Private->pCmdSem;
-#endif	
 	
 	if (stComponent->state == OMX_StateInvalid) {
 		err = OMX_ErrorInvalidState;

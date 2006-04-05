@@ -37,9 +37,9 @@
 #define MAX_BUFFERS      4
 
 /** Default size of the internal input buffer */
-#define INTERNAL_IN_BUFFER_SIZE  8  * 1024
+#define INTERNAL_IN_BUFFER_SIZE  2  * 1024
 /** Default size of the internal output buffer */
-#define INTERNAL_OUT_BUFFER_SIZE 16 * 1024
+#define INTERNAL_OUT_BUFFER_SIZE 4 * 1024
 
 /** Maximum number of reference component instances */
 #define MAX_NUM_OF_REFERENCE_INSTANCES 10
@@ -89,6 +89,8 @@ typedef struct reference_PortType{
 	OMX_BUFFERSUPPLIERTYPE eBufferSupplier;
 	/// @param nNumTunnelBuffer Number of buffer to be tunnelled
 	OMX_U32 nNumTunnelBuffer;
+	/// @param nNumBufferFlushed Number of buffer Flushed
+	OMX_U32 nNumBufferFlushed;
 	/// @param bIsPortFlushed Boolean variables indicate whether the port is flushed
 	OMX_BOOL bIsPortFlushed;
 }reference_PortType;

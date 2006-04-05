@@ -129,9 +129,8 @@ void __attribute__ ((constructor)) reference__register_template()
 OMX_ERRORTYPE reference_Constructor(stComponentType* stComponent)
 {
 	reference_PrivateType* reference_Private;
-	pthread_t testThread;
 	
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s instance=%d\n", __func__,noRefInstance);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s instance=%ld\n", __func__,noRefInstance);
 
 	/** Allocate and fill in reference private structures
 	 * These include output port buffer queue and flow control semaphore
@@ -151,6 +150,8 @@ OMX_ERRORTYPE reference_Constructor(stComponentType* stComponent)
 	reference_Private->bWaitingForCmdToFinish=OMX_FALSE;
 	reference_Private->inputPort.bIsPortFlushed=OMX_FALSE;
 	reference_Private->outputPort.bIsPortFlushed=OMX_FALSE;
+	reference_Private->inputPort.nNumBufferFlushed=0;
+	reference_Private->outputPort.nNumBufferFlushed=0;
 
 	reference_Private->inputPort.hTunneledComponent=NULL;
 	reference_Private->inputPort.nTunneledPort=0;
@@ -166,8 +167,8 @@ OMX_ERRORTYPE reference_Constructor(stComponentType* stComponent)
 	setHeader(&reference_Private->inputPort.sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
 	reference_Private->inputPort.sPortParam.nPortIndex = 0;
 	reference_Private->inputPort.sPortParam.eDir = OMX_DirInput;
-	reference_Private->inputPort.sPortParam.nBufferCountActual = 1;
-	reference_Private->inputPort.sPortParam.nBufferCountMin = 1;
+	reference_Private->inputPort.sPortParam.nBufferCountActual = 2;
+	reference_Private->inputPort.sPortParam.nBufferCountMin = 2;
 	reference_Private->inputPort.sPortParam.nBufferSize = 0;
 	reference_Private->inputPort.sPortParam.bEnabled = OMX_TRUE;
 	reference_Private->inputPort.sPortParam.bPopulated = OMX_FALSE;
@@ -190,8 +191,8 @@ OMX_ERRORTYPE reference_Constructor(stComponentType* stComponent)
 	setHeader(&reference_Private->outputPort.sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
 	reference_Private->outputPort.sPortParam.nPortIndex = 1;
 	reference_Private->outputPort.sPortParam.eDir = OMX_DirOutput;
-	reference_Private->outputPort.sPortParam.nBufferCountActual = 1;
-	reference_Private->outputPort.sPortParam.nBufferCountMin = 1;
+	reference_Private->outputPort.sPortParam.nBufferCountActual = 2;
+	reference_Private->outputPort.sPortParam.nBufferCountMin = 2;
 	reference_Private->outputPort.sPortParam.nBufferSize = 0;
 	reference_Private->outputPort.sPortParam.bEnabled = OMX_TRUE;
 	reference_Private->outputPort.sPortParam.bPopulated = OMX_FALSE;
@@ -345,8 +346,12 @@ OMX_ERRORTYPE reference_MessageHandler(coreMessage_t* message)
 				break;
 				
 			case OMX_CommandFlush:
+				reference_Private->inputPort.nNumBufferFlushed=0;
+				reference_Private->outputPort.nNumBufferFlushed=0;
 				/*Flush ports*/
 				err=reference_FlushPort(stComponent, message->messageParam2);
+				reference_Private->inputPort.nNumBufferFlushed=0;
+				reference_Private->outputPort.nNumBufferFlushed=0;
 				if (err != OMX_ErrorNone) {
 					(*(stComponent->callbacks->EventHandler))
 						(pHandle,
@@ -567,7 +572,6 @@ void* reference_BufferMgmtFunction(void* param) {
 	OMX_BUFFERHEADERTYPE* pOutputBuffer;
 	OMX_BUFFERHEADERTYPE* pInputBuffer;
 	OMX_U32  nFlags;
-	OMX_MARKTYPE *pMark;
 	OMX_BOOL *inbufferUnderProcess=&reference_Private->inputPort.bBufferUnderProcess;
 	OMX_BOOL *outbufferUnderProcess=&reference_Private->outputPort.bBufferUnderProcess;
 	pthread_mutex_t *pInmutex=&reference_Private->inputPort.mutex;
@@ -697,11 +701,33 @@ void* reference_BufferMgmtFunction(void* param) {
 LOOP:
 			if (reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) {
 				if(reference_Private->outputPort.sPortParam.bEnabled==OMX_TRUE){
-					OMX_EmptyThisBuffer(reference_Private->outputPort.hTunneledComponent, pOutputBuffer);
+					if(reference_Private->outputPort.bIsPortFlushed==OMX_FALSE) {
+						OMX_EmptyThisBuffer(reference_Private->outputPort.hTunneledComponent, pOutputBuffer);
+					}
+					else {
+						if(!(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+							OMX_EmptyThisBuffer(reference_Private->outputPort.hTunneledComponent, pOutputBuffer);
+						}
+						else {
+							queue(pOutputQueue,pOutputBuffer);
+							//tsem_up(pOutputSem);
+							pthread_mutex_lock(pOutmutex);
+							reference_Private->outputPort.nNumBufferFlushed++;
+							pthread_mutex_unlock(pOutmutex);
+						}
+					}
 				}
 				else { /*Port Disabled then call ETB if port is not the supplier else dont call*/
-					if(!(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER))
+					if(!(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 						OMX_EmptyThisBuffer(reference_Private->outputPort.hTunneledComponent, pOutputBuffer);
+					}
+					else {
+						queue(pOutputQueue,pOutputBuffer);
+						//tsem_up(pOutputSem);
+						pthread_mutex_lock(pOutmutex);
+						reference_Private->outputPort.nNumBufferFlushed++;
+						pthread_mutex_unlock(pOutmutex);
+					}
 				}
 			} else {
 				(*(stComponent->callbacks->FillBufferDone))
@@ -711,18 +737,20 @@ LOOP:
 			pthread_mutex_lock(pOutmutex);
 			*outbufferUnderProcess = OMX_FALSE;
 			flag=reference_Private->outputPort.bWaitingFlushSem;
-			pthread_mutex_unlock(pOutmutex);
-			if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-				(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				if(pOutputSem->semval==reference_Private->outputPort.nNumTunnelBuffer)
-					if(flag==OMX_TRUE) {
+			if(flag==OMX_TRUE) {
+				pthread_mutex_unlock(pOutmutex);
+				if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
+					(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+					if(reference_Private->outputPort.nNumBufferFlushed==reference_Private->outputPort.nNumTunnelBuffer)
 						tsem_up(reference_Private->outputPort.pFlushSem);
-					}
-			}else{
-				if(flag==OMX_TRUE) {
-				tsem_up(reference_Private->outputPort.pFlushSem);
+					DEBUG(DEB_LEV_SIMPLE_SEQ, "This Code has been moved to FillThisbuffer...\n");
+				}
+				else {
+					tsem_up(reference_Private->outputPort.pFlushSem);
 				}
 			}
+			else 
+				pthread_mutex_unlock(pOutmutex);
 			reference_Private->outbuffercb++;
 		}
 		/*Wait if state is pause*/
@@ -734,46 +762,70 @@ LOOP:
 
 LOOP1:
 		if (reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) {
-			/*Call FTB in case port is enabled*/
 			if(reference_Private->inputPort.sPortParam.bEnabled==OMX_TRUE){
-				OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent,pInputBuffer);
-				reference_Private->inbuffercb++;
+				if(reference_Private->inputPort.bIsPortFlushed==OMX_FALSE) {
+					OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent, pInputBuffer);
+					reference_Private->inbuffercb++;
+				}
+				else {
+					if(!(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+						OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent, pInputBuffer);
+						reference_Private->inbuffercb++;
+					}
+					else {
+						queue(pInputQueue,pInputBuffer);
+						//tsem_up(pInputSem);
+						pthread_mutex_lock(pInmutex);
+						reference_Private->inputPort.nNumBufferFlushed++;
+						pthread_mutex_unlock(pInmutex);
+					}
+				}
 			}
-			else { /*Port Disabled then call FTB if port is not the supplier else dont call*/
+			else { /*Port Disabled then call ETB if port is not the supplier else dont call*/
 				if(!(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					 OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent,pInputBuffer);
-					 reference_Private->inbuffercb++;
+					OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent, pInputBuffer);
+					reference_Private->inbuffercb++;
+				}
+				else {
+					queue(pInputQueue,pInputBuffer);
+					//tsem_up(pInputSem);
+					pthread_mutex_lock(pInmutex);
+					reference_Private->inputPort.nNumBufferFlushed++;
+					pthread_mutex_unlock(pInmutex);
 				}
 			}
 		} else {
 			(*(stComponent->callbacks->EmptyBufferDone))
-				(pHandle, stComponent->callbackData,pInputBuffer);
+				(pHandle, stComponent->callbackData, pInputBuffer);
 			reference_Private->inbuffercb++;
 		}
+		
 		pthread_mutex_lock(pInmutex);
 		*inbufferUnderProcess = OMX_FALSE;
 		flag=reference_Private->inputPort.bWaitingFlushSem;
-		pthread_mutex_unlock(pInmutex);
-		if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
+		if(flag==OMX_TRUE) {
+			pthread_mutex_unlock(pInmutex);
+			if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
 			(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-			if(pInputSem->semval==reference_Private->inputPort.nNumTunnelBuffer)
-				if(flag==OMX_TRUE) {
+				if(reference_Private->inputPort.nNumBufferFlushed==reference_Private->inputPort.nNumTunnelBuffer)
 					tsem_up(reference_Private->inputPort.pFlushSem);
-				}
-		}else{
-			if(flag==OMX_TRUE) {
-			tsem_up(reference_Private->inputPort.pFlushSem);
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "This Code has been moved to EmptyThisbuffer...\n");
+			}
+			else {
+				tsem_up(reference_Private->inputPort.pFlushSem);
 			}
 		}
+		else
+			pthread_mutex_unlock(pInmutex);
 		pthread_mutex_lock(&reference_Private->exit_mutex);
 		exit_thread=reference_Private->bExit_buffer_thread;
-		pthread_mutex_unlock(&reference_Private->exit_mutex);
-		
-LOOP2:
 		if(exit_thread == OMX_TRUE) {
+			pthread_mutex_unlock(&reference_Private->exit_mutex);
 			DEBUG(DEB_LEV_FULL_SEQ, "Exiting from exec thread...\n");
 			break;
 		}
+		else 
+			pthread_mutex_unlock(&reference_Private->exit_mutex);
 		continue;
 	}
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"Exiting Buffer Management Thread\n");
@@ -858,8 +910,8 @@ OMX_ERRORTYPE reference_Deinit(stComponentType* stComponent)
 	tsem_t* pInputSem = reference_Private->inputPort.pBufferSem;
 	tsem_t* pOutputSem = reference_Private->outputPort.pBufferSem;
 	OMX_S32 ret;
-	OMX_BUFFERHEADERTYPE* pOutputBuffer;
-	OMX_BUFFERHEADERTYPE* pInputBuffer;
+	pthread_mutex_t *pInmutex=&reference_Private->inputPort.mutex;
+	pthread_mutex_t *pOutmutex=&reference_Private->outputPort.mutex;
 	
 	DEBUG(DEB_LEV_FULL_SEQ, "In %s\n", __func__);
 	reference_Private->bIsInit = OMX_FALSE;
@@ -875,18 +927,22 @@ OMX_ERRORTYPE reference_Deinit(stComponentType* stComponent)
 		pInputSem->semval, 
 		reference_Private->inputPort.bBufferUnderProcess);
 
+	pthread_mutex_lock(pInmutex);
 	if(pInputSem->semval == 0 && 
 		reference_Private->inputPort.bBufferUnderProcess==OMX_FALSE) {
 		tsem_up(pInputSem);
 	}
+	pthread_mutex_unlock(pInmutex);
 
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s obsemval=%d, bup=%d\n",__func__,
 		pOutputSem->semval, 
 		reference_Private->outputPort.bBufferUnderProcess);
+	pthread_mutex_lock(pOutmutex);
 	if(pOutputSem->semval == 0 && 
 		reference_Private->outputPort.bBufferUnderProcess==OMX_FALSE) {
 		tsem_up(pOutputSem);
 	}
+	pthread_mutex_unlock(pOutmutex);
 
 	DEBUG(DEB_LEV_FULL_SEQ,"All buffers flushed!\n");
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s obsemval=%d, ibsemval=%d\n",__func__,
@@ -898,15 +954,8 @@ OMX_ERRORTYPE reference_Deinit(stComponentType* stComponent)
 		pOutputSem->semval, 
 		pInputSem->semval);
 
-	while(pInputSem->semval>0 ) {
-		tsem_down(pInputSem);
-		pInputBuffer=dequeue(reference_Private->inputPort.pBufferQueue);
-	}
-	while(pOutputSem->semval>0) {
-		tsem_down(pOutputSem);
-		pInputBuffer=dequeue(reference_Private->outputPort.pBufferQueue);
-	}
-
+	tsem_reset(pInputSem);
+	tsem_reset(pOutputSem);
 
 	pthread_mutex_lock(&reference_Private->exit_mutex);
 	reference_Private->bExit_buffer_thread=OMX_FALSE;
@@ -936,8 +985,7 @@ OMX_ERRORTYPE reference_Destructor(stComponentType* stComponent)
 {
 	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_BOOL exit_thread=OMX_FALSE,cmdFlag=OMX_FALSE;
-	OMX_U32 ret;
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s instance=%d\n", __func__,noRefInstance);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s instance=%ld\n", __func__,noRefInstance);
 	if (reference_Private->bIsInit != OMX_FALSE) {
 		reference_Deinit(stComponent);
 	} 
@@ -957,7 +1005,7 @@ OMX_ERRORTYPE reference_Destructor(stComponentType* stComponent)
 		pthread_mutex_unlock(&reference_Private->cmd_mutex);
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting %s for command to finish ...\n",__func__);
 		tsem_down(reference_Private->pCmdSem);
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting %s for command to finish over..cmutex=%x.\n",__func__,&reference_Private->cmd_mutex);
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting %s for command to finish over..\n",__func__);
 
 		pthread_mutex_lock(&reference_Private->cmd_mutex);
 		reference_Private->bWaitingForCmdToFinish=OMX_FALSE;
@@ -1049,17 +1097,12 @@ OMX_ERRORTYPE reference_Destructor(stComponentType* stComponent)
 OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destinationState)
 {
 	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = reference_Private->inputPort.pBufferSem;
-	tsem_t* pOutputSem = reference_Private->outputPort.pBufferSem;
 	pthread_mutex_t* executingMutex = &reference_Private->executingMutex;
 	pthread_cond_t* executingCondition = &reference_Private->executingCondition;
-	pthread_mutex_t *pInmutex=&reference_Private->inputPort.mutex;
-	pthread_mutex_t *pOutmutex=&reference_Private->outputPort.mutex;
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
-	OMX_BUFFERHEADERTYPE* pOutputBuffer;
-	OMX_BUFFERHEADERTYPE* pInputBuffer;
+	OMX_S32 i;
 
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s changing state from %i to %i\n", __func__, stComponent->state, (OMX_S32)destinationState);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s changing state from %i to %ld\n", __func__, stComponent->state, (OMX_S32)destinationState);
 
 	if(destinationState == OMX_StateLoaded){
 		switch(stComponent->state){
@@ -1078,7 +1121,7 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 				if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
 						(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 					/* Freeing here the buffers allocated for the tunneling:*/
-					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: IN TUNNEL!!!! semval=%d\n",__func__,pInputSem->semval);
+					DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: IN TUNNEL!!!! \n",__func__);
 					eError=reference_freeTunnelBuffers(&reference_Private->inputPort);
 				} 
 				else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
@@ -1169,7 +1212,7 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 			case OMX_StateLoaded:
 				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s:  input enabled %i ,  input populated %i\n", __func__, reference_Private->inputPort.sPortParam.bEnabled, reference_Private->inputPort.sPortParam.bPopulated);
 				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: output enabled %i , output populated %i\n", __func__, reference_Private->outputPort.sPortParam.bEnabled, reference_Private->outputPort.sPortParam.bPopulated);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%x output flags 0x%x \n", 
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%lx output flags 0x%lx \n", 
 					(OMX_S32)reference_Private->inputPort.nTunnelFlags, 
 					(OMX_S32)reference_Private->outputPort.nTunnelFlags);
 
@@ -1221,8 +1264,8 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 				tsem_reset(reference_Private->inputPort.pFullAllocationSem);
 				tsem_reset(reference_Private->outputPort.pFullAllocationSem);
 				
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%x\n", (OMX_S32)reference_Private->inputPort.nTunnelFlags);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "                     output flags 0x%x\n", (OMX_S32)reference_Private->outputPort.nTunnelFlags);
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : input flags  0x%lx\n", (OMX_S32)reference_Private->inputPort.nTunnelFlags);
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "                     output flags 0x%lx\n", (OMX_S32)reference_Private->outputPort.nTunnelFlags);
 				break;
 				
 			case OMX_StateIdle:
@@ -1231,14 +1274,18 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 				
 			case OMX_StateExecuting:
 			case OMX_StatePause:
-				DEBUG(DEB_LEV_ERR, "In %s: state transition exe/pause to idle asgn ibfr=%d , obfr=%d\n", __func__,
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: state transition exe/pause to idle asgn ibfr=%ld , obfr=%ld\n", __func__,
 					reference_Private->inputPort.nNumTunnelBuffer,
 					reference_Private->outputPort.nNumTunnelBuffer);
+				reference_Private->inputPort.nNumBufferFlushed=0;
+				reference_Private->outputPort.nNumBufferFlushed=0;
 				reference_Private->inputPort.bIsPortFlushed=OMX_TRUE;
 				reference_Private->outputPort.bIsPortFlushed=OMX_TRUE;
 				reference_FlushPort(stComponent, -1);
 				reference_Private->inputPort.bIsPortFlushed=OMX_FALSE;
 				reference_Private->outputPort.bIsPortFlushed=OMX_FALSE;
+				reference_Private->inputPort.nNumBufferFlushed=0;
+				reference_Private->outputPort.nNumBufferFlushed=0;
 				stComponent->state = OMX_StateIdle;
 				break;
 			default:
@@ -1275,6 +1322,16 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 					return OMX_ErrorInvalidState;
 				break;
 			case OMX_StateIdle:
+				if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
+						(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+					for(i=0;i<reference_Private->inputPort.nNumTunnelBuffer;i++)
+						tsem_up(reference_Private->inputPort.pBufferSem);
+				}
+				if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) &&
+						(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+					for(i=0;i<reference_Private->outputPort.nNumTunnelBuffer;i++)
+						tsem_up(reference_Private->outputPort.pBufferSem);
+				}
 			case OMX_StatePause:
 				pthread_mutex_lock(executingMutex);
 				stComponent->state = OMX_StateExecuting;
@@ -1314,6 +1371,58 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 	return OMX_ErrorNone;
 }
 
+OMX_ERRORTYPE reference_DisableSinglePort(stComponentType* stComponent, reference_PortType *pPort) {
+	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
+	tsem_t* pBufferSem = pPort->pBufferSem;
+	queue_t* pBufferQueue = pPort->pBufferQueue;
+	OMX_BUFFERHEADERTYPE* pBuffer;
+
+	DEBUG(DEB_LEV_FULL_SEQ,"pPort->pFullAllocationSem=%x\n",pPort->pFullAllocationSem->semval);
+		if (pPort->sPortParam.bPopulated == OMX_TRUE && reference_Private->bIsInit == OMX_TRUE) {
+			if (!(pPort->nTunnelFlags & TUNNEL_ESTABLISHED)) {
+				DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for in buffers to be freed\n", __func__);
+				tsem_down(pPort->pFullAllocationSem);
+			}
+			else if ((pPort->nTunnelFlags & TUNNEL_ESTABLISHED) && 
+						(pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+				DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is supplier no of buffers=%d\n",
+					__func__,pBufferSem->semval);
+				/*Free buffers and remove the tunnel*/
+				if(pPort->nNumBufferFlushed==pPort->nNumTunnelBuffer) { 
+					while(pPort->nNumBufferFlushed>0) {
+						//tsem_down(pBufferSem);
+						pBuffer=dequeue(pBufferQueue);
+						pPort->nNumBufferFlushed--;
+					}
+					reference_freeTunnelBuffers(pPort);
+					pPort->hTunneledComponent=NULL;
+					pPort->nTunnelFlags=0;
+				}
+			}
+			else {
+				if(pBufferSem->semval>0)
+					DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is not supplier port still has some buffer %d\n",
+					__func__,pBufferSem->semval);
+				if(pBufferSem->semval==0 && pPort->bBufferUnderProcess==OMX_FALSE) {
+					pPort->hTunneledComponent=NULL;
+					pPort->nTunnelFlags=0;
+				}
+			}
+			pPort->sPortParam.bPopulated = OMX_FALSE;
+		}
+		else 
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"Input port is not populated\n");
+		
+		DEBUG(DEB_LEV_FULL_SEQ, "In %s flush buffers\n", __func__);
+		
+		tsem_reset(pBufferSem);
+		DEBUG(DEB_LEV_FULL_SEQ, "In %s wait for buffer to be de-allocated\n", __func__);
+		pPort->nNumBufferFlushed=0;
+
+		tsem_reset(pPort->pFullAllocationSem);
+
+		return OMX_ErrorNone;
+}
 /** Disables the specified port. This function is called due to a request by the IL client
 	* @param stComponent the component which owns the port to be disabled
 	* @param portIndex the ID of the port to be disabled
@@ -1321,183 +1430,39 @@ OMX_ERRORTYPE reference_DoStateSet(stComponentType* stComponent, OMX_U32 destina
 OMX_ERRORTYPE reference_DisablePort(stComponentType* stComponent, OMX_U32 portIndex)
 {
 	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = reference_Private->inputPort.pBufferSem;
-	tsem_t* pOutputSem = reference_Private->outputPort.pBufferSem;
-	queue_t* pInputQueue = reference_Private->inputPort.pBufferQueue;
-	queue_t* pOutputQueue = reference_Private->outputPort.pBufferQueue;
-	OMX_BUFFERHEADERTYPE* pOutputBuffer;
-	OMX_BUFFERHEADERTYPE* pInputBuffer;
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
+
 	if (portIndex == 0) {
+		reference_Private->inputPort.nNumBufferFlushed=0;
 		reference_Private->inputPort.bIsPortFlushed=OMX_TRUE;
 		reference_FlushPort(stComponent, 0);
 		reference_Private->inputPort.bIsPortFlushed=OMX_FALSE;
 		reference_Private->inputPort.sPortParam.bEnabled = OMX_FALSE;
-		DEBUG(DEB_LEV_FULL_SEQ,"reference_Private->inputPort.pFullAllocationSem=%x\n",reference_Private->inputPort.pFullAllocationSem->semval);
-		if (reference_Private->inputPort.sPortParam.bPopulated == OMX_TRUE && reference_Private->bIsInit == OMX_TRUE) {
-			if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-				DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for in buffers to be freed\n", __func__);
-				tsem_down(reference_Private->inputPort.pFullAllocationSem);
-			}
-			else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is supplier no of buffers=%d\n",
-					__func__,pInputSem->semval);
-				/*Free buffers and remove the tunnel*/
-				if(pInputSem->semval==reference_Private->inputPort.nNumTunnelBuffer) { 
-					while(pInputSem->semval>0) {
-						tsem_down(pInputSem);
-						pInputBuffer=dequeue(pInputQueue);
-					}
-					reference_freeTunnelBuffers(&reference_Private->inputPort);
-					reference_Private->inputPort.hTunneledComponent=NULL;
-					reference_Private->inputPort.nTunnelFlags=0;
-				}
-			}
-			else {
-				if(pInputSem->semval>0)
-					DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is not supplier port still has some buffer %d\n",
-					__func__,pInputSem->semval);
-				if(pInputSem->semval==0 && reference_Private->inputPort.bBufferUnderProcess==OMX_FALSE) {
-					reference_Private->inputPort.hTunneledComponent=NULL;
-					reference_Private->inputPort.nTunnelFlags=0;
-				}
-			}
-			reference_Private->inputPort.sPortParam.bPopulated = OMX_FALSE;
-		}
-		else 
-			DEBUG(DEB_LEV_SIMPLE_SEQ,"Input port is not populated\n");
-		
-		DEBUG(DEB_LEV_FULL_SEQ, "In %s flush buffers\n", __func__);
-		
-		while(pInputSem->semval < 0) {
-			tsem_up(pInputSem);
-		}
-		DEBUG(DEB_LEV_FULL_SEQ, "In %s wait for buffer to be de-allocated\n", __func__);
-	} else if (portIndex == 1) {
+		reference_DisableSinglePort(stComponent,&reference_Private->inputPort) ;
+	}
+	
+	else if (portIndex == 1) {
+		reference_Private->outputPort.nNumBufferFlushed=0;
 		reference_Private->outputPort.bIsPortFlushed=OMX_TRUE;
 		reference_FlushPort(stComponent, 1);
 		reference_Private->outputPort.bIsPortFlushed=OMX_FALSE;
-
 		reference_Private->outputPort.sPortParam.bEnabled = OMX_FALSE;
-		if (reference_Private->outputPort.sPortParam.bPopulated == OMX_TRUE && reference_Private->bIsInit == OMX_TRUE) {
-			if (!(reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-				tsem_down(reference_Private->outputPort.pFullAllocationSem);
-			}
-			else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"In %s output Tunnel is supplier no of buffer=%d\n",
-					__func__,pOutputSem->semval);
-				/*Free buffers and remove the tunnel*/
-				if(pOutputSem->semval==reference_Private->outputPort.nNumTunnelBuffer) {
-					while(pOutputSem->semval>0) {
-						tsem_down(pOutputSem);
-						pInputBuffer=dequeue(pOutputQueue);
-					}
-					reference_freeTunnelBuffers(&reference_Private->outputPort);
-					reference_Private->outputPort.hTunneledComponent=NULL;
-					reference_Private->outputPort.nTunnelFlags=0;
-				}
-			}
-			else {
-				if(pOutputSem->semval>0)
-					DEBUG(DEB_LEV_FULL_SEQ,"In %s output Tunnel is not supplier port still has some buffer %d\n",
-					__func__,pOutputSem->semval);
-				if(pOutputSem->semval==0 && reference_Private->outputPort.bBufferUnderProcess==OMX_FALSE) {
-					reference_Private->outputPort.hTunneledComponent=NULL;
-					reference_Private->outputPort.nTunnelFlags=0;
-				}
-			}
-			reference_Private->outputPort.sPortParam.bPopulated = OMX_FALSE;
-		}
-		
-		while(pOutputSem->semval < 0) {
-			tsem_up(pOutputSem);
-		}
-	} else if (portIndex == -1) {
+		reference_DisableSinglePort(stComponent,&reference_Private->outputPort) ;
+	}
+	else if (portIndex == -1) {
+		reference_Private->inputPort.nNumBufferFlushed=0;
+		reference_Private->outputPort.nNumBufferFlushed=0;
 		reference_Private->inputPort.bIsPortFlushed=OMX_TRUE;
 		reference_Private->outputPort.bIsPortFlushed=OMX_TRUE;
 		reference_FlushPort(stComponent, -1);
 		reference_Private->inputPort.bIsPortFlushed=OMX_FALSE;
 		reference_Private->outputPort.bIsPortFlushed=OMX_FALSE;
-
-		DEBUG(DEB_LEV_FULL_SEQ,"reference_DisablePort ip fASem=%x basn=%d op fAS=%x basn=%d\n",
-			reference_Private->inputPort.pFullAllocationSem->semval,
-			reference_Private->inputPort.nNumAssignedBuffers,
-			reference_Private->outputPort.pFullAllocationSem->semval,
-			reference_Private->outputPort.nNumAssignedBuffers);
-
 		reference_Private->inputPort.sPortParam.bEnabled = OMX_FALSE;
-		if (reference_Private->inputPort.sPortParam.bPopulated == OMX_TRUE) {
-			if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-			tsem_down(reference_Private->inputPort.pFullAllocationSem);
-			}
-			else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is supplier no of buffers=%d\n",
-					__func__,pInputSem->semval);
-				/*Free buffers and remove the tunnel*/
-				if(pInputSem->semval==reference_Private->inputPort.nNumTunnelBuffer) {
-					while(pInputSem->semval>0) {
-						tsem_down(pInputSem);
-						pInputBuffer=dequeue(pInputQueue);
-					}
-					reference_freeTunnelBuffers(&reference_Private->inputPort);
-					reference_Private->inputPort.hTunneledComponent=NULL;
-					reference_Private->inputPort.nTunnelFlags=0;
-				}
-			}
-			else {
-				if(pInputSem->semval>0)
-					DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is not supplier port still has some buffer %d\n",
-					__func__,pInputSem->semval);
-				if(pInputSem->semval==0 && reference_Private->inputPort.bBufferUnderProcess==OMX_FALSE) {
-					reference_Private->inputPort.hTunneledComponent=NULL;
-					reference_Private->inputPort.nTunnelFlags=0;
-				}
-			}
-		}
-		reference_Private->inputPort.sPortParam.bPopulated = OMX_FALSE;
 		reference_Private->outputPort.sPortParam.bEnabled = OMX_FALSE;
-		if (reference_Private->outputPort.sPortParam.bPopulated == OMX_TRUE) {
-			if (!(reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-			tsem_down(reference_Private->outputPort.pFullAllocationSem);
-			}
-			else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"In %s output Tunnel is supplier no of buffer=%d\n",
-					__func__,pOutputSem->semval);
-				/*Free buffers and remove the tunnel*/
-				if(pOutputSem->semval==reference_Private->outputPort.nNumTunnelBuffer) {
-					while(pOutputSem->semval>0) {
-						tsem_down(pOutputSem);
-						pInputBuffer=dequeue(pOutputQueue);
-					}
-					reference_freeTunnelBuffers(&reference_Private->outputPort);
-					reference_Private->outputPort.hTunneledComponent=NULL;
-					reference_Private->outputPort.nTunnelFlags=0;
-				}
-			}
-			else {
-				if(pOutputSem->semval>0)
-					DEBUG(DEB_LEV_FULL_SEQ,"In %s output Tunnel is not supplier port still has some buffer %d\n",
-					__func__,pOutputSem->semval);
-				if(pOutputSem->semval==0 && reference_Private->outputPort.bBufferUnderProcess==OMX_FALSE) {
-					reference_Private->outputPort.hTunneledComponent=NULL;
-					reference_Private->outputPort.nTunnelFlags=0;
-				}
-			}
-		}
-		reference_Private->outputPort.sPortParam.bPopulated = OMX_FALSE;
-		while(pInputSem->semval < 0) {
-			tsem_up(pInputSem);
-		}
-		while(pOutputSem->semval < 0) {
-			tsem_up(pOutputSem);
-		}
-	} else {
-		return OMX_ErrorBadPortIndex;
+		reference_DisableSinglePort(stComponent,&reference_Private->inputPort) ;
+		reference_DisableSinglePort(stComponent,&reference_Private->outputPort) ;
+
 	}
 
 	tsem_reset(reference_Private->inputPort.pFullAllocationSem);
@@ -1507,6 +1472,37 @@ OMX_ERRORTYPE reference_DisablePort(stComponentType* stComponent, OMX_U32 portIn
 	return OMX_ErrorNone;
 }
 
+OMX_ERRORTYPE reference_EnableSinglePort(stComponentType* stComponent,reference_PortType *pPort,OMX_U32 nBufferSize) 
+{
+	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
+	OMX_S32 i;
+
+	pPort->sPortParam.bEnabled = OMX_TRUE;
+	if (pPort->sPortParam.bPopulated == OMX_FALSE && reference_Private->bIsInit == OMX_TRUE) {
+		if (!(pPort->nTunnelFlags & TUNNEL_ESTABLISHED)) {
+			if(stComponent->state!=OMX_StateLoaded && stComponent->state!=OMX_StateWaitForResources) {
+				tsem_down(pPort->pFullAllocationSem);
+				pPort->sPortParam.bPopulated = OMX_TRUE;
+			}
+		}else if ((pPort->nTunnelFlags & TUNNEL_ESTABLISHED) && 
+					(pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			DEBUG(DEB_LEV_FULL_SEQ,"I/p Port buffer sem =%x \n",
+				pPort->pBufferSem->semval);
+			reference_allocateTunnelBuffers(pPort, 0, nBufferSize);
+			if ((pPort->nTunnelFlags & TUNNEL_ESTABLISHED) &&
+					(pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+				for(i=0;i<pPort->nNumTunnelBuffer;i++)
+					tsem_up(pPort->pBufferSem);
+			}
+			pPort->sPortParam.bPopulated = OMX_TRUE;
+
+		}
+		else {
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s else \n",__func__);
+		}
+	}
+	return OMX_ErrorNone;
+}
 /** Enables the specified port. This function is called due to a request by the IL client
 	* @param stComponent the component which owns the port to be enabled
 	* @param portIndex the ID of the port to be enabled
@@ -1514,103 +1510,23 @@ OMX_ERRORTYPE reference_DisablePort(stComponentType* stComponent, OMX_U32 portIn
 OMX_ERRORTYPE reference_EnablePort(stComponentType* stComponent, OMX_U32 portIndex)
 {
 	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = reference_Private->inputPort.pBufferSem;
-	tsem_t* pOutputSem = reference_Private->outputPort.pBufferSem;
-	queue_t* pInputQueue = reference_Private->inputPort.pBufferQueue;
-	queue_t* pOutputQueue = reference_Private->outputPort.pBufferQueue;
-	OMX_BUFFERHEADERTYPE* pOutputBuffer;
-	OMX_BUFFERHEADERTYPE* pInputBuffer;
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"I/p Port.fAS=%x, O/p Port fAS=%d,is Init=%d\n",
 		reference_Private->inputPort.pFullAllocationSem->semval,
 		reference_Private->outputPort.pFullAllocationSem->semval,
 		reference_Private->bIsInit);
-	if (portIndex == 0) {
-		reference_Private->inputPort.sPortParam.bEnabled = OMX_TRUE;
-		if (reference_Private->inputPort.sPortParam.bPopulated == OMX_FALSE && reference_Private->bIsInit == OMX_TRUE) {
-			if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-				if(stComponent->state!=OMX_StateLoaded && stComponent->state!=OMX_StateWaitForResources) {
-					tsem_down(reference_Private->inputPort.pFullAllocationSem);
-					reference_Private->inputPort.sPortParam.bPopulated = OMX_TRUE;
-				}
-			}else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"I/p Port buffer sem =%x \n",
-					pInputSem->semval);
-				reference_allocateTunnelBuffers(&reference_Private->inputPort, 0, INTERNAL_IN_BUFFER_SIZE);
-				reference_Private->inputPort.sPortParam.bPopulated = OMX_TRUE;
-
-			}
-			else {
-				DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s else \n",__func__);
-			}
-		}
-		
-	} else if (portIndex == 1) {
-		reference_Private->outputPort.sPortParam.bEnabled = OMX_TRUE;
-		if (reference_Private->outputPort.sPortParam.bPopulated == OMX_FALSE && reference_Private->bIsInit == OMX_TRUE) {
-			if (!(reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-				if(stComponent->state!=OMX_StateLoaded && stComponent->state!=OMX_StateWaitForResources) {
-					tsem_down(reference_Private->outputPort.pFullAllocationSem);
-					reference_Private->outputPort.sPortParam.bPopulated = OMX_TRUE;
-				}
-			}
-			else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"O/p Port buffer sem =%x \n",
-					pOutputSem->semval);
-				reference_allocateTunnelBuffers(&reference_Private->outputPort, 0, INTERNAL_OUT_BUFFER_SIZE);
-				reference_Private->outputPort.sPortParam.bPopulated = OMX_TRUE;
-			}
-			else {
-				DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s else \n",__func__);
-			}
-		}
-		
-	} else if (portIndex == -1) {
-		reference_Private->inputPort.sPortParam.bEnabled = OMX_TRUE;
-		reference_Private->outputPort.sPortParam.bEnabled = OMX_TRUE;
-		if (reference_Private->inputPort.sPortParam.bPopulated == OMX_FALSE) {
-			if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-				if(stComponent->state!=OMX_StateLoaded && stComponent->state!=OMX_StateWaitForResources) {
-					tsem_down(reference_Private->inputPort.pFullAllocationSem);
-					reference_Private->inputPort.sPortParam.bPopulated = OMX_TRUE;
-				}
-			}
-			else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"I/p Port buffer sem =%x \n",
-					pInputSem->semval);
-				reference_allocateTunnelBuffers(&reference_Private->inputPort, 0, INTERNAL_IN_BUFFER_SIZE);
-				reference_Private->inputPort.sPortParam.bPopulated = OMX_TRUE;
-			}
-			else {
-				DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s else \n",__func__);
-			}
-		}
-		if (reference_Private->outputPort.sPortParam.bPopulated == OMX_FALSE) {
-			if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-				if(stComponent->state!=OMX_StateLoaded && stComponent->state!=OMX_StateWaitForResources) {
-					tsem_down(reference_Private->outputPort.pFullAllocationSem);
-					reference_Private->outputPort.sPortParam.bPopulated = OMX_TRUE;
-				}
-			}
-			else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-						(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				DEBUG(DEB_LEV_FULL_SEQ,"O/p Port buffer sem =%x \n",
-					pOutputSem->semval);
-				reference_allocateTunnelBuffers(&reference_Private->outputPort, 0, INTERNAL_OUT_BUFFER_SIZE);
-				reference_Private->outputPort.sPortParam.bPopulated = OMX_TRUE;
-			}
-			else {
-				DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s else \n",__func__);
-			}
-		}
-	} else {
-		return OMX_ErrorBadPortIndex;
+	if (portIndex == 0 || portIndex == -1) {
+		reference_EnableSinglePort(stComponent,&reference_Private->inputPort,INTERNAL_IN_BUFFER_SIZE) ;
 	}
-
+	if (portIndex == 1 || portIndex == -1) {
+		reference_EnableSinglePort(stComponent,&reference_Private->outputPort,INTERNAL_OUT_BUFFER_SIZE) ;
+	}
+	
+	if ((portIndex != 0) && (portIndex != 1) && (portIndex != -1)) {
+		return OMX_ErrorBadPortIndex;
+	} 
+	
 	tsem_reset(reference_Private->inputPort.pFullAllocationSem);
 	tsem_reset(reference_Private->outputPort.pFullAllocationSem);
 
@@ -1624,7 +1540,7 @@ OMX_ERRORTYPE reference_EnablePort(stComponentType* stComponent, OMX_U32 portInd
 	*/
 OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portIndex)
 {
-	OMX_COMPONENTTYPE* pHandle = &stComponent->omx_component;
+	OMX_COMPONENTTYPE* pHandle=&stComponent->omx_component;
 	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
 	tsem_t* pInputSem = reference_Private->inputPort.pBufferSem;
 	tsem_t* pOutputSem = reference_Private->outputPort.pBufferSem;
@@ -1637,18 +1553,38 @@ OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portInde
 	pthread_mutex_t *pInmutex=&reference_Private->inputPort.mutex;
 	pthread_mutex_t *pOutmutex=&reference_Private->outputPort.mutex;
 	pthread_cond_t* executingCondition = &reference_Private->executingCondition;
-	OMX_BOOL flag;
+	OMX_BOOL flag,dummyInc=OMX_FALSE;
 	
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s portIndex=%x\n", __func__,portIndex);
-	if (portIndex == 0) {
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s portIndex=%ld\n", __func__,portIndex);
+	if (portIndex == 0 || portIndex == -1) {
 		if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-			DEBUG(DEB_LEV_PARAMS,"Flashing input ports insemval=%d outsemval=%d ib=%d,ibcb=%d\n",
+			DEBUG(DEB_LEV_PARAMS,"Flashing input ports insemval=%d outsemval=%d ib=%ld,ibcb=%ld\n",
 				pInputSem->semval,pOutputSem->semval,reference_Private->inbuffer,reference_Private->inbuffercb);
 			if(pOutputSem->semval==0) {
 				/*This is to free the input buffer being processed*/
 				tsem_up(pOutputSem);
+				dummyInc=OMX_TRUE;
 			}
-			
+			pthread_mutex_lock(pInmutex);
+			flag=*inbufferUnderProcess;
+			if(flag==OMX_TRUE) {
+				reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
+				pthread_mutex_unlock(pInmutex);
+				
+				if(stComponent->state==OMX_StatePause) {
+					pthread_cond_signal(executingCondition);
+				}
+
+				/*Buffering being processed waiting for input flush sem*/
+				tsem_down(reference_Private->inputPort.pFlushSem);
+				pthread_mutex_lock(pInmutex);
+				reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
+				pthread_mutex_unlock(pInmutex);
+			}
+			else {
+				pthread_mutex_unlock(pInmutex);
+			}
+			pthread_mutex_lock(pInmutex);
 			while(pInputSem->semval>0) {
 				tsem_down(pInputSem);
 				pInputBuffer = dequeue(pInputQueue);
@@ -1656,25 +1592,9 @@ OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portInde
 					(pHandle, stComponent->callbackData, pInputBuffer);
 				reference_Private->inbuffercb++;
 			}
-			pthread_mutex_lock(pInmutex);
-			flag=*inbufferUnderProcess;
-			if(flag==OMX_TRUE) {
-			reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
 			pthread_mutex_unlock(pInmutex);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*Buffering being processed waiting for input flush sem*/
-			tsem_down(reference_Private->inputPort.pFlushSem);
-			pthread_mutex_lock(pInmutex);
-			reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pInmutex);
-			}
-			else {
-				pthread_mutex_unlock(pInmutex);
-			}
-			
-			if(pOutputSem->semval>0) {
+
+			if(pOutputSem->semval>0 && dummyInc==OMX_TRUE) {
 				/*This is to free the input buffer being processed*/
 				tsem_down(pOutputSem);
 			}
@@ -1684,33 +1604,36 @@ OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portInde
 			if(pOutputSem->semval==0) {
 				/*This is to free the input buffer being processed*/
 				tsem_up(pOutputSem);
+				dummyInc=OMX_TRUE;
 			}
 
+			pthread_mutex_lock(pInmutex);
+			flag=*inbufferUnderProcess;
+			if(flag==OMX_TRUE) {
+				reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
+				pthread_mutex_unlock(pInmutex);
+				if(stComponent->state==OMX_StatePause) {
+					pthread_cond_signal(executingCondition);
+				}
+				/*Buffering being processed waiting for input flush sem*/
+				tsem_down(reference_Private->inputPort.pFlushSem);
+				pthread_mutex_lock(pInmutex);
+				reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
+				pthread_mutex_unlock(pInmutex);
+			}
+			else {
+				pthread_mutex_unlock(pInmutex);
+			}
+			pthread_mutex_lock(pInmutex);
 			while(pInputSem->semval>0) {
 				tsem_down(pInputSem);
 				pInputBuffer = dequeue(pInputQueue);
 				OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent, pInputBuffer);
 				reference_Private->inbuffercb++;
 			}
-			pthread_mutex_lock(pInmutex);
-			flag=*inbufferUnderProcess;
-			if(flag==OMX_TRUE) {
-			reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
 			pthread_mutex_unlock(pInmutex);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*Buffering being processed waiting for input flush sem*/
-			tsem_down(reference_Private->inputPort.pFlushSem);
-			pthread_mutex_lock(pInmutex);
-			reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pInmutex);
-			}
-			else {
-				pthread_mutex_unlock(pInmutex);
-			}
 			
-			if(pOutputSem->semval>0) {
+			if(pOutputSem->semval>0 && dummyInc==OMX_TRUE) {
 				/*This is to free the input buffer being processed*/
 				tsem_down(pOutputSem);
 			}
@@ -1718,13 +1641,19 @@ OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portInde
 		else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
 			(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
 			/*Tunnel is supplier wait till all the buffers are returned*/
+			while(pInputSem->semval>0) {
+				tsem_down(pInputSem);
+				pthread_mutex_lock(pInmutex);
+				reference_Private->inputPort.nNumBufferFlushed++;
+				pthread_mutex_unlock(pInmutex);
+			}
+
 			pthread_mutex_lock(pInmutex);
 			flag=*inbufferUnderProcess;
-			pthread_mutex_unlock(pInmutex);
-			if(pInputSem->semval<reference_Private->inputPort.nNumTunnelBuffer) {
-			pthread_mutex_lock(pInmutex);
+			if(reference_Private->inputPort.nNumBufferFlushed<reference_Private->inputPort.nNumTunnelBuffer) {
 			reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
 			pthread_mutex_unlock(pInmutex);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s in\n",__func__);
 			if(stComponent->state==OMX_StatePause) {
 				pthread_cond_signal(executingCondition);
 			}
@@ -1734,10 +1663,13 @@ OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portInde
 			reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
 			pthread_mutex_unlock(pInmutex);
 			}
+			else
+				pthread_mutex_unlock(pInmutex);
 		}
-	} else if (portIndex == 1) {
+	} 
+	if (portIndex == 1 || portIndex == -1) {
 		if (!(reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-			DEBUG(DEB_LEV_PARAMS,"Flashing output ports outsemval=%d ob=%d obcb=%d\n",
+			DEBUG(DEB_LEV_PARAMS,"Flashing output ports outsemval=%d ob=%ld obcb=%ld\n",
 				pOutputSem->semval,reference_Private->outbuffer,reference_Private->outbuffercb);
 			while(pOutputSem->semval>0) {
 				tsem_down(pOutputSem);
@@ -1758,169 +1690,35 @@ OMX_ERRORTYPE reference_FlushPort(stComponentType* stComponent, OMX_U32 portInde
 		}
 		else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
 			(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			while(pOutputSem->semval>0) {
+				tsem_down(pOutputSem);
+				pthread_mutex_lock(pOutmutex);
+				reference_Private->outputPort.nNumBufferFlushed++;
+				pthread_mutex_unlock(pOutmutex);
+			}
 			/*Tunnel is supplier wait till all the buffers are returned*/
 			pthread_mutex_lock(pOutmutex);
 			flag=*outbufferUnderProcess;
-			pthread_mutex_unlock(pOutmutex);
-			if(pOutputSem->semval<reference_Private->outputPort.nNumTunnelBuffer) {
-			pthread_mutex_lock(pOutmutex);
-			reference_Private->outputPort.bWaitingFlushSem=OMX_TRUE;
-			pthread_mutex_unlock(pOutmutex);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
+			if(reference_Private->outputPort.nNumBufferFlushed<reference_Private->outputPort.nNumTunnelBuffer) {
+				reference_Private->outputPort.bWaitingFlushSem=OMX_TRUE;
+				pthread_mutex_unlock(pOutmutex);
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s in\n",__func__);
+				if(stComponent->state==OMX_StatePause) {
+					pthread_cond_signal(executingCondition);
+				}
+				/*Bufferoutg beoutg processed waitoutg for output flush sem*/
+				tsem_down(reference_Private->outputPort.pFlushSem);
+				pthread_mutex_lock(pOutmutex);
+				reference_Private->outputPort.bWaitingFlushSem=OMX_FALSE;
+				pthread_mutex_unlock(pOutmutex);
 			}
-			/*Bufferoutg beoutg processed waitoutg for output flush sem*/
-			tsem_down(reference_Private->outputPort.pFlushSem);
-			pthread_mutex_lock(pOutmutex);
-			reference_Private->outputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pOutmutex);
-			}
-		}
-	} else if (portIndex == -1) {
-		if (!(reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-			DEBUG(DEB_LEV_PARAMS,"Flashing all ports outsemval=%d insemval=%d ib=%d,ibcb=%d,ob=%d,obcb=%d\n",
-				pOutputSem->semval,pInputSem->semval,reference_Private->inbuffer,reference_Private->inbuffercb,reference_Private->outbuffer,reference_Private->outbuffercb);
-			while(pOutputSem->semval>0) {
-				tsem_down(pOutputSem);
-				pOutputBuffer = dequeue(pOutputQueue);
-				(*(stComponent->callbacks->FillBufferDone))
-					(pHandle, stComponent->callbackData, pOutputBuffer);
-				reference_Private->outbuffercb++;
-			}
-		}
-		else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-			(!(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER))) {
-			while(pOutputSem->semval>0) {
-				tsem_down(pOutputSem);
-				pOutputBuffer = dequeue(pOutputQueue);
-				OMX_EmptyThisBuffer(reference_Private->outputPort.hTunneledComponent, pOutputBuffer);
-				reference_Private->outbuffercb++;
-			}
-		}
-		else if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-			(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-			/*Tunnel is supplier wait till all the buffers are returned*/
-			pthread_mutex_lock(pOutmutex);
-			flag=*outbufferUnderProcess;
-			pthread_mutex_unlock(pOutmutex);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s out port buffer=%d,no of tunlbuffer=%d flushsem=%d bup=%d\n", __func__,
-				pOutputSem->semval,reference_Private->outputPort.nNumTunnelBuffer,
-				reference_Private->outputPort.pFlushSem->semval,flag);
-			if(pOutputSem->semval<reference_Private->outputPort.nNumTunnelBuffer) {
-			pthread_mutex_lock(pOutmutex);
-			reference_Private->outputPort.bWaitingFlushSem=OMX_TRUE;
-			pthread_mutex_unlock(pOutmutex);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s in\n",__func__);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*Bufferoutg beoutg processed waitoutg for output flush sem*/
-			tsem_down(reference_Private->outputPort.pFlushSem);
-			pthread_mutex_lock(pOutmutex);
-			reference_Private->outputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pOutmutex);
-			}
-		}
-		
-		if (!(reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED)) {
-			if(pOutputSem->semval==0) {
-				/*This is to free the input buffer being processed*/
-				tsem_up(pOutputSem);
-			}
-			while(pInputSem->semval>0) {
-				tsem_down(pInputSem);
-				pInputBuffer = dequeue(pInputQueue);
-				(*(stComponent->callbacks->EmptyBufferDone))
-					(pHandle, stComponent->callbackData, pInputBuffer);
-				reference_Private->inbuffercb++;
-			}
-			pthread_mutex_lock(pInmutex);
-			flag=*inbufferUnderProcess;
-			if(flag==OMX_TRUE) {
-			reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
-			pthread_mutex_unlock(pInmutex);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*"Buffering being processed waiting for input flush sem*/
-			tsem_down(reference_Private->inputPort.pFlushSem);
-			pthread_mutex_lock(pInmutex);
-			reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pInmutex);
-			}
-			else {
-				pthread_mutex_unlock(pInmutex);
-			}
-			if(pOutputSem->semval>0) {
-				/*This is to free the input buffer being processed*/
-				tsem_down(pOutputSem);
-			}
-			DEBUG(DEB_LEV_FULL_SEQ,"Flashing input ports insemval=%d outsemval=%d ib=%d,ibcb=%d\n",
-				pInputSem->semval,pOutputSem->semval,reference_Private->inbuffer,reference_Private->inbuffercb);
-		}
-		else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-			(!(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER))) {
-			if(pOutputSem->semval==0) {
-				/*This is to free the input buffer being processed*/
-				tsem_up(pOutputSem);
-			}
-
-			while(pInputSem->semval>0) {
-				tsem_down(pInputSem);
-				pInputBuffer = dequeue(pInputQueue);
-				OMX_FillThisBuffer(reference_Private->inputPort.hTunneledComponent, pInputBuffer);
-				reference_Private->inbuffercb++;
-			}
-			pthread_mutex_lock(pInmutex);
-			flag=*inbufferUnderProcess;
-			if(flag==OMX_TRUE) {
-			reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
-			pthread_mutex_unlock(pInmutex);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*Buffering being processed waiting for input flush sem*/
-			tsem_down(reference_Private->inputPort.pFlushSem);
-			pthread_mutex_lock(pInmutex);
-			reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pInmutex);
-			}
-			else {
-				pthread_mutex_unlock(pInmutex);
-			}
-			
-			if(pOutputSem->semval>0) {
-				/*This is to free the input buffer being processed*/
-				tsem_down(pOutputSem);
-			}
-		}
-		else if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
-			(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-			/*Tunnel is supplier wait till all the buffers are returned*/
-			pthread_mutex_lock(pInmutex);
-			flag=*inbufferUnderProcess;
-			pthread_mutex_unlock(pInmutex);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s in port buffer=%d,no of tunlbuffer=%d flushsem=%d bup=%d\n", __func__,
-				pInputSem->semval,reference_Private->inputPort.nNumTunnelBuffer,
-				reference_Private->inputPort.pFlushSem->semval,flag);
-			if(pInputSem->semval<reference_Private->inputPort.nNumTunnelBuffer) {
-			pthread_mutex_lock(pInmutex);
-			reference_Private->inputPort.bWaitingFlushSem=OMX_TRUE;
-			pthread_mutex_unlock(pInmutex);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s in\n",__func__);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*Buffering being processed waiting for input flush sem*/
-			tsem_down(reference_Private->inputPort.pFlushSem);
-			pthread_mutex_lock(pInmutex);
-			reference_Private->inputPort.bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pInmutex);
-			}
+			else 
+				pthread_mutex_unlock(pOutmutex);
 		}
 	} 
-
+	 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Returning from %s \n", __func__);
+
 	return OMX_ErrorNone;
 }
 
@@ -1939,7 +1737,7 @@ OMX_ERRORTYPE reference_allocateTunnelBuffers(reference_PortType* reference_Port
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	for(i=0;i<reference_Port->nNumTunnelBuffer;i++){
 		if(reference_Port->nBufferState[i] & BUFFER_ALLOCATED){
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %i buffer\n", i);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %ld buffer\n", i);
 			reference_Port->nBufferState[i] &= ~BUFFER_ALLOCATED;
 			free(reference_Port->pBuffer[i]->pBuffer);
 		} else if (reference_Port->nBufferState[i] & BUFFER_ASSIGNED){
@@ -1947,18 +1745,18 @@ OMX_ERRORTYPE reference_allocateTunnelBuffers(reference_PortType* reference_Port
 		}
 	}
 	for(i=0;i<reference_Port->nNumTunnelBuffer;i++){
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "   Allocating  %i buffer of size %i\n", i, (OMX_S32)bufferSize);
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "   Allocating  %ld buffer of size %ld\n", i, (OMX_S32)bufferSize);
 		pBuffer = malloc(bufferSize);
-		DEBUG(DEB_LEV_FULL_SEQ, "   malloc done %x\n",pBuffer);
+		DEBUG(DEB_LEV_FULL_SEQ, "   malloc done %lx\n",(OMX_U32)pBuffer);
 		eError=OMX_UseBuffer(reference_Port->hTunneledComponent,&reference_Port->pBuffer[i],
 			reference_Port->nTunneledPort,NULL,bufferSize,pBuffer); 
 		if(eError!=OMX_ErrorNone) {
-			DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't free buffer %i \n",i);
+			DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't free buffer %ld \n",i);
 			free(pBuffer);
 			return eError;
 		}
 		if ((eError = checkHeader(reference_Port->pBuffer[i], sizeof(OMX_BUFFERHEADERTYPE))) != OMX_ErrorNone) {
-			DEBUG(DEB_LEV_ERR, "In %s: wrong buffer header size=%d version=0x%08x\n", 
+			DEBUG(DEB_LEV_ERR, "In %s: wrong buffer header size=%ld version=0x%08x\n", 
 				__func__,reference_Port->pBuffer[i]->nSize,reference_Port->pBuffer[i]->nVersion.s.nVersionMajor);
 			//return eError;
 		}
@@ -1966,7 +1764,7 @@ OMX_ERRORTYPE reference_allocateTunnelBuffers(reference_PortType* reference_Port
 		reference_Port->nBufferState[i] |= BUFFER_ALLOCATED;
 		
 		queue(reference_Port->pBufferQueue, reference_Port->pBuffer[i]);
-		tsem_up(reference_Port->pBufferSem);
+		//tsem_up(reference_Port->pBufferSem);
 
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "   queue done\n");
 	}
@@ -1986,14 +1784,14 @@ OMX_ERRORTYPE reference_freeTunnelBuffers(reference_PortType* reference_Port) {
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	for(i=0;i<reference_Port->nNumTunnelBuffer;i++){
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "   Freeing  %i buffer %x\n", i,reference_Port->pBuffer[i]->pBuffer);
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "   Freeing  %ld buffer %lx\n", i,(OMX_U32)reference_Port->pBuffer[i]->pBuffer);
 	
 		if(reference_Port->pBuffer[i]->pBuffer)
 			free(reference_Port->pBuffer[i]->pBuffer);
 
 		eError=OMX_FreeBuffer(reference_Port->hTunneledComponent,reference_Port->nTunneledPort,reference_Port->pBuffer[i]);
 		if(eError!=OMX_ErrorNone) {
-			DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't free buffer %i \n",i);
+			DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't free buffer %ld \n",i);
 			return eError;
 		} 
 		
@@ -2006,7 +1804,7 @@ OMX_ERRORTYPE reference_freeTunnelBuffers(reference_PortType* reference_Port) {
 	}
 	for(i=0;i<reference_Port->nNumTunnelBuffer;i++){
 		if(reference_Port->nBufferState[i] & BUFFER_ALLOCATED){
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %i buffer\n", i);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %ld buffer\n", i);
 			reference_Port->nBufferState[i] &= ~BUFFER_ALLOCATED;
 			free(reference_Port->pBuffer[i]->pBuffer);
 		} else if (reference_Port->nBufferState[i] & BUFFER_ASSIGNED){
@@ -2405,10 +2203,10 @@ OMX_ERRORTYPE reference_UseBuffer(
 	}
 	
 	for(i=0;i<MAX_BUFFERS;i++){
-		DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s i=%i Buffer state=%x\n",__func__,i,reference_Port->nBufferState[i]);
+		DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s i=%ld Buffer state=%lx\n",__func__,i,reference_Port->nBufferState[i]);
 		if(!(reference_Port->nBufferState[i] & BUFFER_ALLOCATED) && 
 			!(reference_Port->nBufferState[i] & BUFFER_ASSIGNED)){ 
-			DEBUG(DEB_LEV_FULL_SEQ,"Inside %s i=%i Buffer state=%x\n",__func__,i,reference_Port->nBufferState[i]);
+			DEBUG(DEB_LEV_FULL_SEQ,"Inside %s i=%ld Buffer state=%lx\n",__func__,i,reference_Port->nBufferState[i]);
 			reference_Port->pBuffer[i] = malloc(sizeof(OMX_BUFFERHEADERTYPE));
 			setHeader(reference_Port->pBuffer[i], sizeof(OMX_BUFFERHEADERTYPE));
 			/* use the buffer */
@@ -2442,7 +2240,7 @@ OMX_ERRORTYPE reference_UseBuffer(
 				reference_Port->sPortParam.bPopulated = OMX_TRUE;
 				tsem_up(reference_Port->pFullAllocationSem);
 			}
-			DEBUG(DEB_LEV_SIMPLE_SEQ,"Returning from %s actual buffer=%d,assinged=%d fas=%d\n",
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"Returning from %s actual buffer=%ld,assinged=%ld fas=%d\n",
 				__func__,reference_Port->sPortParam.nBufferCountActual,
 				reference_Port->nNumAssignedBuffers,
 				reference_Port->pFullAllocationSem->semval);
@@ -2450,7 +2248,7 @@ OMX_ERRORTYPE reference_UseBuffer(
 		}
 	}
 	return OMX_ErrorNone;
-}
+} 
 
 OMX_ERRORTYPE reference_AllocateBuffer(
 	OMX_IN OMX_HANDLETYPE hComponent,
@@ -2507,13 +2305,13 @@ OMX_ERRORTYPE reference_AllocateBuffer(
 			}
 			
 			reference_Port->nNumAssignedBuffers++;
-			DEBUG(DEB_LEV_PARAMS, "reference_Port->nNumAssignedBuffers %i\n", reference_Port->nNumAssignedBuffers);
+			DEBUG(DEB_LEV_PARAMS, "reference_Port->nNumAssignedBuffers %ld\n", reference_Port->nNumAssignedBuffers);
 			
 			if (reference_Port->sPortParam.nBufferCountActual == reference_Port->nNumAssignedBuffers) {
 				reference_Port->sPortParam.bPopulated = OMX_TRUE;
 				tsem_up(reference_Port->pFullAllocationSem);
 			}
-			DEBUG(DEB_LEV_SIMPLE_SEQ,"Returning from %s actual buffer=%d,assinged=%d fas=%d\n",
+			DEBUG(DEB_LEV_SIMPLE_SEQ,"Returning from %s actual buffer=%ld,assinged=%ld fas=%d\n",
 				__func__,reference_Port->sPortParam.nBufferCountActual,
 				reference_Port->nNumAssignedBuffers,
 				reference_Port->pFullAllocationSem->semval);
@@ -2577,7 +2375,7 @@ OMX_ERRORTYPE reference_FreeBuffer(
 	for(i=0;i<MAX_BUFFERS;i++){
 		if((reference_Port->nBufferState[i] & BUFFER_ALLOCATED) &&
 			(reference_Port->pBuffer[i]->pBuffer == pBuffer->pBuffer)){
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %i buffer of port %i\n", i, nPortIndex);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %ld buffer of port %ld\n", i, nPortIndex);
 			
 			reference_Port->nNumAssignedBuffers--;
 			free(pBuffer->pBuffer);
@@ -2589,7 +2387,7 @@ OMX_ERRORTYPE reference_FreeBuffer(
 		}
 		else if((reference_Port->nBufferState[i] & BUFFER_ASSIGNED) &&
 			(reference_Port->pBuffer[i] == pBuffer)){
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %i buffer of port %i\n", i, nPortIndex);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing %ld buffer of port %ld\n", i, nPortIndex);
 			
 			reference_Port->nNumAssignedBuffers--;
 			if(reference_Port->nBufferState[i] & HEADER_ALLOCATED ) {
@@ -2602,7 +2400,7 @@ OMX_ERRORTYPE reference_FreeBuffer(
 	/*check if there are some buffers already to be freed */
 	foundBuffer = OMX_FALSE;
 	for (i = 0; i< reference_Port->sPortParam.nBufferCountActual ; i++) {
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "Buffer flags - %i - %i\n", i, reference_Port->nBufferState[i]);
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "Buffer flags - %ld - %ld\n", i, reference_Port->nBufferState[i]);
 	
 		if (reference_Port->nBufferState[i] != BUFFER_FREE) {
 			foundBuffer = OMX_TRUE;
@@ -2646,7 +2444,7 @@ OMX_ERRORTYPE reference_SendCommand(
 	
 	queue_t* messageQueue;
 	tsem_t* messageSem;
-	coreMessage_t* message;
+	coreMessage_t* message=NULL;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	messageQueue = stComponent->coreDescriptor->messageQueue;
@@ -2683,8 +2481,6 @@ OMX_ERRORTYPE reference_SendCommand(
 					if (reference_Private->outputPort.sPortParam.bEnabled)
 						reference_Private->outputPort.transientState = OMX_StateIdle;
 			} else if ((nParam == OMX_StateLoaded) && (stComponent->state == OMX_StateIdle)) {
-				tsem_reset(reference_Private->inputPort.pFullAllocationSem);
-				tsem_reset(reference_Private->outputPort.pFullAllocationSem);
 					if (reference_Private->inputPort.sPortParam.bEnabled)
 						reference_Private->inputPort.transientState = OMX_StateLoaded;
 					if (reference_Private->outputPort.sPortParam.bEnabled)
@@ -2696,11 +2492,7 @@ OMX_ERRORTYPE reference_SendCommand(
 					if (reference_Private->outputPort.sPortParam.bEnabled)
 						reference_Private->outputPort.transientState = OMX_StateInvalid;
 			}
-			/*
-			else if(reference_Private->inputPort.transientState == OMX_StateIdle && 
-				stComponent->state==OMX_StateLoaded && nParam == OMX_StateLoaded){
-			}
-			*/
+			
 		break;
 		case OMX_CommandFlush:
 			DEBUG(DEB_LEV_FULL_SEQ, "In OMX_CommandFlush state is %i\n", stComponent->state);
@@ -2727,8 +2519,6 @@ OMX_ERRORTYPE reference_SendCommand(
 			message->pCmdData=pCmdData;
 		break;
 		case OMX_CommandPortDisable:
-			tsem_reset(reference_Private->inputPort.pFullAllocationSem);
-			tsem_reset(reference_Private->outputPort.pFullAllocationSem);
 			DEBUG(DEB_LEV_SIMPLE_SEQ, "In OMX_CommandPortDisable state is %i\n", stComponent->state);
 			if (nParam == 0) {
 				if (reference_Private->inputPort.sPortParam.bEnabled == OMX_FALSE) {
@@ -2769,8 +2559,6 @@ OMX_ERRORTYPE reference_SendCommand(
 			message->pCmdData=pCmdData;
 		break;
 		case OMX_CommandPortEnable:
-			tsem_reset(reference_Private->inputPort.pFullAllocationSem);
-			tsem_reset(reference_Private->outputPort.pFullAllocationSem);
 			DEBUG(DEB_LEV_SIMPLE_SEQ, "In OMX_CommandPortEnable state is %i\n", stComponent->state);
 			if (nParam == 0) {
 				if (reference_Private->inputPort.sPortParam.bEnabled == OMX_TRUE) {
@@ -2830,10 +2618,10 @@ OMX_ERRORTYPE reference_SendCommand(
 		err = OMX_ErrorUnsupportedIndex;
 		break;
 	}
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s cond %x is signalling\n",__func__,&messageSem->condition);
+	DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s cond is signalling\n",__func__);
 	queue(messageQueue, message);
 	tsem_up(messageSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "%s returning err = %i msg=%x semval=%d\n", __func__, err,messageSem,messageSem->semval);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "%s returning err = %isemval=%u\n", __func__, err,messageSem->semval);
 	return err;
 }
 
@@ -2858,7 +2646,9 @@ OMX_ERRORTYPE reference_EmptyThisBuffer(
 	reference_PrivateType* reference_Private = stComponent->omx_component.pComponentPrivate;
 	tsem_t* pInputSem = reference_Private->inputPort.pBufferSem;
 	queue_t* pInputQueue = reference_Private->inputPort.pBufferQueue;
+	pthread_mutex_t *pInmutex=&reference_Private->inputPort.mutex;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
+	OMX_BOOL flag;
 
 	/* The input port code is not valid
 	*/
@@ -2890,10 +2680,40 @@ OMX_ERRORTYPE reference_EmptyThisBuffer(
 	/* Queue this buffer on the output port */
 	queue(pInputQueue, pBuffer);
 	/* And notify the buffer management thread we have a fresh new buffer to manage */
-	tsem_up(pInputSem);
+	if(reference_Private->inputPort.bIsPortFlushed==OMX_FALSE)
+		tsem_up(pInputSem);
+    else {
+		if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
+			(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			pthread_mutex_lock(pInmutex);
+			reference_Private->inputPort.nNumBufferFlushed++;
+			pthread_mutex_unlock(pInmutex);
+		}
+		else 
+			tsem_up(pInputSem);
+	}
+
+	pthread_mutex_lock(pInmutex);
+	flag=reference_Private->inputPort.bWaitingFlushSem;
+	if(flag==OMX_TRUE) {
+		if ((reference_Private->inputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
+		(reference_Private->inputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			if(reference_Private->inputPort.nNumBufferFlushed==reference_Private->inputPort.nNumTunnelBuffer) {
+				pthread_mutex_unlock(pInmutex);
+				tsem_up(reference_Private->inputPort.pFlushSem);
+				DEBUG(DEB_LEV_ERR, "In %s: incremented flush sem\n", __func__);
+			}
+			else 
+				pthread_mutex_unlock(pInmutex);
+		}
+		else
+			pthread_mutex_unlock(pInmutex);
+	}
+	else
+		pthread_mutex_unlock(pInmutex);
 
 	reference_Private->inbuffer++;
-	DEBUG(DEB_LEV_FULL_SEQ,"In %s no of in buffer=%d\n",__func__,reference_Private->inbuffer);
+	DEBUG(DEB_LEV_FULL_SEQ,"In %s no of in buffer=%ld\n",__func__,reference_Private->inbuffer);
 
 	return OMX_ErrorNone;
 }
@@ -2907,7 +2727,9 @@ OMX_ERRORTYPE reference_FillThisBuffer(
 
 	tsem_t* pOutputSem = reference_Private->outputPort.pBufferSem;
 	queue_t* pOutputQueue = reference_Private->outputPort.pBufferQueue;
+	pthread_mutex_t *pOutmutex=&reference_Private->outputPort.mutex;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
+	OMX_BOOL flag;
  
 	/* The output port code is not valid
 	*/
@@ -2918,11 +2740,14 @@ OMX_ERRORTYPE reference_FillThisBuffer(
 	/* We are not accepting buffers if not in executing or
 	 * paused or idle state
 	 */
+	if(stComponent->state == OMX_StateInvalid)
+		return OMX_ErrorInvalidState;
+
 	if(stComponent->state != OMX_StateExecuting &&
 		stComponent->state != OMX_StatePause &&
 		stComponent->state != OMX_StateIdle){
 		DEBUG(DEB_LEV_ERR, "In %s: we are not in executing or paused state\n", __func__);
-		return OMX_ErrorInvalidState;
+		return OMX_ErrorIncorrectStateOperation;
 	}
 
 	if(reference_Private->outputPort.sPortParam.bEnabled==OMX_FALSE)
@@ -2939,10 +2764,41 @@ OMX_ERRORTYPE reference_FillThisBuffer(
 	/* Signal that some new buffers are available on out put port */
 	DEBUG(DEB_LEV_FULL_SEQ, "In %s: signalling the presence of new buffer on output port\n", __func__);
 
-	tsem_up(pOutputSem);
+	if(reference_Private->outputPort.bIsPortFlushed==OMX_FALSE)
+		tsem_up(pOutputSem);
+    else {
+		if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
+			(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			pthread_mutex_lock(pOutmutex);
+			reference_Private->outputPort.nNumBufferFlushed++;
+			pthread_mutex_unlock(pOutmutex);
+		}
+		else 
+			tsem_up(pOutputSem);
+	}
+
+
+	pthread_mutex_lock(pOutmutex);
+	flag=reference_Private->outputPort.bWaitingFlushSem;
+	if(flag==OMX_TRUE) {
+		if ((reference_Private->outputPort.nTunnelFlags & TUNNEL_ESTABLISHED) && 
+			(reference_Private->outputPort.nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			if(reference_Private->outputPort.nNumBufferFlushed==reference_Private->outputPort.nNumTunnelBuffer) {
+				pthread_mutex_unlock(pOutmutex);
+				tsem_up(reference_Private->outputPort.pFlushSem);
+			}
+			else
+				pthread_mutex_unlock(pOutmutex);
+		}
+		else
+			pthread_mutex_unlock(pOutmutex);
+	}
+	else 
+		pthread_mutex_unlock(pOutmutex);
+
 
 	reference_Private->outbuffer++;
-	DEBUG(DEB_LEV_FULL_SEQ,"In %s no of out buffer=%d\n",__func__,reference_Private->outbuffer);
+	DEBUG(DEB_LEV_FULL_SEQ,"In %s no of out buffer=%ld\n",__func__,reference_Private->outbuffer);
 	return OMX_ErrorNone;
 }
 

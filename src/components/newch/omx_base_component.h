@@ -88,6 +88,8 @@ CLASS(base_component_PortType)
 	OMX_BUFFERSUPPLIERTYPE eBufferSupplier; \
 	/** @param nNumTunnelBuffer Number of buffer to be tunnelled */ \
 	OMX_U32 nNumTunnelBuffer; \
+	/// @param nNumBufferFlushed Number of buffer Flushed
+	OMX_U32 nNumBufferFlushed; \
 	/** @param bIsPortFlushed Boolean variables indicate whether the port is flushed */ \
 	OMX_BOOL bIsPortFlushed;
 ENDCLASS(base_component_PortType)
@@ -152,7 +154,9 @@ CLASS(base_component_PrivateType)
 	/** @param FreeTunnelBuffers Counter of output buffers. Only for debug */ \
 	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*); \
 	/** @param BufferMgmtFunction Counter of output buffers. Only for debug */ \
-	void* (*BufferMgmtFunction)(void* param);
+	void* (*BufferMgmtFunction)(void* param);    \
+	/** @param FlushPort to Flush input/output ports */ \
+	OMX_ERRORTYPE (*FlushPort)(stComponentType* stComponent, OMX_U32 portIndex);
 ENDCLASS(base_component_PrivateType)
 
 /**
@@ -349,5 +353,7 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 	OMX_IN  OMX_U32 nTunneledPort,
 	OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup);
 
+void base_component_SetPortFlushFlag(stComponentType* stComponent, OMX_S32 index, OMX_BOOL value);
+void base_component_SetNumBufferFlush(stComponentType* stComponent, OMX_S32 index, OMX_S32 value);
 
 #endif // _OMX_BASE_COMPONENT_H_

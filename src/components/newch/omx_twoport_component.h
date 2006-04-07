@@ -32,6 +32,7 @@
 
 #define OMX_TWOPORT_INPUTPORT_INDEX 0
 #define OMX_TWOPORT_OUTPUTPORT_INDEX 1
+#define OMX_TWOPORT_ALLPORT_INDEX -1
 
 
 /** Twoport component private structure.
@@ -46,5 +47,6 @@ ENDCLASS(omx_twoport_component_PrivateType)
 OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType*);
 
 void* omx_twoport_component_BufferMgmtFunction(void* param);
+OMX_ERRORTYPE omx_twoport_component_FlushPort(stComponentType* stComponent, OMX_U32 portIndex);
 
 #endif //_OMX_TWOPORT_COMPONENT_H_

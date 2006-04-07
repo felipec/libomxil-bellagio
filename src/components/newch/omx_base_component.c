@@ -143,6 +143,9 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 	base_component_Private->Deinit = &base_component_Deinit;
 	base_component_Private->DoStateSet = &base_component_DoStateSet;
 	base_component_Private->BufferMgmtFunction = &base_component_BufferMgmtFunction;
+	base_component_Private->FlushPort = &base_component_FlushPort;
+	base_component_Private->AllocateTunnelBuffers = &base_component_AllocateTunnelBuffers;
+	base_component_Private->FreeTunnelBuffers = &base_component_FreeTunnelBuffers;
 	
 	/** generic parameter NOT related to a specific port */
 	setHeader(&base_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
@@ -179,7 +182,14 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 			base_component_Private->ports[i]->pFlushSem = malloc(sizeof(tsem_t));
 			if(base_component_Private->ports[i]->pFlushSem==NULL)	return OMX_ErrorInsufficientResources;
 			tsem_init(base_component_Private->ports[i]->pFlushSem, 0);
+
+			base_component_Private->ports[i]->hTunneledComponent = NULL;
+			base_component_Private->ports[i]->nTunneledPort=0;
+			base_component_Private->ports[i]->nTunnelFlags=0;
+
 		}
+		base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
+		base_component_SetNumBufferFlush(stComponent, -1, 0);
 	}
 	
 	pthread_mutex_init(&base_component_Private->exit_mutex, NULL);
@@ -216,9 +226,9 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
  * Assumes sanity checked input
  * fixme params
  */
-void base_component_SetPortFlushFlag(stComponentType* stComponent, int index, OMX_BOOL value) {
+void base_component_SetPortFlushFlag(stComponentType* stComponent, OMX_S32 index, OMX_BOOL value) {
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
-	int i;
+	OMX_S32 i;
 	if (index == -1) {
 		for (i = 0; i < stComponent->nports; i++) {
 			base_component_Private->ports[i]->bIsPortFlushed = value;
@@ -229,6 +239,39 @@ void base_component_SetPortFlushFlag(stComponentType* stComponent, int index, OM
 
 }
 
+/** sets the port flush flag to a value
+ * Assumes sanity checked input
+ * fixme params
+ */
+void base_component_SetNumBufferFlush(stComponentType* stComponent, OMX_S32 index, OMX_S32 value) {
+	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
+	int i;
+	if (index == -1) {
+		for (i = 0; i < stComponent->nports; i++) {
+			base_component_Private->ports[i]->nNumBufferFlushed = value;
+		}		
+	} else {
+		base_component_Private->ports[index]->nNumBufferFlushed = value;
+	}
+
+}
+
+/** sets the port flush flag to a value
+ * Assumes sanity checked input
+ * fixme params
+ */
+void base_component_IncNumBufferFlush(stComponentType* stComponent, OMX_S32 index) {
+	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
+	int i;
+	if (index == -1) {
+		for (i = 0; i < stComponent->nports; i++) {
+			base_component_Private->ports[i]->nNumBufferFlushed++;
+		}		
+	} else {
+		base_component_Private->ports[index]->nNumBufferFlushed++;
+	}
+
+}
 /**
  * FIXME comment
  */
@@ -305,8 +348,11 @@ OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message)
 				break;
 				
 			case OMX_CommandFlush:
+				base_component_SetNumBufferFlush(stComponent, -1, 0);
 				/*Flush ports*/
-				err=base_component_FlushPort(stComponent, message->messageParam2);
+				//err=base_component_FlushPort(stComponent, message->messageParam2);
+				err = (*(base_component_Private->FlushPort))(stComponent, message->messageParam2);	
+				base_component_SetNumBufferFlush(stComponent, -1, 0);
 				// fixme indexes w/ start nr, flush all -> call callback for n ports
 				if (err != OMX_ErrorNone) {
 					(*(stComponent->callbacks->EventHandler))
@@ -567,10 +613,13 @@ OMX_ERRORTYPE base_component_Deinit(stComponentType* stComponent)
 */
 	for (i = 0; i < stComponent->nports; i++) {
 		pSem = base_component_Private->ports[i]->pBufferSem;
+		tsem_reset(pSem);
+		/*
 		while(pSem->semval > 0) {
 			tsem_down(pSem);
 			pBuffer=dequeue(base_component_Private->ports[i]->pBufferQueue);
 		}
+		*/
 		pthread_mutex_destroy(&base_component_Private->ports[i]->mutex);
 	}
 
@@ -692,7 +741,7 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 	OMX_ERRORTYPE eError=OMX_ErrorNone;
 	OMX_BUFFERHEADERTYPE* pOutputBuffer;
 	OMX_BUFFERHEADERTYPE* pInputBuffer;
-	OMX_U32 i;
+	OMX_U32 i,j;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s changing state from %i to %i\n", __func__, stComponent->state, (OMX_S32)destinationState);
 
@@ -822,9 +871,12 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 /*FIXME				DEBUG(DEB_LEV_ERR, "In %s: state transition exe/pause to idle asgn ibfr=%d , obfr=%d\n", __func__,
 					base_component_Private->inputPort.nNumTunnelBuffer,
 					base_component_Private->outputPort.nNumTunnelBuffer); */
+				base_component_SetNumBufferFlush(stComponent, -1, 0);
 				base_component_SetPortFlushFlag(stComponent, -1, OMX_TRUE);
-				base_component_FlushPort(stComponent, -1);
+				//base_component_FlushPort(stComponent, -1);
+				(*(base_component_Private->FlushPort))(stComponent, -1);
 				base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
+				base_component_SetNumBufferFlush(stComponent, -1, 0);
 				stComponent->state = OMX_StateIdle;
 				break;
 			default:
@@ -861,6 +913,14 @@ OMX_ERRORTYPE base_component_DoStateSet(stComponentType* stComponent, OMX_U32 de
 					return OMX_ErrorInvalidState;
 				break;
 			case OMX_StateIdle:
+				/*Send Tunneled Buffer to the Neighbouring Components*/
+				for (i = 0; i < stComponent->nports; i++) {
+					if ((base_component_Private->ports[i]->nTunnelFlags & TUNNEL_ESTABLISHED) &&
+							(base_component_Private->ports[i]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+						for(j=0;j<base_component_Private->ports[i]->nNumTunnelBuffer;j++)
+							tsem_up(base_component_Private->ports[j]->pBufferSem);
+					}
+				}
 			case OMX_StatePause:
 				pthread_mutex_lock(executingMutex);
 				stComponent->state = OMX_StateExecuting;
@@ -909,11 +969,7 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 	tsem_t* pSem = base_component_Private->ports[portIndex]->pBufferSem;
 	queue_t* pQueue = base_component_Private->ports[portIndex]->pBufferQueue;
 	OMX_BUFFERHEADERTYPE* pBuffer;
-	
-	base_component_Private->ports[portIndex]->bIsPortFlushed=OMX_TRUE;
-	base_component_FlushPort(stComponent, portIndex);
-	base_component_Private->ports[portIndex]->bIsPortFlushed=OMX_FALSE;
-	
+		
 	base_component_Private->ports[portIndex]->sPortParam.bEnabled = OMX_FALSE;
 	//FIXME DEBUG(DEB_LEV_FULL_SEQ,"base_component_Private->inputPort.pFullAllocationSem=%x\n",base_component_Private->inputPort.pFullAllocationSem->semval);
 	if (base_component_Private->ports[portIndex]->sPortParam.bPopulated == OMX_TRUE && base_component_Private->bIsInit == OMX_TRUE) {
@@ -926,10 +982,11 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 			//FIXME DEBUG(DEB_LEV_FULL_SEQ,"In %s Input Tunnel is supplier no of buffers=%d\n",
 			//	__func__,pInputSem->semval);
 			/*Free buffers and remove the tunnel*/
-			if(pSem->semval==base_component_Private->ports[portIndex]->nNumTunnelBuffer) { 
-				while(pSem->semval>0) {
-					tsem_down(pSem);
+			if(base_component_Private->ports[portIndex]->nNumBufferFlushed==base_component_Private->ports[portIndex]->nNumTunnelBuffer) { 
+				while(base_component_Private->ports[portIndex]->nNumBufferFlushed>0) {
+					//tsem_down(pSem);
 					pBuffer=dequeue(pQueue);
+					base_component_Private->ports[portIndex]->nNumBufferFlushed--;
 				}
 				(*(base_component_Private->FreeTunnelBuffers))(base_component_Private->ports[portIndex]);				
 				base_component_Private->ports[portIndex]->hTunneledComponent=NULL;
@@ -947,11 +1004,12 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 		}
 		base_component_Private->ports[portIndex]->sPortParam.bPopulated = OMX_FALSE;
 	}
-	else 
-		;//FIXME DEBUG(DEB_LEV_SIMPLE_SEQ,"Input port is not populated\n");
+	
+	//FIXME DEBUG(DEB_LEV_SIMPLE_SEQ,"Input port is not populated\n");
 	
 	//FIXME DEBUG(DEB_LEV_FULL_SEQ, "In %s flush buffers\n", __func__);
-	
+	tsem_reset(base_component_Private->ports[portIndex]->pBufferSem);
+	base_component_Private->ports[portIndex]->nNumBufferFlushed=0;
 	//FIXME DEBUG(DEB_LEV_FULL_SEQ, "In %s wait for buffer to be de-allocated\n", __func__);
 	tsem_reset(base_component_Private->ports[portIndex]->pFullAllocationSem);	
 }
@@ -963,9 +1021,24 @@ void base_component_DisableSinglePort(stComponentType* stComponent, OMX_U32 port
 	*/
 OMX_ERRORTYPE base_component_DisablePort(stComponentType* stComponent, OMX_U32 portIndex)
 {
-	int i;
+	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
+	OMX_S32 i;
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
+
+	if (portIndex == -1) {
+		for (i = 0; i < stComponent->nports; i++) 
+			base_component_Private->ports[i]->bIsPortFlushed=OMX_TRUE;
+
+		(*(base_component_Private->FlushPort))(stComponent,portIndex);
+
+		for (i = 0; i < stComponent->nports; i++) 
+			base_component_Private->ports[i]->bIsPortFlushed=OMX_FALSE;
+	} else { 
+			base_component_Private->ports[portIndex]->bIsPortFlushed=OMX_TRUE;
+			(*(base_component_Private->FlushPort))(stComponent, i);
+			base_component_Private->ports[portIndex]->bIsPortFlushed=OMX_FALSE;
+	}
 
 	if (portIndex != -1) {
 		base_component_DisableSinglePort(stComponent, portIndex);
@@ -988,6 +1061,7 @@ void base_component_EnableSinglePort(stComponentType* stComponent, OMX_U32 portI
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	tsem_t* pSem = base_component_Private->ports[portIndex]->pBufferSem;
 	queue_t* pQueue = base_component_Private->ports[portIndex]->pBufferQueue;
+	OMX_S32 i;
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"Port.fAS=%x, is Init=%d\n",
@@ -1007,11 +1081,14 @@ void base_component_EnableSinglePort(stComponentType* stComponent, OMX_U32 portI
 				pSem->semval);
 				//FIXME check the port index given for allocateTunnelBuffer; why always zero?
 				//FIXME buffer sizes shall be dynamic
+			/*
 			if (base_component_Private->ports[portIndex]->sPortParam.eDir == OMX_DirInput)
 				(*(base_component_Private->AllocateTunnelBuffers))(base_component_Private->ports[portIndex], 0, INTERNAL_IN_BUFFER_SIZE);
 			else
 				(*(base_component_Private->AllocateTunnelBuffers))(base_component_Private->ports[portIndex], 0, INTERNAL_OUT_BUFFER_SIZE);
-				
+				*/
+			for(i=0;i<base_component_Private->ports[portIndex]->nNumTunnelBuffer;i++)
+					tsem_up(base_component_Private->ports[portIndex]->pBufferSem);				
 			base_component_Private->ports[portIndex]->sPortParam.bPopulated = OMX_TRUE;
 		}
 		else {
@@ -1261,7 +1338,7 @@ OMX_ERRORTYPE base_component_AllocateTunnelBuffers(base_component_PortType* base
 		base_component_Port->nBufferState[i] |= BUFFER_ALLOCATED;
 		
 		queue(base_component_Port->pBufferQueue, base_component_Port->pBuffer[i]);
-		tsem_up(base_component_Port->pBufferSem);
+		//tsem_up(base_component_Port->pBufferSem);
 
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "   queue done\n");
 	}
@@ -1479,7 +1556,7 @@ OMX_ERRORTYPE base_component_SetParameter(
 			pBufSupply = (OMX_PARAM_BUFFERSUPPLIERTYPE*)ComponentParameterStructure;
 			portIndex = pBufSupply->nPortIndex;
 			
-			err = base_component_ParameterSanityCheck(hComponent, portIndex, pPortDef, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
+			err = base_component_ParameterSanityCheck(hComponent, portIndex, pBufSupply, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
 			if (err != OMX_ErrorNone)
 				return err;
 
@@ -1871,7 +1948,7 @@ OMX_ERRORTYPE base_component_SendCommand(
 			if ((nParam == OMX_StateIdle) && (stComponent->state == OMX_StateLoaded)) {
 					err=(*(base_component_Private->Init))(stComponent);
 					if(err!=OMX_ErrorNone) {
-						DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s  base_component_Init returned error %i\n",
+						DEBUG(DEB_LEV_ERR, "In %s  base_component_Init returned error %i\n",
 							__func__,err);
 						return OMX_ErrorInsufficientResources;
 					}
@@ -1903,7 +1980,7 @@ OMX_ERRORTYPE base_component_SendCommand(
 				break;
 
 			}
-			if (nParam >= stComponent->nports) {
+			if ((nParam != -1) && nParam >= stComponent->nports) {
 				return OMX_ErrorBadPortIndex;
 			}
 			base_component_SetPortFlushFlag(stComponent, nParam, OMX_TRUE);
@@ -1916,7 +1993,7 @@ OMX_ERRORTYPE base_component_SendCommand(
 			message->pCmdData=pCmdData;
 		break;
 		case OMX_CommandPortDisable:
-			if (nParam >= stComponent->nports) {
+			if ((nParam != -1) && nParam >= stComponent->nports) {
 				return OMX_ErrorBadPortIndex;
 			}
 			
@@ -1956,7 +2033,7 @@ OMX_ERRORTYPE base_component_SendCommand(
 			message->pCmdData=pCmdData;
 		break;
 		case OMX_CommandPortEnable:
-			if (nParam >= stComponent->nports) {
+			if ((nParam != -1) && nParam >= stComponent->nports) {
 				return OMX_ErrorBadPortIndex;
 			}		
 			for (i = 0; i < stComponent->nports; i++) {
@@ -2044,8 +2121,10 @@ OMX_ERRORTYPE base_component_EmptyThisBuffer(
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_U32 portIndex;
 	tsem_t* pInputSem;
+	pthread_mutex_t *pInmutex;
 	queue_t* pInputQueue;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
+	OMX_BOOL flag;
 
  	portIndex = pBuffer->nInputPortIndex;
 	if (portIndex >= stComponent->nports ||
@@ -2056,6 +2135,7 @@ OMX_ERRORTYPE base_component_EmptyThisBuffer(
 	
 	pInputSem = base_component_Private->ports[portIndex]->pBufferSem;
 	pInputQueue = base_component_Private->ports[portIndex]->pBufferQueue;
+	pInmutex = &base_component_Private->ports[portIndex]->mutex;
 	/* We are not accepting buffers if not in executing or
 	 * paused state
 	 */
@@ -2080,7 +2160,37 @@ OMX_ERRORTYPE base_component_EmptyThisBuffer(
 	/* Queue this buffer on the output port */
 	queue(pInputQueue, pBuffer);
 	/* And notify the buffer management thread we have a fresh new buffer to manage */
-	tsem_up(pInputSem);
+	if(base_component_Private->ports[portIndex]->bIsPortFlushed==OMX_FALSE)
+		tsem_up(pInputSem);
+    else {
+		if ((base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
+			(base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			pthread_mutex_lock(pInmutex);
+			base_component_Private->ports[portIndex]->nNumBufferFlushed++;
+			pthread_mutex_unlock(pInmutex);
+		}
+		else 
+			tsem_up(pInputSem);
+	}
+
+	pthread_mutex_lock(pInmutex);
+	flag=base_component_Private->ports[portIndex]->bWaitingFlushSem;
+	if(flag==OMX_TRUE) {
+		if ((base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
+		(base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			if(base_component_Private->ports[portIndex]->nNumBufferFlushed==base_component_Private->ports[portIndex]->nNumTunnelBuffer) {
+				pthread_mutex_unlock(pInmutex);
+				tsem_up(base_component_Private->ports[portIndex]->pFlushSem);
+				DEBUG(DEB_LEV_ERR, "In %s: incremented flush sem\n", __func__);
+			}
+			else 
+				pthread_mutex_unlock(pInmutex);
+		}
+		else
+			pthread_mutex_unlock(pInmutex);
+	}
+	else
+		pthread_mutex_unlock(pInmutex);
 
 	base_component_Private->inbuffer++;
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s no of in buffer=%d\n",__func__,base_component_Private->inbuffer);
@@ -2097,8 +2207,10 @@ OMX_ERRORTYPE base_component_FillThisBuffer(
 	OMX_U32 portIndex;
 	
 	tsem_t* pOutputSem;
+	pthread_mutex_t *pOutmutex;
 	queue_t* pOutputQueue;
 	OMX_ERRORTYPE err=OMX_ErrorNone;
+	OMX_BOOL flag;
  
  	portIndex = pBuffer->nOutputPortIndex;
 	if (portIndex >= stComponent->nports ||
@@ -2109,6 +2221,7 @@ OMX_ERRORTYPE base_component_FillThisBuffer(
 	
 	pOutputSem = base_component_Private->ports[portIndex]->pBufferSem;
 	pOutputQueue = base_component_Private->ports[portIndex]->pBufferQueue;
+	pOutmutex = &base_component_Private->ports[portIndex]->mutex;
 		 	
 	/* We are not accepting buffers if not in executing or
 	 * paused or idle state
@@ -2134,7 +2247,38 @@ OMX_ERRORTYPE base_component_FillThisBuffer(
 	/* Signal that some new buffers are available on out put port */
 	DEBUG(DEB_LEV_FULL_SEQ, "In %s: signalling the presence of new buffer on output port\n", __func__);
 
-	tsem_up(pOutputSem);
+	if(base_component_Private->ports[portIndex]->bIsPortFlushed==OMX_FALSE)
+		tsem_up(pOutputSem);
+    else {
+		if ((base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
+			(base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			pthread_mutex_lock(pOutmutex);
+			base_component_Private->ports[portIndex]->nNumBufferFlushed++;
+			pthread_mutex_unlock(pOutmutex);
+		}
+		else 
+			tsem_up(pOutputSem);
+	}
+
+
+	pthread_mutex_lock(pOutmutex);
+	flag=base_component_Private->ports[portIndex]->bWaitingFlushSem;
+	if(flag==OMX_TRUE) {
+		if ((base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
+			(base_component_Private->ports[portIndex]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+			if(base_component_Private->ports[portIndex]->nNumBufferFlushed==base_component_Private->ports[portIndex]->nNumTunnelBuffer) {
+				pthread_mutex_unlock(pOutmutex);
+				tsem_up(base_component_Private->ports[portIndex]->pFlushSem);
+			}
+			else
+				pthread_mutex_unlock(pOutmutex);
+		}
+		else
+			pthread_mutex_unlock(pOutmutex);
+	}
+	else 
+		pthread_mutex_unlock(pOutmutex);
+
 
 	base_component_Private->outbuffer++;
 	DEBUG(DEB_LEV_FULL_SEQ,"In %s no of out buffer=%d\n",__func__,base_component_Private->outbuffer);
@@ -2155,18 +2299,18 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 	stComponentType* stComponent = (stComponentType*)hComp;
 	base_component_PrivateType* base_component_Private = stComponent->omx_component.pComponentPrivate;
 
-  if (nPort >= stComponent->nports) {
-  	return OMX_ErrorBadPortIndex;
-  }
+	if (nPort >= stComponent->nports) {
+	return OMX_ErrorBadPortIndex;
+	}
 
 	if (pTunnelSetup == NULL || hTunneledComp == 0) {
-    /* cancel previous tunnel */
-	 	base_component_Private->ports[nPort]->hTunneledComponent = 0;
+	/* cancel previous tunnel */
+		base_component_Private->ports[nPort]->hTunneledComponent = 0;
 		base_component_Private->ports[nPort]->nTunneledPort = 0;
 		base_component_Private->ports[nPort]->nTunnelFlags = 0;
 		base_component_Private->ports[nPort]->eBufferSupplier=OMX_BufferSupplyUnspecified;
 		return OMX_ErrorNone;
-  }
+	}
 
 	if (base_component_Private->ports[nPort]->sPortParam.eDir == OMX_DirInput) {
 		/* Get Port Definition of the Tunnelled Component*/

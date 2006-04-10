@@ -210,33 +210,36 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_SetupTunnel(
 	tunnelSetup->nTunnelFlags = 0;
 	tunnelSetup->eSupplier = 0;
 
-	if((hOutput==NULL) | (hInput==NULL))
-		return OMX_ErrorBadParameter;
-	
-	err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, hInput, nPortInput, tunnelSetup);
-	if (err != OMX_ErrorNone) {
+	if (hOutput == NULL && hInput == NULL)
+        return OMX_ErrorBadParameter;
+	if (hOutput){
+		err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, hInput, nPortInput, tunnelSetup);
+		if (err != OMX_ErrorNone) {
 		DEBUG(DEB_LEV_ERR, "Tunneling failed: output port rejects it - err = %i\n", err);
 		free(tunnelSetup);
 		return err;
+		}
 	}
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "First stage of tunneling acheived:\n");
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
 	
 	component = (OMX_COMPONENTTYPE*)hInput;
-	err = (component->ComponentTunnelRequest)(hInput, nPortInput, hOutput, nPortOutput, tunnelSetup);
-	if (err != OMX_ErrorNone) {
-		DEBUG(DEB_LEV_ERR, "Tunneling failed: input port rejects it - err = %i\n", err);
-		// the second stage fails. the tunnel on poutput port has to be removed
-		component = (OMX_COMPONENTTYPE*)hOutput;
-		err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, NULL, 0, tunnelSetup);
+	if (hInput) {
+		err = (component->ComponentTunnelRequest)(hInput, nPortInput, hOutput, nPortOutput, tunnelSetup);
 		if (err != OMX_ErrorNone) {
-			// This error should never happen. It is critical, and not recoverable
+			DEBUG(DEB_LEV_ERR, "Tunneling failed: input port rejects it - err = %i\n", err);
+			// the second stage fails. the tunnel on poutput port has to be removed
+			component = (OMX_COMPONENTTYPE*)hOutput;
+			err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, NULL, 0, tunnelSetup);
+			if (err != OMX_ErrorNone) {
+				// This error should never happen. It is critical, and not recoverable
+				free(tunnelSetup);
+				return OMX_ErrorUndefined;
+			}
 			free(tunnelSetup);
-			return OMX_ErrorUndefined;
+			return OMX_ErrorPortsNotCompatible;
 		}
-		free(tunnelSetup);
-		return OMX_ErrorPortsNotCompatible;
 	}
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Second stage of tunneling acheived:\n");
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);

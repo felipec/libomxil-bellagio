@@ -39,9 +39,9 @@
 #define MAX_BUFFERS      4
 
 /** Default size of the internal input buffer */
-#define INTERNAL_IN_BUFFER_SIZE  8  * 1024
+#define INTERNAL_IN_BUFFER_SIZE  2  * 1024
 /** Default size of the internal output buffer */
-#define INTERNAL_OUT_BUFFER_SIZE 16 * 1024
+#define INTERNAL_OUT_BUFFER_SIZE 4 * 1024
 
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_base_component_INSTANCES 10
@@ -90,7 +90,7 @@ CLASS(base_component_PortType)
 	OMX_U32 nNumTunnelBuffer; \
 	/// @param nNumBufferFlushed Number of buffer Flushed
 	OMX_U32 nNumBufferFlushed; \
-	/** @param bIsPortFlushed Boolean variables indicate whether the port is flushed */ \
+	/** @param bIsPortFlushed Boolean variables indicate port is being flushed at the moment */ \
 	OMX_BOOL bIsPortFlushed;
 ENDCLASS(base_component_PortType)
 
@@ -135,6 +135,10 @@ CLASS(base_component_PrivateType)
 	OMX_BOOL bCmdUnderProcess; \
 	/** @param bWaitingForCmdToFinish Boolean variable indicates whether cmdSem is waiting for command to finish */ \
 	OMX_BOOL bWaitingForCmdToFinish; \
+	/** @param flush_mutex mutex for the flush condition from buffers */ \
+	pthread_mutex_t flush_mutex;	\
+	/** @param The flush_condition condition */ \
+	pthread_cond_t flush_condition;	\
 	/** @param inbuffer Counter of input buffers. Only for debug */ \
 	OMX_U32 inbuffer; \
 	/** @param inbuffercb Counter of input buffers. Only for debug */ \

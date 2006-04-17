@@ -91,7 +91,7 @@ typedef struct reference_PortType{
 	OMX_U32 nNumTunnelBuffer;
 	/// @param nNumBufferFlushed Number of buffer Flushed
 	OMX_U32 nNumBufferFlushed;
-	/// @param bIsPortFlushed Boolean variables indicate whether the port is flushed
+	/// @param bIsPortFlushed Boolean variables indicate port is being flushed at the moment
 	OMX_BOOL bIsPortFlushed;
 }reference_PortType;
 
@@ -128,7 +128,10 @@ typedef struct reference_PrivateType{
 	pthread_mutex_t cmd_mutex;
 	/// @param pCmdSem Semaphore for message handling completion signaling
 	tsem_t* pCmdSem;
-
+	// @param flush_mutex mutex for the flush condition from buffers
+	pthread_mutex_t flush_mutex;
+	/// @param The flush_condition condition
+	pthread_cond_t flush_condition;
 	/// @param nGroupPriority Resource management field: component priority (common to a group of components)
 	OMX_U32 nGroupPriority;
 	/// @param nGroupID ID of a group of components that share the same logical chain

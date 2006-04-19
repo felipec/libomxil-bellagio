@@ -39,7 +39,6 @@ DERIVEDCLASS(omx_alsasink_component_PortType, base_component_PortType)
 #define omx_alsasink_component_PortType_FIELDS base_component_PortType_FIELDS \
 	/** @param omxAudioParamPcmMode Audio PCM pecific OpenMAX parameter */ \
 	OMX_AUDIO_PARAM_PCMMODETYPE omxAudioParamPcmMode;	\
-	
 	/** @param omxAudioConfigVolume Audio Volume OpenMAX parameter */	\
 	OMX_AUDIO_CONFIG_VOLUMETYPE omxAudioConfigVolume;	\
 	/** @param omxAudioChannelVolume Audio Volume OpenMAX parameter for channel */	\

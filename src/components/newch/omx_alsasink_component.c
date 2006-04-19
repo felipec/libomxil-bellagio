@@ -45,23 +45,64 @@ void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
 
 OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
+	OMX_S32 i;
+	omx_alsasink_component_PortType *port;
 
 	if (!stComponent->omx_component.pComponentPrivate) {
 		stComponent->omx_component.pComponentPrivate = calloc(1, sizeof(omx_alsasink_component_PrivateType));
 		if(stComponent->omx_component.pComponentPrivate==NULL)
 			return OMX_ErrorInsufficientResources;
 	}
-	
-	// we could create our own port structures here
-	// fixme maybe the base class could use a "port factory" function pointer?	
-	err = omx_oneport_component_Constructor(stComponent);
 
-	/* here we can override whatever defaults the base_component constructor set
-	 * e.g. we can override the function pointers in the private struct  */
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
+
+	// fixme maybe the base class could use a "port factory" function pointer?	
+	if (stComponent->nports && !omx_alsasink_component_Private->ports) {
+		omx_alsasink_component_Private->ports = calloc(stComponent->nports,
+												sizeof (base_component_PortType *));
+
+		if (!omx_alsasink_component_Private->ports) return OMX_ErrorInsufficientResources;
+		
+		for (i=0; i < stComponent->nports; i++) {
+			// this is the important thing separating this from the base class; size of the struct is for derived class port type
+			// this could be refactored as a smarter factory function instead?
+			omx_alsasink_component_Private->ports[i] = calloc(1, sizeof(omx_alsasink_component_PortType));
+			if (!omx_alsasink_component_Private->ports[i]) return OMX_ErrorInsufficientResources;
+
+			omx_alsasink_component_Private->ports[i]->transientState = OMX_StateMax;
+			setHeader(&omx_alsasink_component_Private->ports[i]->sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
+			omx_alsasink_component_Private->ports[i]->sPortParam.nPortIndex = i;
+			
+			omx_alsasink_component_Private->ports[i]->pBufferSem = malloc(sizeof(tsem_t));
+			if(omx_alsasink_component_Private->ports[i]->pBufferSem==NULL) return OMX_ErrorInsufficientResources;
+			tsem_init(omx_alsasink_component_Private->ports[i]->pBufferSem, 0);
+		
+			omx_alsasink_component_Private->ports[i]->pFullAllocationSem = malloc(sizeof(tsem_t));
+			if(omx_alsasink_component_Private->ports[i]->pFullAllocationSem==NULL) return OMX_ErrorInsufficientResources;
+			tsem_init(omx_alsasink_component_Private->ports[i]->pFullAllocationSem, 0);
+		
+			/** Allocate and initialize buffer queue */
+			omx_alsasink_component_Private->ports[i]->pBufferQueue = malloc(sizeof(queue_t));
+			if(omx_alsasink_component_Private->ports[i]->pBufferQueue==NULL) return OMX_ErrorInsufficientResources;
+			queue_init(omx_alsasink_component_Private->ports[i]->pBufferQueue);
+		
+			omx_alsasink_component_Private->ports[i]->pFlushSem = malloc(sizeof(tsem_t));
+			if(omx_alsasink_component_Private->ports[i]->pFlushSem==NULL)	return OMX_ErrorInsufficientResources;
+			tsem_init(omx_alsasink_component_Private->ports[i]->pFlushSem, 0);
+
+			omx_alsasink_component_Private->ports[i]->hTunneledComponent = NULL;
+			omx_alsasink_component_Private->ports[i]->nTunneledPort=0;
+			omx_alsasink_component_Private->ports[i]->nTunnelFlags=0;
+
+		}
+		base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
+		base_component_SetNumBufferFlush(stComponent, -1, 0);
+	}
+
+	err = omx_oneport_component_Constructor(stComponent);
 	
-	// oh well, for the time being, set the port params, now that the ports exist	
-		/** Domain specific section for the ports. */	
+	// set the port params, now that the ports exist	
+	/** Domain specific section for the ports. */	
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
@@ -73,41 +114,43 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 
 	omx_alsasink_component_Private->BufferMgmtCallback = omx_alsasink_component_BufferMgmtCallback;
 
+	port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+
 	/* OMX_AUDIO_PARAM_PCMMODETYPE */
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nPortIndex = 0;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nChannels = 2;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.eNumData = OMX_NumericalDataSigned;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.eEndian = OMX_EndianLittle;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.bInterleaved = OMX_TRUE;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nBitPerSample = 16;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nSamplingRate = 44100;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
+	port->omxAudioParamPcmMode.nPortIndex = 0;
+	port->omxAudioParamPcmMode.nChannels = 2;
+	port->omxAudioParamPcmMode.eNumData = OMX_NumericalDataSigned;
+	port->omxAudioParamPcmMode.eEndian = OMX_EndianLittle;
+	port->omxAudioParamPcmMode.bInterleaved = OMX_TRUE;
+	port->omxAudioParamPcmMode.nBitPerSample = 16;
+	port->omxAudioParamPcmMode.nSamplingRate = 44100;
+	port->omxAudioParamPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
+	port->omxAudioParamPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
 	/* Todo: add the volume stuff */
 
 	/* Allocate the playback handle and the hardware parameter structure */
-	if ((err = snd_pcm_open (&omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+	if ((err = snd_pcm_open (&port->playback_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
 		DEBUG(DEB_LEV_ERR, "cannot open audio device %s (%s)\n", "default", snd_strerror (err));
 		base_component_Panic();
 	}
 	else
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "Got playback handle at %08x %08X in %i\n", (int)omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, (int)&omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, getpid());
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "Got playback handle at %08x %08X in %i\n", (int)port->playback_handle, (int)&port->playback_handle, getpid());
 
-	if (snd_pcm_hw_params_malloc(&omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->hw_params) < 0) {
+	if (snd_pcm_hw_params_malloc(&port->hw_params) < 0) {
 		DEBUG(DEB_LEV_ERR, "%s: failed allocating input port hw parameters\n", __func__);
 		base_component_Panic();
 	}
 	else
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "Got hw parameters at %08x\n", (int)omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->hw_params);
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "Got hw parameters at %08x\n", (int)port->hw_params);
 
-	if ((err = snd_pcm_hw_params_any (omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->hw_params)) < 0) {
+	if ((err = snd_pcm_hw_params_any (port->playback_handle, port->hw_params)) < 0) {
 		DEBUG(DEB_LEV_ERR, "cannot initialize hardware parameter structure (%s)\n",	snd_strerror (err));
 		base_component_Panic();
 	}
 
 	/* Write in the default paramenters */
 	omx_alsasink_component_SetParameter(&stComponent->omx_component, OMX_IndexParamAudioInit, &omx_alsasink_component_Private->sPortTypesParam);
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->AudioPCMConfigured	= 0;
+	port->AudioPCMConfigured	= 0;
 
 	omx_alsasink_component_Private->Init = &omx_alsasink_component_Init;
 
@@ -118,23 +161,24 @@ OMX_ERRORTYPE omx_alsasink_component_Init(stComponentType* stComponent)
 {
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_ERRORTYPE err = OMX_ErrorNone;
-
+	omx_alsasink_component_PortType *port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+	
 	base_component_Init(stComponent);
 
-	if (!omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->AudioPCMConfigured) {
+	if (!port->AudioPCMConfigured) {
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface in the Init function\n");
-		alsasink_SetParameter(&stComponent->omx_component, OMX_IndexParamAudioPcm, &omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode);
+		alsasink_SetParameter(&stComponent->omx_component, OMX_IndexParamAudioPcm, &port->omxAudioParamPcmMode);
 	}
 
 	/** Configure and prepare the ALSA handle */
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface\n");
 	
-	if ((err = snd_pcm_hw_params (omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->hw_params)) < 0) {
+	if ((err = snd_pcm_hw_params (port->playback_handle, port->hw_params)) < 0) {
 		DEBUG(DEB_LEV_ERR, "cannot set parameters (%s)\n",	snd_strerror (err));
 		base_component_Panic();
 	}
 	
-	if ((err = snd_pcm_prepare (omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle)) < 0) {
+	if ((err = snd_pcm_prepare (port->playback_handle)) < 0) {
 		DEBUG(DEB_LEV_ERR, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
 		base_component_Panic();
 	}
@@ -152,28 +196,21 @@ void omx_alsasink_component_BufferMgmtCallback(stComponentType* stComponent, OMX
 	OMX_BOOL allDataSent;
 
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
-
-	/*
-	for (i = 0; i < sampleCount; i++) {
-		((OMX_S16*) outputbuffer->pBuffer)[i] = (OMX_S16)
-			(((OMX_S16*) inputbuffer->pBuffer)[i] * (omx_alsasink_component_Private->gain / 100.0f));
-	}
-	outputbuffer->nFilledLen = inputbuffer->nFilledLen;
-	*/
+	omx_alsasink_component_PortType *port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
 
 	/* Feed it to ALSA */
-	frameSize = (omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nChannels * omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nBitPerSample) >> 3;
+	frameSize = (port->omxAudioParamPcmMode.nChannels * port->omxAudioParamPcmMode.nBitPerSample) >> 3;
 	DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n", 
-		frameSize,omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nChannels,inputbuffer->nFilledLen);
+		frameSize,port->omxAudioParamPcmMode.nChannels,inputbuffer->nFilledLen);
 	allDataSent = OMX_FALSE;
 	totalBuffer = inputbuffer->nFilledLen/frameSize;
 	offsetBuffer = 0;
 	while (!allDataSent) {
-		written = snd_pcm_writei(omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, inputbuffer->pBuffer + (offsetBuffer * frameSize), totalBuffer);
+		written = snd_pcm_writei(port->playback_handle, inputbuffer->pBuffer + (offsetBuffer * frameSize), totalBuffer);
 		if (written < 0) {
 			if(written == -EPIPE){
 				DEBUG(DEB_LEV_ERR, "ALSA Underrun..\n");
-				snd_pcm_prepare(omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle);
+				snd_pcm_prepare(port->playback_handle);
 				written = 0;
 			} else {
 				DEBUG(DEB_LEV_ERR, "Cannot send any data to the audio device %s (%s)\n", "default", snd_strerror (written));
@@ -223,7 +260,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 	/* Check which structure we are being fed and make control its header */
 	stComponentType* stComponent = (stComponentType*)hComponent;
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
-	omx_alsasink_component_PortType* inputPort = omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+	omx_alsasink_component_PortType* inputPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
 	snd_pcm_t* playback_handle = inputPort->playback_handle;
 	snd_pcm_hw_params_t* hw_params = inputPort->hw_params;
 
@@ -238,7 +275,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 	 * e.g.: changing a previously configured sampling rate does not have
 	 * any effect if we are not calling this each time.
 	 */
-	err = snd_pcm_hw_params_any (omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->playback_handle, omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->hw_params);
+	err = snd_pcm_hw_params_any (inputPort->playback_handle, inputPort->hw_params);
 
 	switch(nParamIndex) {
 		case OMX_IndexParamAudioInit:
@@ -427,6 +464,7 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
 	
 	stComponentType* stComponent = (stComponentType*)hComponent;
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
+	omx_alsasink_component_PortType *port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];	
 	if (ComponentParameterStructure == NULL) {
 		return OMX_ErrorBadParameter;
 	}
@@ -448,9 +486,9 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
 		break;		
 		case OMX_IndexParamAudioPcm:
 			if(((OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure)->nPortIndex !=
-				omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode.nPortIndex)
+				port->omxAudioParamPcmMode.nPortIndex)
 				return OMX_ErrorBadParameter;
-			memcpy(ComponentParameterStructure, &omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+			memcpy(ComponentParameterStructure, &port->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 			break;
 		default:
 			return base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);

@@ -66,6 +66,7 @@ ENDCLASS(omx_alsasink_component_PrivateType)
 
 /* Component private entry points declaration */
 OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType*);
+OMX_ERRORTYPE omx_alsasink_component_Destructor(stComponentType*);
 
 void omx_alsasink_component_BufferMgmtCallback(
 	stComponentType* stComponent,

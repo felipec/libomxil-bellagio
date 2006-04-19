@@ -32,6 +32,7 @@ void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
 	/** here you can override the base component defaults */
 	component->name = "OMX.alsa.alsasink";
 	component->constructor = omx_alsasink_component_Constructor;
+	component->destructor = omx_alsasink_component_Destructor;
 	component->omx_component.SetConfig = omx_alsasink_component_SetConfig;
 	component->omx_component.GetConfig = omx_alsasink_component_GetConfig;
 	component->omx_component.SetParameter = omx_alsasink_component_SetParameter;
@@ -41,6 +42,18 @@ void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
 	component->nports = 1;
   
  	register_template(component);
+}
+
+
+OMX_ERRORTYPE omx_alsasink_component_Destructor(stComponentType* stComponent) {
+	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
+
+	omx_alsasink_component_PortType* inputPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+
+	snd_pcm_hw_params_free (inputPort->hw_params);
+	snd_pcm_close(inputPort->playback_handle);
+	
+	base_component_Destructor(stComponent);
 }
 
 OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {

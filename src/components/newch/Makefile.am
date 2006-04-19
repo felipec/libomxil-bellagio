@@ -2,11 +2,14 @@ omxnewchdir = $(libdir)/omxilcomponents
 
 omxnewch_LTLIBRARIES=libomxnewch.la
 
+libomxnewch_la_LIBADD = -lasound
+
 libomxnewch_la_SOURCES = omx_base_component.c \
 						 omx_twoport_component.c \
 						 omx_oneport_component.c \
 						 omx_alsasink_component.c \
 						 omx_volume_component.c
+						 
 noinst_HEADERS = omx_base_component.h \
 				 omx_twoport_component.h \
 				 omx_oneport_component.h \

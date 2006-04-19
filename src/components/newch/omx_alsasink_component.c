@@ -30,7 +30,7 @@ void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
 	  
 	stComponentType *component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
-	component->name = "OMX.volume.component";
+	component->name = "OMX.alsa.alsasink";
 	component->constructor = omx_alsasink_component_Constructor;
 	component->omx_component.SetConfig = omx_alsasink_component_SetConfig;
 	component->omx_component.GetConfig = omx_alsasink_component_GetConfig;
@@ -167,7 +167,7 @@ OMX_ERRORTYPE omx_alsasink_component_Init(stComponentType* stComponent)
 
 	if (!port->AudioPCMConfigured) {
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface in the Init function\n");
-		alsasink_SetParameter(&stComponent->omx_component, OMX_IndexParamAudioPcm, &port->omxAudioParamPcmMode);
+		omx_alsasink_component_SetParameter(&stComponent->omx_component, OMX_IndexParamAudioPcm, &port->omxAudioParamPcmMode);
 	}
 
 	/** Configure and prepare the ALSA handle */
@@ -214,7 +214,7 @@ void omx_alsasink_component_BufferMgmtCallback(stComponentType* stComponent, OMX
 				written = 0;
 			} else {
 				DEBUG(DEB_LEV_ERR, "Cannot send any data to the audio device %s (%s)\n", "default", snd_strerror (written));
-				alsasink_Panic();
+				base_component_Panic();
 			}
 		}
 
@@ -315,20 +315,20 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 				if(omxAudioParamPcmMode->bInterleaved == OMX_TRUE){
 					if ((err = snd_pcm_hw_params_set_access(inputPort->playback_handle, inputPort->hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
 						DEBUG(DEB_LEV_ERR, "cannot set access type intrleaved (%s)\n", snd_strerror (err));
-						alsasink_Panic();
+						base_component_Panic();
 					}
 				}
 				else{
 					if ((err = snd_pcm_hw_params_set_access(inputPort->playback_handle, inputPort->hw_params, SND_PCM_ACCESS_RW_NONINTERLEAVED)) < 0) {
 						DEBUG(DEB_LEV_ERR, "cannot set access type non interleaved (%s)\n", snd_strerror (err));
-						alsasink_Panic();
+						base_component_Panic();
 					}
 				}
 
 				rate = omxAudioParamPcmMode->nSamplingRate;
 				if ((err = snd_pcm_hw_params_set_rate_near(inputPort->playback_handle, inputPort->hw_params, &rate, 0)) < 0) {
 					DEBUG(DEB_LEV_ERR, "cannot set sample rate (%s)\n", snd_strerror (err));
-					alsasink_Panic();
+					base_component_Panic();
 				}
 				else{
 					DEBUG(DEB_LEV_PARAMS, "Set correctly sampling rate to %i\n", (int)inputPort->omxAudioParamPcmMode.nSamplingRate);
@@ -404,7 +404,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 						int err;
 						if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
 							DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
-							alsasink_Panic();
+							base_component_Panic();
 						}
 					}
 					else{
@@ -417,7 +417,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 					DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
 					if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_A_LAW)) < 0) {
 						DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
-						alsasink_Panic();
+						base_component_Panic();
 					}
 					memcpy(&inputPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 					break;
@@ -426,7 +426,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 					DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
 					if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_MU_LAW)) < 0) {
 						DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n", snd_strerror (err));
-						alsasink_Panic();
+						base_component_Panic();
 					}
 					memcpy(&inputPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 					break;

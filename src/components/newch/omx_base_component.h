@@ -88,7 +88,7 @@ CLASS(base_component_PortType)
 	OMX_BUFFERSUPPLIERTYPE eBufferSupplier; \
 	/** @param nNumTunnelBuffer Number of buffer to be tunnelled */ \
 	OMX_U32 nNumTunnelBuffer; \
-	/// @param nNumBufferFlushed Number of buffer Flushed
+	/** @param nNumBufferFlushed Number of buffer Flushed */ \
 	OMX_U32 nNumBufferFlushed; \
 	/** @param bIsPortFlushed Boolean variables indicate port is being flushed at the moment */ \
 	OMX_BOOL bIsPortFlushed;

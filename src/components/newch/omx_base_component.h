@@ -46,6 +46,17 @@
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_base_component_INSTANCES 10
 
+/**
+ * Port Specific Macro's
+ */
+
+#define PORT_IS_BEING_FLUSHED(port)				(port->bIsPortFlushed == OMX_FALSE)
+#define PORT_IS_ENABLED(port)					(port->sPortParam.bEnabled == OMX_TRUE)
+#define PORT_IS_POPULATED(port)					(port->sPortParam.bPopulated == OMX_TRUE)
+#define PORT_IS_TUNNELED(port)					(port->nTunnelFlags & TUNNEL_ESTABLISHED)
+#define PORT_IS_BUFFER_SUPPLIER(port)			(port->nTunnelFlags & TUNNEL_IS_SUPPLIER)
+#define PORT_IS_WAITING_FLUSH_SEMAPHORE(port)	(port->bWaitingFlushSem)
+#define IS_BUFFER_UNDER_PROCESS(port)			(port->bBufferUnderProcess==OMX_TRUE)
 
 /**
  * The structure for port Type.
@@ -359,5 +370,7 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 
 void base_component_SetPortFlushFlag(stComponentType* stComponent, OMX_S32 index, OMX_BOOL value);
 void base_component_SetNumBufferFlush(stComponentType* stComponent, OMX_S32 index, OMX_S32 value);
+void base_component_returnInputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pInputBuffer,base_component_PortType *pPort);
+void base_component_returnOutputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pOutputBuffer,base_component_PortType *pPort);
 
 #endif // _OMX_BASE_COMPONENT_H_

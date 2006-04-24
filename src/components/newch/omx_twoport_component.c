@@ -66,133 +66,6 @@ OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType* stComponent) {
 	return err;
 }
 
-/**
- * This is a straight copypaste from the omx reference component
- */
-
-void returnInputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pInputBuffer) {
-	OMX_COMPONENTTYPE* pHandle = &stComponent->omx_component;
-	omx_twoport_component_PrivateType* omx_twoport_component_Private = stComponent->omx_component.pComponentPrivate;
-	queue_t* pInputQueue = omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->pBufferQueue;
-	OMX_BOOL flag;
-	OMX_BOOL *inbufferUnderProcess=&omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->bBufferUnderProcess;
-	pthread_mutex_t *pInmutex=&omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->mutex;
-
-	if (omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_ESTABLISHED) {
-		if(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.bEnabled==OMX_TRUE){
-			if(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->bIsPortFlushed==OMX_FALSE) {
-				OMX_FillThisBuffer(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->hTunneledComponent, pInputBuffer);
-				omx_twoport_component_Private->inbuffercb++;
-			}
-			else {
-				if(!(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					OMX_FillThisBuffer(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->hTunneledComponent, pInputBuffer);
-					omx_twoport_component_Private->inbuffercb++;
-				}
-				else {
-					queue(pInputQueue,pInputBuffer);
-					pthread_mutex_lock(pInmutex);
-					omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nNumBufferFlushed++;
-					pthread_mutex_unlock(pInmutex);
-				}
-			}
-		}
-		else { /*Port Disabled then call ETB if port is not the supplier else dont call*/
-			if(!(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				OMX_FillThisBuffer(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->hTunneledComponent, pInputBuffer);
-				omx_twoport_component_Private->inbuffercb++;
-			}
-			else {
-				queue(pInputQueue,pInputBuffer);
-				pthread_mutex_lock(pInmutex);
-				omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nNumBufferFlushed++;
-				pthread_mutex_unlock(pInmutex);
-			}
-		}
-	} else {
-		(*(stComponent->callbacks->EmptyBufferDone))
-			(pHandle, stComponent->callbackData, pInputBuffer);
-		omx_twoport_component_Private->inbuffercb++;
-	}
-	
-	pthread_mutex_lock(pInmutex);
-	*inbufferUnderProcess = OMX_FALSE;
-	flag=omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->bWaitingFlushSem;
-	if(flag==OMX_TRUE) {
-		pthread_mutex_unlock(pInmutex);
-		if ((omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
-		(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-			if(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nNumBufferFlushed==omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nNumTunnelBuffer)
-				tsem_up(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->pFlushSem);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "This Code has been moved to EmptyThisbuffer...\n");
-		}
-		else {
-			tsem_up(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->pFlushSem);
-		}
-	}
-	else
-		pthread_mutex_unlock(pInmutex);
-}
-void returnOutputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pOutputBuffer){ 
-	OMX_COMPONENTTYPE* pHandle = &stComponent->omx_component;
-	omx_twoport_component_PrivateType* omx_twoport_component_Private = stComponent->omx_component.pComponentPrivate;
-	queue_t* pOutputQueue = omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->pBufferQueue;
-	OMX_BOOL flag;
-	OMX_BOOL *outbufferUnderProcess=&omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->bBufferUnderProcess;
-	pthread_mutex_t *pOutmutex=&omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->mutex;
-
-	if (omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_ESTABLISHED) {
-		if(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.bEnabled==OMX_TRUE){
-			if(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->bIsPortFlushed==OMX_FALSE) {
-				OMX_EmptyThisBuffer(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->hTunneledComponent, pOutputBuffer);
-			}
-			else {
-				if(!(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-					OMX_EmptyThisBuffer(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->hTunneledComponent, pOutputBuffer);
-				}
-				else {
-					queue(pOutputQueue,pOutputBuffer);
-					pthread_mutex_lock(pOutmutex);
-					omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nNumBufferFlushed++;
-					pthread_mutex_unlock(pOutmutex);
-				}
-			}
-		}
-		else { /*Port Disabled then call ETB if port is not the supplier else dont call*/
-			if(!(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-				OMX_EmptyThisBuffer(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->hTunneledComponent, pOutputBuffer);
-			}
-			else {
-				queue(pOutputQueue,pOutputBuffer);
-				pthread_mutex_lock(pOutmutex);
-				omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nNumBufferFlushed++;
-				pthread_mutex_unlock(pOutmutex);
-			}
-		}
-	} else {
-		(*(stComponent->callbacks->FillBufferDone))
-			(pHandle, stComponent->callbackData, pOutputBuffer);
-	}
-
-	pthread_mutex_lock(pOutmutex);
-	*outbufferUnderProcess = OMX_FALSE;
-	flag=omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->bWaitingFlushSem;
-	if(flag==OMX_TRUE) {
-		pthread_mutex_unlock(pOutmutex);
-		if ((omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
-			(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
-			if(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nNumBufferFlushed==omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nNumTunnelBuffer)
-				tsem_up(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->pFlushSem);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "This Code has been moved to FillThisbuffer...\n");
-		}
-		else {
-			tsem_up(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->pFlushSem);
-		}
-	}
-	else 
-		pthread_mutex_unlock(pOutmutex);
-	omx_twoport_component_Private->outbuffercb++;
-}
 /** This is the central function for component processing. It
 	* is executed in a separate thread, is synchronized with 
 	* semaphores at each port, those are released each time a new buffer
@@ -225,8 +98,8 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 		((omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->transientState = OMX_StateIdle) && 
 		(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->transientState = OMX_StateIdle))){
 
-		while(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->bIsPortFlushed==OMX_TRUE || 
-			  omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->bIsPortFlushed==OMX_TRUE)
+		while(! PORT_IS_BEING_FLUSHED(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]) || 
+			  ! PORT_IS_BEING_FLUSHED(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]))
 			pthread_cond_wait(&omx_twoport_component_Private->flush_condition,&omx_twoport_component_Private->flush_mutex);
 
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for input buffer semval=%d \n",pInputSem->semval);
@@ -252,8 +125,8 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 		if(nFlags==OMX_BUFFERFLAG_EOS) {
 			DEBUG(DEB_LEV_SIMPLE_SEQ, "Detected EOS flags in input buffer\n");
 		}
-		if(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->bIsPortFlushed==OMX_TRUE) {
-			returnInputBuffer(stComponent,pInputBuffer);
+		if(! PORT_IS_BEING_FLUSHED(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX])) {
+			base_component_returnInputBuffer(stComponent,pInputBuffer,omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]);
 			/*Return Input Buffer*/
 			continue;
 		}
@@ -263,9 +136,9 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 		*outbufferUnderProcess = OMX_TRUE;
 		pthread_mutex_unlock(pOutmutex);
 		DEBUG(DEB_LEV_FULL_SEQ, "Output buffer arrived\n");
-		if(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->bIsPortFlushed==OMX_TRUE) {
+		if(! PORT_IS_BEING_FLUSHED(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX])) {
 			/*Return Input Buffer*/
-			returnInputBuffer(stComponent,pInputBuffer);
+			base_component_returnInputBuffer(stComponent,pInputBuffer,omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]);
 			continue;
 		}
 
@@ -325,12 +198,12 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 			}
 			
 			DEBUG(DEB_LEV_FULL_SEQ, "In %s: got some buffers to fill on output port\n", __func__);
-			/*Copying input buffer data*/
-			memcpy(pOutputBuffer->pBuffer,pInputBuffer->pBuffer,pInputBuffer->nFilledLen);
-			pOutputBuffer->nFilledLen=pInputBuffer->nFilledLen;
 
-			/** Place here the code of the component. The input buffer header is pInputBuffer, the output
-			* buffer header is pOutputBuffer. */
+			/* This calls the actual algorithm; fp must be set */			
+			if (omx_twoport_component_Private->BufferMgmtCallback) {
+				(*(omx_twoport_component_Private->BufferMgmtCallback))(stComponent, pInputBuffer, pOutputBuffer);
+			}
+
 			/*Wait if state is pause*/
 			if(stComponent->state==OMX_StatePause) {
 				if(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->bWaitingFlushSem!=OMX_TRUE) {
@@ -339,7 +212,7 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 			}
 
 			/*Call ETB in case port is enabled*/
-			returnOutputBuffer(stComponent,pOutputBuffer);
+			base_component_returnOutputBuffer(stComponent,pOutputBuffer,omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]);
 		}
 		/*Wait if state is pause*/
 		if(stComponent->state==OMX_StatePause) {
@@ -348,7 +221,7 @@ void* omx_twoport_component_BufferMgmtFunction(void* param) {
 			}
 		}
 
-		returnInputBuffer(stComponent,pInputBuffer);
+		base_component_returnInputBuffer(stComponent,pInputBuffer,omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]);
 
 		pthread_mutex_lock(&omx_twoport_component_Private->exit_mutex);
 		exit_thread=omx_twoport_component_Private->bExit_buffer_thread;
@@ -476,13 +349,14 @@ OMX_ERRORTYPE omx_twoport_component_FlushPort(stComponentType* stComponent, OMX_
 		}
 		else if ((omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
 			(omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+
 			/*Tunnel is supplier wait till all the buffers are returned*/
+			pthread_mutex_lock(pInmutex);
 			while(pInputSem->semval>0) {
 				tsem_down(pInputSem);
-				pthread_mutex_lock(pInmutex);
 				omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->nNumBufferFlushed++;
-				pthread_mutex_unlock(pInmutex);
 			}
+			pthread_mutex_unlock(pInmutex);
 
 			pthread_mutex_lock(pInmutex);
 			flag=*inbufferUnderProcess;
@@ -526,12 +400,13 @@ OMX_ERRORTYPE omx_twoport_component_FlushPort(stComponentType* stComponent, OMX_
 		}
 		else if ((omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_ESTABLISHED) && 
 			(omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nTunnelFlags & TUNNEL_IS_SUPPLIER)) {
+
+			pthread_mutex_lock(pOutmutex);
 			while(pOutputSem->semval>0) {
 				tsem_down(pOutputSem);
-				pthread_mutex_lock(pOutmutex);
 				omx_twoport_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->nNumBufferFlushed++;
-				pthread_mutex_unlock(pOutmutex);
 			}
+			pthread_mutex_unlock(pOutmutex);
 			/*Tunnel is supplier wait till all the buffers are returned*/
 			pthread_mutex_lock(pOutmutex);
 			flag=*outbufferUnderProcess;

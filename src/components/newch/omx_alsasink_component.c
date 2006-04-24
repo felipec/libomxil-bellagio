@@ -72,7 +72,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	// fixme maybe the base class could use a "port factory" function pointer?	
 	if (stComponent->nports && !omx_alsasink_component_Private->ports) {
 		omx_alsasink_component_Private->ports = calloc(stComponent->nports,
-												sizeof (base_component_PortType *));
+												sizeof (base_component_PortType));
 
 		if (!omx_alsasink_component_Private->ports) return OMX_ErrorInsufficientResources;
 		
@@ -200,14 +200,11 @@ OMX_ERRORTYPE omx_alsasink_component_Init(stComponentType* stComponent)
 
 
 void omx_alsasink_component_BufferMgmtCallback(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer) {
-	int i;
-	//int sampleCount = inputbuffer->nFilledLen / 2; // signed 16 bit samples assumed
 	OMX_U32  frameSize;
 	OMX_S32 written;
 	OMX_S32 totalBuffer;
 	OMX_S32 offsetBuffer;
 	OMX_BOOL allDataSent;
-
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
 	omx_alsasink_component_PortType *port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
 
@@ -239,6 +236,7 @@ void omx_alsasink_component_BufferMgmtCallback(stComponentType* stComponent, OMX
 			allDataSent = OMX_TRUE;
 		}
 	}
+	inputbuffer->nFilledLen=0;
 }
 
 OMX_ERRORTYPE omx_alsasink_component_SetConfig(

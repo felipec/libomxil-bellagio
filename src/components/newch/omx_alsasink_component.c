@@ -24,6 +24,8 @@
 #include <omxcore.h>
 #include <omx_alsasink_component.h>
 
+/** Maximum Number of base_component Instance*/
+OMX_U32 noAlsasinkInstance=0;
 
 void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);	
@@ -50,8 +52,12 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(stComponentType* stComponent) {
 
 	omx_alsasink_component_PortType* inputPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
 
-	snd_pcm_hw_params_free (inputPort->hw_params);
-	snd_pcm_close(inputPort->playback_handle);
+	noAlsasinkInstance--;
+
+	if(inputPort->hw_params)
+		snd_pcm_hw_params_free (inputPort->hw_params);
+	if(inputPort->playback_handle)
+		snd_pcm_close(inputPort->playback_handle);
 	
 	base_component_Destructor(stComponent);
 }
@@ -72,7 +78,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	// fixme maybe the base class could use a "port factory" function pointer?	
 	if (stComponent->nports && !omx_alsasink_component_Private->ports) {
 		omx_alsasink_component_Private->ports = calloc(stComponent->nports,
-												sizeof (base_component_PortType));
+												sizeof (base_component_PortType *));
 
 		if (!omx_alsasink_component_Private->ports) return OMX_ErrorInsufficientResources;
 		
@@ -139,6 +145,10 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	port->omxAudioParamPcmMode.nSamplingRate = 44100;
 	port->omxAudioParamPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
 	port->omxAudioParamPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
+
+	noAlsasinkInstance++;
+	if(noAlsasinkInstance > MAX_NUM_OF_alsasink_component_INSTANCES) 
+		return OMX_ErrorInsufficientResources;
 	/* Todo: add the volume stuff */
 
 	/* Allocate the playback handle and the hardware parameter structure */
@@ -212,6 +222,10 @@ void omx_alsasink_component_BufferMgmtCallback(stComponentType* stComponent, OMX
 	frameSize = (port->omxAudioParamPcmMode.nChannels * port->omxAudioParamPcmMode.nBitPerSample) >> 3;
 	DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n", 
 		frameSize,port->omxAudioParamPcmMode.nChannels,inputbuffer->nFilledLen);
+
+	if(inputbuffer->nFilledLen < frameSize)
+		return;
+
 	allDataSent = OMX_FALSE;
 	totalBuffer = inputbuffer->nFilledLen/frameSize;
 	offsetBuffer = 0;

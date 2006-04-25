@@ -32,6 +32,8 @@
 #include <omx_oneport_component.h>
 #include <alsa/asoundlib.h>
 
+/** Maximum number of base_component component instances */
+#define MAX_NUM_OF_alsasink_component_INSTANCES 1
 
 /** Alsasinkport component private structure.
  */

@@ -28,9 +28,10 @@
 OMX_U32 noAlsasinkInstance=0;
 
 void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
+	stComponentType *component;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);	
 	  
-	stComponentType *component = base_component_CreateComponentStruct();
+	component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
 	component->name = "OMX.alsa.alsasink";
 	component->constructor = omx_alsasink_component_Constructor;
@@ -66,6 +67,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
 	OMX_S32 i;
 	omx_alsasink_component_PortType *port;
+	omx_alsasink_component_PrivateType* omx_alsasink_component_Private;
 
 	if (!stComponent->omx_component.pComponentPrivate) {
 		stComponent->omx_component.pComponentPrivate = calloc(1, sizeof(omx_alsasink_component_PrivateType));
@@ -73,7 +75,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 			return OMX_ErrorInsufficientResources;
 	}
 
-	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
+	omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
 
 	// fixme maybe the base class could use a "port factory" function pointer?	
 	if (stComponent->nports && !omx_alsasink_component_Private->ports) {

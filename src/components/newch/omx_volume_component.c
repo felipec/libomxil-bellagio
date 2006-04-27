@@ -26,9 +26,10 @@
 
 
 void __attribute__ ((constructor)) omx_volume_component_register_template() {
+	stComponentType *component;
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);	
 	  
-	stComponentType *component = base_component_CreateComponentStruct();
+	component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
 	component->name = "OMX.volume.component";
 	component->constructor = omx_volume_component_Constructor;
@@ -45,7 +46,8 @@ void __attribute__ ((constructor)) omx_volume_component_register_template() {
 
 OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
-
+	omx_volume_component_PrivateType* omx_volume_component_Private;
+	
 	if (!stComponent->omx_component.pComponentPrivate) {
 		stComponent->omx_component.pComponentPrivate = calloc(1, sizeof(omx_volume_component_PrivateType));
 		if(stComponent->omx_component.pComponentPrivate==NULL)
@@ -58,7 +60,7 @@ OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 
 	/* here we can override whatever defaults the base_component constructor set
 	 * e.g. we can override the function pointers in the private struct  */
-	omx_volume_component_PrivateType* omx_volume_component_Private = stComponent->omx_component.pComponentPrivate;
+	omx_volume_component_Private = stComponent->omx_component.pComponentPrivate;
 	
 	// oh well, for the time being, set the port params, now that the ports exist	
 		/** Domain specific section for the ports. */	

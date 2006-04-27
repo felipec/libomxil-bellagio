@@ -27,6 +27,7 @@
 
 OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
+	omx_twoport_component_PrivateType* omx_twoport_component_Private;
 
 	if (!stComponent->omx_component.pComponentPrivate) {
 		stComponent->omx_component.pComponentPrivate = calloc(1, sizeof(omx_twoport_component_PrivateType));
@@ -40,7 +41,7 @@ OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType* stComponent) {
 
 	/* here we can override whatever defaults the base_component constructor set
 	 * e.g. we can override the function pointers in the private struct  */
-	omx_twoport_component_PrivateType* omx_twoport_component_Private = stComponent->omx_component.pComponentPrivate;
+	omx_twoport_component_Private = stComponent->omx_component.pComponentPrivate;
 	
 	// oh well, for the time being, set the port params, now that the ports exist	
 	omx_twoport_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.eDir = OMX_DirInput;

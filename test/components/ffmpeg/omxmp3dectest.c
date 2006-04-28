@@ -132,8 +132,10 @@ int main(int argc, char** argv){
 
 	/** Ask the core for a handle to the dummy component
 	 */
-	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.st.ffmpeg.mp3dec", NULL /*appPriv */, &mp3callbacks);
-	err = OMX_GetHandle(&appPriv->alsasinkhandle, "OMX.st.alsa.alsasink", NULL /*appPriv */, &alsasinkcallbacks);
+//	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.st.ffmpeg.mp3dec", NULL /*appPriv */, &mp3callbacks);
+//	err = OMX_GetHandle(&appPriv->alsasinkhandle, "OMX.st.alsa.alsasink", NULL /*appPriv */, &alsasinkcallbacks);
+	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.ffmpeg.mp3dec.component", NULL /*appPriv */, &mp3callbacks);
+	err = OMX_GetHandle(&appPriv->alsasinkhandle, "OMX.alsa.alsasink", NULL /*appPriv */, &alsasinkcallbacks);
 
 	/** Set the number of ports for the dummy component
 	 */

@@ -26,9 +26,11 @@
 
 
 void __attribute__ ((constructor)) omx_mp3dec_component_register_template() {
+	stComponentType *component;
+	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Registering component's template in %s...\n", __func__);	
 	  
-	stComponentType *component = base_component_CreateComponentStruct();
+	component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
 	component->name = "OMX.ffmpeg.mp3dec.component";
 	component->constructor = omx_mp3dec_component_Constructor;

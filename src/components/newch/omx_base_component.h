@@ -39,9 +39,9 @@
 #define MAX_BUFFERS      4
 
 /** Default size of the internal input buffer */
-#define INTERNAL_IN_BUFFER_SIZE  2  * 1024
+#define INTERNAL_IN_BUFFER_SIZE  4  * 1024
 /** Default size of the internal output buffer */
-#define INTERNAL_OUT_BUFFER_SIZE 4 * 1024
+#define INTERNAL_OUT_BUFFER_SIZE 8 * 1024
 
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_base_component_INSTANCES 10

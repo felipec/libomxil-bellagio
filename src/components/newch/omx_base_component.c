@@ -1261,7 +1261,7 @@ OMX_ERRORTYPE base_component_AllocateTunnelBuffers(base_component_PortType* base
 		eError=OMX_UseBuffer(base_component_Port->hTunneledComponent,&base_component_Port->pBuffer[i],
 			base_component_Port->nTunneledPort,NULL,bufferSize,pBuffer); 
 		if(eError!=OMX_ErrorNone) {
-			DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't free buffer %i \n",i);
+			DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't Use buffer %i \n",i);
 			free(pBuffer);
 			return eError;
 		}

@@ -98,6 +98,7 @@ void omx_volume_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 			(((OMX_S16*) inputbuffer->pBuffer)[i] * (omx_volume_component_Private->gain / 100.0f));
 	}
 	outputbuffer->nFilledLen = inputbuffer->nFilledLen;
+	inputbuffer->nFilledLen=0;
 }
 
 OMX_ERRORTYPE omx_volume_component_SetConfig(

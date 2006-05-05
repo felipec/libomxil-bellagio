@@ -241,12 +241,14 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 			omx_mp3dec_component_Private->inputCurrBuffer += len;
 			omx_mp3dec_component_Private->inputCurrLength -= len;
 			inputbuffer->nFilledLen -= len;
-			DEBUG(DEB_LEV_FULL_SEQ, "New Buf Reqd IbLen=%d Len=%d minlen=%d\n", 
+			DEBUG(DEB_LEV_FULL_SEQ, "Buf Consumed IbLen=%d Len=%d minlen=%d\n", 
 				inputbuffer->nFilledLen,len,omx_mp3dec_component_Private->minBufferLength);
+			if(inputbuffer->nFilledLen==0)
+				omx_mp3dec_component_Private->isNewBuffer=1;
 		} else {
 			/**  This condition becomes true when the input buffer has completely be consumed.
 				*  In this case is immediately switched because there is no real buffer consumption */
-			DEBUG(DEB_LEV_FULL_SEQ, "New Buf Reqd IbLen=%d Len=%d \n", inputbuffer->nFilledLen,len);
+			DEBUG(DEB_LEV_FULL_SEQ, "New Buf Reqd IbLen=%d Len=%d  iof=%d\n", inputbuffer->nFilledLen,len,internalOutputFilled);
 			inputbuffer->nFilledLen=0;
 			omx_mp3dec_component_Private->isNewBuffer=1;
 		}

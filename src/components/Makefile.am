@@ -1,4 +1,5 @@
-SUBDIRS = audio_effects
+SUBDIRS = 
+
 
 if WITH_FFMPEGCOMPONENTS
 SUBDIRS+=ffmpeg
@@ -8,4 +9,7 @@ if WITH_ALSACOMPONENT
 SUBDIRS+=alsa
 endif 
 
+if WITH_AUDIOEFFECTS
+SUBDIRS+=audio_effects
+endif
 

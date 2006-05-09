@@ -32,7 +32,7 @@ void __attribute__ ((constructor)) omx_mp3dec_component_register_template() {
 	  
 	component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
-	component->name = "OMX.ffmpeg.mp3dec.component";
+	component->name = "OMX.st.ffmpeg.mp3dec";
 	component->constructor = omx_mp3dec_component_Constructor;
 	component->omx_component.SetConfig = omx_mp3dec_component_SetConfig;
 	component->omx_component.GetConfig = omx_mp3dec_component_GetConfig;

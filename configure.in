@@ -34,33 +34,17 @@ AC_ARG_ENABLE(alsacomponent,
   [with_alsacomponent=true]) dnl default
 AM_CONDITIONAL(WITH_ALSACOMPONENT, test x$with_alsacomponent = xtrue && test x$with_alsalibrary = xtrue)
 
-#Check whether reference component has been requested
-AC_ARG_ENABLE(referencecomponent,
-  AC_HELP_STRING([--disable-referencecomponent], [whether to disable reference component compilation]),
-  [with_referencecomponent=false],
-  [with_referencecomponent=true]) dnl default
-AM_CONDITIONAL(WITH_REFERENCECOMPONENT, test x$with_referencecomponent = xtrue)
-
-#Check whether the new component hierarchy has been requested
-AC_ARG_ENABLE(newch,
-  AC_HELP_STRING([--enable-newch], [whether to enable new component hierarchy]),
-  [with_newch=true],
-  [with_newch=false]) dnl default
-AM_CONDITIONAL(WITH_NEWCH, test x$with_newch = xtrue)
-
 AC_OUTPUT([
 	Makefile		\
 	include/Makefile        \
 	src/Makefile		\
+	src/base/Makefile		\
 	src/components/Makefile	\
-	src/components/reference/Makefile	\
 	src/components/alsa/Makefile	\
 	src/components/ffmpeg/Makefile	\
-	src/components/newch/Makefile \
+	src/components/audio_effects/Makefile	\
 	test/Makefile		\
 	test/components/Makefile	\
 	test/components/alsasink/Makefile \
-	test/components/reference/Makefile \
-	test/components/newch/Makefile \
 	test/components/ffmpeg/Makefile
 ])

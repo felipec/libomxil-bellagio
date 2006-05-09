@@ -33,7 +33,7 @@ void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
 	  
 	component = base_component_CreateComponentStruct();
 	/** here you can override the base component defaults */
-	component->name = "OMX.alsa.alsasink";
+	component->name = "OMX.st.alsa.alsasink";
 	component->constructor = omx_alsasink_component_Constructor;
 	component->destructor = omx_alsasink_component_Destructor;
 	component->omx_component.SetConfig = omx_alsasink_component_SetConfig;

@@ -35,10 +35,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@WITH_ALSACOMPONENT_TRUE@am__append_1 = alsa
-@WITH_REFERENCECOMPONENT_TRUE@am__append_2 = reference
-@WITH_FFMPEGCOMPONENTS_TRUE@am__append_3 = ffmpeg
-@WITH_NEWCH_TRUE@am__append_4 = newch
+@WITH_FFMPEGCOMPONENTS_TRUE@am__append_1 = ffmpeg
+@WITH_ALSACOMPONENT_TRUE@am__append_2 = alsa
 subdir = src/components
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -57,7 +55,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = alsa reference ffmpeg newch
+DIST_SUBDIRS = audio_effects ffmpeg alsa
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -120,10 +118,6 @@ WITH_FFMPEGCOMPONENTS_FALSE = @WITH_FFMPEGCOMPONENTS_FALSE@
 WITH_FFMPEGCOMPONENTS_TRUE = @WITH_FFMPEGCOMPONENTS_TRUE@
 WITH_FFMPEGLIBRARY_FALSE = @WITH_FFMPEGLIBRARY_FALSE@
 WITH_FFMPEGLIBRARY_TRUE = @WITH_FFMPEGLIBRARY_TRUE@
-WITH_NEWCH_FALSE = @WITH_NEWCH_FALSE@
-WITH_NEWCH_TRUE = @WITH_NEWCH_TRUE@
-WITH_REFERENCECOMPONENT_FALSE = @WITH_REFERENCECOMPONENT_FALSE@
-WITH_REFERENCECOMPONENT_TRUE = @WITH_REFERENCECOMPONENT_TRUE@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -167,8 +161,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4)
+SUBDIRS = audio_effects $(am__append_1) $(am__append_2)
 all: all-recursive
 
 .SUFFIXES:

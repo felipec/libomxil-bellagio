@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 SOURCES = $(libomxnewch_la_SOURCES)
 
 srcdir = @srcdir@
@@ -23,7 +22,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../../..
+top_builddir = ../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -39,7 +38,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = src/components/newch
+subdir = src/base
 DIST_COMMON = README $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -48,20 +47,9 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(omxnewchdir)"
-omxnewchLTLIBRARIES_INSTALL = $(INSTALL)
-LTLIBRARIES = $(omxnewch_LTLIBRARIES)
-libomxnewch_la_DEPENDENCIES =
+libomxnewch_la_LIBADD =
 am_libomxnewch_la_OBJECTS = omx_base_component.lo \
-	omx_twoport_component.lo omx_oneport_component.lo \
-	omx_alsasink_component.lo omx_volume_component.lo \
-	omx_mp3dec_component.lo
+	omx_twoport_component.lo omx_oneport_component.lo
 libomxnewch_la_OBJECTS = $(am_libomxnewch_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -141,10 +129,6 @@ WITH_FFMPEGCOMPONENTS_FALSE = @WITH_FFMPEGCOMPONENTS_FALSE@
 WITH_FFMPEGCOMPONENTS_TRUE = @WITH_FFMPEGCOMPONENTS_TRUE@
 WITH_FFMPEGLIBRARY_FALSE = @WITH_FFMPEGLIBRARY_FALSE@
 WITH_FFMPEGLIBRARY_TRUE = @WITH_FFMPEGLIBRARY_TRUE@
-WITH_NEWCH_FALSE = @WITH_NEWCH_FALSE@
-WITH_NEWCH_TRUE = @WITH_NEWCH_TRUE@
-WITH_REFERENCECOMPONENT_FALSE = @WITH_REFERENCECOMPONENT_FALSE@
-WITH_REFERENCECOMPONENT_TRUE = @WITH_REFERENCECOMPONENT_TRUE@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -188,24 +172,16 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-omxnewchdir = $(libdir)/omxilcomponents
-omxnewch_LTLIBRARIES = libomxnewch.la
-libomxnewch_la_LIBADD = -lasound -lavcodec -lavformat
+EXTRA_LTLIBRARIES = libomxnewch.la
 libomxnewch_la_SOURCES = omx_base_component.c \
 						 omx_twoport_component.c \
-						 omx_oneport_component.c \
-						 omx_alsasink_component.c \
-						 omx_volume_component.c \
-						 omx_mp3dec_component.c
+						 omx_oneport_component.c
 
 noinst_HEADERS = omx_base_component.h \
 				 omx_twoport_component.h \
-				 omx_oneport_component.h \
-				 omx_alsasink_component.h \
-				 omx_volume_component.h \
-				 omx_mp3dec_component.h
+				 omx_oneport_component.h
 
-INCLUDES = -I../../../include/ -I../../ -I./
+INCLUDES = -I../../include/ -I../ -I./
 all: all-am
 
 .SUFFIXES:
@@ -219,9 +195,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/components/newch/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/base/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/components/newch/Makefile
+	  $(AUTOMAKE) --gnu  src/base/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -239,35 +215,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-install-omxnewchLTLIBRARIES: $(omxnewch_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(omxnewchdir)" || $(mkdir_p) "$(DESTDIR)$(omxnewchdir)"
-	@list='$(omxnewch_LTLIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    f=$(am__strip_dir) \
-	    echo " $(LIBTOOL) --mode=install $(omxnewchLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(omxnewchdir)/$$f'"; \
-	    $(LIBTOOL) --mode=install $(omxnewchLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(omxnewchdir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-omxnewchLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@set -x; list='$(omxnewch_LTLIBRARIES)'; for p in $$list; do \
-	  p=$(am__strip_dir) \
-	  echo " $(LIBTOOL) --mode=uninstall rm -f '$(DESTDIR)$(omxnewchdir)/$$p'"; \
-	  $(LIBTOOL) --mode=uninstall rm -f "$(DESTDIR)$(omxnewchdir)/$$p"; \
-	done
-
-clean-omxnewchLTLIBRARIES:
-	-test -z "$(omxnewch_LTLIBRARIES)" || rm -f $(omxnewch_LTLIBRARIES)
-	@list='$(omxnewch_LTLIBRARIES)'; for p in $$list; do \
-	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
-	  test "$$dir" != "$$p" || dir=.; \
-	  echo "rm -f \"$${dir}/so_locations\""; \
-	  rm -f "$${dir}/so_locations"; \
-	done
 libomxnewch.la: $(libomxnewch_la_OBJECTS) $(libomxnewch_la_DEPENDENCIES) 
-	$(LINK) -rpath $(omxnewchdir) $(libomxnewch_la_LDFLAGS) $(libomxnewch_la_OBJECTS) $(libomxnewch_la_LIBADD) $(LIBS)
+	$(LINK)  $(libomxnewch_la_LDFLAGS) $(libomxnewch_la_OBJECTS) $(libomxnewch_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -275,12 +224,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_alsasink_component.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_base_component.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_mp3dec_component.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_oneport_component.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_twoport_component.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_volume_component.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -390,11 +336,8 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS)
+all-am: Makefile $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(omxnewchdir)"; do \
-	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -421,8 +364,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-omxnewchLTLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -440,7 +382,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-omxnewchLTLIBRARIES
+install-data-am:
 
 install-exec-am:
 
@@ -468,21 +410,21 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-omxnewchLTLIBRARIES
+uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-omxnewchLTLIBRARIES ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-omxnewchLTLIBRARIES install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	clean-libtool ctags distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-exec install-exec-am \
+	install-info install-info-am install-man install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am \
-	uninstall-omxnewchLTLIBRARIES
+	tags uninstall uninstall-am uninstall-info-am
 
+
+all: libomxnewch.la
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

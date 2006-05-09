@@ -58,7 +58,7 @@ am__installdirs = "$(DESTDIR)$(omxffmpegdir)"
 omxffmpegLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(omxffmpeg_LTLIBRARIES)
 libomxffmpeg_la_DEPENDENCIES =
-am_libomxffmpeg_la_OBJECTS = omx_ffmpeg_mp3dec.lo
+am_libomxffmpeg_la_OBJECTS = omx_mp3dec_component.lo
 libomxffmpeg_la_OBJECTS = $(am_libomxffmpeg_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -138,10 +138,6 @@ WITH_FFMPEGCOMPONENTS_FALSE = @WITH_FFMPEGCOMPONENTS_FALSE@
 WITH_FFMPEGCOMPONENTS_TRUE = @WITH_FFMPEGCOMPONENTS_TRUE@
 WITH_FFMPEGLIBRARY_FALSE = @WITH_FFMPEGLIBRARY_FALSE@
 WITH_FFMPEGLIBRARY_TRUE = @WITH_FFMPEGLIBRARY_TRUE@
-WITH_NEWCH_FALSE = @WITH_NEWCH_FALSE@
-WITH_NEWCH_TRUE = @WITH_NEWCH_TRUE@
-WITH_REFERENCECOMPONENT_FALSE = @WITH_REFERENCECOMPONENT_FALSE@
-WITH_REFERENCECOMPONENT_TRUE = @WITH_REFERENCECOMPONENT_TRUE@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -187,10 +183,10 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 omxffmpegdir = $(libdir)/omxilcomponents
 omxffmpeg_LTLIBRARIES = libomxffmpeg.la
-libomxffmpeg_la_SOURCES = omx_ffmpeg_mp3dec.c
-noinst_HEADERS = omx_ffmpeg_mp3dec.h
-libomxffmpeg_la_LIBADD = -lpthread -lavcodec -lavformat
-INCLUDES = -I../../../include/ -I../../ -I./
+libomxffmpeg_la_SOURCES = omx_mp3dec_component.c
+noinst_HEADERS = omx_mp3dec_component.h
+libomxffmpeg_la_LIBADD = -lavcodec -lavformat
+INCLUDES = -I../../../include/ -I../../ -I./ -I../../base/
 all: all-am
 
 .SUFFIXES:
@@ -260,7 +256,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_ffmpeg_mp3dec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_mp3dec_component.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

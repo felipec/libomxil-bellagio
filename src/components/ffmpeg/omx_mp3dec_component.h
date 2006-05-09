@@ -28,6 +28,8 @@
 #include <OMX_Component.h>
 #include <OMX_Core.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
 #include <omx_twoport_component.h>
 /* Specific include files */
 #include <ffmpeg/avcodec.h>

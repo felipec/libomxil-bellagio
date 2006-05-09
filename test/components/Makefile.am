@@ -4,14 +4,6 @@ if WITH_ALSACOMPONENT
 SUBDIRS += alsasink
 endif
 
-if WITH_REFERENCECOMPONENT
-SUBDIRS += reference
-endif
-
 if WITH_FFMPEGCOMPONENTS
 SUBDIRS+=ffmpeg
 endif 
-
-if WITH_NEWCH
-SUBDIRS+=newch
-endif

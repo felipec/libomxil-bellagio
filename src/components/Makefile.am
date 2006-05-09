@@ -1,17 +1,11 @@
-SUBDIRS =
-
-if WITH_ALSACOMPONENT
-SUBDIRS+=alsa
-endif 
-
-if WITH_REFERENCECOMPONENT
-SUBDIRS+=reference
-endif 
+SUBDIRS = audio_effects
 
 if WITH_FFMPEGCOMPONENTS
 SUBDIRS+=ffmpeg
 endif 
 
-if WITH_NEWCH
-SUBDIRS+=newch
-endif
+if WITH_ALSACOMPONENT
+SUBDIRS+=alsa
+endif 
+
+

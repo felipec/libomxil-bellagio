@@ -59,7 +59,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libomxil_la_DEPENDENCIES =
+libomxil_la_DEPENDENCIES = base/libomxnewch.la
 am_libomxil_la_OBJECTS = omxcore.lo tsemaphore.lo queue.lo
 libomxil_la_OBJECTS = $(am_libomxil_la_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -152,10 +152,6 @@ WITH_FFMPEGCOMPONENTS_FALSE = @WITH_FFMPEGCOMPONENTS_FALSE@
 WITH_FFMPEGCOMPONENTS_TRUE = @WITH_FFMPEGCOMPONENTS_TRUE@
 WITH_FFMPEGLIBRARY_FALSE = @WITH_FFMPEGLIBRARY_FALSE@
 WITH_FFMPEGLIBRARY_TRUE = @WITH_FFMPEGLIBRARY_TRUE@
-WITH_NEWCH_FALSE = @WITH_NEWCH_FALSE@
-WITH_NEWCH_TRUE = @WITH_NEWCH_TRUE@
-WITH_REFERENCECOMPONENT_FALSE = @WITH_REFERENCECOMPONENT_FALSE@
-WITH_REFERENCECOMPONENT_TRUE = @WITH_REFERENCECOMPONENT_TRUE@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -199,8 +195,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = components
-libomxil_la_LIBADD = -lpthread -ldl
+SUBDIRS = components base
+
+# addition of base and n-port classes for component development
+libomxil_la_LIBADD = -lpthread -ldl base/libomxnewch.la
 lib_LTLIBRARIES = libomxil.la
 omxregister_SOURCES = omxregister.c
 omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\"

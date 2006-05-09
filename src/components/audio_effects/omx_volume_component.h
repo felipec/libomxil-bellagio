@@ -27,6 +27,8 @@
 #include <OMX_Types.h>
 #include <OMX_Component.h>
 #include <OMX_Core.h>
+#include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <omx_twoport_component.h>
 

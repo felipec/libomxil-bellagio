@@ -1,18 +1,22 @@
-Bellagio OpenMAX Integration Layer  0.1 project 
+Bellagio OpenMAX Integration Layer  0.2 project 
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API, specified
 by the Khronos group (see http://www.khronos.org/openmax).
 
 This package includes the libomxil shared library together with the following OpenMAX 
 components (built as separate shared objects and loaded at runtime):
-- OMX reference component
 - OMX alsa sink component
 - OMX mp3 decoder component (requires ffmpeg and ffmpeg-devel libraries, not part of this package)
+- OMX volume control component
+And the base classes for new architecture based on component hierarchy:
+- OMX base component
+- OMX one port component
+- OMX two ports component
 
 The following simple test applications are provided:
 
 test/components/alsasink/omxalsasinktest
-test/components/reference/omxreferencetest
+test/components/ffmpeg/omxmp3dectest
 
 Check the distribution build:
 
@@ -42,10 +46,6 @@ test/components/alsasink/omxalsasinktest somepcmfile.pcm
 The reference component takes a PCM input file and simply forwards it directly to the output.
 
 test/components/reference/omxreferencetest any_file > any_file_replicated
-
-The reference component is basically used as a boilerplate to develop new components.
-In the next releases, an inheritance mechanism will be introduced, by means of which
-new OMX components can be created based on the reference component, avoiding code duplication.
 
 The MP3 decoder component test is a simple MP3 player which uses OpenMAX data tunneling
 between the OMX MP3 decoder component and the OMX alsa sink component.
@@ -84,5 +84,5 @@ Mandriva 2006.0,
 Ubuntu 5.10,
 CentOS 4.1.
 
-Last modified: Feb 9th, 2006.
+Last modified: May 9th, 2006.
 

@@ -1,5 +1,5 @@
 /**
-	@file test/components/reference/omxreferencetest.c
+	@file test/components/audio_effects/omxvolcontroltest.c
 	
 	Test application that uses the reference component. 
 	This application does not apply any stream manipulation, but reproduces
@@ -7,7 +7,7 @@
 	
 	Copyright (C) 2006  STMicroelectronics
 
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+	@author Diego MELPIGNANO, Ukri NIEMIMUUKKO, Pankaj SEN, David SIORPAES, Giulio URLINI
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -24,7 +24,7 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/02/08:  Reference Component Test version 0.1
+	2006/02/10:  Reference Component Test version 0.2
 
 */
 
@@ -55,9 +55,9 @@ OMX_HANDLETYPE handle;
 
 int main(int argc, char** argv){
 	//	appPrivateType* appPriv;
-	OMX_CALLBACKTYPE callbacks = { .EventHandler = dummyEventHandler,
-								 .EmptyBufferDone = dummyEmptyBufferDone,
-								 .FillBufferDone = dummyFillBufferDone,
+	OMX_CALLBACKTYPE callbacks = { .EventHandler = volcEventHandler,
+								 .EmptyBufferDone = volcEmptyBufferDone,
+								 .FillBufferDone = volcFillBufferDone,
 	};
 
 	OMX_VERSIONTYPE componentVersion;
@@ -100,7 +100,7 @@ int main(int argc, char** argv){
 		DEBUG(DEB_LEV_ERR, "OMX_Init() failed\n");
 		exit(1);
 	}
-	/** Ask the core for a handle to the dummy component
+	/** Ask the core for a handle to the volume control component
 	 */
 	err = OMX_GetHandle(&handle, "OMX.volume.component", NULL /*appPriv */, &callbacks);
 	if(err != OMX_ErrorNone) {
@@ -240,7 +240,7 @@ int main(int argc, char** argv){
 }
 
 /* Callbacks implementation */
-OMX_ERRORTYPE dummyEventHandler(
+OMX_ERRORTYPE volcEventHandler(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_EVENTTYPE eEvent,
@@ -255,7 +255,7 @@ OMX_ERRORTYPE dummyEventHandler(
 	return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE dummyEmptyBufferDone(
+OMX_ERRORTYPE volcEmptyBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)
@@ -276,7 +276,7 @@ OMX_ERRORTYPE dummyEmptyBufferDone(
 	return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE dummyFillBufferDone(
+OMX_ERRORTYPE volcFillBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)

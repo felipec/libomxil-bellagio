@@ -51,7 +51,7 @@ typedef struct appPrivateType{
 #define BUFFER_IN_SIZE 2048
 
 /* Callback prototypes */
-OMX_ERRORTYPE dummyEventHandler(
+OMX_ERRORTYPE volcEventHandler(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_EVENTTYPE eEvent,
@@ -59,12 +59,12 @@ OMX_ERRORTYPE dummyEventHandler(
 	OMX_OUT OMX_U32 Data2,
 	OMX_IN OMX_PTR pEventData);
 
-OMX_ERRORTYPE dummyEmptyBufferDone(
+OMX_ERRORTYPE volcEmptyBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
-OMX_ERRORTYPE dummyFillBufferDone(
+OMX_ERRORTYPE volcFillBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);

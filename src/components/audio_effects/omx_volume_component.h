@@ -33,6 +33,13 @@
 #include <omx_twoport_component.h>
 
 
+/** Volume component port structure.
+ */
+DERIVEDCLASS(omx_volume_component_PortType, base_component_PortType)
+#define omx_volume_component_PortType_FIELDS base_component_PortType_FIELDS \
+	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
+	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
+ENDCLASS(omx_volume_component_PortType)
 
 /** Twoport component private structure.
  * see the define above

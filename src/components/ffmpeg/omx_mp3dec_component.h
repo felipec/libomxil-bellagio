@@ -36,6 +36,14 @@
 #include <ffmpeg/avformat.h>
 
 
+/** Mp3 Decoder component port structure.
+ */
+DERIVEDCLASS(omx_mp3dec_component_PortType, base_component_PortType)
+#define omx_mp3dec_component_PortType_FIELDS base_component_PortType_FIELDS \
+	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
+	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
+ENDCLASS(omx_mp3dec_component_PortType)
+
 /** Twoport component private structure.
  * see the define above
  */

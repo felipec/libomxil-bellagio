@@ -128,14 +128,21 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
 
+	/*
 	setHeader(&omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam.nPortIndex = 0;
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam.nIndex = 0;
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam.eEncoding = 0;
+	*/
 	
 	omx_alsasink_component_Private->BufferMgmtCallback = omx_alsasink_component_BufferMgmtCallback;
 
 	port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+
+	setHeader(&port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+	port->sAudioParam.nPortIndex = 0;
+	port->sAudioParam.nIndex = 0;
+	port->sAudioParam.eEncoding = 0;
 
 	/* OMX_AUDIO_PARAM_PCMMODETYPE */
 	port->omxAudioParamPcmMode.nPortIndex = 0;

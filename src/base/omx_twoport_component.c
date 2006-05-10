@@ -35,8 +35,7 @@ OMX_ERRORTYPE omx_twoport_component_Constructor(stComponentType* stComponent) {
 			return OMX_ErrorInsufficientResources;
 	}
 	
-	// we could create our own port structures here
-	// fixme maybe the base class could use a "port factory" function pointer?	
+	/*Call the base class constructory*/
 	err = base_component_Constructor(stComponent);
 
 	/* here we can override whatever defaults the base_component constructor set

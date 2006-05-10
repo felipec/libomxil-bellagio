@@ -87,8 +87,6 @@ CLASS(base_component_PortType)
 	pthread_mutex_t mutex; \
 	/** @param sPortParam General OpenMAX port parameter */ \
 	OMX_PARAM_PORTDEFINITIONTYPE sPortParam; \
-	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; \
 	/** @param hTunneledComponent Handle to the tunnelled component */ \
 	OMX_HANDLETYPE hTunneledComponent; \
 	/** @param nTunneledPort Tunnelled port number */ \
@@ -105,8 +103,7 @@ CLASS(base_component_PortType)
 	OMX_BOOL bIsPortFlushed;
 ENDCLASS(base_component_PortType)
 
-
-
+ 
 /**
  * Components Private Structure
  */

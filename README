@@ -17,6 +17,7 @@ The following simple test applications are provided:
 
 test/components/alsasink/omxalsasinktest
 test/components/ffmpeg/omxmp3dectest
+test/components/audio_effects/omxvolcontroltest
 
 Check the distribution build:
 
@@ -43,14 +44,16 @@ The alsasink plays a PCM file, at 44100 Hz, stereo
 
 test/components/alsasink/omxalsasinktest somepcmfile.pcm
 
-The reference component takes a PCM input file and simply forwards it directly to the output.
-
-test/components/reference/omxreferencetest any_file > any_file_replicated
-
 The MP3 decoder component test is a simple MP3 player which uses OpenMAX data tunneling
 between the OMX MP3 decoder component and the OMX alsa sink component.
 
 test/components/ffmpeg/omxmp3dectest somemp3file.mp3
+
+The volume control test receives in input a PCM stream and put on std uotput the same stream
+filtered by the volume cotrol component.
+
+test/components/audio_effects/omxvolcontroltest audio_stream.raw | aplay -f cd
+
 
 HOW TO ADD A NEW COMPONENT
 -Add, in the src/components directory, a directory that will contain your component.

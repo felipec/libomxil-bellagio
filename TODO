@@ -1,3 +1,2 @@
 * manage end of stream in case of data tunneling
-* add inheritance scheme for components, where the base class is the current reference component
 * performance optimizations of the data flow

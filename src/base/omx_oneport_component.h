@@ -38,6 +38,8 @@
 #include <OMX_Core.h>
 #include <pthread.h>
 #include <omx_base_component.h>
+#include <stdlib.h>
+
 
 #define OMX_ONEPORT_INPUTPORT_INDEX 0
 #define OMX_ONEPORT_ALLPORT_INDEX -1

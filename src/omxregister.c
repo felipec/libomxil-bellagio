@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <dirent.h>
+#include <stdlib.h>
 #include <strings.h>
 #include <errno.h>
 

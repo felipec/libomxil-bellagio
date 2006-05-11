@@ -47,7 +47,8 @@ void __attribute__ ((constructor)) omx_alsasink_component_register_template() {
  	register_template(component);
 }
 
-
+/** The Destructor 
+ */
 OMX_ERRORTYPE omx_alsasink_component_Destructor(stComponentType* stComponent) {
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;
 
@@ -63,6 +64,8 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(stComponentType* stComponent) {
 	base_component_Destructor(stComponent);
 }
 
+/** The Constructor 
+ */
 OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
 	OMX_S32 i;
@@ -128,13 +131,6 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
 	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
 
-	/*
-	setHeader(&omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam.nPortIndex = 0;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam.nIndex = 0;
-	omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sAudioParam.eEncoding = 0;
-	*/
-	
 	omx_alsasink_component_Private->BufferMgmtCallback = omx_alsasink_component_BufferMgmtCallback;
 
 	port = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
@@ -158,8 +154,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	noAlsasinkInstance++;
 	if(noAlsasinkInstance > MAX_NUM_OF_alsasink_component_INSTANCES) 
 		return OMX_ErrorInsufficientResources;
-	/* Todo: add the volume stuff */
-
+	
 	/* Allocate the playback handle and the hardware parameter structure */
 	if ((err = snd_pcm_open (&port->playback_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
 		DEBUG(DEB_LEV_ERR, "cannot open audio device %s (%s)\n", "default", snd_strerror (err));
@@ -185,6 +180,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	port->AudioPCMConfigured	= 0;
 
 	omx_alsasink_component_Private->Init = &omx_alsasink_component_Init;
+	omx_alsasink_component_Private->DomainCheck	 = &omx_alsasink_component_DomainCheck;
 
 	return err;
 }
@@ -217,7 +213,18 @@ OMX_ERRORTYPE omx_alsasink_component_Init(stComponentType* stComponent)
 	
 };
 
+/**Check Domain of the Tunneled Component*/
+OMX_ERRORTYPE omx_alsasink_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef){
+	if(pDef.eDomain!=OMX_PortDomainAudio)
+		return OMX_ErrorPortsNotCompatible;
+	else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax)
+		return OMX_ErrorPortsNotCompatible;
 
+	return OMX_ErrorNone;
+}
+
+/** This function is used to process the input buffer and provide one output buffer
+ */
 void omx_alsasink_component_BufferMgmtCallback(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer) {
 	OMX_U32  frameSize;
 	OMX_S32 written;

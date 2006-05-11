@@ -184,6 +184,7 @@ OMX_ERRORTYPE omx_mp3dec_component_Constructor(stComponentType* stComponent) {
 	omx_mp3dec_component_Private->BufferMgmtCallback = omx_mp3dec_component_BufferMgmtCallback;
 	omx_mp3dec_component_Private->Init = omx_mp3dec_component_Init;
 	omx_mp3dec_component_Private->Deinit = omx_mp3dec_component_Deinit;
+	omx_mp3dec_component_Private->DomainCheck	 = &omx_mp3dec_component_DomainCheck;
 
 	return err;
 }
@@ -227,6 +228,18 @@ OMX_ERRORTYPE omx_mp3dec_component_Deinit(stComponentType* stComponent) {
 	return err;
 }
 
+/**Check Domain of the Tunneled Component*/
+OMX_ERRORTYPE omx_mp3dec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef){
+	if(pDef.eDomain!=OMX_PortDomainAudio)
+		return OMX_ErrorPortsNotCompatible;
+	else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax)
+		return OMX_ErrorPortsNotCompatible;
+
+	return OMX_ErrorNone;
+}
+
+/** This function is used to process the input buffer and provide one output buffer
+ */
 void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer) {
 	omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_S32 outputfilled = 0;
@@ -274,7 +287,6 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 				omx_mp3dec_component_Private->positionInOutBuf = 0;
 				outputfilled = 1;
 				break;
-				//base_component_Panic();
 			}
 		} else {
 			len = avcodec_decode_audio(omx_mp3dec_component_Private->avCodecContext,

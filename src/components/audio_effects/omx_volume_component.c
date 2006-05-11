@@ -134,9 +134,22 @@ OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 	
 	omx_volume_component_Private->gain = 100.0f; // default gain
 	omx_volume_component_Private->BufferMgmtCallback = omx_volume_component_BufferMgmtCallback;
+	omx_volume_component_Private->DomainCheck	 = &omx_volume_component_DomainCheck;
 	return err;
 }
 
+/**Check Domain of the Tunneled Component*/
+OMX_ERRORTYPE omx_volume_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef){
+	if(pDef.eDomain!=OMX_PortDomainAudio)
+		return OMX_ErrorPortsNotCompatible;
+	else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax)
+		return OMX_ErrorPortsNotCompatible;
+
+	return OMX_ErrorNone;
+}
+
+/** This function is used to process the input buffer and provide one output buffer
+ */
 void omx_volume_component_BufferMgmtCallback(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer) {
 	int i;
 	int sampleCount = inputbuffer->nFilledLen / 2; // signed 16 bit samples assumed

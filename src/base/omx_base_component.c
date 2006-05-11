@@ -39,7 +39,7 @@ extern "C" {
 
 #include <OMX_Core.h>
 #include <OMX_Component.h>
-#include <OMX_Audio.h>
+//#include <OMX_Audio.h>
 
 #include "omxcore.h"
 #include "omx_base_component.h"
@@ -147,6 +147,7 @@ OMX_ERRORTYPE base_component_Constructor(stComponentType* stComponent)
 	base_component_Private->FlushPort = &base_component_FlushPort;
 	base_component_Private->AllocateTunnelBuffers = &base_component_AllocateTunnelBuffers;
 	base_component_Private->FreeTunnelBuffers = &base_component_FreeTunnelBuffers;
+	base_component_Private->DomainCheck		  = &base_component_DomainCheck;
 	
 	/** generic parameter NOT related to a specific port */
 	setHeader(&base_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
@@ -484,8 +485,12 @@ void* base_component_BufferMgmtFunction(void* param) {
 	
 	return NULL;
 }
+/** Dummy Function to check domain specific parameters of the Component
+ */
 
-
+OMX_ERRORTYPE base_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef){
+	return OMX_ErrorNone;
+}
 
 /** This function is executed when a loaded to idle transition occurs.
  * It is responsible of allocating all necessary resources for being
@@ -2249,12 +2254,12 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 
 		base_component_Private->ports[nPort]->nNumTunnelBuffer=param.nBufferCountMin;
 
-		/*FixMe: It requires a call to derived class domain check: Pankaj*/
-		DEBUG(DEB_LEV_SIMPLE_SEQ,"Tunneled port domain=%d\n",param.eDomain);
-		if(param.eDomain!=OMX_PortDomainAudio)
-			return OMX_ErrorPortsNotCompatible;
-		else if(param.format.audio.eEncoding == OMX_AUDIO_CodingMax)
-			return OMX_ErrorPortsNotCompatible;
+		/*Check domain of the tunnelled component*/
+		err = (*(base_component_Private->DomainCheck))(param);
+		if (err != OMX_ErrorNone) {
+			DEBUG(DEB_LEV_ERR,"Domain Check Error=%08x\n",err);
+			return err;
+		}
 
 		/* Get Buffer Supplier type of the Tunnelled Component*/
 		pSupplier.nPortIndex=nTunneledPort;

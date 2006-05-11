@@ -102,4 +102,8 @@ OMX_ERRORTYPE omx_mp3dec_component_GetConfig(
 	OMX_IN  OMX_INDEXTYPE nIndex,
 	OMX_INOUT OMX_PTR pComponentConfigStructure);
 
+/**Check Domain of the Tunneled Component*/
+OMX_ERRORTYPE omx_mp3dec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
+
+
 #endif //_OMX_MP3DEC_COMPONENT_H_

@@ -168,7 +168,9 @@ CLASS(base_component_PrivateType)
 	/** @param BufferMgmtFunction Counter of output buffers. Only for debug */ \
 	void* (*BufferMgmtFunction)(void* param);    \
 	/** @param FlushPort to Flush input/output ports */ \
-	OMX_ERRORTYPE (*FlushPort)(stComponentType* stComponent, OMX_U32 portIndex);
+	OMX_ERRORTYPE (*FlushPort)(stComponentType* stComponent, OMX_U32 portIndex);\
+	/** @param FreeTunnelBuffers Counter of output buffers. Only for debug */ \
+	OMX_ERRORTYPE (*DomainCheck)(OMX_PARAM_PORTDEFINITIONTYPE pDef); 
 ENDCLASS(base_component_PrivateType)
 
 /**
@@ -369,5 +371,6 @@ void base_component_SetPortFlushFlag(stComponentType* stComponent, OMX_S32 index
 void base_component_SetNumBufferFlush(stComponentType* stComponent, OMX_S32 index, OMX_S32 value);
 void base_component_returnInputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pInputBuffer,base_component_PortType *pPort);
 void base_component_returnOutputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pOutputBuffer,base_component_PortType *pPort);
+OMX_ERRORTYPE base_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
 
 #endif // _OMX_BASE_COMPONENT_H_

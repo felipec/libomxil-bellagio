@@ -78,4 +78,7 @@ OMX_ERRORTYPE omx_volume_component_GetConfig(
 	OMX_IN  OMX_INDEXTYPE nIndex,
 	OMX_INOUT OMX_PTR pComponentConfigStructure);
 
+/**Check Domain of the Tunneled Component*/
+OMX_ERRORTYPE omx_volume_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
+
 #endif //_OMX_VOLUME_COMPONENT_H_

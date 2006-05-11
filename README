@@ -77,8 +77,8 @@ HOW TO ADD A NEW COMPONENT
  make check
 -To build RPM:
  make dist
- cp libomxil-0.1.tar.gz /usr/src/redhat/SOURCES/
- rpmbuild -ba libomxil-0.1.spec
+ cp libomxil-0.2.tar.gz /usr/src/redhat/SOURCES/
+ rpmbuild -ba libomxil-0.2.spec
 
 This version has been tested on:
 FC2 (with ffmpeg-0.4.8), 

@@ -6,7 +6,8 @@ libomxnewch_la_SOURCES = omx_base_component.c \
 						 
 noinst_HEADERS = omx_base_component.h \
 				 omx_twoport_component.h \
-				 omx_oneport_component.h
+				 omx_oneport_component.h \
+				 omx_classmagic.h
 
 INCLUDES = -I../../include/ -I../ -I./
 

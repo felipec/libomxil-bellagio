@@ -1,9 +1,9 @@
 Name: libomxil
-Version: 0.1
+Version: 0.2
 Release: 0
 License: GNU LGPL
 Group: System Environment/Libraries
-Source: libomxil-0.1.tar.gz
+Source: libomxil-0.2.tar.gz
 Summary: OpenMAX Integration Layer 1.0 library and components.
 Vendor: STMicroelectronics
 
@@ -13,8 +13,8 @@ enable developers and platform providers to integrate and communicate
 with multimedia codecs implemented in hardware or software.
  
 The libomxil shared library implements the OpenMAX IL Core functionalities.
-Three dynamically loadable components are also included: OMX reference
-component, OMX alsa sink component, and OMX mp3 decoder component
+Three dynamically loadable components are also included: OMX alsa sink 
+component, OMX mp3 decoder component and OMX volume control component.
 (requires ffmpeg library, not part of this package).
 
 %prep

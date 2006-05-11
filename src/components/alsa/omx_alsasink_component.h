@@ -1,5 +1,7 @@
 /**
- * @file src/components/newch/omx_alsasink_component.h
+ * @file src/components/alsa/omx_alsasink_component.h
+ * 
+ * OpenMax alsa sink component. This component is an audio sink that uses ALSA library.
  * 
  * Copyright (C) 2006  Nokia and STMicroelectronics
  * @author Ukri NIEMIMUUKKO, Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
@@ -18,6 +20,9 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
+ *
+ * 2006/05/11:  audio alsa sink component version 0.2
+ *
  */
 
 

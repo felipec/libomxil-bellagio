@@ -1,7 +1,7 @@
 #ifndef OMX_CLASSMAGIC_H_
 #define OMX_CLASSMAGIC_H_
 /**
- * @file src/components/newch/omx_classmagic.h
+ * @file src/baase/omx_classmagic.h
  * 
  * Copyright (C) 2006  Nokia
  * @author Ukri NIEMIMUUKKO
@@ -36,6 +36,9 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
+ *
+ * 2006/05/11:  class handling helper macros version 0.2
+ *
  */
 
 

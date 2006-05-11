@@ -1,5 +1,8 @@
 /**
- * @file src/components/newch/omx_volume_component.c
+ * @file src/components/audio_effects/omx_volume_component.c
+ * 
+ * OpenMax volume control component. This component implements a filter that 
+ * controls the volume level of the audio PCM stream.
  * 
  * Copyright (C) 2006  Nokia and STMicroelectronics
  * @author Ukri NIEMIMUUKKO, Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
@@ -18,6 +21,9 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
+ *
+ * 2006/05/11:  audio volume control component version 0.2
+ *
  */
 
 

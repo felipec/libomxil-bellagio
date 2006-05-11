@@ -1,15 +1,7 @@
-This folder contains the start of the new component hierarchy.
+This folder contains the base classes to implement th new hierarchical components.
 
-The goal is to provide a component base class or base classes that can be quickly 
-used for creating new OpenMAX IL Components.
+It provides a base class for common functionality, and two component, one port and two ports components, 
+that allow the impementation of sources and sinks, and respectively filters and codecs. 
 
-This is very much under construction and currently it doesn't yet work.
-
-By default the compilation of these is not included in the build. To enable,
-run in the top folder:
-
-./reconf
-./configure --enable-newch
-./make
-
-Remove this file after the hierarchy becomes usable.
+These base components are included in the omil library, with the core functionality,
+that each final component must include.

@@ -1,5 +1,5 @@
 /**
-	@file src/components/newch/omx_base_component.h
+	@file src/base/omx_base_component.h
 	
 	OpenMax base_component component. This component does not perform any multimedia
 	processing.	It is used as a base_component for new components development.
@@ -23,7 +23,7 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/02/08:  OpenMAX base_component component version 0.1
+	2006/05/11:  OpenMAX base_component component version 0.2
 
 */
 #ifndef _OMX_BASE_COMPONENT_H_

@@ -1,6 +1,9 @@
 /**
- * @file src/components/newch/omx_mp3dec_component.c
- * 
+ * @file src/components/ffmpeg/omx_mp3dec_component.c
+ *
+ * This component implements and mp3 decoder. The Mp3 decoder is based on ffmpeg
+ * software library.
+ *
  * Copyright (C) 2006  Nokia and STMicroelectronics
  * @author Pankaj SEN,Ukri NIEMIMUUKKO, Diego MELPIGNANO, , David SIORPAES, Giulio URLINI
  * 
@@ -18,6 +21,9 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
+ *
+ * 2006/05/11:  ffmpeg mp3 decoder component version 0.2
+ *
  */
 
 

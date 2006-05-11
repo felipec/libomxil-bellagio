@@ -31,7 +31,7 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/02/08:  IL component register version 0.1
+	2006/05/11:  IL component register version 0.2
 
 */
 

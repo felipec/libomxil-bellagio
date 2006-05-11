@@ -1,6 +1,10 @@
 /**
  * @file src/components/newch/omx_twoport_component.c
  * 
+ * OpenMax two ports component. This component does not perform any multimedia
+ * processing. It derives from base component and contains two ports. It can be used 
+ * as base class for codec and filter components.
+ * 
  * Copyright (C) 2006  Nokia and STMicroelectronics
  * @author Ukri NIEMIMUUKKO, Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
  * 
@@ -18,6 +22,9 @@
  * along with this library; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
+ *
+ * 2006/05/11:  two ports component version 0.2
+ *
  */
 
 

@@ -24,7 +24,7 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/02/08:  Debug Level for tests version 0.1
+	2006/05/11:  Debug Level for tests version 0.2
 
 */
 

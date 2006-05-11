@@ -228,10 +228,10 @@ int main(int argc, char** argv){
 
 	tsem_down(appPriv->eofSem);
 
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop alsa sink\n");
-	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop mp3 dec\n");
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop alsa sink\n");
+	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	
 	tsem_down(appPriv->alsasinkEventSem);
 	tsem_down(appPriv->decoderEventSem);
@@ -342,6 +342,9 @@ OMX_ERRORTYPE mp3FillBufferDone(
 {
 	OMX_ERRORTYPE err;
 	int i;	
+	OMX_STATETYPE eState;
+	
+	OMX_GetState(hComponent,&eState);
 
 	/* Output data to alsa sink */
 	if(pBuffer != NULL){
@@ -349,7 +352,8 @@ OMX_ERRORTYPE mp3FillBufferDone(
 			DEBUG(DEB_LEV_ERR, "Ouch! In %s: no data in the output buffer!\n", __func__);
 			return OMX_ErrorNone;
 		}
-		err = OMX_EmptyThisBuffer(appPriv->alsasinkhandle, pBuffer);
+		if(eState==OMX_StateExecuting || eState==OMX_StatePause)
+			err = OMX_EmptyThisBuffer(appPriv->alsasinkhandle, pBuffer);
 	}
 	else {
 		DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);

@@ -185,6 +185,9 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType* stComponent) {
 	return err;
 }
 
+/** The Initialization function 
+ */
+
 OMX_ERRORTYPE omx_alsasink_component_Init(stComponentType* stComponent)
 {
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = stComponent->omx_component.pComponentPrivate;

@@ -54,13 +54,14 @@ void omx_mp3dec_component_ffmpegLibInit(omx_mp3dec_component_PrivateType* omx_mp
 
 	DEBUG(DEB_LEV_FULL_SEQ, "FFMpeg Library/codec iniited\n");
 
+	/*Find the Mpeg2 decoder */
 	omx_mp3dec_component_Private->avCodec = avcodec_find_decoder(CODEC_ID_MP2);
 	if (!omx_mp3dec_component_Private->avCodec) {
 		DEBUG(DEB_LEV_ERR, "Codec Not found\n");
 		base_component_Panic();
 	}
 	omx_mp3dec_component_Private->avCodecContext = avcodec_alloc_context();
-    //open it
+    /*open the avcodec */
     if (avcodec_open(omx_mp3dec_component_Private->avCodecContext, omx_mp3dec_component_Private->avCodec) < 0) {
 		DEBUG(DEB_LEV_ERR, "Could not open codec\n");
 		base_component_Panic();
@@ -86,6 +87,8 @@ void omx_mp3dec_component_ffmpegLibDeInit(omx_mp3dec_component_PrivateType* omx_
     
 }
 
+/** The Constructor 
+ */
 OMX_ERRORTYPE omx_mp3dec_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
 	omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private;
@@ -189,6 +192,8 @@ OMX_ERRORTYPE omx_mp3dec_component_Constructor(stComponentType* stComponent) {
 	return err;
 }
 
+/** The Initialization function 
+ */
 OMX_ERRORTYPE omx_mp3dec_component_Init(stComponentType* stComponent)
 {
 	omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private = stComponent->omx_component.pComponentPrivate;
@@ -213,6 +218,8 @@ OMX_ERRORTYPE omx_mp3dec_component_Init(stComponentType* stComponent)
 	
 };
 
+/** The Deinitialization function 
+ */
 OMX_ERRORTYPE omx_mp3dec_component_Deinit(stComponentType* stComponent) {
 	omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_ERRORTYPE err = OMX_ErrorNone;
@@ -305,6 +312,7 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 			inputbuffer->nFilledLen -= len;
 			DEBUG(DEB_LEV_FULL_SEQ, "Buf Consumed IbLen=%d Len=%d minlen=%d\n", 
 				inputbuffer->nFilledLen,len,omx_mp3dec_component_Private->minBufferLength);
+			/*Buffer is fully consumed. Request for new Input Buffer*/
 			if(inputbuffer->nFilledLen==0)
 				omx_mp3dec_component_Private->isNewBuffer=1;
 		} else {
@@ -312,6 +320,8 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 				*  In this case is immediately switched because there is no real buffer consumption */
 			DEBUG(DEB_LEV_FULL_SEQ, "New Buf Reqd IbLen=%d Len=%d  iof=%d\n", inputbuffer->nFilledLen,len,internalOutputFilled);
 			inputbuffer->nFilledLen=0;
+			/*Few bytes may be left in the input buffer but can't generate one output frame. 
+				Request for new Input Buffer*/
 			omx_mp3dec_component_Private->isNewBuffer=1;
 		}
 
@@ -336,8 +346,6 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 		}
 	}
 	DEBUG(DEB_LEV_FULL_SEQ, "One output buffer %x len=%d is full returning\n",outputbuffer->pBuffer,outputbuffer->nFilledLen);
-
-	
 }
 
 OMX_ERRORTYPE omx_mp3dec_component_SetConfig(
@@ -359,8 +367,11 @@ OMX_ERRORTYPE omx_mp3dec_component_GetConfig(
 	OMX_IN  OMX_INDEXTYPE nIndex,
 	OMX_INOUT OMX_PTR pComponentConfigStructure)
 {
-	//fixme
-	return base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
+	switch (nIndex) {
+		default: // delegate to superclass
+			return base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
+	}
+	return OMX_ErrorNone;
 }
 
 OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
@@ -414,7 +425,6 @@ OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
 			portIndex = pAudioPortFormat->nPortIndex;
 			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAuidoMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
 		break;
-		//fixme
 		default:
 			return base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}

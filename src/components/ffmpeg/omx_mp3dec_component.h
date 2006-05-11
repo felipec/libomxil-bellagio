@@ -44,8 +44,7 @@ DERIVEDCLASS(omx_mp3dec_component_PortType, base_component_PortType)
 	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
 ENDCLASS(omx_mp3dec_component_PortType)
 
-/** Twoport component private structure.
- * see the define above
+/** Mp3Dec component private structure.
  */
 DERIVEDCLASS(omx_mp3dec_component_PrivateType, omx_twoport_component_PrivateType)
 #define omx_mp3dec_component_PrivateType_FIELDS omx_twoport_component_PrivateType_FIELDS \

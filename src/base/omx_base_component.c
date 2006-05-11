@@ -2271,7 +2271,7 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 			return OMX_ErrorPortsNotCompatible;
 		}
 		else {
-			DEBUG(DEB_LEV_SIMPLE_SEQ,"Tunneled Port eBufferSupplier=%x\n",pSupplier.eBufferSupplier);
+			DEBUG(DEB_LEV_FULL_SEQ,"Tunneled Port eBufferSupplier=%x\n",pSupplier.eBufferSupplier);
 		}
 
 		// store the current callbacks, if defined
@@ -2295,6 +2295,17 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 			}
 		}
 		base_component_Private->ports[nPort]->nTunnelFlags |= TUNNEL_ESTABLISHED;
+
+		/* Set Buffer Supplier type of the Tunnelled Component after final negotiation*/
+		pSupplier.nPortIndex=nTunneledPort;
+		pSupplier.eBufferSupplier=base_component_Private->ports[nPort]->eBufferSupplier;
+		err = OMX_SetParameter(hTunneledComp, OMX_IndexParamCompBufferSupplier, &pSupplier);
+		if (err != OMX_ErrorNone) {
+			// compatibility not reached
+			DEBUG(DEB_LEV_ERR,"In %s Tunneled Buffer Supplier error=0x%08x Line=%d\n",__func__,err,__LINE__);
+			base_component_Private->ports[nPort]->nTunnelFlags=0;
+			return OMX_ErrorPortsNotCompatible;
+		}
 	} else  {
 		// output port
 		// all the consistency checks are under other component responsibility

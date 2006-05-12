@@ -56,7 +56,17 @@ ENDCLASS(omx_oneport_component_PrivateType)
 /* Component private entry points declaration */
 OMX_ERRORTYPE omx_oneport_component_Constructor(stComponentType*);
 
+/** This is the central function for component processing. It
+ * is executed in a separate thread, is synchronized with 
+ * semaphores at each port, those are released each time a new buffer
+ * is available on the given port.
+ */
 void* omx_oneport_component_BufferMgmtFunction(void* param);
+/** Flushes all the buffers under processing by the given port. 
+ * This function si called due to a state change of the component, typically
+ * @param stComponent the component which owns the port to be flushed
+ * @param portIndex the ID of the port to be flushed
+ */
 OMX_ERRORTYPE omx_oneport_component_FlushPort(stComponentType* stComponent, OMX_U32 portIndex);
 
 #endif //_OMX_ONEPORT_COMPONENT_H_

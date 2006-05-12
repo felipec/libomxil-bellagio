@@ -174,7 +174,8 @@ CLASS(base_component_PrivateType)
 ENDCLASS(base_component_PrivateType)
 
 /**
- * FIXME comment
+ * This is the stComponent template from which all
+ * other stComponent instances are factored by the core.
  */
 stComponentType* base_component_CreateComponentStruct(void);
 
@@ -367,10 +368,25 @@ OMX_ERRORTYPE base_component_ComponentTunnelRequest(
 	OMX_IN  OMX_U32 nTunneledPort,
 	OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup);
 
+/**
+ * Set/Reset Port Flush Flag
+ */
 void base_component_SetPortFlushFlag(stComponentType* stComponent, OMX_S32 index, OMX_BOOL value);
+/**
+ * Set Number of Buffer Flushed with the value Specified
+ */
 void base_component_SetNumBufferFlush(stComponentType* stComponent, OMX_S32 index, OMX_S32 value);
+/**
+ * Returns Input Buffer to the IL client or Tunneled Component
+ */
 void base_component_returnInputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pInputBuffer,base_component_PortType *pPort);
+/**
+ * Returns Output Buffer to the IL client or Tunneled Component
+ */
 void base_component_returnOutputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pOutputBuffer,base_component_PortType *pPort);
+/**
+ * Base Class Function to Check Domain of the Tunneled Component
+ */
 OMX_ERRORTYPE base_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
 
 #endif // _OMX_BASE_COMPONENT_H_

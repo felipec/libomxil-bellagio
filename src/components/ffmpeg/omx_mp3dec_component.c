@@ -403,6 +403,7 @@ OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
 	switch(nParamIndex) {
 		case OMX_IndexParamAudioInit:
+			/*Check Structure Header*/
 			checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
 			if (err != OMX_ErrorNone)
 				return err;
@@ -411,6 +412,7 @@ OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
 		case OMX_IndexParamAudioPortFormat:
 			pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
 			portIndex = pAudioPortFormat->nPortIndex;
+			/*Check Structure Header and verify component state*/
 			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
 			if (err != OMX_ErrorNone)
 					return err;
@@ -424,14 +426,16 @@ OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
 		case OMX_IndexParamAudioPcm:
 			pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
 			portIndex = pAudioPortFormat->nPortIndex;
+			/*Check Structure Header and verify component state*/
 			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 		break;
 		case OMX_IndexParamAudioMp3:
 			pAuidoMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
 			portIndex = pAudioPortFormat->nPortIndex;
+			/*Check Structure Header and verify component state*/
 			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAuidoMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
 		break;
-		default:
+		default: /*Call the base component function*/
 			return base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
 	return OMX_ErrorNone;
@@ -465,13 +469,13 @@ OMX_ERRORTYPE omx_mp3dec_component_GetParameter(
 			break;		
 		case OMX_IndexParamAudioPortFormat:
 		pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-		setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-		if (pAudioPortFormat->nPortIndex <= 1) {
-			port = (omx_mp3dec_component_PortType *)omx_mp3dec_component_Private->ports[pAudioPortFormat->nPortIndex];
-			memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-		} else {
-				return OMX_ErrorBadPortIndex;
-		}
+			setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+			if (pAudioPortFormat->nPortIndex <= 1) {
+				port = (omx_mp3dec_component_PortType *)omx_mp3dec_component_Private->ports[pAudioPortFormat->nPortIndex];
+				memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+			} else {
+					return OMX_ErrorBadPortIndex;
+			}
 		break;		
 		case OMX_IndexParamAudioPcm:
 			pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
@@ -499,7 +503,7 @@ OMX_ERRORTYPE omx_mp3dec_component_GetParameter(
 			pAuidoMp3->nAudioBandWidth = 0;
 			pAuidoMp3->eChannelMode = OMX_AUDIO_ChannelModeStereo;
 		break;
-		default:
+		default: /*Call the base component function*/
 			return base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
 	return OMX_ErrorNone;

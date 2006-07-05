@@ -76,40 +76,12 @@ OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 			// this could be refactored as a smarter factory function instead?
 			omx_volume_component_Private->ports[i] = calloc(1, sizeof(omx_volume_component_PortType));
 			if (!omx_volume_component_Private->ports[i]) return OMX_ErrorInsufficientResources;
-
-			omx_volume_component_Private->ports[i]->transientState = OMX_StateMax;
-			setHeader(&omx_volume_component_Private->ports[i]->sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
-			omx_volume_component_Private->ports[i]->sPortParam.nPortIndex = i;
-			
-			omx_volume_component_Private->ports[i]->pBufferSem = malloc(sizeof(tsem_t));
-			if(omx_volume_component_Private->ports[i]->pBufferSem==NULL) return OMX_ErrorInsufficientResources;
-			tsem_init(omx_volume_component_Private->ports[i]->pBufferSem, 0);
-		
-			omx_volume_component_Private->ports[i]->pFullAllocationSem = malloc(sizeof(tsem_t));
-			if(omx_volume_component_Private->ports[i]->pFullAllocationSem==NULL) return OMX_ErrorInsufficientResources;
-			tsem_init(omx_volume_component_Private->ports[i]->pFullAllocationSem, 0);
-		
-			/** Allocate and initialize buffer queue */
-			omx_volume_component_Private->ports[i]->pBufferQueue = malloc(sizeof(queue_t));
-			if(omx_volume_component_Private->ports[i]->pBufferQueue==NULL) return OMX_ErrorInsufficientResources;
-			queue_init(omx_volume_component_Private->ports[i]->pBufferQueue);
-		
-			omx_volume_component_Private->ports[i]->pFlushSem = malloc(sizeof(tsem_t));
-			if(omx_volume_component_Private->ports[i]->pFlushSem==NULL)	return OMX_ErrorInsufficientResources;
-			tsem_init(omx_volume_component_Private->ports[i]->pFlushSem, 0);
-
-			omx_volume_component_Private->ports[i]->hTunneledComponent = NULL;
-			omx_volume_component_Private->ports[i]->nTunneledPort=0;
-			omx_volume_component_Private->ports[i]->nTunnelFlags=0;
-
 		}
-		base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
-		base_component_SetNumBufferFlush(stComponent, -1, 0);
 	}
 	
 	// we could create our own port structures here
 	// fixme maybe the base class could use a "port factory" function pointer?	
-	err = omx_twoport_component_Constructor(stComponent);
+	err = base_filter_component_Constructor(stComponent);
 
 	/* here we can override whatever defaults the base_component constructor set
 	 * e.g. we can override the function pointers in the private struct  */
@@ -117,16 +89,16 @@ OMX_ERRORTYPE omx_volume_component_Constructor(stComponentType* stComponent) {
 	
 	// oh well, for the time being, set the port params, now that the ports exist	
 		/** Domain specific section for the ports. */	
-	omx_volume_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-	omx_volume_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
-	omx_volume_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
+	omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
+	omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
+	omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
 
-	omx_volume_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-	omx_volume_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
-	omx_volume_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
+	omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
+	omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
+	omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
 
-	inPort = (omx_volume_component_PortType *) omx_volume_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX];
-	outPort = (omx_volume_component_PortType *) omx_volume_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX];
+	inPort = (omx_volume_component_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+	outPort = (omx_volume_component_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
 
 	setHeader(&inPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
 	inPort->sAudioParam.nPortIndex = 0;

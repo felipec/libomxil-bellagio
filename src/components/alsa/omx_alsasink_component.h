@@ -34,7 +34,7 @@
 #include <OMX_Core.h>
 #include <OMX_Audio.h>
 #include <pthread.h>
-#include <omx_oneport_component.h>
+#include <base_sink_component.h>
 #include <alsa/asoundlib.h>
 
 /** Maximum number of base_component component instances */
@@ -69,8 +69,8 @@ ENDCLASS(omx_alsasink_component_PortType)
 /** Alsasinkport component private structure.
  * see the define above
  */
-DERIVEDCLASS(omx_alsasink_component_PrivateType, omx_oneport_component_PrivateType)
-#define omx_alsasink_component_PrivateType_FIELDS omx_oneport_component_PrivateType_FIELDS 
+DERIVEDCLASS(omx_alsasink_component_PrivateType, base_sink_component_PrivateType)
+#define omx_alsasink_component_PrivateType_FIELDS base_sink_component_PrivateType_FIELDS 
 ENDCLASS(omx_alsasink_component_PrivateType)
 
 /* Component private entry points declaration */

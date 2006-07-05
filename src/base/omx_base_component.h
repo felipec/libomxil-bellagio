@@ -35,16 +35,13 @@
 #include "queue.h"
 #include "omx_classmagic.h"
 
-/** Maximum number of buffers for the input port */
-#define MAX_BUFFERS      4
-
 /** Default size of the internal input buffer */
-#define INTERNAL_IN_BUFFER_SIZE  4  * 1024
+#define DEFAULT_IN_BUFFER_SIZE  2  * 1024
 /** Default size of the internal output buffer */
-#define INTERNAL_OUT_BUFFER_SIZE 8 * 1024
+#define DEFAULT_OUT_BUFFER_SIZE 8 * 1024
 
 /** Maximum number of base_component component instances */
-#define MAX_NUM_OF_base_component_INSTANCES 10
+#define MAX_NUM_OF_COMPONENT_INSTANCES 10
 
 /**
  * Port Specific Macro's
@@ -58,15 +55,22 @@
 #define PORT_IS_WAITING_FLUSH_SEMAPHORE(port)	(port->bWaitingFlushSem)
 #define IS_BUFFER_UNDER_PROCESS(port)			(port->bBufferUnderProcess==OMX_TRUE)
 
+/*Check if Component is Deinitalizing*/
+#define IS_COMPONENT_DEINIT(component_Private, exit_condition)  \
+		pthread_mutex_lock(&component_Private->exit_mutex)	,\
+		exit_condition = component_Private->bIsComponentDeinit ,\
+		pthread_mutex_unlock(&component_Private->exit_mutex) ,\
+		(exit_condition == OMX_TRUE) ? OMX_TRUE:OMX_FALSE \
+		
 /**
  * The structure for port Type.
  */
 CLASS(base_component_PortType)
 #define base_component_PortType_FIELDS \
 	/** @param pBuffer An array of pointers to buffer headers. */ \
-	OMX_BUFFERHEADERTYPE *pBuffer[MAX_BUFFERS]; \
+	OMX_BUFFERHEADERTYPE **pBuffer; \
 	/** @param nBufferState The State of the Buffer whether assigned or allocated */ \
-	OMX_U32 nBufferState[MAX_BUFFERS]; \
+	OMX_U32 *nBufferState; \
 	/** @param nNumAssignedBuffers Number of buffer assigned on each port */ \
 	OMX_U32 nNumAssignedBuffers; \
 	/** @param pBufferQueue queue for buffer to be processed by the port */ \
@@ -123,8 +127,8 @@ CLASS(base_component_PrivateType)
 	pthread_mutex_t executingMutex; \
 	/** @param executingCondition The executing mutex condition */ \
 	pthread_cond_t executingCondition; \
-	/** @param bExit_buffer_thread boolean flag for the exit condition from the main component thread */ \
-	OMX_BOOL bExit_buffer_thread; \
+	/** @param bIsComponentDeinit boolean flag to indicate component is deinitializing */ \
+	OMX_BOOL bIsComponentDeinit; \
 	/** @param exit_mutex mutex for the exit condition from the main component thread */ \
 	pthread_mutex_t exit_mutex; \
 	/** @param The exit mutex condition */ \
@@ -286,7 +290,7 @@ OMX_ERRORTYPE base_component_SetCallbacks(
 	OMX_IN  OMX_PTR pAppData);
 
 /** The panic function that exits from the application. This function is only for debug purposes and should be removed in the next releases */
-void base_component_Panic();
+//void base_component_Panic();
 
 /** Component entry points declarations */
 OMX_ERRORTYPE base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hComponent,

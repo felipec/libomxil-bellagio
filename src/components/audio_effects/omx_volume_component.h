@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <omx_twoport_component.h>
+#include <base_filter_component.h>
 
 
 /** Volume component port structure.
@@ -50,8 +50,8 @@ ENDCLASS(omx_volume_component_PortType)
 /** Twoport component private structure.
  * see the define above
  */
-DERIVEDCLASS(omx_volume_component_PrivateType, omx_twoport_component_PrivateType)
-#define omx_volume_component_PrivateType_FIELDS omx_twoport_component_PrivateType_FIELDS \
+DERIVEDCLASS(omx_volume_component_PrivateType, base_filter_component_PrivateType)
+#define omx_volume_component_PrivateType_FIELDS base_filter_component_PrivateType_FIELDS \
 	/** @param gain the volume gain value */ \
 	float gain;
 ENDCLASS(omx_volume_component_PrivateType)

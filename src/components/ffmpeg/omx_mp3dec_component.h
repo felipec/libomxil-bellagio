@@ -36,7 +36,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <omx_twoport_component.h>
+#include <base_filter_component.h>
 /* Specific include files */
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
@@ -52,12 +52,16 @@ ENDCLASS(omx_mp3dec_component_PortType)
 
 /** Mp3Dec component private structure.
  */
-DERIVEDCLASS(omx_mp3dec_component_PrivateType, omx_twoport_component_PrivateType)
-#define omx_mp3dec_component_PrivateType_FIELDS omx_twoport_component_PrivateType_FIELDS \
+DERIVEDCLASS(omx_mp3dec_component_PrivateType, base_filter_component_PrivateType)
+#define omx_mp3dec_component_PrivateType_FIELDS base_filter_component_PrivateType_FIELDS \
 	/** @param avCodec pointer to the ffpeg audio decoder */ \
 	AVCodec *avCodec;	\
 	/** @param avCodecContext pointer to ffmpeg decoder context  */ \
 	AVCodecContext *avCodecContext;	\
+	/** @param pAudioMp3 Referece to OMX_AUDIO_PARAM_MP3TYPE structure*/	\
+	OMX_AUDIO_PARAM_MP3TYPE pAudioMp3;	\
+	/** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/	\
+	OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;	\
 	/** @param avcodecReady boolean flag that is true when the audio coded has been initialized */ \
 	OMX_BOOL avcodecReady;	\
 	/** @param minBufferLength Field that stores the minimun allowed size for ffmpeg decoder */ \

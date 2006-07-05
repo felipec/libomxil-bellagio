@@ -54,7 +54,7 @@ void __attribute__ ((constructor)) omx_mp3dec_component_register_template() {
 /** 
 	It initializates the ffmpeg framework, and opens an ffmpeg mp3 decoder
 */
-void omx_mp3dec_component_ffmpegLibInit(omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private) {
+OMX_ERRORTYPE omx_mp3dec_component_ffmpegLibInit(omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private) {
 	avcodec_init();
 	av_register_all();
 
@@ -63,14 +63,16 @@ void omx_mp3dec_component_ffmpegLibInit(omx_mp3dec_component_PrivateType* omx_mp
 	/*Find the Mpeg2 decoder */
 	omx_mp3dec_component_Private->avCodec = avcodec_find_decoder(CODEC_ID_MP2);
 	if (!omx_mp3dec_component_Private->avCodec) {
-		DEBUG(DEB_LEV_ERR, "Codec Not found\n");
-		base_component_Panic();
+			DEBUG(DEB_LEV_ERR, "Codec Not found\n");
+			return OMX_ErrorInsufficientResources;
+//			base_component_Panic();
 	}
 	omx_mp3dec_component_Private->avCodecContext = avcodec_alloc_context();
     /*open the avcodec */
     if (avcodec_open(omx_mp3dec_component_Private->avCodecContext, omx_mp3dec_component_Private->avCodec) < 0) {
-		DEBUG(DEB_LEV_ERR, "Could not open codec\n");
-		base_component_Panic();
+			DEBUG(DEB_LEV_ERR, "Could not open codec\n");
+			return OMX_ErrorInsufficientResources;
+//			base_component_Panic();
     }
 }
 
@@ -121,40 +123,12 @@ OMX_ERRORTYPE omx_mp3dec_component_Constructor(stComponentType* stComponent) {
 			// this could be refactored as a smarter factory function instead?
 			omx_mp3dec_component_Private->ports[i] = calloc(1, sizeof(omx_mp3dec_component_PortType));
 			if (!omx_mp3dec_component_Private->ports[i]) return OMX_ErrorInsufficientResources;
-
-			omx_mp3dec_component_Private->ports[i]->transientState = OMX_StateMax;
-			setHeader(&omx_mp3dec_component_Private->ports[i]->sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
-			omx_mp3dec_component_Private->ports[i]->sPortParam.nPortIndex = i;
-			
-			omx_mp3dec_component_Private->ports[i]->pBufferSem = malloc(sizeof(tsem_t));
-			if(omx_mp3dec_component_Private->ports[i]->pBufferSem==NULL) return OMX_ErrorInsufficientResources;
-			tsem_init(omx_mp3dec_component_Private->ports[i]->pBufferSem, 0);
-		
-			omx_mp3dec_component_Private->ports[i]->pFullAllocationSem = malloc(sizeof(tsem_t));
-			if(omx_mp3dec_component_Private->ports[i]->pFullAllocationSem==NULL) return OMX_ErrorInsufficientResources;
-			tsem_init(omx_mp3dec_component_Private->ports[i]->pFullAllocationSem, 0);
-		
-			/** Allocate and initialize buffer queue */
-			omx_mp3dec_component_Private->ports[i]->pBufferQueue = malloc(sizeof(queue_t));
-			if(omx_mp3dec_component_Private->ports[i]->pBufferQueue==NULL) return OMX_ErrorInsufficientResources;
-			queue_init(omx_mp3dec_component_Private->ports[i]->pBufferQueue);
-		
-			omx_mp3dec_component_Private->ports[i]->pFlushSem = malloc(sizeof(tsem_t));
-			if(omx_mp3dec_component_Private->ports[i]->pFlushSem==NULL)	return OMX_ErrorInsufficientResources;
-			tsem_init(omx_mp3dec_component_Private->ports[i]->pFlushSem, 0);
-
-			omx_mp3dec_component_Private->ports[i]->hTunneledComponent = NULL;
-			omx_mp3dec_component_Private->ports[i]->nTunneledPort=0;
-			omx_mp3dec_component_Private->ports[i]->nTunnelFlags=0;
-
 		}
-		base_component_SetPortFlushFlag(stComponent, -1, OMX_FALSE);
-		base_component_SetNumBufferFlush(stComponent, -1, 0);
 	}
 
 	// we could create our own port structures here
 	// fixme maybe the base class could use a "port factory" function pointer?	
-	err = omx_twoport_component_Constructor(stComponent);
+	err = base_filter_component_Constructor(stComponent);
 
 	/* here we can override whatever defaults the base_component constructor set
 	 * e.g. we can override the function pointers in the private struct  */
@@ -162,20 +136,41 @@ OMX_ERRORTYPE omx_mp3dec_component_Constructor(stComponentType* stComponent) {
 	
 	// oh well, for the time being, set the port params, now that the ports exist	
 		/** Domain specific section for the ports. */	
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "audio/mpeg";
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "audio/mpeg";
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_IN_BUFFER_SIZE;
 
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
-	omx_mp3dec_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = 0;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = 0;
+	omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
 
-	inPort = (omx_mp3dec_component_PortType *) omx_mp3dec_component_Private->ports[OMX_TWOPORT_INPUTPORT_INDEX];
-	outPort = (omx_mp3dec_component_PortType *) omx_mp3dec_component_Private->ports[OMX_TWOPORT_OUTPUTPORT_INDEX];
+	setHeader(&omx_mp3dec_component_Private->pAudioMp3,sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+	omx_mp3dec_component_Private->pAudioMp3.nPortIndex = 0;
+	omx_mp3dec_component_Private->pAudioMp3.nChannels = 2;
+	omx_mp3dec_component_Private->pAudioMp3.nBitRate = 28000;
+	omx_mp3dec_component_Private->pAudioMp3.nSampleRate = 44100;
+	omx_mp3dec_component_Private->pAudioMp3.nAudioBandWidth = 0;
+	omx_mp3dec_component_Private->pAudioMp3.eChannelMode = OMX_AUDIO_ChannelModeStereo;
+
+	setHeader(&omx_mp3dec_component_Private->pAudioPcmMode,sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+	omx_mp3dec_component_Private->pAudioPcmMode.nPortIndex = 1;
+	omx_mp3dec_component_Private->pAudioPcmMode.nChannels = 2;
+	omx_mp3dec_component_Private->pAudioPcmMode.eNumData = OMX_NumericalDataSigned;
+	omx_mp3dec_component_Private->pAudioPcmMode.eEndian = OMX_EndianLittle;
+	omx_mp3dec_component_Private->pAudioPcmMode.bInterleaved = OMX_TRUE;
+	omx_mp3dec_component_Private->pAudioPcmMode.nBitPerSample = 16;
+	omx_mp3dec_component_Private->pAudioPcmMode.nSamplingRate = 44100;
+	omx_mp3dec_component_Private->pAudioPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
+	omx_mp3dec_component_Private->pAudioPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
+
+	inPort = (omx_mp3dec_component_PortType *) omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+	outPort = (omx_mp3dec_component_PortType *) omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
 
 	setHeader(&inPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
 	inPort->sAudioParam.nPortIndex = 0;
@@ -204,6 +199,7 @@ OMX_ERRORTYPE omx_mp3dec_component_Init(stComponentType* stComponent)
 {
 	omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_ERRORTYPE err = OMX_ErrorNone;
+	OMX_U32 nBufferSize;
 	
 	base_component_Init(stComponent);
 
@@ -212,10 +208,12 @@ OMX_ERRORTYPE omx_mp3dec_component_Init(stComponentType* stComponent)
 		omx_mp3dec_component_Private->avcodecReady = OMX_TRUE;
 	}
 
+	/*Temporary First Output buffer size*/
+	nBufferSize=omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
 	omx_mp3dec_component_Private->inputCurrBuffer=NULL;
 	omx_mp3dec_component_Private->inputCurrLength=0;
-	omx_mp3dec_component_Private->internalOutputBuffer = (OMX_U8 *)malloc(INTERNAL_OUT_BUFFER_SIZE*2);
-	memset(omx_mp3dec_component_Private->internalOutputBuffer, 0, INTERNAL_OUT_BUFFER_SIZE*2);
+	omx_mp3dec_component_Private->internalOutputBuffer = (OMX_U8 *)malloc(nBufferSize);
+	memset(omx_mp3dec_component_Private->internalOutputBuffer, 0, nBufferSize);
 	omx_mp3dec_component_Private->isFirstBuffer=1;
 	omx_mp3dec_component_Private->positionInOutBuf = 0;
 	omx_mp3dec_component_Private->isNewBuffer=1;
@@ -300,6 +298,30 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 				omx_mp3dec_component_Private->positionInOutBuf = 0;
 				outputfilled = 1;
 				break;
+			}
+
+			if((omx_mp3dec_component_Private->pAudioPcmMode.nSamplingRate != omx_mp3dec_component_Private->avCodecContext->sample_rate) ||
+				( omx_mp3dec_component_Private->pAudioPcmMode.nChannels!=omx_mp3dec_component_Private->avCodecContext->channels)) {
+				DEBUG(DEB_LEV_FULL_SEQ, "---->Sending Port Settings Change Event\n");
+			
+				/*Update Parameter which has changed from avCodecContext*/
+				/*pAudioMp3 is for input port Mp3 data*/
+				omx_mp3dec_component_Private->pAudioMp3.nChannels = omx_mp3dec_component_Private->avCodecContext->channels;
+				omx_mp3dec_component_Private->pAudioMp3.nBitRate = omx_mp3dec_component_Private->avCodecContext->bit_rate;
+				omx_mp3dec_component_Private->pAudioMp3.nSampleRate = omx_mp3dec_component_Private->avCodecContext->sample_rate;
+				/*pAudioPcmMode is for output port PCM data*/
+				omx_mp3dec_component_Private->pAudioPcmMode.nChannels = omx_mp3dec_component_Private->avCodecContext->channels;
+				omx_mp3dec_component_Private->pAudioPcmMode.nBitPerSample = omx_mp3dec_component_Private->avCodecContext->bits_per_sample;
+				omx_mp3dec_component_Private->pAudioPcmMode.nSamplingRate = omx_mp3dec_component_Private->avCodecContext->sample_rate;
+
+				/*Send Port Settings changed call back*/
+				(*(stComponent->callbacks->EventHandler))
+						(&stComponent->omx_component,
+						stComponent->callbackData,
+						OMX_EventPortSettingsChanged, /* The command was completed */
+						0, 
+						1, /* This is the output port index */
+						NULL);
 			}
 		} else {
 			len = avcodec_decode_audio(omx_mp3dec_component_Private->avCodecContext,
@@ -389,7 +411,7 @@ OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
 	OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
 	OMX_AUDIO_PARAM_PCMMODETYPE* pAudioPcmMode;
 	OMX_PARAM_PORTDEFINITIONTYPE *pPortDef ;
-	OMX_AUDIO_PARAM_MP3TYPE * pAuidoMp3;
+	OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
 	OMX_U32 portIndex;
 
 	/* Check which structure we are being fed and make control its header */
@@ -430,10 +452,10 @@ OMX_ERRORTYPE omx_mp3dec_component_SetParameter(
 			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 		break;
 		case OMX_IndexParamAudioMp3:
-			pAuidoMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
+			pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
 			portIndex = pAudioPortFormat->nPortIndex;
 			/*Check Structure Header and verify component state*/
-			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAuidoMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+			err = base_component_ParameterSanityCheck(hComponent, portIndex, pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
 		break;
 		default: /*Call the base component function*/
 			return base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -452,7 +474,7 @@ OMX_ERRORTYPE omx_mp3dec_component_GetParameter(
 	OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
 	OMX_PORT_PARAM_TYPE* pPortDomains;
 	OMX_U32 portIndex;
-	OMX_AUDIO_PARAM_MP3TYPE * pAuidoMp3;
+	OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
 	omx_mp3dec_component_PortType *port;
 	
 	stComponentType* stComponent = (stComponentType*)hComponent;
@@ -468,7 +490,7 @@ OMX_ERRORTYPE omx_mp3dec_component_GetParameter(
 			memcpy(ComponentParameterStructure, &omx_mp3dec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
 			break;		
 		case OMX_IndexParamAudioPortFormat:
-		pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
+			pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
 			setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
 			if (pAudioPortFormat->nPortIndex <= 1) {
 				port = (omx_mp3dec_component_PortType *)omx_mp3dec_component_Private->ports[pAudioPortFormat->nPortIndex];
@@ -483,28 +505,19 @@ OMX_ERRORTYPE omx_mp3dec_component_GetParameter(
 			if (pAudioPcmMode->nPortIndex > 1) {
 				return OMX_ErrorBadPortIndex;
 			}
-			pAudioPcmMode->nChannels = 2;
-			pAudioPcmMode->eNumData = OMX_NumericalDataSigned;
-			pAudioPcmMode->eEndian = OMX_EndianBig;
-			pAudioPcmMode->bInterleaved = OMX_TRUE;
-			pAudioPcmMode->nBitPerSample = 16;
-			pAudioPcmMode->nSamplingRate = 0;
-			pAudioPcmMode->ePCMMode = OMX_AUDIO_PCMModeLinear;
+			memcpy(pAudioPcmMode,&omx_mp3dec_component_Private->pAudioPcmMode,sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
 		break;
 		case OMX_IndexParamAudioMp3:
-			pAuidoMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
-			setHeader(pAuidoMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
-			if (pAuidoMp3->nPortIndex != 0) {
+			pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
+			setHeader(pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+			if (pAudioMp3->nPortIndex != 0) {
 				return OMX_ErrorBadPortIndex;
 			}
-			pAuidoMp3->nChannels = 2;
-			pAuidoMp3->nBitRate = 0;
-			pAuidoMp3->nSampleRate = 0;
-			pAuidoMp3->nAudioBandWidth = 0;
-			pAuidoMp3->eChannelMode = OMX_AUDIO_ChannelModeStereo;
+			memcpy(pAudioMp3,&omx_mp3dec_component_Private->pAudioMp3,sizeof(OMX_AUDIO_PARAM_MP3TYPE));
 		break;
 		default: /*Call the base component function*/
 			return base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
 	}
 	return OMX_ErrorNone;
 }
+

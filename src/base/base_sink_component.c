@@ -1,7 +1,7 @@
 /**
- * @file src/base/omx_oneport_component.c
+ * @file src/base/base_sink_component.c
  * 
- * OpenMax one port component. This component does not perform any multimedia
+ * OpenMax base sink component. This component does not perform any multimedia
  * processing. It derives from base component and contains a single port. It can be used 
  * as base class for sink and source components.
  * 
@@ -23,21 +23,21 @@
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
  *
- * 2006/05/11:  one port component version 0.2
+ * 2006/05/11:  base sink component version 0.2
  *
  */
 
 
 #include <omxcore.h>
 
-#include <omx_oneport_component.h>
+#include <base_sink_component.h>
 
-OMX_ERRORTYPE omx_oneport_component_Constructor(stComponentType* stComponent) {
+OMX_ERRORTYPE base_sink_component_Constructor(stComponentType* stComponent) {
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
-	omx_oneport_component_PrivateType* omx_oneport_component_Private;
+	base_sink_component_PrivateType* base_sink_component_Private;
 
 	if (!stComponent->omx_component.pComponentPrivate) {
-		stComponent->omx_component.pComponentPrivate = calloc(1, sizeof(omx_oneport_component_PrivateType));
+		stComponent->omx_component.pComponentPrivate = calloc(1, sizeof(base_sink_component_PrivateType));
 		if(stComponent->omx_component.pComponentPrivate==NULL)
 			return OMX_ErrorInsufficientResources;
 	}
@@ -48,21 +48,21 @@ OMX_ERRORTYPE omx_oneport_component_Constructor(stComponentType* stComponent) {
 
 	/* here we can override whatever defaults the base_component constructor set
 	 * e.g. we can override the function pointers in the private struct  */
-	omx_oneport_component_Private = stComponent->omx_component.pComponentPrivate;
+	base_sink_component_Private = stComponent->omx_component.pComponentPrivate;
 	
 	// oh well, for the time being, set the port params, now that the ports exist	
-	omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.eDir = OMX_DirInput;
-	omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.nBufferCountActual = 2;
-	omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.nBufferCountMin = 2;
-	omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.nBufferSize = 0;
-	omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.bEnabled = OMX_TRUE;
-	omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->sPortParam.bPopulated = OMX_FALSE;
+	base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->sPortParam.eDir = OMX_DirInput;
+	base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->sPortParam.nBufferCountActual = 2;
+	base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->sPortParam.nBufferCountMin = 2;
+	base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_IN_BUFFER_SIZE;
+	base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->sPortParam.bEnabled = OMX_TRUE;
+	base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->sPortParam.bPopulated = OMX_FALSE;
 
-	omx_oneport_component_Private->sPortTypesParam.nPorts = 1;
-	omx_oneport_component_Private->sPortTypesParam.nStartPortNumber = 0;	
+	base_sink_component_Private->sPortTypesParam.nPorts = 1;
+	base_sink_component_Private->sPortTypesParam.nStartPortNumber = 0;	
 	
-	omx_oneport_component_Private->BufferMgmtFunction = omx_oneport_component_BufferMgmtFunction;
-	omx_oneport_component_Private->FlushPort = &omx_oneport_component_FlushPort;
+	base_sink_component_Private->BufferMgmtFunction = base_sink_component_BufferMgmtFunction;
+	base_sink_component_Private->FlushPort = &base_sink_component_FlushPort;
 
 	return err;
 }
@@ -72,41 +72,40 @@ OMX_ERRORTYPE omx_oneport_component_Constructor(stComponentType* stComponent) {
 	* semaphores at each port, those are released each time a new buffer
 	* is available on the given port.
 	*/
-void* omx_oneport_component_BufferMgmtFunction(void* param) {
+void* base_sink_component_BufferMgmtFunction(void* param) {
 	stComponentType* stComponent = (stComponentType*)param;
 	OMX_COMPONENTTYPE* pHandle = &stComponent->omx_component;
-	omx_oneport_component_PrivateType* omx_oneport_component_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->pBufferSem;
-	queue_t* pInputQueue = omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->pBufferQueue;
-	OMX_BOOL exit_thread = OMX_FALSE;
+	base_sink_component_PrivateType* base_sink_component_Private = stComponent->omx_component.pComponentPrivate;
+	tsem_t* pInputSem = base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->pBufferSem;
+	queue_t* pInputQueue = base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->pBufferQueue;
+	OMX_BOOL exit_condition = OMX_FALSE;
 	OMX_BOOL isInputBufferEnded;
 	OMX_BUFFERHEADERTYPE* pInputBuffer;
 	OMX_U32  nFlags;
-	OMX_BOOL *inbufferUnderProcess=&omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->bBufferUnderProcess;
-	pthread_mutex_t *pInmutex=&omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->mutex;
+	OMX_BOOL *inbufferUnderProcess=&base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->bBufferUnderProcess;
+	pthread_mutex_t *pInmutex=&base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->mutex;
 	OMX_COMPONENTTYPE* target_component;
-	pthread_mutex_t* executingMutex = &omx_oneport_component_Private->executingMutex;
-	pthread_cond_t* executingCondition = &omx_oneport_component_Private->executingCondition;
-	base_component_PortType *pPort=(base_component_PortType *)omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+	pthread_mutex_t* executingMutex = &base_sink_component_Private->executingMutex;
+	pthread_cond_t* executingCondition = &base_sink_component_Private->executingCondition;
+	base_component_PortType *pPort=(base_component_PortType *)base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 	
 	DEBUG(DEB_LEV_FULL_SEQ, "In %s \n", __func__);
-	while(stComponent->state == OMX_StateIdle || stComponent->state == OMX_StateExecuting || 
-		(pPort->transientState = OMX_StateIdle)){
+	while(stComponent->state == OMX_StateIdle || stComponent->state == OMX_StateExecuting || stComponent->state == OMX_StatePause || 
+		(pPort->transientState == OMX_StateIdle)){
 
 		/*Wait till the ports are being flushed*/
-		while(pPort->bIsPortFlushed==OMX_TRUE )
-			pthread_cond_wait(&omx_oneport_component_Private->flush_condition,&omx_oneport_component_Private->flush_mutex);
+		pthread_mutex_lock(&base_sink_component_Private->flush_mutex);
+		while(! PORT_IS_BEING_FLUSHED(pPort))
+			pthread_cond_wait(&base_sink_component_Private->flush_condition,&base_sink_component_Private->flush_mutex);
+		pthread_mutex_unlock(&base_sink_component_Private->flush_mutex);
 
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for input buffer semval=%d \n",pInputSem->semval);
 		tsem_down(pInputSem);
 		DEBUG(DEB_LEV_FULL_SEQ, "Input buffer arrived\n");
-		pthread_mutex_lock(&omx_oneport_component_Private->exit_mutex);
-		exit_thread = omx_oneport_component_Private->bExit_buffer_thread;
-		pthread_mutex_unlock(&omx_oneport_component_Private->exit_mutex);
-		if(exit_thread == OMX_TRUE) {
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "Exiting from exec thread...\n");
+		/*If Component is De-initializing, exit buffer management thread*/
+		if(IS_COMPONENT_DEINIT(base_sink_component_Private, exit_condition))
 			break;
-		}
+
 		pthread_mutex_lock(pInmutex);
 		*inbufferUnderProcess = OMX_TRUE;
 		pthread_mutex_unlock(pInmutex);
@@ -114,7 +113,7 @@ void* omx_oneport_component_BufferMgmtFunction(void* param) {
 		pInputBuffer = dequeue(pInputQueue);
 		if(pInputBuffer == NULL){
 			DEBUG(DEB_LEV_ERR, "What the hell!! had NULL input buffer!!\n");
-			base_component_Panic();
+			break;
 		}
 		nFlags=pInputBuffer->nFlags;
 		if(nFlags==OMX_BUFFERFLAG_EOS) {
@@ -125,15 +124,9 @@ void* omx_oneport_component_BufferMgmtFunction(void* param) {
 			base_component_returnInputBuffer(stComponent,pInputBuffer,pPort);
 			continue;
 		}
-		
-		pthread_mutex_lock(&omx_oneport_component_Private->exit_mutex);
-		exit_thread=omx_oneport_component_Private->bExit_buffer_thread;
-		pthread_mutex_unlock(&omx_oneport_component_Private->exit_mutex);
-		
-		if(exit_thread==OMX_TRUE) {
-			DEBUG(DEB_LEV_FULL_SEQ, "Exiting from exec thread...\n");
+		/*If Component is De-initializing, exit buffer management thread*/
+		if(IS_COMPONENT_DEINIT(base_sink_component_Private, exit_condition))
 			break;
-		}
 		isInputBufferEnded = OMX_FALSE;
 		
 		while(!isInputBufferEnded) {
@@ -141,8 +134,8 @@ void* omx_oneport_component_BufferMgmtFunction(void* param) {
 			*  In this case is immediately switched because there is no real buffer consumption */
 			isInputBufferEnded = OMX_TRUE;
 									
-			if(omx_oneport_component_Private->pMark!=NULL){
-				omx_oneport_component_Private->pMark=NULL;
+			if(base_sink_component_Private->pMark!=NULL){
+				base_sink_component_Private->pMark=NULL;
 			}
 			target_component=(OMX_COMPONENTTYPE*)pInputBuffer->hMarkTargetComponent;
 			if(target_component==(OMX_COMPONENTTYPE *)&stComponent->omx_component) {
@@ -173,8 +166,8 @@ void* omx_oneport_component_BufferMgmtFunction(void* param) {
 			DEBUG(DEB_LEV_FULL_SEQ, "In %s: got some buffers \n", __func__);
 
 			/* This calls the actual algorithm; fp must be set */			
-			if (omx_oneport_component_Private->BufferMgmtCallback) {
-				(*(omx_oneport_component_Private->BufferMgmtCallback))(stComponent, pInputBuffer);
+			if (base_sink_component_Private->BufferMgmtCallback) {
+				(*(base_sink_component_Private->BufferMgmtCallback))(stComponent, pInputBuffer);
 			}
 		}
 		/*Wait if state is pause*/
@@ -187,16 +180,9 @@ void* omx_oneport_component_BufferMgmtFunction(void* param) {
 		/*Return Input Buffer*/
 		base_component_returnInputBuffer(stComponent,pInputBuffer,pPort);
 
-		pthread_mutex_lock(&omx_oneport_component_Private->exit_mutex);
-		exit_thread=omx_oneport_component_Private->bExit_buffer_thread;
-		if(exit_thread == OMX_TRUE) {
-			pthread_mutex_unlock(&omx_oneport_component_Private->exit_mutex);
-			DEBUG(DEB_LEV_FULL_SEQ, "Exiting from exec thread...\n");
+		/*If Component is De-initializing, exit buffer management thread*/
+		if(IS_COMPONENT_DEINIT(base_sink_component_Private, exit_condition))
 			break;
-		}
-		else 
-			pthread_mutex_unlock(&omx_oneport_component_Private->exit_mutex);
-		continue;
 	}
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"Exiting Buffer Management Thread\n");
 	return NULL;
@@ -207,50 +193,47 @@ void* omx_oneport_component_BufferMgmtFunction(void* param) {
 	* @param stComponent the component which owns the port to be flushed
 	* @param portIndex the ID of the port to be flushed
 	*/
-OMX_ERRORTYPE omx_oneport_component_FlushPort(stComponentType* stComponent, OMX_U32 portIndex)
+OMX_ERRORTYPE base_sink_component_FlushPort(stComponentType* stComponent, OMX_U32 portIndex)
 {
 	OMX_COMPONENTTYPE* pHandle=&stComponent->omx_component;
-	omx_oneport_component_PrivateType* omx_oneport_component_Private = stComponent->omx_component.pComponentPrivate;
-	tsem_t* pInputSem = omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->pBufferSem;
-	queue_t* pInputQueue = omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->pBufferQueue;
+	base_sink_component_PrivateType* base_sink_component_Private = stComponent->omx_component.pComponentPrivate;
+	tsem_t* pInputSem = base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->pBufferSem;
+	queue_t* pInputQueue = base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->pBufferQueue;
 	OMX_BUFFERHEADERTYPE* pInputBuffer;
-	pthread_mutex_t *pInmutex=&omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX]->mutex;
-	pthread_cond_t* executingCondition = &omx_oneport_component_Private->executingCondition;
-	base_component_PortType *pPort=(base_component_PortType *)omx_oneport_component_Private->ports[OMX_ONEPORT_INPUTPORT_INDEX];
+	pthread_mutex_t *pInmutex=&base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX]->mutex;
+	pthread_cond_t* executingCondition = &base_sink_component_Private->executingCondition;
+	base_component_PortType *pPort=(base_component_PortType *)base_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s portIndex=%ld\n", __func__,portIndex);
 
-	if (portIndex == OMX_ONEPORT_INPUTPORT_INDEX || portIndex == OMX_ONEPORT_ALLPORT_INDEX) {
+	if (portIndex == OMX_BASE_SINK_INPUTPORT_INDEX || portIndex == OMX_BASE_SINK_ALLPORT_INDEX) {
 		if (!PORT_IS_TUNNELED(pPort)) { // Port is not tunnelled 
 			DEBUG(DEB_LEV_PARAMS,"Flashing input ports insemval=%d ib=%ld,ibcb=%ld\n",
-				pInputSem->semval,omx_oneport_component_Private->inbuffer,omx_oneport_component_Private->inbuffercb);
+				pInputSem->semval,base_sink_component_Private->inbuffer,base_sink_component_Private->inbuffercb);
 			/*First return the Buffer presently being processed,if any*/
 			pthread_mutex_lock(pInmutex);
 			if(IS_BUFFER_UNDER_PROCESS(pPort)) {
+				/*Indicate that pFlushSem is waiting for buffer for flushing*/
 				pPort->bWaitingFlushSem=OMX_TRUE;
 				pthread_mutex_unlock(pInmutex);
-				
+				/*Dummy signaling to buffer management thread,if waiting in the paused condition and
+				now port flush request received*/
 				if(stComponent->state==OMX_StatePause) {
 					pthread_cond_signal(executingCondition);
 				}
-
 				/*Buffering being processed waiting for input flush sem*/
 				tsem_down(pPort->pFlushSem);
 				pthread_mutex_lock(pInmutex);
+				/*Indicate that pFlushSem waiting is over*/
 				pPort->bWaitingFlushSem=OMX_FALSE;
-				pthread_mutex_unlock(pInmutex);
-			}
-			else {
-				pthread_mutex_unlock(pInmutex);
 			}
 			/*Return All other input buffers*/
-			pthread_mutex_lock(pInmutex);
 			while(pInputSem->semval>0) {
 				tsem_down(pInputSem);
 				pInputBuffer = dequeue(pInputQueue);
 				(*(stComponent->callbacks->EmptyBufferDone))
 					(pHandle, stComponent->callbackData, pInputBuffer);
-				omx_oneport_component_Private->inbuffercb++;
+				base_sink_component_Private->inbuffercb++;
 			}
 			pthread_mutex_unlock(pInmutex);
 			
@@ -260,27 +243,26 @@ OMX_ERRORTYPE omx_oneport_component_FlushPort(stComponentType* stComponent, OMX_
 			/*First return the Buffer presently being processed,if any*/
 			pthread_mutex_lock(pInmutex);
 			if(IS_BUFFER_UNDER_PROCESS(pPort)) {
+				/*Indicate that pFlushSem is waiting for buffer for flushing*/
 				pPort->bWaitingFlushSem=OMX_TRUE;
 				pthread_mutex_unlock(pInmutex);
+				/*Dummy signaling to buffer management thread,if waiting in the paused condition and
+				now port flush request received*/
 				if(stComponent->state==OMX_StatePause) {
 					pthread_cond_signal(executingCondition);
 				}
 				/*Buffering being processed waiting for input flush sem*/
 				tsem_down(pPort->pFlushSem);
 				pthread_mutex_lock(pInmutex);
+				/*Indicate that pFlushSem waiting is over*/
 				pPort->bWaitingFlushSem=OMX_FALSE;
-				pthread_mutex_unlock(pInmutex);
-			}
-			else {
-				pthread_mutex_unlock(pInmutex);
 			}
 			/*Return All other input buffers*/
-			pthread_mutex_lock(pInmutex);
 			while(pInputSem->semval>0) {
 				tsem_down(pInputSem);
 				pInputBuffer = dequeue(pInputQueue);
 				OMX_FillThisBuffer(pPort->hTunneledComponent, pInputBuffer);
-				omx_oneport_component_Private->inbuffercb++;
+				base_sink_component_Private->inbuffercb++;
 			}
 			pthread_mutex_unlock(pInmutex);
 			
@@ -289,29 +271,28 @@ OMX_ERRORTYPE omx_oneport_component_FlushPort(stComponentType* stComponent, OMX_
 			PORT_IS_BUFFER_SUPPLIER(pPort)) { // Port is tunnelled & supplier
 			/*Tunnel is supplier wait till all the buffers are returned*/
 			pthread_mutex_lock(pInmutex);
+			/*Flush all input buffers*/
 			while(pInputSem->semval>0) {
 				tsem_down(pInputSem);
 				pPort->nNumBufferFlushed++;
 			}
-			pthread_mutex_unlock(pInmutex);
-
 			/*Wait till the buffer sent to the tunneled component returns*/
-			pthread_mutex_lock(pInmutex);
 			if(pPort->nNumBufferFlushed<pPort->nNumTunnelBuffer) {
-			pPort->bWaitingFlushSem=OMX_TRUE;
-			pthread_mutex_unlock(pInmutex);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s in\n",__func__);
-			if(stComponent->state==OMX_StatePause) {
-				pthread_cond_signal(executingCondition);
-			}
-			/*Buffering being processed waiting for input flush sem*/
-			tsem_down(pPort->pFlushSem);
-			pthread_mutex_lock(pInmutex);
-			pPort->bWaitingFlushSem=OMX_FALSE;
-			pthread_mutex_unlock(pInmutex);
-			}
-			else
+				/*Indicate that pFlushSem is waiting for buffer for flushing*/
+				pPort->bWaitingFlushSem=OMX_TRUE;
 				pthread_mutex_unlock(pInmutex);
+				/*Dummy signaling to buffer management thread,if waiting in the paused condition and
+				now port flush request received*/
+				if(stComponent->state==OMX_StatePause) {
+					pthread_cond_signal(executingCondition);
+				}
+				/*Buffering being processed waiting for input flush sem*/
+				tsem_down(pPort->pFlushSem);
+				pthread_mutex_lock(pInmutex);
+				/*Indicate that pFlushSem waiting is over*/
+				pPort->bWaitingFlushSem=OMX_FALSE;
+			}
+			pthread_mutex_unlock(pInmutex);
 		}
 	} 
 	

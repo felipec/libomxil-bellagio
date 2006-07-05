@@ -49,7 +49,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 libomxnewch_la_LIBADD =
 am_libomxnewch_la_OBJECTS = omx_base_component.lo \
-	omx_twoport_component.lo omx_oneport_component.lo
+	base_filter_component.lo base_sink_component.lo
 libomxnewch_la_OBJECTS = $(am_libomxnewch_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -176,12 +176,13 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 EXTRA_LTLIBRARIES = libomxnewch.la
 libomxnewch_la_SOURCES = omx_base_component.c \
-						 omx_twoport_component.c \
-						 omx_oneport_component.c
+						 base_filter_component.c \
+						 base_sink_component.c
 
 noinst_HEADERS = omx_base_component.h \
-				 omx_twoport_component.h \
-				 omx_oneport_component.h \
+				 base_filter_component.h \
+				 base_sink_component.h \
+				 base_source_component.h \
 				 omx_classmagic.h
 
 INCLUDES = -I../../include/ -I../ -I./
@@ -198,9 +199,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  src/base/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/base/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  src/base/Makefile
+	  $(AUTOMAKE) --gnu  src/base/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -227,9 +228,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/base_filter_component.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/base_sink_component.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_base_component.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_oneport_component.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omx_twoport_component.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -426,6 +427,7 @@ uninstall-am: uninstall-info-am
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-info-am
 
+						 base_source_component.c
 
 all: libomxnewch.la
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

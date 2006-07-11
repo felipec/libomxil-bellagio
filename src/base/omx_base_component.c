@@ -1922,14 +1922,14 @@ OMX_ERRORTYPE base_component_SendCommand(
 				* change state to loaded --. deallocate buffers
 				*/
 			if ((nParam == OMX_StateIdle) && (stComponent->state == OMX_StateLoaded)) {
+					for (i = 0; i < stComponent->nports; i++) {
+						base_component_Private->ports[i]->transientState = OMX_StateIdle;
+					}
 					err=(*(base_component_Private->Init))(stComponent);
 					if(err!=OMX_ErrorNone) {
 						DEBUG(DEB_LEV_ERR, "In %s  base_component_Init returned error %i\n",
 							__func__,err);
 						return OMX_ErrorInsufficientResources;
-					}
-					for (i = 0; i < stComponent->nports; i++) {
-						base_component_Private->ports[i]->transientState = OMX_StateIdle;
 					}
 			} else if ((nParam == OMX_StateLoaded) && (stComponent->state == OMX_StateIdle)) {
 					for (i = 0; i < stComponent->nports; i++) {

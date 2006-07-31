@@ -56,8 +56,6 @@ int main(int argc, char** argv){
 											 .FillBufferDone = NULL
 	};
 
-#error BUILDBOT_CHECK
-
 	OMX_PORT_PARAM_TYPE param;
 	OMX_PARAM_PORTDEFINITIONTYPE omxAudioPortDefinition;
 	OMX_AUDIO_PARAM_PCMMODETYPE omxAudioParamPcmMode;

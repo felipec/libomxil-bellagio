@@ -209,9 +209,9 @@ OMX_ERRORTYPE omx_mp3dec_component_Init(stComponentType* stComponent)
 	}
 
 	/*Temporary First Output buffer size*/
-	nBufferSize=omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
 	omx_mp3dec_component_Private->inputCurrBuffer=NULL;
 	omx_mp3dec_component_Private->inputCurrLength=0;
+	nBufferSize=omx_mp3dec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
 	omx_mp3dec_component_Private->internalOutputBuffer = (OMX_U8 *)malloc(nBufferSize);
 	memset(omx_mp3dec_component_Private->internalOutputBuffer, 0, nBufferSize);
 	omx_mp3dec_component_Private->isFirstBuffer=1;
@@ -254,7 +254,6 @@ OMX_ERRORTYPE omx_mp3dec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef
 void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer) {
 	omx_mp3dec_component_PrivateType* omx_mp3dec_component_Private = stComponent->omx_component.pComponentPrivate;
 	OMX_S32 outputfilled = 0;
-	OMX_U8* outputBuffer;
 	OMX_U8* outputCurrBuffer;
 	OMX_U32 outputLength;
 	OMX_U32 len = 0;
@@ -263,10 +262,10 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 
 	/*This is just a work arround that minimum input buffer size should be 10.
 	Though may be or should be higher. I didnot measured any statistics*/
-	if(inputbuffer->nFilledLen < 10) {
+/*	if(inputbuffer->nFilledLen < 10) {
 		inputbuffer->nFilledLen=0;
 		return;
-	}
+	}*/
 	/**Fill up the current input buffer when a new buffer has arrived*/
 	if(omx_mp3dec_component_Private->isNewBuffer) {
 	omx_mp3dec_component_Private->inputCurrBuffer = inputbuffer->pBuffer;
@@ -274,8 +273,7 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 	omx_mp3dec_component_Private->positionInOutBuf = 0;
 	omx_mp3dec_component_Private->isNewBuffer=0;
 	}
-	outputBuffer = outputbuffer->pBuffer;
-	outputCurrBuffer = outputBuffer;
+	outputCurrBuffer = outputbuffer->pBuffer;
 	outputLength = outputbuffer->nAllocLen;
 	outputbuffer->nFilledLen = 0;
 

@@ -1,5 +1,5 @@
 INCLUDES= -I../../../include/ -I../../../src
-check_PROGRAMS = omxmp3dectest
+check_PROGRAMS = omxmp3dectest omxmp3convertest
 
 #if using ../src/libomxil.la there is no need to
 #install the library and everything is resolved
@@ -8,4 +8,5 @@ check_PROGRAMS = omxmp3dectest
 #installed
 #omxdummytest_LDADD=../src/libomxil.la -lpthread
 omxmp3dectest_LDADD = -lomxil -lpthread -lasound
-EXTRA_DIST=omxmp3dectest.h
+omxmp3convertest_LDADD = -lomxil -lpthread -lasound
+EXTRA_DIST=omxmp3dectest.h omxmp3convertest.h

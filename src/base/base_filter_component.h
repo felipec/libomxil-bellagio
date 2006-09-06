@@ -41,7 +41,7 @@
 #define OMX_BASE_FILTER_INPUTPORT_INDEX 0
 #define OMX_BASE_FILTER_OUTPUTPORT_INDEX 1
 #define OMX_BASE_FILTER_ALLPORT_INDEX -1
-
+#define MIN_PAYLOAD_ALLOWED 10
 
 /** Base Filter component private structure.
  */

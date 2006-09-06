@@ -260,12 +260,6 @@ void omx_mp3dec_component_BufferMgmtCallback(stComponentType* stComponent, OMX_B
 	OMX_S32 internalOutputFilled=0;
 			
 
-	/*This is just a work arround that minimum input buffer size should be 10.
-	Though may be or should be higher. I didnot measured any statistics*/
-/*	if(inputbuffer->nFilledLen < 10) {
-		inputbuffer->nFilledLen=0;
-		return;
-	}*/
 	/**Fill up the current input buffer when a new buffer has arrived*/
 	if(omx_mp3dec_component_Private->isNewBuffer) {
 	omx_mp3dec_component_Private->inputCurrBuffer = inputbuffer->pBuffer;

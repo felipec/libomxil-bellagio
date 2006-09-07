@@ -142,11 +142,6 @@ void* base_filter_component_BufferMgmtFunction(void* param) {
 		}
 		
 		isInputBufferEnded = OMX_FALSE;
-		if(pInputBuffer->nFilledLen < MIN_PAYLOAD_ALLOWED) {
-			DEBUG(DEB_LEV_ERR, "What the hell!! had %i bytes of data available!!\n", pInputBuffer->nFilledLen);
-			pInputBuffer->nFilledLen=0;
-			isInputBufferEnded = OMX_TRUE;
-		}
 		
 		while(!isInputBufferEnded && 
 			PORT_IS_BEING_FLUSHED(pInPort) &&

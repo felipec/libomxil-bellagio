@@ -24,6 +24,10 @@
 	02110-1301  USA
 	
 	2006/05/11:  IL Core version 0.2
+	
+	Last Changed: $Date$ by $Author$
+    $Revision$
+    $URL$
 
 */
 

@@ -98,10 +98,29 @@
 /** This flag is applied to a buffer just deallocated 
 	*/
 #define BUFFER_FREE 0
+/** This field contains the number of message handler threads contructed at the beginning
+	*/
+#define MESS_HANDLER_THREADS 2
 
 /* Contains core related data structures
  * message handler thread descriptors, queue and semaphore.
  */
+
+/** This structure contains all the fields of a message handled by the core */
+typedef struct coreMessage_t coreMessage_t;
+/** 	The sub thread stucture contains the needed fields for handle each sub thread used for handle messages
+	*/
+typedef struct subThreadMessHandler_t {
+	pthread_t messHandlSubThread; /// This field contains the reference to the thread that receives messages for the components
+	int messHandlSubThreadID; /// The IDs of the sub threads those handle the messages
+	coreMessage_t* subMessage; /// This field contains the messages to be handled by each thread
+	tsem_t* subMessageSem; /// The queue access semahpore used for message read synchronization
+	tsem_t* subThreadCreationSem; /// The queue access semahpore used for message read synchronization
+	int isAvailable; /// This flag is true when the thread is usable for a new message
+	pthread_mutex_t avail_flag_mutex;
+	pthread_mutex_t exit_mutex;
+	int exit_messageThread;
+} subThreadMessHandler_t;
 
 /** Core internal structure used for cummunication with components.
 	* This structure is used to define the thread that handles the messages queue
@@ -113,15 +132,17 @@
 typedef struct coreDescriptor_t{
 	pthread_t messageHandlerThread; /// This field contains the reference to the thread that receives messages for the components
 	int messageHandlerThreadID; /// The ID of the pthread that handles the messages for the components
+
+	subThreadMessHandler_t subMessHandler[MESS_HANDLER_THREADS]; /// This field contains the reference to the thread that receives messages for the components
+
 	queue_t* messageQueue; /// The output queue for the messages to be send to the components
 	tsem_t* messageSem; /// The queue access semahpore used for message read synchronization
 	int exit_messageThread; /// boolean variable for the exit condition from the message thread
 	pthread_mutex_t exit_mutex; /// mutex for access synchronization to the internal core fields during exiting the core
+	int subThreadIndex; /// this field cointains the indwx of the subthread just called for handling the message
 } coreDescriptor_t;
 
 
-/** This structure contains all the fields of a message handled by the core */
-typedef struct coreMessage_t coreMessage_t;
 /** This field contains all the private data common to each component, both private and related to OpenMAX standard */
 typedef struct stComponentType stComponentType;
 
@@ -136,7 +157,7 @@ struct stComponentType{
 	OMX_ERRORTYPE (*constructor)(stComponentType*); /// constructor function pointer for each Linux ST OpenMAX component
 	OMX_ERRORTYPE (*destructor)(stComponentType*);/// destructor function pointer for each Linux ST OpenMAX component
 	OMX_ERRORTYPE (*messageHandler)(coreMessage_t*);/// This function receives messages from the message queue. It is needed for each Linux ST OpenMAX component
-
+	pthread_mutex_t pHandleMessageMutex;
 	int needsRegistation; /// This field specify if the store component structure has already been registered by the omxregister application
 };
 
@@ -168,6 +189,11 @@ int register_template(stComponentType* template);
  * triggering component.
  */
 void* messageHandlerFunction(void*);
+
+/** \brief This is the subfunction that effectively executes the message handling function of each component.
+ * 
+ */
+void* messHandlSubFunction(void*);
 
 /** \brief Fills in the header of a given structure with proper size and spec version
  * \param header Pointer to the structure

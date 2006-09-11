@@ -56,7 +56,7 @@
 #define DEB_ALL_MESS   15
 
 /** \def DEBUG_LEVEL is the current level do debug output on standard err */
-#define DEBUG_LEVEL (DEB_LEV_ERR)
+#define DEBUG_LEVEL (DEB_LEV_ERR | DEB_ALL_MESS)
 #if DEBUG_LEVEL > 0
 static int omxcore_debug = DEBUG_LEVEL;
 #define DEBUG(n, args...) do { if (omxcore_debug & (n)) fprintf(stderr, args); } while (0)

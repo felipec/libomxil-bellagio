@@ -23,11 +23,7 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/05/11:  IL Core version 0.2
-	
-	Last Changed: $Date$ by $Author$
-    $Revision$
-    $URL$
+	2006/07/27:  IL Core version 0.2
 
 */
 
@@ -63,6 +59,7 @@ int initialized=0;
 
 OMX_ERRORTYPE OMX_Init()
 {
+	int i = 0;
 	if(initialized!=1) {
 		initialized=1;
 		if(coreDescriptor==NULL) {
@@ -83,6 +80,29 @@ OMX_ERRORTYPE OMX_Init()
 				NULL,
 				messageHandlerFunction,
 				coreDescriptor);
+			
+			for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+				coreDescriptor->subMessHandler[i].subMessageSem = malloc(sizeof(tsem_t));
+				tsem_init(coreDescriptor->subMessHandler[i].subMessageSem, 0);
+				coreDescriptor->subMessHandler[i].subThreadCreationSem = malloc(sizeof(tsem_t));
+				tsem_init(coreDescriptor->subMessHandler[i].subThreadCreationSem, 0);
+				pthread_mutex_init(&coreDescriptor->subMessHandler[i].exit_mutex, NULL);
+				
+				pthread_mutex_lock(&coreDescriptor->subMessHandler[i].exit_mutex);
+				coreDescriptor->subMessHandler[i].exit_messageThread=OMX_FALSE;
+				pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].exit_mutex);
+				pthread_mutex_lock(&coreDescriptor->exit_mutex);
+				
+				coreDescriptor->subThreadIndex = i;
+				pthread_mutex_unlock(&coreDescriptor->exit_mutex);
+				coreDescriptor->subMessHandler[i].messHandlSubThreadID = pthread_create(&coreDescriptor->subMessHandler[i].messHandlSubThread,
+				NULL,
+				messHandlSubFunction,
+				coreDescriptor);
+				tsem_down(coreDescriptor->subMessHandler[i].subThreadCreationSem);
+				coreDescriptor->subMessHandler[i].isAvailable = 1;
+				pthread_mutex_init(&coreDescriptor->subMessHandler[i].avail_flag_mutex, NULL);
+			}
 		}
 	}
 	return OMX_ErrorNone;
@@ -90,36 +110,62 @@ OMX_ERRORTYPE OMX_Init()
 
 OMX_ERRORTYPE OMX_Deinit()
 {
+	int i = 0;
 	if(initialized==1) {
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 /// \todo add the check for every component not yet disposed
 		pthread_mutex_lock(&coreDescriptor->exit_mutex);
 		coreDescriptor->exit_messageThread=OMX_TRUE;
 		pthread_mutex_unlock(&coreDescriptor->exit_mutex);
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			pthread_mutex_lock(&coreDescriptor->subMessHandler[i].exit_mutex);
+			coreDescriptor->subMessHandler[i].exit_messageThread=OMX_TRUE;
+			pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].exit_mutex);
+		}
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "coreDescriptor->exit_mutex done\n");
 
 		if(coreDescriptor->messageSem->semval==0) {
 			tsem_up(coreDescriptor->messageSem);
 		}
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "messagesem done\n");
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			if (coreDescriptor->subMessHandler[i].subMessageSem->semval == 0) {
+				tsem_up(coreDescriptor->subMessHandler[i].subMessageSem);
+				DEBUG(DEB_LEV_SIMPLE_SEQ, "messagesem of thread %i done\n", i);
+			}
+		}
 	
 		/** With the following call, the mesage queue is not flushed, so that if something 
 			* goes wrong in the queue, the execution hangs forever 
 			*/
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			pthread_join(coreDescriptor->subMessHandler[i].messHandlSubThread,NULL);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "messages thread %i done\n", i);
+		}	
 		pthread_join(coreDescriptor->messageHandlerThread,NULL);
-	
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "messages thread done\n");
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "main thread closed\n");
 	
 		pthread_mutex_lock(&coreDescriptor->exit_mutex);
 		coreDescriptor->exit_messageThread=OMX_FALSE;
 		pthread_mutex_unlock(&coreDescriptor->exit_mutex);
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			pthread_mutex_lock(&coreDescriptor->subMessHandler[i].exit_mutex);
+			coreDescriptor->subMessHandler[i].exit_messageThread=OMX_FALSE;
+			pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].exit_mutex);
+		}
+		
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "coreDescriptor->exit_mutex done\n");
 
 		tsem_deinit(coreDescriptor->messageSem);
 		queue_deinit(coreDescriptor->messageQueue);
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			tsem_deinit(coreDescriptor->subMessHandler[i].subMessageSem);
+		}
 
 		pthread_mutex_destroy(&coreDescriptor->exit_mutex);
-
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			pthread_mutex_destroy(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
+		}
 		if(coreDescriptor->messageSem!=NULL) {
 			free(coreDescriptor->messageSem);
 		}
@@ -301,11 +347,70 @@ OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size)
 	return OMX_ErrorNone;
 }
 
+/** This function is executed in the context of a separate thread. 
+	* There is an array of threads, each one of them that runs this function. For each message
+	* recevied from the IL Client, a thread is executed. When all the threads available in
+	* the array are busy, a new thread is created, and the function messHandldynamicFunction is
+	* executed instead of this one.
+	*/
+void* messHandlSubFunction(void* param) {
+	coreDescriptor_t* coreDescriptor = param;
+	int subThreadIndex;
+	int exit_thread;
+
+	pthread_mutex_lock(&coreDescriptor->exit_mutex);
+	subThreadIndex = coreDescriptor->subThreadIndex;
+	pthread_mutex_unlock(&coreDescriptor->exit_mutex);
+	tsem_up(coreDescriptor->subMessHandler[subThreadIndex].subThreadCreationSem);
+	while(1) {
+		tsem_down(coreDescriptor->subMessHandler[subThreadIndex].subMessageSem);
+		pthread_mutex_lock(&coreDescriptor->subMessHandler[subThreadIndex].exit_mutex);
+		exit_thread = coreDescriptor->subMessHandler[subThreadIndex].exit_messageThread;
+		pthread_mutex_unlock(&coreDescriptor->subMessHandler[subThreadIndex].exit_mutex);
+		if(exit_thread==OMX_TRUE) {
+			break;
+		}
+		if (coreDescriptor->subMessHandler[subThreadIndex].subMessage == NULL) {DEBUG(DEB_LEV_ERR, "Error, message is NULL!!!!\n");	continue;}
+		pthread_mutex_lock(&coreDescriptor->subMessHandler[subThreadIndex].subMessage->stComponent->pHandleMessageMutex);
+		coreDescriptor->subMessHandler[subThreadIndex].subMessage->stComponent->messageHandler(coreDescriptor->subMessHandler[subThreadIndex].subMessage);
+		pthread_mutex_unlock(&coreDescriptor->subMessHandler[subThreadIndex].subMessage->stComponent->pHandleMessageMutex);
+		
+		free(coreDescriptor->subMessHandler[subThreadIndex].subMessage);
+		
+		pthread_mutex_lock(&coreDescriptor->subMessHandler[subThreadIndex].avail_flag_mutex);
+		coreDescriptor->subMessHandler[subThreadIndex].isAvailable = 1;
+		pthread_mutex_unlock(&coreDescriptor->subMessHandler[subThreadIndex].avail_flag_mutex);
+	}
+	return NULL;
+}
+
+/** This function is executed in the context of a thread dynamically created. If the normal array of threads
+	* is not enough to handle all the parallel messages from the IL client, the needed threads are created dynamically,
+	* an this is the function executed.
+	*/
+void* messHandldynamicFunction(void* param) {
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
+	coreMessage_t* coreMessage = param;
+	pthread_mutex_lock(&coreMessage->stComponent->pHandleMessageMutex);
+	coreMessage->stComponent->messageHandler(coreMessage);
+	pthread_mutex_unlock(&coreMessage->stComponent->pHandleMessageMutex);
+	free(coreMessage);
+	return NULL;
+}
+
+/** This function receives the messages from the IL client and retrieve them from a message queue.
+	* It dispatches the messages to message handle threads, for the processing.
+	* In order to avoid deadlocks, the messages are handled in threads different from this one.
+	*/
 void* messageHandlerFunction(void* param)
 {
 	coreDescriptor_t* coreDescriptor = param;
 	coreMessage_t* coreMessage;
+
 	int exit_thread;
+	int i;
+	int dynamicThreadID;
+	pthread_t dynamicThread;
 	
 	while(1){
 		DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -320,7 +425,7 @@ void* messageHandlerFunction(void* param)
 
 		/* Dequeue it */
 		coreMessage = dequeue(coreDescriptor->messageQueue);
-
+		
 		if(coreMessage == NULL){
 			DEBUG(DEB_LEV_ERR, "In %s: ouch!! had null message!\n", __func__);
 			break;
@@ -330,15 +435,27 @@ void* messageHandlerFunction(void* param)
 			DEBUG(DEB_LEV_ERR, "In %s: ouch!! had null component!\n", __func__);
 			break;
 		}
-		
 		/* Process it by calling component's message handler method
 		 */
-		coreMessage->stComponent->messageHandler(coreMessage);
+		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
+			pthread_mutex_lock(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
+			if (coreDescriptor->subMessHandler[i].isAvailable) {
+				coreDescriptor->subMessHandler[i].isAvailable = 0;
+				pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
+				coreDescriptor->subMessHandler[i].subMessage = coreMessage;
+				tsem_up(coreDescriptor->subMessHandler[i].subMessageSem);
+				break;
+			} else {
+				pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
+			}
+		}
+		if (i == MESS_HANDLER_THREADS) {
+			dynamicThreadID = pthread_create(&dynamicThread, NULL, messHandldynamicFunction, coreMessage);
+		}
 		
 		/* Message ownership has been transferred to us
 		 * so we gonna free it when finished.
 		 */
-		free(coreMessage);
 	}
 	DEBUG(DEB_LEV_SIMPLE_SEQ,"Exiting Message Handler thread\n");
 	return NULL;

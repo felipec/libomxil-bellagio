@@ -1806,7 +1806,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=libomxil
- VERSION=0.2
+ VERSION=B0.3.0
 
 
 cat >>confdefs.h <<_ACEOF

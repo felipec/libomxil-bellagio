@@ -1,13 +1,17 @@
-Second Public Release of the OpenMAX core developed by Nokia and STMicroelectronics for Linux distributions
+OpenMAX core developed by Nokia and STMicroelectronics for Linux distributions
 
-Major additions to the 0.2
+Major additions to the 0.3
 - Component hierarchy architecture:
-  - new base component
-	- new one port derived component, for each source/sink component
-	- new two ports components, for each encoder/decoder/filter
-- The components of the 0.1 have been changed, based on new architecture. The components in the 0.2 delivery are:
+  - renamed base components
+  - fixed several bugs on 0.2
+  - tested on Fedora core 5
+  - added new thread-mechanism for the message handling in the core
+- The components of the 0.3 release are:
   - Mp3 decoder
-	- Alsa sink renderer
-	- volume control
-	- the reference component has been removed
+  - Alsa sink renderer
+  - volume control
+
+Known issues:
+  - several times the internal test suite (not published) hangs.
+    Need more inspection
 

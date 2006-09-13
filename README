@@ -1,4 +1,4 @@
-Bellagio OpenMAX Integration Layer  0.2 project 
+Bellagio OpenMAX Integration Layer  1.0 project 
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API, specified
 by the Khronos group (see http://www.khronos.org/openmax).
@@ -10,13 +10,15 @@ components (built as separate shared objects and loaded at runtime):
 - OMX volume control component
 And the base classes for new architecture based on component hierarchy:
 - OMX base component
-- OMX one port component
-- OMX two ports component
+- OMX source component
+- OMX sink component
+- OMX filter component
 
 The following simple test applications are provided:
 
 test/components/alsasink/omxalsasinktest
 test/components/ffmpeg/omxmp3dectest
+test/components/ffmpeg/omxmp3convertest
 test/components/audio_effects/omxvolcontroltest
 
 Check the distribution build:
@@ -49,6 +51,15 @@ between the OMX MP3 decoder component and the OMX alsa sink component.
 
 test/components/ffmpeg/omxmp3dectest somemp3file.mp3
 
+Another mp3 dec test simply converts an input mp3 file into a 
+decoded stream on standard output.
+The usage is the following:
+
+test/components/ffmpeg/omxmp3convertest somemp3file.mp3 | aplay -f cd
+
+to decode the file and redirect it to the player
+
+
 The volume control test receives in input a PCM stream and put on std uotput the same stream
 filtered by the volume cotrol component.
 
@@ -77,15 +88,16 @@ HOW TO ADD A NEW COMPONENT
  make check
 -To build RPM:
  make dist
- cp libomxil-0.2.tar.gz /usr/src/redhat/SOURCES/
- rpmbuild -ba libomxil-0.2.spec
+ cp libomxil-B0.3.tar.gz /usr/src/redhat/SOURCES/
+ rpmbuild -ba libomxil-0.3.spec
 
 This version has been tested on:
 FC2 (with ffmpeg-0.4.8), 
 FC4 (with ffmpeg-0.4.9),
+FC5 (with ffmpeg-0.4.9),
 Mandriva 2006.0,
 Ubuntu 5.10,
 CentOS 4.1.
 
-Last modified: May 9th, 2006.
+Last modified: Sep 13th, 2006.
 

@@ -60,7 +60,7 @@ test/components/ffmpeg/omxmp3convertest somemp3file.mp3 | aplay -f cd
 to decode the file and redirect it to the player
 
 
-The volume control test receives in input a PCM stream and put on std uotput the same stream
+The volume control test receives in input a PCM stream and put on std output the same stream
 filtered by the volume cotrol component.
 
 test/components/audio_effects/omxvolcontroltest audio_stream.raw | aplay -f cd

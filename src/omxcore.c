@@ -389,8 +389,9 @@ void* messHandlSubFunction(void* param) {
 	* an this is the function executed.
 	*/
 void* messHandldynamicFunction(void* param) {
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	coreMessage_t* coreMessage = param;
+	
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 	pthread_mutex_lock(&coreMessage->stComponent->pHandleMessageMutex);
 	coreMessage->stComponent->messageHandler(coreMessage);
 	pthread_mutex_unlock(&coreMessage->stComponent->pHandleMessageMutex);

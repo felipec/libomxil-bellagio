@@ -571,7 +571,7 @@ int loadComponentSO(char* component)
 	}
 	if(line)
 		free(line);
-
+	fclose(omxregistryfp);
 	if(handle != NULL)
 		return 0;
 	return ENOENT;

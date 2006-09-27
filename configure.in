@@ -54,5 +54,6 @@ AC_OUTPUT([
 	test/components/Makefile	\
 	test/components/alsasink/Makefile \
 	test/components/audio_effects/Makefile \
-	test/components/ffmpeg/Makefile
+	test/components/ffmpeg/Makefile \
+	libomxil.pc
 ])

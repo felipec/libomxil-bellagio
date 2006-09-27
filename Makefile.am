@@ -7,3 +7,7 @@ libomxildoc_DATA = \
         ChangeLog\
         TODO
 
+pkgconfigexecdir        = $(libdir)/pkgconfig
+pkgconfigexec_DATA      = libomxil.pc
+
+$(pkgconfigexec_DATA): config.status

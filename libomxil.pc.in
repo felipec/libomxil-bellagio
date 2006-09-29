@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: libomxil
 Description: OpenMAX Integration Layer library
 Version: @VERSION@
-Libs: @PTHREAD_LIBS@ -L${libdir}
-Cflags: @PTHREAD_CFLAGS@ -I${includedir}
+Libs: -L${libdir} -lomxil
+Cflags: -I${includedir}
 

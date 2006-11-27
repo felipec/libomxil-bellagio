@@ -43,6 +43,7 @@ AM_CONDITIONAL(WITH_AUDIOEFFECTS, test x$with_audioeffects = xtrue)
 
 AC_OUTPUT([
 	Makefile		\
+	libomxil.pc		\
 	include/Makefile        \
 	src/Makefile		\
 	src/base/Makefile		\
@@ -54,6 +55,5 @@ AC_OUTPUT([
 	test/components/Makefile	\
 	test/components/alsasink/Makefile \
 	test/components/audio_effects/Makefile \
-	test/components/ffmpeg/Makefile \
-	libomxil.pc
+	test/components/ffmpeg/Makefile
 ])

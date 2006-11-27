@@ -39,14 +39,12 @@ void queue_init(queue_t* queue)
 	qelem_t* newelem;
 	qelem_t* current;
 	queue->first = malloc(sizeof(qelem_t));
-	DEBUG(DEB_LEV_FULL_SEQ, "QUEUE +++ first elem init %x\n", (int)queue->first);
 	memset(queue->first, 0, sizeof(qelem_t));
 	current = queue->last = queue->first;
 	queue->nelem = 0;
 	for (i = 0; i<MAX_QUEUE_ELEMENTS - 2; i++) {
 		newelem = malloc(sizeof(qelem_t));
 		memset(newelem, 0, sizeof(qelem_t));
-		DEBUG(DEB_LEV_FULL_SEQ, "QUEUE +++ next elem init %x\n", (int)newelem);
 		current->q_forw = newelem;
 		current = newelem;
 	}
@@ -72,7 +70,6 @@ void queue(queue_t* queue, void* data)
 	if (queue->last->data != NULL) {
 		return;
 	}
-	DEBUG(DEB_LEV_FULL_SEQ, "QUEUE +++ added data at %x elem in the queue %i\n", (int)queue->last, (int)(queue->nelem + 1));
 	queue->last->data = data;
 	queue->last = queue->last->q_forw;
 	queue->nelem++;
@@ -84,7 +81,6 @@ void* dequeue(queue_t* queue)
 	if (queue->first->data == NULL) {
 		return NULL;
 	}
-	DEBUG(DEB_LEV_FULL_SEQ, "QUEUE +++ removed data from %x elem already in queue %i\n", (int)queue->first, (int)(queue->nelem-1));
 	data = queue->first->data;
 	queue->first->data = NULL;
 	queue->first = queue->first->q_forw;

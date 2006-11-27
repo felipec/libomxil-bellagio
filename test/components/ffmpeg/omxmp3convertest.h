@@ -57,13 +57,8 @@ typedef struct appPrivateType{
 	
 }appPrivateType;
 
-//#define BUFFER_IN_SIZE 16384
-//#define BUFFER_IN_SIZE 8192
-#define BUFFER_IN_SIZE 4096
-//#define BUFFER_IN_SIZE 2048
-
-//#define BUFFER_OUT_SIZE 16384
-#define BUFFER_OUT_SIZE 8192
+//#define BUFFER_SIZE 32768
+#define BUFFER_SIZE 8192
 
 /** Specification version*/
 #define VERSIONMAJOR    1

@@ -45,7 +45,8 @@
 #include "tsemaphore.h"
 #include "queue.h"
 
-/** \def MAXCOMPONENTS This statement defines the maximum ndefine statement should be removed when the dynamic load method will be implemented
+/** \def MAXCOMPONENTS This statement defines the maximum ndefine statement should 
+	* be removed when the dynamic load method will be implemented
 	*/
 #define MAXCOMPONENTS 128
 /** The arrow string is used in the list of registered components, $HOME/.omxregistry */
@@ -105,6 +106,7 @@ OMX_ERRORTYPE OMX_Init()
 			}
 		}
 	}
+	readOMXRegistry();
 	return OMX_ErrorNone;
 }
 
@@ -242,7 +244,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(OMX_OUT OMX_STRING cCom
 	OMX_IN OMX_U32 nIndex)
 {
 	OMX_ERRORTYPE err;
-	err = readOMXRegistry(nIndex, nNameLength, (char*) cComponentName);
+	err = readOMXRegistryEntry(nIndex, nNameLength, (char*) cComponentName);
 	return err;
 }
 
@@ -571,13 +573,14 @@ int loadComponentSO(char* component)
 	}
 	if(line)
 		free(line);
+
 	fclose(omxregistryfp);
 	if(handle != NULL)
 		return 0;
 	return ENOENT;
 }
 
-OMX_ERRORTYPE readOMXRegistry(int position, int size, char* componentname)
+OMX_ERRORTYPE readOMXRegistryEntry(int position, int size, char* componentname)
 {
 	FILE* omxregistryfp;
 	char* line = NULL;
@@ -624,6 +627,65 @@ OMX_ERRORTYPE readOMXRegistry(int position, int size, char* componentname)
 	return OMX_ErrorNone;
 }
 
+OMX_ERRORTYPE readOMXRegistry()
+{
+	FILE* omxregistryfp;
+	char* line = NULL;
+	char* templine = NULL;
+	size_t len = 0;
+	ssize_t read;
+	char omxregistryfile[200];
+	int index;
+	char *name;
+	char *role;
+	char *libname;
+	int hasRole;
+  void* handle;
+
+	memset(omxregistryfile, 0, sizeof(omxregistryfile));
+	strcat(omxregistryfile, getenv("HOME"));
+	strcat(omxregistryfile, "/.omxregistry");
+
+	omxregistryfp = fopen(omxregistryfile, "r");
+	if (omxregistryfp == NULL){
+		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
+		return ENOENT;
+	}
+
+	name = malloc(128 * sizeof(char));
+	role = malloc(128 * sizeof(char));
+	libname = malloc(256 * sizeof(char));
+	while((read = getline(&line, &len, omxregistryfp)) != -1) {
+		hasRole = 0;
+		index = 0;
+		templine = line;
+		if ((*templine == ' ') && (*(templine+1) == '=')) {
+			templine+= 5;
+			hasRole = 1;
+		}
+		while (*(templine+index) != ' ') {index++;}
+		*(templine+index) = 0;
+		strcpy(name, templine);
+		templine += index + 5;
+		index = 0;
+		while ((*(templine+index) != ' ') && (*(templine+index) != '\n')) {index++;}
+		*(templine+index) = 0;
+		strcpy(libname, templine);
+		if (hasRole) {
+			templine += index + 5;
+			index = 0;
+			while ((*(templine+index) != ' ') && (*(templine+index) != '\n')) {index++;}
+			*(templine+index) = 0;
+			strcpy(role, templine);
+		}
+		if((handle = dlopen(libname, RTLD_NOW)) == NULL){
+			DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", libname, dlerror());
+		}
+	}
+
+	fclose(omxregistryfp);
+	return OMX_ErrorNone;
+}
 
 static int isTemplateAvailable(char* cComponentName)
 {

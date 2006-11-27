@@ -52,9 +52,6 @@
 appPrivateType* appPriv;
 
 unsigned int nextBuffer = 0;
-int accumulator = 0;
-int total_size = 0;
-int old_total_size = 0;
 
 OMX_BUFFERHEADERTYPE *inBuffer1, *inBuffer2, *outBuffer1, *outBuffer2, *inAlsaBuffer1, *inAlsaBuffer2;
 int isFirstBuffer = 1;
@@ -353,13 +350,7 @@ OMX_ERRORTYPE mp3FillBufferDone(
 	if(pBuffer != NULL){
 		if (pBuffer->nFilledLen == 0) {
 			DEBUG(DEB_LEV_ERR, "Ouch! In %s: no data in the output buffer!\n", __func__);
-			old_total_size = total_size;
-			accumulator++;
-			if (accumulator>20)
-				return OMX_ErrorNone;
-		} else {
-			accumulator = 0;
-			total_size += pBuffer->nFilledLen;
+			return OMX_ErrorNone;
 		}
 		if(eState==OMX_StateExecuting || eState==OMX_StatePause)
 			err = OMX_EmptyThisBuffer(appPriv->alsasinkhandle, pBuffer);

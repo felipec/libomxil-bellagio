@@ -232,7 +232,13 @@ int loadComponentSO(char* component);
 	* \param componentname the returned component name
 	* \return it returns OMX_ErrorNone in case of successfull request, and OMX_ErrorNoMore in case of error
 	*/
-OMX_ERRORTYPE readOMXRegistry(int position, int size, char* componentname);
+OMX_ERRORTYPE readOMXRegistryEntry(int position, int size, char* componentname);
+
+/** Reads the .omxregistry file and fills the internal storage array with 
+		the names of all the components contained in the .omxregistry file.
+	* \return it returns OMX_ErrorNone in case of successfull request, and OMX_ErrorNoMore in case of error
+	*/
+OMX_ERRORTYPE readOMXRegistry();
 
 /** Checks whether the template of a given component exists
  * \cComponentName The name of the component

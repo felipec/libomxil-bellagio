@@ -9,7 +9,9 @@ includedir = $(prefix)/include
 noinst_HEADERS = queue.h tsemaphore.h omxcore.h omx_comp_debug_levels.h user_debug_levels.h
 libomxil_la_SOURCES = omxcore.c tsemaphore.c queue.c
 INCLUDES = -I../include
-SUBDIRS += components base
+#Order is important
+#First base, then core, finally components
+SUBDIRS += base . components
 
 # addition of base and n-port classes for component development
 libomxil_la_LIBADD += base/libomxnewch.la

@@ -36,7 +36,7 @@
 #include "omx_classmagic.h"
 
 /** Default size of the internal input buffer */
-#define DEFAULT_IN_BUFFER_SIZE  2  * 1024
+#define DEFAULT_IN_BUFFER_SIZE  4  * 1024
 /** Default size of the internal output buffer */
 #define DEFAULT_OUT_BUFFER_SIZE 8 * 1024
 

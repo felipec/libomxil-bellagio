@@ -422,7 +422,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 					
 					if(snd_pcm_format != SND_PCM_FORMAT_UNKNOWN){
 						int err;
-						if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+						if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, snd_pcm_format)) < 0) {
 							DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
 							return OMX_ErrorHardware;
 //							base_component_Panic();

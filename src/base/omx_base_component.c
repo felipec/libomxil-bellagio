@@ -701,7 +701,9 @@ OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent)
 			free(base_component_Private->ports[i]->pFlushSem);
 			DEBUG(DEB_LEV_SIMPLE_SEQ,"Destroyed and Freeing pFlushSem semaphore\n");
 		}
+
 		if(base_component_Private->ports[i]->pBuffer!=NULL){
+            free(base_component_Private->ports[i]->nBufferState);
 			free(base_component_Private->ports[i]->pBuffer); 
 			DEBUG(DEB_LEV_SIMPLE_SEQ,"Freeing pBuffer\n");
 		}

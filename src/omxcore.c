@@ -683,6 +683,12 @@ OMX_ERRORTYPE readOMXRegistry()
 		}
 	}
 
+    if(line)
+		free(line);
+    free(name);
+    free(role);
+    free(libname);
+
 	fclose(omxregistryfp);
 	return OMX_ErrorNone;
 }

@@ -1,4 +1,4 @@
-Bellagio OpenMAX Integration Layer  1.0 project 
+Bellagio OpenMAX Integration Layer 1.0 project 
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API, specified
 by the Khronos group (see http://www.khronos.org/openmax).
@@ -99,5 +99,5 @@ Mandriva 2006.0,
 Ubuntu 5.10,
 CentOS 4.1.
 
-Last modified: Sep 13th, 2006.
+Last modified: Dec 11th, 2006.
 

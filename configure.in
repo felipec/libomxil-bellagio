@@ -1,5 +1,5 @@
 AC_INIT(configure.in)
-AM_INIT_AUTOMAKE(libomxil-bellagio, 0.2.1)
+AM_INIT_AUTOMAKE(libomxil-B, 0.2.1)
 AC_PROG_CC
 AM_PROG_LIBTOOL
 AC_PROG_INSTALL

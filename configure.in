@@ -1,13 +1,10 @@
 AC_INIT(configure.in)
-AM_INIT_AUTOMAKE(libomxil-B, 0.2.1)
+AM_INIT_AUTOMAKE(libomxil-B, 0.2.9)
 AC_PROG_CC
 AM_PROG_LIBTOOL
 AC_PROG_INSTALL
-# This flag should be commented working with Fedora Core 4
-# where the default compiler is gcc 4.0.0 and it produces
-# several warning due to OpenMAX standard type definition
 
-#CFLAGS="${CFLAGS=} -Werror -g"
+CFLAGS="${CFLAGS=} -Wall -g"
 
 # Check if Alsa sound library is present
 AC_CHECK_LIB(asound, snd_pcm_plugin_init, [with_alsalibrary=true], [with_alsalibrary=false])
@@ -20,12 +17,29 @@ AC_CHECK_HEADER(ffmpeg/avcodec.h, [], [with_ffmpeglibrary=false])
 AC_CHECK_HEADER(ffmpeg/avformat.h, [], [with_ffmpeglibrary=false])
 AM_CONDITIONAL(WITH_FFMPEGLIBRARY, test x$with_ffmpeglibrary = xtrue)
 
+#Check for mad components dependencies
+AC_CHECK_LIB(mad, mad_header_decode, [with_madlibrary=true], [with_madlibrary=false])
+AC_CHECK_HEADER(mad.h, [], [with_madlibrary=false])
+AM_CONDITIONAL(WITH_MADLIBRARY, test x$with_madlibrary = xtrue)
+
+#Check for glib components dependencies
+AC_CHECK_LIB(glib-2.0, g_rand_new_with_seed_array, [with_glibrary=true], [with_glibrary=false])
+AC_CHECK_HEADER(glib.h, [with_glibrary=true], [with_glibrary=false])
+AM_CONDITIONAL(WITH_GLIBRARY, test x$with_glibrary = xtrue)
+
 #Check whether ffmpeg components have been requested
 AC_ARG_ENABLE(ffmpegcomponents,
   AC_HELP_STRING([--disable-ffmpegcomponents], [whether to disable ffmpeg components compilation]),
   [with_ffmpegcomponents=false],
   [with_ffmpegcomponents=true]) dnl default
 AM_CONDITIONAL(WITH_FFMPEGCOMPONENTS, test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary = xtrue)
+
+#Check whether mad components have been requested
+AC_ARG_ENABLE(madcomponents,
+  AC_HELP_STRING([--disable-madcomponents], [whether to disable mad components compilation]),
+  [with_madcomponents=false],
+  [with_madcomponents=true]) dnl default
+AM_CONDITIONAL(WITH_MADCOMPONENTS, test x$with_madcomponents = xtrue && test x$with_madlibrary = xtrue)
 
 #Check whether alsa component has been requested
 AC_ARG_ENABLE(alsacomponent,
@@ -41,6 +55,7 @@ AC_ARG_ENABLE(audioeffects,
   [with_audioeffects=true]) dnl default
 AM_CONDITIONAL(WITH_AUDIOEFFECTS, test x$with_audioeffects = xtrue)
 
+
 AC_OUTPUT([
 	Makefile		\
 	libomxil.pc		\
@@ -50,6 +65,7 @@ AC_OUTPUT([
 	src/components/Makefile	\
 	src/components/alsa/Makefile	\
 	src/components/ffmpeg/Makefile	\
+	src/components/mad/Makefile	\
 	src/components/audio_effects/Makefile	\
 	test/Makefile		\
 	test/components/Makefile	\
@@ -57,3 +73,5 @@ AC_OUTPUT([
 	test/components/audio_effects/Makefile \
 	test/components/ffmpeg/Makefile
 ])
+
+

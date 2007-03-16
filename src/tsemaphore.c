@@ -31,10 +31,11 @@
 #include <sys/time.h>
 #include <errno.h>
 #include "tsemaphore.h"
+#include "omx_comp_debug_levels.h"
 
 void tsem_init(tsem_t* tsem, unsigned int val)
 {
-	pthread_cond_init(&tsem->condition, NULL);
+  pthread_cond_init(&tsem->condition, NULL);
 	pthread_mutex_init(&tsem->mutex, NULL);
 	tsem->semval = val;
 }
@@ -65,5 +66,19 @@ void tsem_up(tsem_t* tsem)
 void tsem_reset(tsem_t* tsem) {
 	pthread_mutex_lock(&tsem->mutex);
 	tsem->semval=0;
+	pthread_mutex_unlock(&tsem->mutex);
+}
+
+void tsem_wait(tsem_t* tsem)
+{
+	pthread_mutex_lock(&tsem->mutex);
+	pthread_cond_wait(&tsem->condition, &tsem->mutex);
+	pthread_mutex_unlock(&tsem->mutex);
+}
+
+void tsem_signal(tsem_t* tsem)
+{
+	pthread_mutex_lock(&tsem->mutex);
+	pthread_cond_signal(&tsem->condition);
 	pthread_mutex_unlock(&tsem->mutex);
 }

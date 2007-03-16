@@ -21,7 +21,7 @@
  *
  */
 
-/** @file OMX_Other.h
+/** @file OMX_Other.h - OpenMax IL version 1.1
  *  The structures needed by Other components to exchange
  *  parameters and configuration data with the components.
  */
@@ -54,6 +54,7 @@ typedef enum OMX_OTHER_FORMATTYPE {
                                    management, setting clocks? */
     OMX_OTHER_FormatStats,    /**< Could be things such as frame rate, frames 
                                    dropped, etc */
+    OMX_OTHER_FormatBinary,   /**< Arbitrary binary data */
     OMX_OTHER_FormatVendorReserved = 1000, /**< Starting value for vendor specific 
                                                 formats */
 

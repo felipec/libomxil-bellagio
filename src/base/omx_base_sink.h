@@ -1,5 +1,5 @@
 /**
- * @file src/base/base_sink_component.h
+ * @file src/base/omx_base_sink.h
  * 
  * OpenMax base sink component. This component is an audio sink that uses ALSA library.
  * 
@@ -44,29 +44,28 @@
 #define OMX_BASE_SINK_INPUTPORT_INDEX 0
 #define OMX_BASE_SINK_ALLPORT_INDEX -1
 
-
 /** base sink component private structure.
  */
-DERIVEDCLASS(base_sink_component_PrivateType, base_component_PrivateType)
-#define base_sink_component_PrivateType_FIELDS base_component_PrivateType_FIELDS \
+DERIVEDCLASS(omx_base_sink_PrivateType, omx_base_component_PrivateType)
+#define omx_base_sink_PrivateType_FIELDS omx_base_component_PrivateType_FIELDS \
 	/** @param BufferMgmtCallback function pointer for algorithm callback */ \
-	void (*BufferMgmtCallback)(stComponentType* stComponent, OMX_BUFFERHEADERTYPE* inputbuffer);
-ENDCLASS(base_sink_component_PrivateType)
+	void (*BufferMgmtCallback)(OMX_COMPONENTTYPE* openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer);
+ENDCLASS(omx_base_sink_PrivateType)
 
 /* Component private entry points declaration */
-OMX_ERRORTYPE base_sink_component_Constructor(stComponentType*);
+OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
 
 /** This is the central function for component processing. It
  * is executed in a separate thread, is synchronized with 
  * semaphores at each port, those are released each time a new buffer
  * is available on the given port.
  */
-void* base_sink_component_BufferMgmtFunction(void* param);
+void* omx_base_sink_BufferMgmtFunction(void* param);
 /** Flushes all the buffers under processing by the given port. 
  * This function si called due to a state change of the component, typically
  * @param stComponent the component which owns the port to be flushed
  * @param portIndex the ID of the port to be flushed
  */
-OMX_ERRORTYPE base_sink_component_FlushPort(stComponentType* stComponent, OMX_U32 portIndex);
+OMX_ERRORTYPE omx_base_sink_FlushPort(OMX_COMPONENTTYPE *openmaxStandComp,OMX_U32 portIndex);
 
 #endif //_OMX_BASE_SINK_COMPONENT_H_

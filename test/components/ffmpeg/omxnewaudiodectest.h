@@ -1,11 +1,10 @@
 /**
-	@file test/components/ffmpeg/omxmp3dectest.h
+	@file test/components/ffmpeg/omx11audiodectest.h
 	
-	Test application that uses two OpenMAX components, an mp3 decoder and 
-	an alsa sink. The application receives an mp3 stream in inupt, from a file
-	or from standard input, decodes it and sends it to the alsa sink. 
-	It is possible to specify the option -t that requests a tunnel between 
-	OpenMAX components.
+	Test application that uses two OpenMAX components, a gneric audio decoder and 
+	an alsa sink. The application receives an audio stream decoded by a multiple format decoder component.
+	The decoded output is sent to an alsa sink. 
+	It is possible to specify the option -t that requests a tunnel between OpenMAX components.
 	
 	Copyright (C) 2006  STMicroelectronics
 
@@ -41,28 +40,16 @@
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 
-#include <user_debug_levels.h>
+//#include <user_debug_levels.h>
 /* Application's private data */
 typedef struct appPrivateType{
-	
-	OMX_BUFFERHEADERTYPE* currentInputBuffer;
 	tsem_t* decoderEventSem;
-	tsem_t* alsasinkEventSem;
 	tsem_t* eofSem;
+	OMX_HANDLETYPE audiodechandle;
 
-	OMX_HANDLETYPE mp3handle;
-	OMX_HANDLETYPE alsasinkhandle;
-	
-	int minBufferSize;
-	
 }appPrivateType;
 
-//#define BUFFER_IN_SIZE 16384
-//#define BUFFER_IN_SIZE 8192
 #define BUFFER_IN_SIZE 4096
-//#define BUFFER_IN_SIZE 2048
-
-//#define BUFFER_OUT_SIZE 16384
 #define BUFFER_OUT_SIZE 8192
 
 /** Specification version*/
@@ -72,7 +59,7 @@ typedef struct appPrivateType{
 #define VERSIONSTEP     0
 
 /* Callback prototypes */
-OMX_ERRORTYPE mp3EventHandler(
+OMX_ERRORTYPE audiodecEventHandler(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_EVENTTYPE eEvent,
@@ -80,25 +67,12 @@ OMX_ERRORTYPE mp3EventHandler(
 	OMX_OUT OMX_U32 Data2,
 	OMX_OUT OMX_PTR pEventData);
 
-OMX_ERRORTYPE mp3EmptyBufferDone(
+OMX_ERRORTYPE audiodecEmptyBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
-OMX_ERRORTYPE mp3FillBufferDone(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
-
-OMX_ERRORTYPE alsasinkEventHandler(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_EVENTTYPE eEvent,
-	OMX_OUT OMX_U32 Data1,
-	OMX_OUT OMX_U32 Data2,
-	OMX_OUT OMX_PTR pEventData);
-
-OMX_ERRORTYPE alsasinkEmptyBufferDone(
+OMX_ERRORTYPE audiodecFillBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);

@@ -2,11 +2,11 @@
 	@file src/omxcore.c
 	
 	OpenMax Integration Layer Core. This library implements the OpenMAX core
-	responsible for environment setup and components tunneling and communication.
+	responsible for environment setup, components tunneling and communication.
 	
-	Copyright (C) 2006  STMicroelectronics
+	Copyright (C) 2007  STMicroelectronics
 
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+	@author Pankaj SEN, Giulio URLINI
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/07/27:  IL Core version 0.2
-
+	$Date$
+	Revision $Rev$
+	Author $Author$
 */
 
 #include <stdio.h>
@@ -42,213 +43,175 @@
 #include <OMX_Component.h>
 
 #include "omxcore.h"
-#include "tsemaphore.h"
-#include "queue.h"
 
-/** \def MAXCOMPONENTS This statement defines the maximum ndefine statement should 
-	* be removed when the dynamic load method will be implemented
-	*/
-#define MAXCOMPONENTS 128
-/** The arrow string is used in the list of registered components, $HOME/.omxregistry */
-#define ARROW " ==> "
-/** Container for handle templates.
+/** The static field initialized is equal to 0 if the core is not initialized. 
+ * It is equal to 1 whern the OMX_Init has been called
  */
-stComponentType* templateList[MAXCOMPONENTS];
-
-coreDescriptor_t* coreDescriptor=NULL;
 int initialized=0;
+/** This static fields contain the numebr of loaders already added to the system. 
+ * The use of a static variable can be changed in the future when a different
+ * way to expose loaders will be proposed.
+ */ 
+int loadersAdded = 0;
 
-OMX_ERRORTYPE OMX_Init()
-{
-	int i = 0;
-	if(initialized!=1) {
-		initialized=1;
-		if(coreDescriptor==NULL) {
-			coreDescriptor = malloc(sizeof(coreDescriptor_t));
-			coreDescriptor->messageQueue=NULL;
-			coreDescriptor->messageSem=NULL;
+OMX_BOOL isDefaultLoader=OMX_FALSE;
+BOSA_COMPONENTLOADER* defaultLoader=NULL;
 
-			coreDescriptor->messageQueue = malloc(sizeof(queue_t));
-			queue_init(coreDescriptor->messageQueue);
+#define MAXLOADER 3
 
-			coreDescriptor->messageSem = malloc(sizeof(tsem_t));
-			tsem_init(coreDescriptor->messageSem, 0);
-		
-			coreDescriptor->exit_messageThread=OMX_FALSE;
-			pthread_mutex_init(&coreDescriptor->exit_mutex, NULL);
-	
-			coreDescriptor->messageHandlerThreadID = pthread_create(&coreDescriptor->messageHandlerThread,
-				NULL,
-				messageHandlerFunction,
-				coreDescriptor);
-			
-			for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-				coreDescriptor->subMessHandler[i].subMessageSem = malloc(sizeof(tsem_t));
-				tsem_init(coreDescriptor->subMessHandler[i].subMessageSem, 0);
-				coreDescriptor->subMessHandler[i].subThreadCreationSem = malloc(sizeof(tsem_t));
-				tsem_init(coreDescriptor->subMessHandler[i].subThreadCreationSem, 0);
-				pthread_mutex_init(&coreDescriptor->subMessHandler[i].exit_mutex, NULL);
-				
-				pthread_mutex_lock(&coreDescriptor->subMessHandler[i].exit_mutex);
-				coreDescriptor->subMessHandler[i].exit_messageThread=OMX_FALSE;
-				pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].exit_mutex);
-				pthread_mutex_lock(&coreDescriptor->exit_mutex);
-				
-				coreDescriptor->subThreadIndex = i;
-				pthread_mutex_unlock(&coreDescriptor->exit_mutex);
-				coreDescriptor->subMessHandler[i].messHandlSubThreadID = pthread_create(&coreDescriptor->subMessHandler[i].messHandlSubThread,
-				NULL,
-				messHandlSubFunction,
-				coreDescriptor);
-				tsem_down(coreDescriptor->subMessHandler[i].subThreadCreationSem);
-				coreDescriptor->subMessHandler[i].isAvailable = 1;
-				pthread_mutex_init(&coreDescriptor->subMessHandler[i].avail_flag_mutex, NULL);
-			}
-		}
-	}
-	readOMXRegistry();
+/** The pointer to the loaders list. This filed, tike the loadersAdded, is
+ * used by the current loaders list handlig, and can be changed in the future
+ */
+BOSA_COMPONENTLOADER *loadersList[MAXLOADER]={NULL,NULL,NULL};
+
+/** @brief The registration function for loaders. 
+ * 
+ * This function is used with 
+ * loadersAdded and loadersList. It could be changed in the future
+ */ 
+OMX_ERRORTYPE BOSA_AddComponentLoader(BOSA_COMPONENTLOADER* componentLoader) {
+	BOSA_COMPONENTLOADER *currentloader;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+	//currentloader = loadersList + loadersAdded;
+	//currentloader = componentLoader;
+  loadersList[loadersAdded]=componentLoader;
+  DEBUG(DEB_LEV_ERR, "In %s loadersList=%x,componentLoader=%x,\n",
+    __func__,(int)loadersList[loadersAdded],(int)componentLoader);
+	loadersAdded++;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE OMX_Deinit()
-{
+/** @brief The OMX_Init standard function
+ */
+OMX_ERRORTYPE OMX_Init() {
+	/// TODO add a check for multiple components with the same name
+	/// in different loaders
 	int i = 0;
-	if(initialized==1) {
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
-/// \todo add the check for every component not yet disposed
-		pthread_mutex_lock(&coreDescriptor->exit_mutex);
-		coreDescriptor->exit_messageThread=OMX_TRUE;
-		pthread_mutex_unlock(&coreDescriptor->exit_mutex);
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			pthread_mutex_lock(&coreDescriptor->subMessHandler[i].exit_mutex);
-			coreDescriptor->subMessHandler[i].exit_messageThread=OMX_TRUE;
-			pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].exit_mutex);
-		}
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "coreDescriptor->exit_mutex done\n");
+  //void *test;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n", __func__);
+	if(initialized == 0) {
+		initialized = 1;
 
-		if(coreDescriptor->messageSem->semval==0) {
-			tsem_up(coreDescriptor->messageSem);
+    /*If no loader added then add default component loader*/
+    if(loadersAdded==0) {
+      DEBUG(DEB_LEV_ERR, "In %s no of loader=%d Adding Default Loader\n", __func__,loadersAdded);
+      BOSA_ST_InitComponentLoader(&defaultLoader);
+      BOSA_AddComponentLoader(defaultLoader);
+      isDefaultLoader=OMX_TRUE;
+    }
+		/// TODO check if the list is empty and in case provide a default component loader
+    for (i = 0; i<loadersAdded; i++) {
+      if(loadersList) 
+        if(loadersList[i]->BOSA_CreateComponentLoader)
+          loadersList[i]->BOSA_CreateComponentLoader(&loadersList[i]->storeHandler);
 		}
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "messagesem done\n");
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			if (coreDescriptor->subMessHandler[i].subMessageSem->semval == 0) {
-				tsem_up(coreDescriptor->subMessHandler[i].subMessageSem);
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "messagesem of thread %i done\n", i);
-			}
-		}
-	
-		/** With the following call, the mesage queue is not flushed, so that if something 
-			* goes wrong in the queue, the execution hangs forever 
-			*/
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			pthread_join(coreDescriptor->subMessHandler[i].messHandlSubThread,NULL);
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "messages thread %i done\n", i);
-		}	
-		pthread_join(coreDescriptor->messageHandlerThread,NULL);
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "main thread closed\n");
-	
-		pthread_mutex_lock(&coreDescriptor->exit_mutex);
-		coreDescriptor->exit_messageThread=OMX_FALSE;
-		pthread_mutex_unlock(&coreDescriptor->exit_mutex);
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			pthread_mutex_lock(&coreDescriptor->subMessHandler[i].exit_mutex);
-			coreDescriptor->subMessHandler[i].exit_messageThread=OMX_FALSE;
-			pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].exit_mutex);
-		}
-		
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "coreDescriptor->exit_mutex done\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
+	return OMX_ErrorNone;
+  }
+}
 
-		tsem_deinit(coreDescriptor->messageSem);
-		queue_deinit(coreDescriptor->messageQueue);
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			tsem_deinit(coreDescriptor->subMessHandler[i].subMessageSem);
+/** @brief The OMX_Deinit standard function
+ */
+OMX_ERRORTYPE OMX_Deinit() {
+	int i = 0;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+	if(initialized == 1) {
+		for (i = 0; i<loadersAdded; i++) {
+			loadersList[i]->BOSA_DestroyComponentLoader(loadersList[i]->storeHandler);
 		}
-
-		pthread_mutex_destroy(&coreDescriptor->exit_mutex);
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			pthread_mutex_destroy(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
-		}
-		if(coreDescriptor->messageSem!=NULL) {
-			free(coreDescriptor->messageSem);
-		}
-		if(coreDescriptor->messageQueue!=NULL) {
-			free(coreDescriptor->messageQueue);
-		}
-		if(coreDescriptor!=NULL) {
-			free(coreDescriptor);
-		}
-	
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "deinit done\n");
-	
-		initialized=0;
-		coreDescriptor=NULL;
 	}
-	
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Exiting %s...\n", __func__);
+
+  /*If Default Loader Added Then Free the Default Loader*/
+  if(isDefaultLoader==OMX_TRUE){
+    BOSA_ST_DeinitComponentLoader(defaultLoader);
+    isDefaultLoader=OMX_FALSE;
+    loadersAdded--;
+  }
+  initialized = 0;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return OMX_ErrorNone;
 }
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
+OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
 	OMX_IN  OMX_STRING cComponentName,
 	OMX_IN  OMX_PTR pAppData,
-	OMX_IN  OMX_CALLBACKTYPE* pCallBacks)
-{
-	int i, err = OMX_ErrorNone;
-	OMX_ERRORTYPE eError = OMX_ErrorNone;
-	stComponentType* pStcomponent;
-	
-	/** If the component is not available try to load its
-	 * implementation from the file system via loadComponentSO()
-	 */
-	if(!isTemplateAvailable(cComponentName))
-		err = loadComponentSO(cComponentName);
-	if(err){
-		DEBUG(DEB_LEV_ERR, "Component %s not found, sorry...\n", cComponentName);
-		return OMX_ErrorComponentNotFound;
-	}
+	OMX_IN  OMX_CALLBACKTYPE* pCallBacks) {
+	int i;
+	OMX_ERRORTYPE err = OMX_ErrorNone;
 
-	/* Find the requested template and factor the component out of it */
-	for(i=0;i<MAXCOMPONENTS;i++){
-		if(templateList[i]){
-			if(!strcmp(templateList[i]->name, cComponentName)){
-				DEBUG(DEB_LEV_PARAMS, "Found requested template %s\n", cComponentName);
-				/* Build ST component from template and fill fields */
-				pStcomponent = malloc(sizeof(stComponentType));
-				memcpy(pStcomponent, templateList[i], sizeof(stComponentType));
-				pStcomponent->coreDescriptor = coreDescriptor;
-				eError=pStcomponent->constructor(pStcomponent);//Startup component (will spawn the event manager thread)
-				/* Fill and return the OMX thing */
-				*pHandle = &pStcomponent->omx_component;
-				((OMX_COMPONENTTYPE*)*pHandle)->SetCallbacks(*pHandle, pCallBacks, pAppData);	
-				DEBUG(DEB_LEV_FULL_SEQ, "Template %s found returning from OMX_GetHandle\n", cComponentName);
-				return eError;
-			}
+	for (i = 0; i<loadersAdded; i++) {
+		err = loadersList[i]->BOSA_CreateComponent(
+					loadersList[i]->storeHandler,
+					pHandle,
+					cComponentName,
+					pAppData,
+					pCallBacks);
+		if (err == OMX_ErrorNone) {
+			// the component has been found
+			return OMX_ErrorNone;
 		}
 	}
-	
-	/* Giving up. Something went wrong contructing the component */
-	DEBUG(DEB_LEV_ERR, "Template %s not found, sorry...\n", cComponentName);
 	return OMX_ErrorComponentNotFound;
 }
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
-{
-	stComponentType* stComponent = (stComponentType*)hComponent;
-	stComponent->destructor(stComponent);
-	free(stComponent);
-	return OMX_ErrorNone;
+OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent) {
+  OMX_ERRORTYPE err = OMX_ErrorNone;
+  int i;
+	for (i = 0; i<loadersAdded; i++) {
+		err = loadersList[i]->BOSA_DestroyComponent(
+					loadersList[i]->storeHandler,
+					hComponent);
+		if (err == OMX_ErrorNone) {
+			// the component has been found
+			return OMX_ErrorNone;
+		}
+	}
+	return OMX_ErrorComponentNotFound;
 }
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
+OMX_ERRORTYPE OMX_APIENTRY OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
 	OMX_IN OMX_U32 nNameLength,
-	OMX_IN OMX_U32 nIndex)
-{
-	OMX_ERRORTYPE err;
-	err = readOMXRegistryEntry(nIndex, nNameLength, (char*) cComponentName);
-	return err;
+	OMX_IN OMX_U32 nIndex) {
+	OMX_ERRORTYPE err = OMX_ErrorNone;
+	int i, index, offset = 0;
+	int end_index = 0;
+	for (i = 0; i<loadersAdded; i++) {
+		err = loadersList[i]->BOSA_ComponentNameEnum(
+					loadersList[i]->storeHandler,
+					cComponentName,
+					nNameLength,
+					nIndex - offset);
+		if (err != OMX_ErrorNone) {
+			// The component has been not found with the current loader.
+			// the first step is to find the curent number of component for the 
+			// current loader, and use it as offset for the next loader
+			end_index = 0; index = 0;
+			while (!end_index) {
+				err = loadersList[i]->BOSA_ComponentNameEnum(
+							loadersList[i]->storeHandler,
+							cComponentName,
+							nNameLength,
+							index);
+				if (err == OMX_ErrorNone) {
+					index++;
+				} else {
+					end_index = 1;
+					offset+=index;
+				}
+			}
+		} else {
+			return OMX_ErrorNone;
+		}
+	}
+	return OMX_ErrorNoMore;
 }
 
-OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_SetupTunnel(
+/** @brief The setup tunnel openMAX standard function
+ * 
+ * The implementation of this function is described in the OpenMAX spec
+ */
+OMX_ERRORTYPE OMX_APIENTRY OMX_SetupTunnel(
 	OMX_IN  OMX_HANDLETYPE hOutput,
 	OMX_IN  OMX_U32 nPortOutput,
 	OMX_IN  OMX_HANDLETYPE hInput,
@@ -257,6 +220,8 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_SetupTunnel(
 	OMX_ERRORTYPE err;
 	OMX_COMPONENTTYPE* component;
 	OMX_TUNNELSETUPTYPE* tunnelSetup;
+	
+	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	tunnelSetup = malloc(sizeof(OMX_TUNNELSETUPTYPE));
 	component = (OMX_COMPONENTTYPE*)hOutput;
 	tunnelSetup->nTunnelFlags = 0;
@@ -272,15 +237,15 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_SetupTunnel(
 		return err;
 		}
 	}
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "First stage of tunneling acheived:\n");
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
+	DEBUG(DEB_LEV_PARAMS, "First stage of tunneling acheived:\n");
+	DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
+	DEBUG(DEB_LEV_PARAMS, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
 	
 	component = (OMX_COMPONENTTYPE*)hInput;
 	if (hInput) {
 		err = (component->ComponentTunnelRequest)(hInput, nPortInput, hOutput, nPortOutput, tunnelSetup);
 		if (err != OMX_ErrorNone) {
-			DEBUG(DEB_LEV_ERR, "Tunneling failed: input port rejects it - err = %i\n", err);
+			DEBUG(DEB_LEV_ERR, "Tunneling failed: input port rejects it - err = %08x\n", err);
 			// the second stage fails. the tunnel on poutput port has to be removed
 			component = (OMX_COMPONENTTYPE*)hOutput;
 			err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, NULL, 0, tunnelSetup);
@@ -293,411 +258,80 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_SetupTunnel(
 			return OMX_ErrorPortsNotCompatible;
 		}
 	}
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Second stage of tunneling acheived:\n");
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
+	DEBUG(DEB_LEV_PARAMS, "Second stage of tunneling acheived:\n");
+	DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
+	DEBUG(DEB_LEV_PARAMS, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
 	free(tunnelSetup);
-	return OMX_ErrorNone;
-}
-/**************************************************************
- *
- * PRIVATE: core private entry points and helper functions
- *
- **************************************************************/
-
-int register_template(stComponentType* template)
-{
-  int i;
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "REGISTERING TEMPLATE\n");
-  for(i=0;i<MAXCOMPONENTS;i++)
-    if(templateList[i] == NULL){
-      templateList[i] = template;
-		templateList[i]->needsRegistation = 1;
-      return 0;
-    }
-  return OMX_ErrorInsufficientResources;
-}
-
-void setHeader(OMX_PTR header, OMX_U32 size)
-{
-	OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
-	*((OMX_U32*)header) = size;
-
-	ver->s.nVersionMajor = SPECVERSIONMAJOR;
-	ver->s.nVersionMinor = SPECVERSIONMINOR;
-	ver->s.nRevision = SPECREVISION;
-	ver->s.nStep = SPECSTEP;
-}
-
-OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size)
-{
-	OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
-	if (header == NULL) {
-		return OMX_ErrorBadParameter;
-	}
-	if(*((OMX_U32*)header) != size){
-		return OMX_ErrorBadParameter;
-	}
-
-	if(ver->s.nVersionMajor != SPECVERSIONMAJOR ||
-		ver->s.nVersionMinor != SPECVERSIONMINOR ||
-		ver->s.nRevision != SPECREVISION ||
-		ver->s.nStep != SPECSTEP){
-		return OMX_ErrorVersionMismatch;
-	}
-
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return OMX_ErrorNone;
 }
 
-/** This function is executed in the context of a separate thread. 
-	* There is an array of threads, each one of them that runs this function. For each message
-	* recevied from the IL Client, a thread is executed. When all the threads available in
-	* the array are busy, a new thread is created, and the function messHandldynamicFunction is
-	* executed instead of this one.
-	*/
-void* messHandlSubFunction(void* param) {
-	coreDescriptor_t* coreDescriptor = param;
-	int subThreadIndex;
-	int exit_thread;
-
-	pthread_mutex_lock(&coreDescriptor->exit_mutex);
-	subThreadIndex = coreDescriptor->subThreadIndex;
-	pthread_mutex_unlock(&coreDescriptor->exit_mutex);
-	tsem_up(coreDescriptor->subMessHandler[subThreadIndex].subThreadCreationSem);
-	while(1) {
-		tsem_down(coreDescriptor->subMessHandler[subThreadIndex].subMessageSem);
-		pthread_mutex_lock(&coreDescriptor->subMessHandler[subThreadIndex].exit_mutex);
-		exit_thread = coreDescriptor->subMessHandler[subThreadIndex].exit_messageThread;
-		pthread_mutex_unlock(&coreDescriptor->subMessHandler[subThreadIndex].exit_mutex);
-		if(exit_thread==OMX_TRUE) {
-			break;
-		}
-		if (coreDescriptor->subMessHandler[subThreadIndex].subMessage == NULL) {DEBUG(DEB_LEV_ERR, "Error, message is NULL!!!!\n");	continue;}
-		pthread_mutex_lock(&coreDescriptor->subMessHandler[subThreadIndex].subMessage->stComponent->pHandleMessageMutex);
-		coreDescriptor->subMessHandler[subThreadIndex].subMessage->stComponent->messageHandler(coreDescriptor->subMessHandler[subThreadIndex].subMessage);
-		pthread_mutex_unlock(&coreDescriptor->subMessHandler[subThreadIndex].subMessage->stComponent->pHandleMessageMutex);
-		
-		free(coreDescriptor->subMessHandler[subThreadIndex].subMessage);
-		
-		pthread_mutex_lock(&coreDescriptor->subMessHandler[subThreadIndex].avail_flag_mutex);
-		coreDescriptor->subMessHandler[subThreadIndex].isAvailable = 1;
-		pthread_mutex_unlock(&coreDescriptor->subMessHandler[subThreadIndex].avail_flag_mutex);
-	}
-	return NULL;
-}
-
-/** This function is executed in the context of a thread dynamically created. If the normal array of threads
-	* is not enough to handle all the parallel messages from the IL client, the needed threads are created dynamically,
-	* an this is the function executed.
-	*/
-void* messHandldynamicFunction(void* param) {
-	coreMessage_t* coreMessage = param;
-	
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
-	pthread_mutex_lock(&coreMessage->stComponent->pHandleMessageMutex);
-	coreMessage->stComponent->messageHandler(coreMessage);
-	pthread_mutex_unlock(&coreMessage->stComponent->pHandleMessageMutex);
-	free(coreMessage);
-	return NULL;
-}
-
-/** This function receives the messages from the IL client and retrieve them from a message queue.
-	* It dispatches the messages to message handle threads, for the processing.
-	* In order to avoid deadlocks, the messages are handled in threads different from this one.
-	*/
-void* messageHandlerFunction(void* param)
-{
-	coreDescriptor_t* coreDescriptor = param;
-	coreMessage_t* coreMessage;
-
-	int exit_thread;
+OMX_ERRORTYPE OMX_GetRolesOfComponent ( 
+  OMX_IN      OMX_STRING CompName, 
+  OMX_INOUT   OMX_U32 *pNumRoles,
+  OMX_OUT     OMX_U8 **roles) {
+	OMX_ERRORTYPE err = OMX_ErrorNone;
 	int i;
-	int dynamicThreadID;
-	pthread_t dynamicThread;
 	
-	while(1){
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
-		/* Wait for an incoming message */
-		tsem_down(coreDescriptor->messageSem);
-		pthread_mutex_lock(&coreDescriptor->exit_mutex);
-		exit_thread = coreDescriptor->exit_messageThread;
-		pthread_mutex_unlock(&coreDescriptor->exit_mutex);
-		if(exit_thread==OMX_TRUE) {
-			break;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+	for (i = 0; i<loadersAdded; i++) {
+		err = loadersList[i]->BOSA_GetRolesOfComponent(
+					loadersList[i]->storeHandler,
+					CompName,
+					pNumRoles,
+					roles);
+		if (err == OMX_ErrorNone) {
+			return OMX_ErrorNone;
 		}
-
-		/* Dequeue it */
-		coreMessage = dequeue(coreDescriptor->messageQueue);
-		
-		if(coreMessage == NULL){
-			DEBUG(DEB_LEV_ERR, "In %s: ouch!! had null message!\n", __func__);
-			break;
-		}
-
-		if(coreMessage->stComponent == NULL){
-			DEBUG(DEB_LEV_ERR, "In %s: ouch!! had null component!\n", __func__);
-			break;
-		}
-		/* Process it by calling component's message handler method
-		 */
-		for (i = 0; i<MESS_HANDLER_THREADS; i++) {
-			pthread_mutex_lock(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
-			if (coreDescriptor->subMessHandler[i].isAvailable) {
-				coreDescriptor->subMessHandler[i].isAvailable = 0;
-				pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
-				coreDescriptor->subMessHandler[i].subMessage = coreMessage;
-				tsem_up(coreDescriptor->subMessHandler[i].subMessageSem);
-				break;
-			} else {
-				pthread_mutex_unlock(&coreDescriptor->subMessHandler[i].avail_flag_mutex);
-			}
-		}
-		if (i == MESS_HANDLER_THREADS) {
-			dynamicThreadID = pthread_create(&dynamicThread, NULL, messHandldynamicFunction, coreMessage);
-		}
-		
-		/* Message ownership has been transferred to us
-		 * so we gonna free it when finished.
-		 */
 	}
-	DEBUG(DEB_LEV_SIMPLE_SEQ,"Exiting Message Handler thread\n");
-	return NULL;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
+	return OMX_ErrorComponentNotFound;
 }
 
-int buildComponentsList(char* componentspath, int* ncomponents)
-{
-	DIR *dirp = NULL;
-	struct dirent *dp;
+OMX_ERRORTYPE OMX_GetComponentsOfRole ( 
+  OMX_IN      OMX_STRING role,
+  OMX_INOUT   OMX_U32 *pNumComps,
+  OMX_INOUT   OMX_U8  **compNames) {
+  OMX_ERRORTYPE err = OMX_ErrorNone;
+	int i,j;
+	int only_number_requested = 0,full_number=0;
+	int total_num_comp = 0;
+	int temp_num_comp = 0;
+	int index_current_name = 0;
 	
-  void* handle;
-	int i = 0;
-	FILE* omxregistryfp;
-	char omxregistryfile[200];
-	
-	*ncomponents = 0;
-	memset(omxregistryfile, 0, sizeof(omxregistryfile));
-	strcat(omxregistryfile, getenv("HOME"));
-	strcat(omxregistryfile, "/.omxregistry");
-	
-	/* Populate the registry file */
-	dirp = opendir(componentspath);
-	if(dirp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open directory %s\n", componentspath);
-		return ENOENT;
-	}
-
-	omxregistryfp = fopen(omxregistryfile, "w");
-	if (omxregistryfp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
-		return ENOENT;
-	}
-	
-	while((dp = readdir(dirp)) != NULL){
-		int len;
-      char ext[4];
-		
-      len = strlen(dp->d_name);
-		
-      if(len >= 3){
-			strncpy(ext, &(dp->d_name[len-3]), 3);
-			ext[4]='\0';
-			
-			if(strncmp(ext, ".so", 3) == 0){
-				char lib_absolute_path[200];
-				
-				strcpy(lib_absolute_path, componentspath);
-				strcat(lib_absolute_path, "/");
-				strcat(lib_absolute_path, dp->d_name);
-				
-				if((handle = dlopen(lib_absolute_path, RTLD_NOW)) == NULL){
-					DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", lib_absolute_path, dlerror());
-				}
-				else{
-					for(i=0;i<MAXCOMPONENTS;i++){
-						if(templateList[i] && templateList[i]->needsRegistation == 1){
-							char buffer[256];
-							memset(buffer, 0, sizeof(buffer));
-							templateList[i]->needsRegistation = 0;
-							(*ncomponents)++;
-							DEBUG(DEB_LEV_SIMPLE_SEQ, "Found component %s in shared object %s\n",
-								templateList[i]->name, lib_absolute_path);
-							strcat(buffer, templateList[i]->name);
-							strcat(buffer, ARROW);
-							strcat(buffer, lib_absolute_path);
-							strcat(buffer, "\n");
-							fwrite(buffer, 1, strlen(buffer), omxregistryfp);
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	fclose(omxregistryfp);
-	return 0;
-}
-
-int loadComponentSO(char* component)
-{
-	FILE* omxregistryfp;
-	char* line = NULL;
-	char* componentpath;
-	size_t len = 0;
-	ssize_t read;
-	char omxregistryfile[200];
-	void* handle = NULL;
-	
-	memset(omxregistryfile, 0, sizeof(omxregistryfile));
-	strcat(omxregistryfile, getenv("HOME"));
-	strcat(omxregistryfile, "/.omxregistry");
-
-	omxregistryfp = fopen(omxregistryfile, "r");
-	if (omxregistryfp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
-		return ENOENT;
-	}
-
-	/** Scan through the registry and look for component's implementation.
-	 * Load it.
-	 */
-	while((read = getline(&line, &len, omxregistryfp)) != -1) {
-		if(!strncmp(line, component, strlen(component))){
-			componentpath = line + strlen(component) + strlen(ARROW);
-			componentpath[strlen(componentpath) - 1] = 0;
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "Found component %s in %s\n", component, componentpath);
-			if((handle = dlopen(componentpath, RTLD_NOW)) == NULL){
-				DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", componentpath, dlerror());
-			}
-			break;
-		}
-	}
-	if(line)
-		free(line);
-
-	fclose(omxregistryfp);
-	if(handle != NULL)
-		return 0;
-	return ENOENT;
-}
-
-OMX_ERRORTYPE readOMXRegistryEntry(int position, int size, char* componentname)
-{
-	FILE* omxregistryfp;
-	char* line = NULL;
-	size_t len = 0;
-	ssize_t read;
-	char omxregistryfile[200];
-	int index;
-
-	memset(omxregistryfile, 0, sizeof(omxregistryfile));
-	strcat(omxregistryfile, getenv("HOME"));
-	strcat(omxregistryfile, "/.omxregistry");
-
-	omxregistryfp = fopen(omxregistryfile, "r");
-	if (omxregistryfp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
-		return ENOENT;
-	}
-
-	/** Scan through the registry and look for component's implementation.
-	 * Load it.
-	 */
-	index = 0;
-	while((read = getline(&line, &len, omxregistryfp)) != -1) {
-		if (index == position) {
-			break;
-		}
-		index++;
-	}
-	if (read != -1) {
-		index = 0;
-		while (*(line+index) != ' ') {index++;}
-		*(line+index) = 0;
-		
-		if (size < index) {*(line+size) = 0;}
-		strcpy(componentname, line);
-		*(componentname + index) = 0;
+	OMX_U8 **tempCompNames;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+	if (compNames == NULL) {
+		only_number_requested = 1;
 	} else {
-		if(line)
-			free(line);
-		return OMX_ErrorNoMore;
+		only_number_requested = 0;
 	}
-	if(line)
-		free(line);
-	return OMX_ErrorNone;
-}
-
-OMX_ERRORTYPE readOMXRegistry()
-{
-	FILE* omxregistryfp;
-	char* line = NULL;
-	char* templine = NULL;
-	size_t len = 0;
-	ssize_t read;
-	char omxregistryfile[200];
-	int index;
-	char *name;
-	char *role;
-	char *libname;
-	int hasRole;
-  void* handle;
-
-	memset(omxregistryfile, 0, sizeof(omxregistryfile));
-	strcat(omxregistryfile, getenv("HOME"));
-	strcat(omxregistryfile, "/.omxregistry");
-
-	omxregistryfp = fopen(omxregistryfile, "r");
-	if (omxregistryfp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
-		return ENOENT;
-	}
-
-	name = malloc(128 * sizeof(char));
-	role = malloc(128 * sizeof(char));
-	libname = malloc(256 * sizeof(char));
-	while((read = getline(&line, &len, omxregistryfp)) != -1) {
-		hasRole = 0;
-		index = 0;
-		templine = line;
-		if ((*templine == ' ') && (*(templine+1) == '=')) {
-			templine+= 5;
-			hasRole = 1;
+	for (i = 0; i<loadersAdded; i++) {
+		temp_num_comp = *pNumComps;
+		err = loadersList[i]->BOSA_GetComponentsOfRole(
+					&loadersList[i]->storeHandler,
+					role,
+					pNumComps,
+					NULL);
+		full_number += temp_num_comp;
+		if (only_number_requested == 0) {
+			tempCompNames = malloc(temp_num_comp * sizeof(OMX_STRING));
+			for (j=0; j<temp_num_comp; j++) {
+				tempCompNames[j] = malloc(OMX_MAX_STRINGNAME_SIZE * sizeof(char));
+			}
+			err = loadersList[i]->BOSA_GetComponentsOfRole(
+					loadersList[i]->storeHandler,
+					role,
+					pNumComps,
+					tempCompNames);
+			
 		}
-		while (*(templine+index) != ' ') {index++;}
-		*(templine+index) = 0;
-		strcpy(name, templine);
-		templine += index + 5;
-		index = 0;
-		while ((*(templine+index) != ' ') && (*(templine+index) != '\n')) {index++;}
-		*(templine+index) = 0;
-		strcpy(libname, templine);
-		if (hasRole) {
-			templine += index + 5;
-			index = 0;
-			while ((*(templine+index) != ' ') && (*(templine+index) != '\n')) {index++;}
-			*(templine+index) = 0;
-			strcpy(role, templine);
-		}
-		if((handle = dlopen(libname, RTLD_NOW)) == NULL){
-			DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", libname, dlerror());
+		
+		if (err == OMX_ErrorNone) {
+			return OMX_ErrorNone;
 		}
 	}
-
-    if(line)
-		free(line);
-    free(name);
-    free(role);
-    free(libname);
-
-	fclose(omxregistryfp);
-	return OMX_ErrorNone;
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
+	return OMX_ErrorComponentNotFound;
 }
 
-static int isTemplateAvailable(char* cComponentName)
-{
-	int i;
-	for(i=0;i<MAXCOMPONENTS;i++)
-		if(templateList[i] && !strcmp(templateList[i]->name, cComponentName))
-			return 1;
-	return 0;
-}

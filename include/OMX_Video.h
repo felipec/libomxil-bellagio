@@ -22,12 +22,18 @@
  */
 
 /** 
- *  @file OMX_Video.h
+ *  @file OMX_Video.h - OpenMax IL version 1.1
  *  The structures is needed by Video components to exchange parameters 
  *  and configuration data with OMX components.
  */
 #ifndef OMX_Video_h
 #define OMX_Video_h
+
+/** @defgroup video OpenMAX IL Video Domain
+ * @ingroup iv
+ * Structures for OpenMAX IL Video domain
+ * @{
+ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +117,8 @@ typedef enum OMX_VIDEO_CODINGTYPE {
  *                          component. When OMX_VIDEO_CodingUnused is 
  *                          specified, eColorFormat is used
  *  eColorFormat : Decompressed format used by this component
+ *  pNativeWindow : Platform specific reference for a window object if a 
+ *                          display sink , otherwise this field is 0x0. 
  */
 typedef struct OMX_VIDEO_PORTDEFINITIONTYPE {
     OMX_STRING cMIMEType;
@@ -124,8 +132,8 @@ typedef struct OMX_VIDEO_PORTDEFINITIONTYPE {
     OMX_BOOL bFlagErrorConcealment;
     OMX_VIDEO_CODINGTYPE eCompressionFormat;
     OMX_COLOR_FORMATTYPE eColorFormat;
+    OMX_NATIVE_WINDOWTYPE pNativeWindow;
 } OMX_VIDEO_PORTDEFINITIONTYPE;
-
 
 /**  
  * Port format parameter.  This structure is used to enumerate the various 
@@ -141,6 +149,7 @@ typedef struct OMX_VIDEO_PORTDEFINITIONTYPE {
  *                       component. When OMX_VIDEO_CodingUnused is specified, 
  *                       eColorFormat is used 
  *  eColorFormat       : Decompressed format used by this component
+ *  xFrameRate         : Indicates the video frame rate in Q16 format
  */
 typedef struct OMX_VIDEO_PARAM_PORTFORMATTYPE {
     OMX_U32 nSize;
@@ -149,6 +158,7 @@ typedef struct OMX_VIDEO_PARAM_PORTFORMATTYPE {
     OMX_U32 nIndex;
     OMX_VIDEO_CODINGTYPE eCompressionFormat; 
     OMX_COLOR_FORMATTYPE eColorFormat;
+    OMX_U32 xFramerate;
 } OMX_VIDEO_PARAM_PORTFORMATTYPE;
 
 
@@ -410,9 +420,10 @@ typedef enum OMX_VIDEO_H263LEVELTYPE {
     OMX_VIDEO_H263Level20  = 0x02,      
     OMX_VIDEO_H263Level30  = 0x04,      
     OMX_VIDEO_H263Level40  = 0x08,      
-    OMX_VIDEO_H263Level50  = 0x10,      
-    OMX_VIDEO_H263Level60  = 0x20,      
-    OMX_VIDEO_H263Level70  = 0x40,      
+    OMX_VIDEO_H263Level45  = 0x10,      
+    OMX_VIDEO_H263Level50  = 0x20,      
+    OMX_VIDEO_H263Level60  = 0x40,      
+    OMX_VIDEO_H263Level70  = 0x80, 
     OMX_VIDEO_H263LevelMax = 0x7FFFFFFF  
 } OMX_VIDEO_H263LEVELTYPE;
 
@@ -579,10 +590,14 @@ typedef enum OMX_VIDEO_MPEG4PROFILETYPE {
  * sizes, bit rates, decoder frame rates.  No need 
  */
 typedef enum OMX_VIDEO_MPEG4LEVELTYPE {
-    OMX_VIDEO_MPEG4Levell = 0x01,   /**< Level 1 */ 
-    OMX_VIDEO_MPEG4Level2 = 0x02,   /**< Level 2 */ 
-    OMX_VIDEO_MPEG4Level3 = 0x04,   /**< Level 3 */ 
-    OMX_VIDEO_MPEG4Level4 = 0x08,   /**< Level 4 */   
+    OMX_VIDEO_MPEG4Level0  = 0x01,   /**< Level 0 */   
+    OMX_VIDEO_MPEG4Level0b = 0x02,   /**< Level 0b */   
+    OMX_VIDEO_MPEG4Level1  = 0x04,   /**< Level 1 */ 
+    OMX_VIDEO_MPEG4Level2  = 0x08,   /**< Level 2 */ 
+    OMX_VIDEO_MPEG4Level3  = 0x10,   /**< Level 3 */ 
+    OMX_VIDEO_MPEG4Level4  = 0x20,   /**< Level 4 */  
+    OMX_VIDEO_MPEG4Level4a = 0x40,   /**< Level 4a */  
+    OMX_VIDEO_MPEG4Level5  = 0x80,   /**< Level 5 */  
     OMX_VIDEO_MPEG4LevelMax = 0x7FFFFFFF  
 } OMX_VIDEO_MPEG4LEVELTYPE;
 
@@ -671,7 +686,8 @@ typedef struct OMX_VIDEO_PARAM_WMVTYPE {
 typedef enum OMX_VIDEO_RVFORMATTYPE {
     OMX_VIDEO_RVFormatUnused = 0, /**< Format unused or unknown */
     OMX_VIDEO_RVFormat8,          /**< Real Video format 8 */
-    OMX_VIDEO_RVFormat9,          /**< Real video format 9 */
+    OMX_VIDEO_RVFormat9,          /**< Real Video format 9 */
+    OMX_VIDEO_RVFormatG2,         /**< Real Video Format G2 */
     OMX_VIDEO_RVFormatMax = 0x7FFFFFFF
 } OMX_VIDEO_RVFORMATTYPE;
 
@@ -684,7 +700,15 @@ typedef enum OMX_VIDEO_RVFORMATTYPE {
  *  nVersion           : OMX specification version information 
  *  nPortIndex         : Port that this structure applies to
  *  eFormat            : Version of RV stream / data
+ *  nBitsPerPixel      : Bits per pixel coded in the frame
+ *  nPaddedWidth       : Padded width in pixel of a video frame
+ *  nPaddedHeight      : Padded Height in pixels of a video frame
+ *  nFrameRate         : Rate of video in frames per second
+ *  nBitstreamFlags    : Flags which internal information about the bitstream
+ *  nBitstreamVersion  : Bitstream version
+ *  nMaxEncodeFrameSize: Max encoded frame size
  *  bEnablePostFilter  : Turn on/off post filter
+ *  bEnableTemporalInterpolation : Turn on/off temporal interpolation
  *  bEnableLatencyMode : When enabled, the decoder does not display a decoded 
  *                       frame until it has detected that no enhancement layer 
  *  					 frames or dependent B frames will be coming. This 
@@ -696,8 +720,16 @@ typedef struct OMX_VIDEO_PARAM_RVTYPE {
     OMX_VERSIONTYPE nVersion;
     OMX_U32 nPortIndex;
     OMX_VIDEO_RVFORMATTYPE eFormat;
+    OMX_U16 nBitsPerPixel;
+    OMX_U16 nPaddedWidth;
+    OMX_U16 nPaddedHeight;
+    OMX_U32 nFrameRate;
+    OMX_U32 nBitstreamFlags;
+    OMX_U32 nBitstreamVersion;
+    OMX_U32 nMaxEncodeFrameSize;
     OMX_BOOL bEnablePostFilter;
-    OMX_BOOL bEnableLatencyMode;									
+    OMX_BOOL bEnableTemporalInterpolation;
+    OMX_BOOL bEnableLatencyMode;
 } OMX_VIDEO_PARAM_RVTYPE;
 
 
@@ -840,6 +872,150 @@ typedef struct OMX_VIDEO_PARAM_AVCTYPE {
 	OMX_VIDEO_AVCLOOPFILTERTYPE eLoopFilterMode;
 } OMX_VIDEO_PARAM_AVCTYPE;
 
+typedef struct OMX_VIDEO_PARAM_PROFILELEVELTYPE {
+   OMX_U32 nSize;                 
+   OMX_VERSIONTYPE nVersion;      
+   OMX_U32 nPortIndex;            
+   OMX_U32 eProfile;      /**< type is OMX_VIDEO_AVCPROFILETYPE, OMX_VIDEO_H263PROFILETYPE, 
+                                 or OMX_VIDEO_MPEG4PROFILETYPE depending on context */
+   OMX_U32 eLevel;        /**< type is OMX_VIDEO_AVCLEVELTYPE, OMX_VIDEO_H263LEVELTYPE, 
+                                 or OMX_VIDEO_MPEG4PROFILETYPE depending on context */
+   OMX_U32 nProfileIndex; /**< Used to query for individual profile support information,
+                               This parameter is valid only for 
+                               OMX_IndexParamVideoProfileLevelQuerySupported index,
+                               For all other indices this parameter is to be ignored. */
+} OMX_VIDEO_PARAM_PROFILELEVELTYPE;
+
+/** 
+ * Structure for dynamically configuring bitrate mode of a codec. 
+ *
+ * STRUCT MEMBERS:
+ *  nSize          : Size of the struct in bytes
+ *  nVersion       : OMX spec version info
+ *  nPortIndex     : Port that this struct applies to
+ *  nEncodeBitrate : Target average bitrate to be generated in bps
+ */
+typedef struct OMX_VIDEO_CONFIG_BITRATETYPE {
+    OMX_U32 nSize;                          
+    OMX_VERSIONTYPE nVersion;               
+    OMX_U32 nPortIndex;                     
+    OMX_U32 nEncodeBitrate;                 
+} OMX_VIDEO_CONFIG_BITRATETYPE;
+
+/** 
+ * Defines Encoder Frame Rate setting
+ *
+ * STRUCT MEMBERS:
+ *  nSize            : Size of the structure in bytes
+ *  nVersion         : OMX specification version information 
+ *  nPortIndex       : Port that this structure applies to
+ *  xEncodeFramerate : Encoding framerate represented in Q16 format
+ */
+typedef struct OMX_CONFIG_FRAMERATETYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 xEncodeFramerate; // Q16 format
+} OMX_CONFIG_FRAMERATETYPE;
+
+typedef struct OMX_CONFIG_INTRAREFRESHVOPTYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_BOOL IntraRefreshVOP;
+} OMX_CONFIG_INTRAREFRESHVOPTYPE;
+
+typedef struct OMX_CONFIG_MACROBLOCKERRORMAPTYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nErrMapSize;           // Size of the Error Map in bytes
+    OMX_U8  ErrMap[1];             // Error map hint   
+} OMX_CONFIG_MACROBLOCKERRORMAPTYPE;
+
+typedef struct OMX_CONFIG_MBERRORREPORTINGTYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_BOOL bEnabled;
+} OMX_CONFIG_MBERRORREPORTINGTYPE;
+
+typedef struct OMX_PARAM_MACROBLOCKSTYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nMacroblocks;
+} OMX_PARAM_MACROBLOCKSTYPE;
+
+/** 
+ * AVC Slice Mode modes 
+ *
+ * OMX_VIDEO_SLICEMODE_AVCDefault   : Normal frame encoding, one slice per frame
+ * OMX_VIDEO_SLICEMODE_AVCMBSlice   : NAL mode, number of MBs per frame
+ * OMX_VIDEO_SLICEMODE_AVCByteSlice : NAL mode, number of bytes per frame
+ */
+typedef enum OMX_VIDEO_AVCSLICEMODETYPE {
+    OMX_VIDEO_SLICEMODE_AVCDefault = 0,
+    OMX_VIDEO_SLICEMODE_AVCMBSlice,
+    OMX_VIDEO_SLICEMODE_AVCByteSlice,
+    OMX_VIDEO_SLICEMODE_AVCLevelMax = 0x7FFFFFFF
+} OMX_VIDEO_AVCSLICEMODETYPE;
+
+/** 
+ * AVC FMO Slice Mode Params 
+ *
+ * STRUCT MEMBERS:
+ *  nSize      : Size of the structure in bytes
+ *  nVersion   : OMX specification version information
+ *  nPortIndex : Port that this structure applies to
+ *  nNumSliceGroups : Specifies the number of slice groups
+ *  nSliceGroupMapType : Specifies the type of slice groups
+ *  eSliceMode : Specifies the type of slice
+ */
+typedef struct OMX_VIDEO_PARAM_AVCSLICEFMO {
+    OMX_U32 nSize; 
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U8 nNumSliceGroups;
+    OMX_U8 nSliceGroupMapType;
+    OMX_VIDEO_AVCSLICEMODETYPE eSliceMode;
+} OMX_VIDEO_PARAM_AVCSLICEFMO;
+
+/** 
+ * AVC IDR Period Configs
+ *
+ * STRUCT MEMBERS:
+ *  nSize      : Size of the structure in bytes
+ *  nVersion   : OMX specification version information
+ *  nPortIndex : Port that this structure applies to
+ *  nIDRPeriod : Specifies periodicity of IDR frames
+ *  nPFrames : Specifies internal of coding Intra frames
+ */
+typedef struct OMX_VIDEO_CONFIG_AVCINTRAPERIOD {
+    OMX_U32 nSize; 
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nIDRPeriod;
+    OMX_U32 nPFrames;
+} OMX_VIDEO_CONFIG_AVCINTRAPERIOD;
+
+/** 
+ * AVC NAL Size Configs
+ *
+ * STRUCT MEMBERS:
+ *  nSize      : Size of the structure in bytes
+ *  nVersion   : OMX specification version information
+ *  nPortIndex : Port that this structure applies to
+ *  nNaluBytes : Specifies the NAL unit size
+ */
+typedef struct OMX_VIDEO_CONFIG_NALSIZE {
+    OMX_U32 nSize; 
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nNaluBytes;
+} OMX_VIDEO_CONFIG_NALSIZE;
+
+/** @} */
 
 #ifdef __cplusplus
 }

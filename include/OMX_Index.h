@@ -21,7 +21,7 @@
  *
  */
 
-/** @file OMX_Index.h
+/** @file OMX_Index.h - OpenMax IL version 1.1
  *  The OMX_Index header file contains the definitions for both applications
  *  and components .
  */
@@ -65,12 +65,30 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexParamImageInit, /**< reference: OMX_PORT_PARAM_TYPE  */
     OMX_IndexParamVideoInit, /**< reference: OMX_PORT_PARAM_TYPE  */
     OMX_IndexParamOtherInit, /**< reference: OMX_PORT_PARAM_TYPE  */
+    OMX_IndexParamNumAvailableStreams, /**< reference: OMX_PARAM_U32TYPE */
+    OMX_IndexParamActiveStream,        /**< reference: OMX_PARAM_U32TYPE */
+    OMX_IndexParamSuspensionPolicy,    /**< reference: OMX_PARAM_SUSPENSIONPOLICYTYPE */
+    OMX_IndexParamComponentSuspended,  /**< reference: OMX_PARAM_SUSPENSIONTYPE */
+    OMX_IndexConfigCapturing, /**< reference: OMX_CONFIG_BOOLEANTYPE */ 
+    OMX_IndexConfigCaptureMode, /**< reference: OMX_CONFIG_CAPTUREMODETYPE */ 
+    OMX_IndexAutoPauseAfterCapture, /**< reference: OMX_CONFIG_BOOLEANTYPE */ 
+    OMX_IndexParamContentURI,  /**< reference: OMX_PARAM_CONTENTURITYPE */
+    OMX_IndexParamCustomContentPipe, /**< reference: OMX_PARAM_CONTENTPIPETYPE */ 
+    OMX_IndexParamDisableResourceConcealment, /**< reference: OMX_RESOURCECONCEALMENTTYPE */
+    OMX_IndexConfigMetaDataItemCount,        /**< reference: OMX_CONFIG_METADATAITEMCOUNTTYPE */
+    OMX_IndexConfigMetaDataSize,             /**< reference: OMX_CONFIG_METADATAITEMTYPE */
+    OMX_IndexConfigMetaDataAtIndex,          /**< reference: OMX_CONFIG_METADATAITEMTYPE */
+    OMX_IndexConfigMetaDataAtKey,            /**< reference: OMX_CONFIG_METADATAITEMTYPE */
+    OMX_IndexConfigMetaDataNodeCount,        /**< reference: OMX_CONFIG_CONTAINERNODECOUNTTYPE */
+    OMX_IndexConfigMetaDataNode,             /**< reference: OMX_CONFIG_CONTAINERNODEIDTYPE */
+    OMX_IndexParamMetadataKeyFilter,         /**< reference: OMX_PARAM_METADATAFILTERTYPE */
+    OMX_IndexConfigPriorityMgmt,             /**< reference: OMX_PRIORITYMGMTTYPE */
+    OMX_IndexParamStandardComponentRole,     /**< reference: OMX_PARAM_COMPONENTROLETYPE */
 
     OMX_IndexPortStartUnused = 0x02000000,
     OMX_IndexParamPortDefinition, /**< reference: OMX_PARAM_PORTDEFINITIONTYPE */
     OMX_IndexParamCompBufferSupplier, /**< reference: OMX_PARAM_BUFFERSUPPLIERTYPE (*/ 
     OMX_IndexReservedStartUnused = 0x03000000,
-
 
     /* Audio parameters and configurations */
     OMX_IndexAudioStartUnused = 0x04000000,
@@ -89,18 +107,18 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexParamAudioGsm_FR, /**< reference: OMX_AUDIO_PARAM__GSMFRTYPE */
     OMX_IndexParamAudioMidiLoadUserSound, /**< reference: OMX_AUDIO_PARAM_MIDILOADUSERSOUNDTYPE */
     OMX_IndexParamAudioG726,     /**< reference: OMX_AUDIO_PARAM_G726TYPE */
-    OMX_IndexParamAudioGsm_EFR,  /**< reference: OMX_AUDIO_PARAM__GSMEFRTYPE */
-    OMX_IndexParamAudioGsm_HR,   /**< reference: OMX_AUDIO_PARAM__GSMHRTYPE */
-    OMX_IndexParamAudioPdc_FR,   /**< reference: OMX_AUDIO_PARAM__PDCFRTYPE */
-    OMX_IndexParamAudioPdc_EFR,  /**< reference: OMX_AUDIO_PARAM__PDCEFRTYPE */
-    OMX_IndexParamAudioPdc_HR,   /**< reference: OMX_AUDIO_PARAM__PDCHRTYPE */
-    OMX_IndexParamAudioTdma_FR,  /**< reference: OMX_AUDIO_PARAM__TDMAFRTYPE */
-    OMX_IndexParamAudioTdma_EFR, /**< reference: OMX_AUDIO_PARAM__TDMAEFRTYPE */
-    OMX_IndexParamAudioQcelp8,   /**< reference: OMX_AUDIO_PARAM__QCELP8TYPE */
-    OMX_IndexParamAudioQcelp13,  /**< reference: OMX_AUDIO_PARAM__QCELP13TYPE */
-    OMX_IndexParamAudioEvrc,     /**< reference: OMX_AUDIO_PARAM__EVRCTYPE */
-    OMX_IndexParamAudioSmv,      /**< reference: OMX_AUDIO_PARAM__SMVTYPE */
-    OMX_IndexParamAudioVorbis,   /**< reference: OMX_AUDIO_PARAM__VORBISTYPE */
+    OMX_IndexParamAudioGsm_EFR,  /**< reference: OMX_AUDIO_PARAM_GSMEFRTYPE */
+    OMX_IndexParamAudioGsm_HR,   /**< reference: OMX_AUDIO_PARAM_GSMHRTYPE */
+    OMX_IndexParamAudioPdc_FR,   /**< reference: OMX_AUDIO_PARAM_PDCFRTYPE */
+    OMX_IndexParamAudioPdc_EFR,  /**< reference: OMX_AUDIO_PARAM_PDCEFRTYPE */
+    OMX_IndexParamAudioPdc_HR,   /**< reference: OMX_AUDIO_PARAM_PDCHRTYPE */
+    OMX_IndexParamAudioTdma_FR,  /**< reference: OMX_AUDIO_PARAM_TDMAFRTYPE */
+    OMX_IndexParamAudioTdma_EFR, /**< reference: OMX_AUDIO_PARAM_TDMAEFRTYPE */
+    OMX_IndexParamAudioQcelp8,   /**< reference: OMX_AUDIO_PARAM_QCELP8TYPE */
+    OMX_IndexParamAudioQcelp13,  /**< reference: OMX_AUDIO_PARAM_QCELP13TYPE */
+    OMX_IndexParamAudioEvrc,     /**< reference: OMX_AUDIO_PARAM_EVRCTYPE */
+    OMX_IndexParamAudioSmv,      /**< reference: OMX_AUDIO_PARAM_SMVTYPE */
+    OMX_IndexParamAudioVorbis,   /**< reference: OMX_AUDIO_PARAM_VORBISTYPE */
 
     OMX_IndexConfigAudioMidiImmediateEvent, /**< OMX_AUDIO_CONFIG_MIDIIMMEDIATEEVENTTYPE */
     OMX_IndexConfigAudioMidiControl, /**< reference: OMX_AUDIO_CONFIG_MIDICONTROLTYPE */
@@ -121,6 +139,7 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexConfigAudioChorus,      /**< reference: OMX_AUDIO_CONFIG_CHORUSTYPE */
     OMX_IndexConfigAudioEqualizer,   /**< reference: OMX_AUDIO_CONFIG_EQUALIZERTYPE */
     OMX_IndexConfigAudioReverberation, /**< reference: OMX_AUDIO_CONFIG_REVERBERATIONTYPE */
+    OMX_IndexConfigAudioChannelVolume, /**< reference: OMX_AUDIO_CONFIG_CHANNELVOLUMETYPE */
 
     /* Image specific parameters and configurations */
     OMX_IndexImageStartUnused = 0x05000000,
@@ -130,6 +149,7 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexParamQFactor,           /**< refer to OMX_IMAGE_PARAM_QFACTORTYPE */
     OMX_IndexParamQuantizationTable, /**< refer to OMX_IMAGE_PARAM_QUANTIZATIONTABLETYPE */
     OMX_IndexParamHuffmanTable,      /**< For jpeg, refer to OMX_IMAGE_PARAM_HUFFMANTTABLETYPE */
+    OMX_IndexConfigFlashControl,      /**< refer to OMX_IMAGE_PARAM_FLASHCONTROLTYPE */
 
     /* Video specific parameters and configurations */
     OMX_IndexVideoStartUnused = 0x06000000,
@@ -147,6 +167,18 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexParamVideoRv,    /**< reference:OMX_VIDEO_PARAM_RVTYPE */
     OMX_IndexParamVideoAvc,   /**< reference:OMX_VIDEO_PARAM_AVCTYPE */
     OMX_IndexParamVideoH263,  /**< reference:OMX_VIDEO_PARAM_H263TYPE */
+    OMX_IndexParamVideoProfileLevelQuerySupported, /**< reference:OMX_VIDEO_PARAM_PROFILELEVEL */
+    OMX_IndexParamVideoProfileLevelCurrent, /**< reference:OMX_VIDEO_PARAM_PROFILELEVEL */
+    OMX_IndexConfigVideoBitrate, /**< reference: OMX_VIDEO_CONFIG_BITRATETYPE */
+    OMX_IndexConfigVideoFramerate, /**< reference:OMX_VIDEO_CONFIG_FRAMERATETYPE */
+    OMX_IndexConfigVideoIntraVOPRefresh, /**< reference: OMX_CONFIG_INTRAREFRESHVOPTYPE */
+    OMX_IndexConfigVideoIntraMBRefresh, /**< reference: OMX_CONFIG_MACROBLOCKERRORMAPTYPE */
+    OMX_IndexConfigVideoMBErrorReporting, /**< reference: OMX_CONFIG_MBERRORREPORTINGTYPE */
+    OMX_IndexParamVideoMacroblocksPerFrame, /**< reference: OMX_PARAM_MACROBLOCKSTYPE */
+    OMX_IndexConfigVideoMacroBlockErrorMap, /**< reference: OMX_CONFIG_MACROBLOCKERRORMAPTYPE */
+    OMX_IndexParamVideoSliceFMO, /**< reference: OMX_VIDEO_PARAM_AVCSLICEFMO */
+    OMX_IndexConfigVideoAVCIntraPeriod, /** reference: OMX_VIDEO_CONFIG_AVCINTRAPERIOD */
+    OMX_IndexConfigVideoNalSize, /** reference: OMX_VIDEO_CONFIG_NALSIZE */
 
     /* Image & Video common Configurations */
     OMX_IndexCommonStartUnused = 0x07000000,
@@ -165,8 +197,8 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexConfigCommonOutputPosition, /**< reference: OMX_CONFIG_POINTTYPE */
     OMX_IndexConfigCommonInputCrop, /**< reference: OMX_CONFIG_RECTTYPE */
     OMX_IndexConfigCommonOutputCrop, /**< reference: OMX_CONFIG_RECTTYPE */
-    OMX_IndexConfigCommonDigitalZoom,  /**< reference: OMX_SCALEFACTORTYPE */
-    OMX_IndexConfigCommonOpticalZoom, /**< reference: OMX_SCALEFACTORTYPE*/
+    OMX_IndexConfigCommonDigitalZoom,  /**< reference: OMX_CONFIG_SCALEFACTORTYPE */
+    OMX_IndexConfigCommonOpticalZoom, /**< reference: OMX_CONFIG_SCALEFACTORTYPE*/
     OMX_IndexConfigCommonWhiteBalance, /**< reference: OMX_CONFIG_WHITEBALCONTROLTYPE */
     OMX_IndexConfigCommonExposure, /**< reference: OMX_CONFIG_EXPOSURECONTROLTYPE */
     OMX_IndexConfigCommonContrast, /**< reference to OMX_CONFIG_CONTRASTTYPE */
@@ -178,7 +210,11 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexConfigCommonExclusionRect, /** reference: OMX_CONFIG_RECTTYPE */
     OMX_IndexConfigCommonDithering, /**< reference: OMX_TIME_CONFIG_DITHERTYPE */
     OMX_IndexConfigCommonPlaneBlend, /** reference: OMX_CONFIG_PLANEBLENDTYPE */
-
+    OMX_IndexConfigCommonExposureValue,  /**< reference: OMX_CONFIG_EXPOSUREVALUETYPE */
+    OMX_IndexConfigCommonOutputSize, /**< reference: OMX_FRAMESIZETYPE */
+    OMX_IndexParamCommonExtraQuantData, /**< reference: OMX_OTHER_EXTRADATATYPE */
+    OMX_IndexConfigCommonFocusRegion,      /**< refer to OMX_PARAM_FOCUSREGIONTYPE */
+    OMX_IndexConfigCommonFocusStatus,      /**< refer to OMX_IMAGE_CONFIG_FOCUSSTATUSTYPE */
 
     /* Reserved Configuration range */
     OMX_IndexOtherStartUnused = 0x08000000,
@@ -212,7 +248,6 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexMax = 0x7FFFFFFF
 
 } OMX_INDEXTYPE;
-
 
 #ifdef __cplusplus
 }

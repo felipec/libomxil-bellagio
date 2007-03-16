@@ -1,4 +1,4 @@
-Bellagio OpenMAX Integration Layer 1.0 project 
+Bellagio OpenMAX Integration Layer  1.1 project 
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API, specified
 by the Khronos group (see http://www.khronos.org/openmax).
@@ -6,19 +6,16 @@ by the Khronos group (see http://www.khronos.org/openmax).
 This package includes the libomxil shared library together with the following OpenMAX 
 components (built as separate shared objects and loaded at runtime):
 - OMX alsa sink component
-- OMX mp3 decoder component (requires ffmpeg and ffmpeg-devel libraries, not part of this package)
+- OMX audio decoder based on ffmpeg library that supports the following audio formats:
+  - MP3
+  - WMA (still under debug process)
 - OMX volume control component
-And the base classes for new architecture based on component hierarchy:
-- OMX base component
-- OMX source component
-- OMX sink component
-- OMX filter component
 
 The following simple test applications are provided:
 
 test/components/alsasink/omxalsasinktest
 test/components/ffmpeg/omxmp3dectest
-test/components/ffmpeg/omxmp3convertest
+test/components/ffmpeg/omx11audiodectest
 test/components/audio_effects/omxvolcontroltest
 
 Check the distribution build:
@@ -40,42 +37,11 @@ If the components are installed in a different directory, the omxregister
 command should be called as follows:
 /usr/local/bin/omxregister component_installation_path
 
-Now, run the tests:
 
-The alsasink plays a PCM file, at 44100 Hz, stereo
-
-test/components/alsasink/omxalsasinktest somepcmfile.pcm
-
-The MP3 decoder component test is a simple MP3 player which uses OpenMAX data tunneling
-between the OMX MP3 decoder component and the OMX alsa sink component.
-
-test/components/ffmpeg/omxmp3dectest somemp3file.mp3
-
-Another mp3 dec test simply converts an input mp3 file into a 
-decoded stream on standard output.
-The usage is the following:
-
-test/components/ffmpeg/omxmp3convertest somemp3file.mp3 | aplay -f cd
-
-to decode the file and redirect it to the player
-
-
-The volume control test receives in input a PCM stream and put on std output the same stream
-filtered by the volume cotrol component.
-
-test/components/audio_effects/omxvolcontroltest audio_stream.raw | aplay -f cd
-
+The test description is unde rdevelopment
 
 HOW TO ADD A NEW COMPONENT
--Add, in the src/components directory, a directory that will contain your component.
--Put your source and header files in there.
--Edit the configure.in file and add new rules according to your needs.
- In particular, you may want to add some library dependencies that are
- needed by the src/Makefile.am
- Also, remember to add the path of your Makefile in the AC_OUTPUT directive.
--Edit the src/components/Makefile.am file and add rules for building your component.
--Edit the src/Makefile.am file and add rules for building your component.
--Create a src/components/yourcomponentdirectory/Makefile.am file.
+this description and a related document is under construction
 
 -Test building with
  ./configure
@@ -88,16 +54,11 @@ HOW TO ADD A NEW COMPONENT
  make check
 -To build RPM:
  make dist
- cp libomxil-B0.3.tar.gz /usr/src/redhat/SOURCES/
- rpmbuild -ba libomxil-0.3.spec
+ cp libomxil-0.2.9.tar.gz /usr/src/redhat/SOURCES/
+ rpmbuild -ba libomxil.spec
 
 This version has been tested on:
-FC2 (with ffmpeg-0.4.8), 
-FC4 (with ffmpeg-0.4.9),
-FC5 (with ffmpeg-0.4.9),
-Mandriva 2006.0,
-Ubuntu 5.10,
-CentOS 4.1.
+not yet
 
-Last modified: Dec 11th, 2006.
+Last modified: Mar 16th, 2007.
 

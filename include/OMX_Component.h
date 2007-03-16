@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Component.h
+/** OMX_Component.h - OpenMax IL version 1.1
  *  The OMX_Component header file contains the definitions used to define
  *  the public interface of a component.  This header file is intended to
  *  be used by both the application and the component.
@@ -47,6 +47,7 @@ extern "C" {
 #include <OMX_Image.h>
 #include <OMX_Other.h>
 
+/** @ingroup comp */
 typedef enum OMX_PORTDOMAINTYPE { 
     OMX_PortDomainAudio, 
     OMX_PortDomainVideo, 
@@ -55,6 +56,7 @@ typedef enum OMX_PORTDOMAINTYPE {
     OMX_PortDomainMax = 0x7ffffff
 } OMX_PORTDOMAINTYPE;
 
+/** @ingroup comp */
 typedef struct OMX_PARAM_PORTDEFINITIONTYPE {
     OMX_U32 nSize;                 /**< Size of the structure in bytes */
     OMX_VERSIONTYPE nVersion;      /**< OMX specification version information */
@@ -73,13 +75,198 @@ typedef struct OMX_PARAM_PORTDEFINITIONTYPE {
                                         and unpopulated on a transition to loaded. */
     OMX_PORTDOMAINTYPE eDomain;    /**< Domain of the port. Determines the contents of metadata below. */
     union {
-    	OMX_AUDIO_PORTDEFINITIONTYPE audio;
-	    OMX_VIDEO_PORTDEFINITIONTYPE video;
-	    OMX_IMAGE_PORTDEFINITIONTYPE image;
-	    OMX_OTHER_PORTDEFINITIONTYPE other;
+        OMX_AUDIO_PORTDEFINITIONTYPE audio;
+        OMX_VIDEO_PORTDEFINITIONTYPE video;
+        OMX_IMAGE_PORTDEFINITIONTYPE image;
+        OMX_OTHER_PORTDEFINITIONTYPE other;
     } format;
 } OMX_PARAM_PORTDEFINITIONTYPE;
 
+/** @ingroup comp */
+typedef struct OMX_PARAM_U32TYPE { 
+    OMX_U32 nSize;                    /**< Size of this structure, in Bytes */ 
+    OMX_VERSIONTYPE nVersion;         /**< OMX specification version information */ 
+    OMX_U32 nPortIndex;               /**< port that this structure applies to */ 
+    OMX_U32 nU32;                     /**< U32 value */
+} OMX_PARAM_U32TYPE;
+
+/** @ingroup rpm */
+typedef enum OMX_SUSPENSIONPOLICYTYPE {
+    OMX_SuspensionDisabled, /**< No suspension; v1.0 behavior */
+    OMX_SuspensionEnabled,  /**< Suspension allowed */   
+    OMX_SuspensionPolicyMax = 0x7fffffff
+} OMX_SUSPENSIONPOLICYTYPE;
+
+/** @ingroup rpm */
+typedef struct OMX_PARAM_SUSPENSIONPOLICYTYPE {
+    OMX_U32 nSize;                  
+    OMX_VERSIONTYPE nVersion;        
+    OMX_SUSPENSIONPOLICYTYPE ePolicy;
+} OMX_PARAM_SUSPENSIONPOLICYTYPE;
+
+/** @ingroup rpm */
+typedef enum OMX_SUSPENSIONTYPE {
+    OMX_NotSuspended, /**< component is not suspended */
+    OMX_Suspended,    /**< component is suspended */
+    OMX_SuspendMax = 0x7FFFFFFF
+} OMX_SUSPENSIONTYPE;
+
+/** @ingroup rpm */
+typedef struct OMX_PARAM_SUSPENSIONTYPE {
+    OMX_U32 nSize;                  
+    OMX_VERSIONTYPE nVersion;       
+    OMX_SUSPENSIONTYPE eType;             
+} OMX_PARAM_SUSPENSIONTYPE ;
+
+typedef struct OMX_CONFIG_BOOLEANTYPE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_BOOL bEnabled;    
+} OMX_CONFIG_BOOLEANTYPE;
+
+#define MAX_URI_LENGTH 256
+
+/* Parameter specifying the content uri to use. */
+/** @ingroup cp */
+typedef struct OMX_PARAM_CONTENTURITYPE
+{
+    OMX_U32 nSize;                      /**< size of the structure in bytes */
+    OMX_VERSIONTYPE nVersion;           /**< OMX specification version information */
+    OMX_U8 contentURI[MAX_URI_LENGTH];    /**< The URI name */
+} OMX_PARAM_CONTENTURITYPE;
+
+/* Parameter specifying the pipe to use. */
+/** @ingroup cp */
+typedef struct OMX_PARAM_CONTENTPIPETYPE
+{
+    OMX_U32 nSize;              /**< size of the structure in bytes */
+    OMX_VERSIONTYPE nVersion;   /**< OMX specification version information */
+    OMX_HANDLETYPE hPipe;       /**< The pipe handle*/
+} OMX_PARAM_CONTENTPIPETYPE;
+
+/** @ingroup rpm */
+typedef struct OMX_RESOURCECONCEALMENTTYPE {
+    OMX_U32 nSize;             /**< size of the structure in bytes */
+    OMX_VERSIONTYPE nVersion;  /**< OMX specification version information */
+    OMX_BOOL bResourceConcealmentForbidden; /**< disallow the use of resource concealment 
+                                            methods (like degrading algorithm quality to 
+                                            lower resource consumption or functional bypass) 
+                                            on a component as a resolution to resource conflicts. */
+} OMX_RESOURCECONCEALMENTTYPE;
+
+
+/** @ingroup metadata */
+typedef enum OMX_METADATACHARSETTYPE {
+    OMX_MetadataCharsetUnknown = 0,
+    OMX_MetadataCharsetASCII,
+    OMX_MetadataCharsetBinary,
+    OMX_MetadataCharsetCodePage1252,
+    OMX_MetadataCharsetUTF8,
+    OMX_MetadataCharsetJavaConformantUTF8,
+    OMX_MetadataCharsetUTF7,
+    OMX_MetadataCharsetImapUTF7,
+    OMX_MetadataCharsetUTF16LE, 
+    OMX_MetadataCharsetUTF16BE,
+    OMX_MetadataCharsetGB12345,
+    OMX_MetadataCharsetHZGB2312,
+    OMX_MetadataCharsetGB2312,
+    OMX_MetadataCharsetGB18030,
+    OMX_MetadataCharsetGBK,
+    OMX_MetadataCharsetBig5,
+    OMX_MetadataCharsetISO88591,
+    OMX_MetadataCharsetISO88592,
+    OMX_MetadataCharsetISO88593,
+    OMX_MetadataCharsetISO88594,
+    OMX_MetadataCharsetISO88595,
+    OMX_MetadataCharsetISO88596,
+    OMX_MetadataCharsetISO88597,
+    OMX_MetadataCharsetISO88598,
+    OMX_MetadataCharsetISO88599,
+    OMX_MetadataCharsetISO885910,
+    OMX_MetadataCharsetISO885913,
+    OMX_MetadataCharsetISO885914,
+    OMX_MetadataCharsetISO885915,
+    OMX_MetadataCharsetShiftJIS,
+    OMX_MetadataCharsetISO2022JP,
+    OMX_MetadataCharsetISO2022JP1,
+    OMX_MetadataCharsetISOEUCJP,
+    OMX_MetadataCharsetSMS7Bit,
+    OMX_MetadataCharsetTypeMax= 0x7FFFFFFF
+} OMX_METADATACHARSETTYPE;
+
+/** @ingroup metadata */
+typedef enum OMX_METADATASCOPETYPE
+{
+    OMX_MetadataScopeAllLevels,
+    OMX_MetadataScopeTopLevel,
+    OMX_MetadataScopePortLevel,
+    OMX_MetadataScopeNodeLevel,
+    OMX_MetadataScopeTypeMax = 0x7fffffff
+} OMX_METADATASCOPETYPE;
+
+/** @ingroup metadata */
+typedef struct OMX_CONFIG_METADATAITEMCOUNTTYPE
+{
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_METADATASCOPETYPE eScopeMode;
+    OMX_U32 nScopeSpecifier;
+    OMX_U32 nMetadataItemCount;
+} OMX_CONFIG_METADATAITEMCOUNTTYPE;
+
+/** @ingroup metadata */
+typedef struct OMX_CONFIG_METADATAITEMTYPE
+{
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_METADATASCOPETYPE eScopeMode;
+    OMX_U32 nScopeSpecifier;
+    OMX_U32 nMetadataItemIndex;  
+    OMX_METADATACHARSETTYPE eKeyCharset;
+    OMX_U8 nKeySizeUsed;
+    OMX_U8 nKey[128];
+    OMX_METADATACHARSETTYPE eValueCharset;
+    OMX_STRING sLanguageCountry;
+    OMX_U32 nValueMaxSize;
+    OMX_U32 nValueSizeUsed;
+    OMX_U8 nValue[1];
+} OMX_CONFIG_METADATAITEMTYPE;
+
+/* @ingroup metadata */
+typedef struct OMX_CONFIG_CONTAINERNODECOUNTTYPE
+{
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nParentNodeID;
+    OMX_U32 nNumNodes;
+} OMX_CONFIG_CONTAINERNODECOUNTTYPE;
+
+/** @ingroup metadata */
+typedef struct OMX_CONFIG_CONTAINERNODEIDTYPE
+{
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nParentNodeID;
+    OMX_U32 nNodeIndex; 
+    OMX_U32 nNodeID; 
+    OMX_STRING cNodeName;
+    OMX_BOOL bIsLeafType;
+} OMX_CONFIG_CONTAINERNODEIDTYPE;
+
+/** @ingroup metadata */
+typedef struct OMX_PARAM_METADATAFILTERTYPE 
+{ 
+    OMX_U32 nSize; 
+    OMX_VERSIONTYPE nVersion; 
+    OMX_BOOL bAllKeys;	/* if true then this structure refers to all keys and 
+                         * the three key fields below are ignored */
+    OMX_METADATACHARSETTYPE eKeyCharset;
+    OMX_U32 nKeySizeUsed; 
+    OMX_U8   nKey [128]; 
+    OMX_BOOL bEnabled;	/* if true then key is part of filter (e.g. 
+                         * retained for query later). If false then
+                         * key is not part of filter */
+} OMX_PARAM_METADATAFILTERTYPE; 
 
 /** The OMX_HANDLETYPE structure defines the component handle.  The component 
  *  handle is used to access all of the component's public methods and also
@@ -89,6 +276,8 @@ typedef struct OMX_PARAM_PORTDEFINITIONTYPE {
  *  successfully loaded, the application can safely access any of the
  *  component's public functions (although some may return an error because
  *  the state is inappropriate for the access).
+ * 
+ *  @ingroup comp
  */
 typedef struct OMX_COMPONENTTYPE
 {
@@ -142,7 +331,7 @@ typedef struct OMX_COMPONENTTYPE
     OMX_ERRORTYPE (*GetParameter)(
             OMX_IN  OMX_HANDLETYPE hComponent, 
             OMX_IN  OMX_INDEXTYPE nParamIndex,  
-            OMX_INOUT OMX_PTR ComponentParameterStructure);
+            OMX_INOUT OMX_PTR pComponentParameterStructure);
 
 
     /** refer to OMX_SetParameter in OMX_core.h or the OMX IL 
@@ -151,7 +340,7 @@ typedef struct OMX_COMPONENTTYPE
     OMX_ERRORTYPE (*SetParameter)(
             OMX_IN  OMX_HANDLETYPE hComponent, 
             OMX_IN  OMX_INDEXTYPE nIndex,
-            OMX_IN  OMX_PTR ComponentParameterStructure);
+            OMX_IN  OMX_PTR pComponentParameterStructure);
 
 
     /** refer to OMX_GetConfig in OMX_core.h or the OMX IL 
@@ -247,6 +436,7 @@ typedef struct OMX_COMPONENTTYPE
         @return OMX_ERRORTYPE
             If the command successfully executes, the return code will be
             OMX_NoError.  Otherwise the appropriate OMX error will be returned.
+        @ingroup tun
     */
 
     OMX_ERRORTYPE (*ComponentTunnelRequest)(
@@ -258,6 +448,7 @@ typedef struct OMX_COMPONENTTYPE
 
     /** refer to OMX_UseBuffer in OMX_core.h or the OMX IL 
         specification for details on the UseBuffer method.
+        @ingroup buf
      */
     OMX_ERRORTYPE (*UseBuffer)(
             OMX_IN OMX_HANDLETYPE hComponent,
@@ -269,6 +460,7 @@ typedef struct OMX_COMPONENTTYPE
 
     /** refer to OMX_AllocateBuffer in OMX_core.h or the OMX IL 
         specification for details on the AllocateBuffer method.
+        @ingroup buf
      */
     OMX_ERRORTYPE (*AllocateBuffer)(
             OMX_IN OMX_HANDLETYPE hComponent,
@@ -279,6 +471,7 @@ typedef struct OMX_COMPONENTTYPE
 
     /** refer to OMX_FreeBuffer in OMX_core.h or the OMX IL 
         specification for details on the FreeBuffer method.
+        @ingroup buf
      */
     OMX_ERRORTYPE (*FreeBuffer)(
             OMX_IN  OMX_HANDLETYPE hComponent,
@@ -287,6 +480,7 @@ typedef struct OMX_COMPONENTTYPE
 
     /** refer to OMX_EmptyThisBuffer in OMX_core.h or the OMX IL 
         specification for details on the EmptyThisBuffer method.
+        @ingroup buf
      */
     OMX_ERRORTYPE (*EmptyThisBuffer)(
             OMX_IN  OMX_HANDLETYPE hComponent,
@@ -294,6 +488,7 @@ typedef struct OMX_COMPONENTTYPE
 
     /** refer to OMX_FillThisBuffer in OMX_core.h or the OMX IL 
         specification for details on the FillThisBuffer method.
+        @ingroup buf
      */
     OMX_ERRORTYPE (*FillThisBuffer)(
             OMX_IN  OMX_HANDLETYPE hComponent,
@@ -335,6 +530,19 @@ typedef struct OMX_COMPONENTTYPE
      */
     OMX_ERRORTYPE (*ComponentDeInit)(
             OMX_IN  OMX_HANDLETYPE hComponent);
+
+    /** @ingroup buf */
+    OMX_ERRORTYPE (*UseEGLImage)(
+            OMX_IN OMX_HANDLETYPE hComponent,
+            OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
+            OMX_IN OMX_U32 nPortIndex,
+            OMX_IN OMX_PTR pAppPrivate,
+            OMX_IN void* eglImage);
+
+    OMX_ERRORTYPE (*ComponentRoleEnum)(
+        OMX_IN OMX_HANDLETYPE hComponent,
+		OMX_OUT OMX_U8 *cRole,
+		OMX_IN OMX_U32 nIndex);
 
 } OMX_COMPONENTTYPE;
 

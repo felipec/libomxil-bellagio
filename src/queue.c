@@ -63,6 +63,9 @@ void queue_deinit(queue_t* queue)
  			queue->first = current;
  		}
  	}
+
+  if(queue->first)
+    free(queue->first);
 }
 
 void queue(queue_t* queue, void* data)

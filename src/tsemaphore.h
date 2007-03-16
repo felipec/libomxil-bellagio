@@ -63,4 +63,14 @@ void tsem_up(tsem_t* tsem);
  */
 void tsem_reset(tsem_t* tsem);
 
+/** Wait on the condition.
+ * \param tsem the semaphore to wait
+ */
+void tsem_wait(tsem_t* tsem);
+
+/** Signal the condition,if waiting
+ * \param tsem the semaphore to signal
+ */
+void tsem_signal(tsem_t* tsem);
+
 #endif

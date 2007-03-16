@@ -46,7 +46,7 @@
 #include <OMX_Audio.h>
 #include <OMX_Video.h>
 
-#include "omxmp3dectest.h"
+#include "omxmp3convertest.h"
 #include "tsemaphore.h"
 
 appPrivateType* appPriv;
@@ -55,8 +55,9 @@ unsigned int nextBuffer = 0;
 
 OMX_BUFFERHEADERTYPE *inBuffer1, *inBuffer2, *outBuffer1, *outBuffer2, *inAlsaBuffer1, *inAlsaBuffer2;
 int isFirstBuffer = 1;
-int buffer_in_size = BUFFER_SIZE;
-int buffer_out_size = BUFFER_SIZE * 2;
+int buffer_in_size = BUFFER_IN_SIZE;
+//int buffer_out_size = BUFFER_OUT_SIZE * 2;
+int buffer_out_size = BUFFER_OUT_SIZE;
 OMX_PARAM_PORTDEFINITIONTYPE paramPort;
 int fd = 0;
 
@@ -77,44 +78,11 @@ int main(int argc, char** argv){
 											 .FillBufferDone = NULL
 	};
 
-	if(argc == 1){
-		fd = STDIN_FILENO;
-	} else if (argc == 2){
-		if (((*argv[1]) == '-') && ((*(argv[1]+1)) == 't')) {
-			isTunneled = 1;
-			fd = STDIN_FILENO;
-		} else {
-			fd = open(argv[1], O_RDONLY);
-			if(fd < 0){
-				DEBUG(DEB_LEV_ERR, "Error opening input file\n");
-				exit(1);
-			}
-		}
+	if(argc < 2){
+		DEBUG(DEB_LEV_ERR, "Usage: omx11audiodectest filename.mp3");
+		exit(1);
 	} else {
-		if (((*argv[1]) == '-') && ((*(argv[1]+1)) == 't')) {
-			isTunneled = 1;
-			fd = open(argv[2], O_RDONLY);
-			if(fd < 0){
-				DEBUG(DEB_LEV_ERR, "Error opening second argument as input file\n");
-				exit(1);
-			}
-		} else if (((*argv[2]) == '-') && ((*(argv[2]+1)) == 't')) {
-			isTunneled = 1;
-			fd = open(argv[1], O_RDONLY);
-			if(fd < 0){
-				DEBUG(DEB_LEV_ERR, "Error opening first argument as input file\n");
-				exit(1);
-			}
-		} else {
-			fd = open(argv[1], O_RDONLY);
-			if(fd < 0){
-				DEBUG(DEB_LEV_ERR, "Error opening input file_\n");
-				exit(1);
-			}
-		}
-	}
-	if (isTunneled) {
-		DEBUG(DEB_LEV_PARAMS, "Tunnel setup requested\n");
+		fd = open(argv[1], O_RDONLY);
 	}
 	/* Initialize application private data */
 	appPriv = malloc(sizeof(appPrivateType));
@@ -132,8 +100,8 @@ int main(int argc, char** argv){
 
 	/** Ask the core for a handle to the dummy component
 	 */
-	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.st.ffmpeg.mp3dec", NULL /*appPriv */, &mp3callbacks);
-	err = OMX_GetHandle(&appPriv->alsasinkhandle, "OMX.st.alsa.alsasink", NULL /*appPriv */, &alsasinkcallbacks);
+	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.st.audio_decoder.mp3", NULL /*appPriv */, &mp3callbacks);
+//	err = OMX_GetHandle(&appPriv->alsasinkhandle, "OMX.st.alsa.alsasink", NULL /*appPriv */, &alsasinkcallbacks);
 
 	/** Set the number of ports for the dummy component
 	 */
@@ -159,10 +127,10 @@ int main(int argc, char** argv){
 			exit(1);
 		}
 		paramPort.nPortIndex = 0;
-		err = OMX_GetParameter(appPriv->alsasinkhandle, OMX_IndexParamPortDefinition, &paramPort);
+//		err = OMX_GetParameter(appPriv->alsasinkhandle, OMX_IndexParamPortDefinition, &paramPort);
 	
 		paramPort.nBufferCountActual = 2;
-		err = OMX_SetParameter(appPriv->alsasinkhandle, OMX_IndexParamPortDefinition, &paramPort);
+//		err = OMX_SetParameter(appPriv->alsasinkhandle, OMX_IndexParamPortDefinition, &paramPort);
 		if(err != OMX_ErrorNone){
 			DEBUG(DEB_LEV_ERR, "Error in setting OMX_PORT_PARAM_TYPE parameter\n");
 			exit(1);
@@ -171,16 +139,16 @@ int main(int argc, char** argv){
 	
 	inBuffer1 = inBuffer2 = outBuffer1 = outBuffer2 = inAlsaBuffer1 = inAlsaBuffer2 = NULL;
 
-	if (isTunneled) {
-		err=OMX_SetupTunnel(appPriv->mp3handle, 1, appPriv->alsasinkhandle, 0);
-		if(err!=OMX_ErrorNone) 
-		{
-			DEBUG(DEB_LEV_ERR, "Setup Tunnel failed Error=%08x\n",err);
-		}
-	}
+//	if (isTunneled) {
+//		err=OMX_SetupTunnel(appPriv->mp3handle, 1, appPriv->alsasinkhandle, 0);
+//		if(err!=OMX_ErrorNone) 
+//		{
+//			DEBUG(DEB_LEV_ERR, "Setup Tunnel failed Error=%08x\n",err);
+//		}
+//	}
 	
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
+//	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	
 	err = OMX_AllocateBuffer(appPriv->mp3handle, &inBuffer1, 0, NULL, buffer_in_size);
 	err = OMX_AllocateBuffer(appPriv->mp3handle, &inBuffer2, 0, NULL, buffer_in_size);
@@ -188,20 +156,20 @@ int main(int argc, char** argv){
 	if (!isTunneled) {
 		err = OMX_AllocateBuffer(appPriv->mp3handle, &outBuffer1, 1, NULL, buffer_out_size);
 		err = OMX_AllocateBuffer(appPriv->mp3handle, &outBuffer2, 1, NULL, buffer_out_size);
-		err = OMX_UseBuffer(appPriv->alsasinkhandle, &inAlsaBuffer1, 0, NULL, buffer_out_size, outBuffer1->pBuffer);
-		err = OMX_UseBuffer(appPriv->alsasinkhandle, &inAlsaBuffer2, 0, NULL, buffer_out_size, outBuffer2->pBuffer);
+//		err = OMX_UseBuffer(appPriv->alsasinkhandle, &inAlsaBuffer1, 0, NULL, buffer_out_size, outBuffer1->pBuffer);
+//		err = OMX_UseBuffer(appPriv->alsasinkhandle, &inAlsaBuffer2, 0, NULL, buffer_out_size, outBuffer2->pBuffer);
 	}
 
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Before locking on idle wait semaphore\n");
 	tsem_down(appPriv->decoderEventSem);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "decoder Sem free\n");
-	tsem_down(appPriv->alsasinkEventSem);
+//	tsem_down(appPriv->alsasinkEventSem);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "alsa sink Sem free\n");
 	
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
-	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
+//	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
 	tsem_down(appPriv->decoderEventSem);
-	tsem_down(appPriv->alsasinkEventSem);
+//	tsem_down(appPriv->alsasinkEventSem);
 	if (!isTunneled){
 		outBuffer1->nOutputPortIndex = 1;
 		outBuffer1->nInputPortIndex = 0;
@@ -231,18 +199,18 @@ int main(int argc, char** argv){
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop mp3 dec\n");
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop alsa sink\n");
-	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
+//	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	
-	tsem_down(appPriv->alsasinkEventSem);
+//	tsem_down(appPriv->alsasinkEventSem);
 	tsem_down(appPriv->decoderEventSem);
 	
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
-	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
+//	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
 	DEBUG(DEB_LEV_PARAMS, "alsa sink to loaded\n");
-	if (!isTunneled) {
-		err = OMX_FreeBuffer(appPriv->alsasinkhandle, 0, inAlsaBuffer1);
-		err = OMX_FreeBuffer(appPriv->alsasinkhandle, 0, inAlsaBuffer2);
-	}
+//	if (!isTunneled) {
+//		err = OMX_FreeBuffer(appPriv->alsasinkhandle, 0, inAlsaBuffer1);
+//		err = OMX_FreeBuffer(appPriv->alsasinkhandle, 0, inAlsaBuffer2);
+//	}
 	
 	DEBUG(DEB_LEV_PARAMS, "Mp3 dec to loaded\n");
 	
@@ -254,10 +222,10 @@ int main(int argc, char** argv){
 		err = OMX_FreeBuffer(appPriv->mp3handle, 1, outBuffer2);
 	}
 	tsem_down(appPriv->decoderEventSem);
-	tsem_down(appPriv->alsasinkEventSem);
+//	tsem_down(appPriv->alsasinkEventSem);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "All components released\n");
 	
-	OMX_FreeHandle(appPriv->alsasinkhandle);
+//	OMX_FreeHandle(appPriv->alsasinkhandle);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Alsa sink freed\n");
 	OMX_FreeHandle(appPriv->mp3handle);
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "mp3 dec freed\n");
@@ -265,7 +233,7 @@ int main(int argc, char** argv){
 	
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "All components freed. Closing...\n");
 	free(appPriv->decoderEventSem);
-	free(appPriv->alsasinkEventSem);
+//	free(appPriv->alsasinkEventSem);
 	free(appPriv->eofSem);
 	free(appPriv);
 	
@@ -335,6 +303,10 @@ OMX_ERRORTYPE mp3EmptyBufferDone(
 	return OMX_ErrorNone;
 }
 
+int accumulator = 0;
+int total_size = 0;
+int old_total_size = 0;
+
 OMX_ERRORTYPE mp3FillBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
@@ -349,15 +321,26 @@ OMX_ERRORTYPE mp3FillBufferDone(
 	/* Output data to alsa sink */
 	if(pBuffer != NULL){
 		if (pBuffer->nFilledLen == 0) {
-			DEBUG(DEB_LEV_ERR, "Ouch! In %s: no data in the output buffer!\n", __func__);
-			return OMX_ErrorNone;
+			DEBUG(DEB_LEV_ERR, "Ouch! In %s: no data in the output buffer! Already done %i diff %i\n", __func__, total_size, (total_size - old_total_size));
+			old_total_size = total_size;
+			accumulator++;
+			if (accumulator>20)
+				return OMX_ErrorNone;
+		} else {
+			accumulator = 0;
+			total_size += pBuffer->nFilledLen;
 		}
-		if(eState==OMX_StateExecuting || eState==OMX_StatePause)
-			err = OMX_EmptyThisBuffer(appPriv->alsasinkhandle, pBuffer);
+		for(i=0;i<pBuffer->nFilledLen;i++){
+			putchar(*(char*)(pBuffer->pBuffer + i));
+		}
+		pBuffer->nFilledLen = 0;
+//		if(eState==OMX_StateExecuting || eState==OMX_StatePause)
+//			err = OMX_EmptyThisBuffer(appPriv->alsasinkhandle, pBuffer);
 	}
 	else {
 		DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
 	}
+	err = OMX_FillThisBuffer(hComponent, pBuffer);
 }
 
 OMX_ERRORTYPE alsasinkEventHandler(

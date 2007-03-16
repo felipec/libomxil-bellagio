@@ -34,7 +34,7 @@
 #include <OMX_Core.h>
 #include <OMX_Audio.h>
 #include <pthread.h>
-#include <base_sink_component.h>
+#include <omx_base_sink.h>
 #include <alsa/asoundlib.h>
 
 /** Maximum number of base_component component instances */
@@ -42,8 +42,8 @@
 
 /** Alsasinkport component port structure.
  */
-DERIVEDCLASS(omx_alsasink_component_PortType, base_component_PortType)
-#define omx_alsasink_component_PortType_FIELDS base_component_PortType_FIELDS \
+DERIVEDCLASS(omx_alsasink_component_PortType, omx_base_PortType)
+#define omx_alsasink_component_PortType_FIELDS omx_base_PortType_FIELDS \
 	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
 	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; \
 	/** @param omxAudioParamPcmMode Audio PCM pecific OpenMAX parameter */ \
@@ -69,16 +69,16 @@ ENDCLASS(omx_alsasink_component_PortType)
 /** Alsasinkport component private structure.
  * see the define above
  */
-DERIVEDCLASS(omx_alsasink_component_PrivateType, base_sink_component_PrivateType)
-#define omx_alsasink_component_PrivateType_FIELDS base_sink_component_PrivateType_FIELDS 
+DERIVEDCLASS(omx_alsasink_component_PrivateType, omx_base_sink_PrivateType)
+#define omx_alsasink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS 
 ENDCLASS(omx_alsasink_component_PrivateType)
 
 /* Component private entry points declaration */
-OMX_ERRORTYPE omx_alsasink_component_Constructor(stComponentType*);
-OMX_ERRORTYPE omx_alsasink_component_Destructor(stComponentType*);
+OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
+OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 void omx_alsasink_component_BufferMgmtCallback(
-	stComponentType* stComponent,
+	OMX_COMPONENTTYPE *openmaxStandComp,
 	OMX_BUFFERHEADERTYPE* inputbuffer);
 
 OMX_ERRORTYPE omx_alsasink_component_SetConfig(
@@ -101,7 +101,7 @@ OMX_ERRORTYPE omx_alsasink_component_GetConfig(
 	OMX_IN  OMX_INDEXTYPE nIndex,
 	OMX_INOUT OMX_PTR pComponentConfigStructure);
 
-OMX_ERRORTYPE omx_alsasink_component_Init(stComponentType* stComponent);
+OMX_ERRORTYPE omx_alsasink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
 /**Check Domain of the Tunneled Component*/
 OMX_ERRORTYPE omx_alsasink_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
 

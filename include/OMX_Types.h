@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Types.h
+/** OMX_Types.h - OpenMax IL version 1.1
  *  The OMX_Types header file contains the primitive type definitions used by 
  *  the core, the application and the component.  This file may need to be
  *  modified to be used on systems that do not have "char" set to 8 bits, 
@@ -95,9 +95,41 @@ extern "C" {
 
 /** OMX_ALL is used to as a wildcard to select all entities of the same type
  *  when specifying the index, or referring to a object by an index.  (i.e.
- *  use OMX_ALL to indicate all N channels) */
-#define OMX_ALL 0xFFFFFFFF;
+ *  use OMX_ALL to indicate all N channels). When used as a port index
+ *  for a config or parameter this OMX_ALL denotes that the config or
+ *  parameter applies to the entire component not just one port. */
+#define OMX_ALL 0xFFFFFFFF
 
+/** In the following we define groups that help building doxygen documentation */
+
+/** @defgroup core OpenMAX IL core
+ * Functions and structure related to the OMX IL core
+ */
+ 
+ /** @defgroup comp OpenMAX IL component
+ * Functions and structure related to the OMX IL component
+ */
+ 
+/** @defgroup rpm Resource and Policy Management 
+ * Structures for resource and policy management of components
+ */
+
+/** @defgroup buf Buffer Management
+ * Buffer handling functions and structures
+ */
+  
+/** @defgroup tun Tunneling
+ * @ingroup core comp
+ * Structures and functions to manage tunnels among component ports
+ */
+ 
+/** @defgroup cp Content Pipes
+ *  @ingroup core
+ */
+ 
+ /** @defgroup metadata Metadata handling
+  * 
+  */ 
 
 /** OMX_U8 is an 8 bit unsigned quantity that is byte aligned */
 typedef unsigned char OMX_U8;
@@ -280,6 +312,34 @@ typedef struct OMX_MARKTYPE
  *  or can be used by a audio port for native audio rendering */
 typedef void* OMX_NATIVE_DEVICETYPE;
 
+/** OMX_NATIVE_WINDOWTYPE is used to map a OMX video port to the
+ *  platform & operating specific object used to reference the window */
+typedef void* OMX_NATIVE_WINDOWTYPE;
+
+/** The OMX_VERSIONTYPE union is used to specify the version for
+    a structure or component.  For a component, the version is entirely
+    specified by the component vendor.  Components doing the same function
+    from different vendors may or may not have the same version.  For 
+    structures, the version shall be set by the entity that allocates the
+    structure.  For structures specified in the OMX 1.1 specification, the
+    value of the version shall be set to 1.1.0.0 in all cases.  Access to the
+    OMX_VERSIONTYPE can be by a single 32 bit access (e.g. by nVersion) or
+    by accessing one of the structure elements to, for example, check only
+    the Major revision.
+ */
+typedef union OMX_VERSIONTYPE
+{
+    struct
+    {
+        OMX_U8 nVersionMajor;   /**< Major version accessor element */
+        OMX_U8 nVersionMinor;   /**< Minor version accessor element */
+        OMX_U8 nRevision;       /**< Revision version accessor element */
+        OMX_U8 nStep;           /**< Step version accessor element */
+    } s;
+    OMX_U32 nVersion;           /**< 32 bit value to make accessing the
+                                    version easily done in a single word
+                                    size copy/compare operation */
+} OMX_VERSIONTYPE;
 
 #ifdef __cplusplus
 }

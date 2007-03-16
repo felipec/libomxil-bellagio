@@ -44,6 +44,9 @@
 
 #include "omxalsasinktest.h"
 #include "tsemaphore.h"
+#include <component_loader.h>
+
+#include <st_static_component_loader.h>
 
 /* Application private date: should go in the component field (segs...) */
 appPrivateType* appPriv;
@@ -88,7 +91,7 @@ int main(int argc, char** argv){
 	pthread_mutex_init(&appPriv->mutex, NULL);
 	appPriv->eventSem = malloc(sizeof(tsem_t));
 	tsem_init(appPriv->eventSem, 0);
-	
+
 	err = OMX_Init();
 	
 	/** Ask the core for a handle to the alsasink component
@@ -102,7 +105,7 @@ int main(int argc, char** argv){
 	 */
 	err = OMX_GetParameter(handle, OMX_IndexParamAudioInit, &param);
 	if(err != OMX_ErrorNone){
-		DEBUG(DEB_LEV_ERR, "Error in getting OMX_PORT_PARAM_TYPE parameter\n");
+		DEBUG(DEB_LEV_ERR, "Error %08x in getting OMX_PORT_PARAM_TYPE parameter\n",err);
 		exit(1);
 	}
 	param.nPorts = 1;
@@ -194,6 +197,8 @@ int main(int argc, char** argv){
 	tsem_down(appPriv->eventSem);
 	
 	OMX_FreeHandle(handle);
+
+  OMX_Deinit();
 
 	free(appPriv->eventSem);
 	free(appPriv);

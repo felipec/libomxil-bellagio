@@ -9,7 +9,12 @@ if WITH_ALSACOMPONENT
 SUBDIRS+=alsa
 endif 
 
-if WITH_AUDIOEFFECTS
-SUBDIRS+=audio_effects
-endif
+#if WITH_AUDIOEFFECTS
+#SUBDIRS+=audio_effects
+#endif
+
+#if WITH_MADCOMPONENTS
+#SUBDIRS+=mad
+#endif
+
 

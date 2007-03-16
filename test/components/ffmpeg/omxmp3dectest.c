@@ -48,6 +48,9 @@
 
 #include "omxmp3dectest.h"
 #include "tsemaphore.h"
+#include <component_loader.h>
+
+#include <st_static_component_loader.h>
 
 appPrivateType* appPriv;
 
@@ -62,10 +65,12 @@ int fd = 0;
 
 int main(int argc, char** argv){
 	//	appPrivateType* appPriv;
+  OMX_AUDIO_PARAM_PCMMODETYPE omxAudioParamPcmMode;
 	
 	OMX_ERRORTYPE err;
 	int isTunneled = 0;
 	int data_read;
+  BOSA_COMPONENTLOADER* componentLoader;
 	
 	OMX_CALLBACKTYPE mp3callbacks = { .EventHandler = mp3EventHandler,
 											 .EmptyBufferDone = mp3EmptyBufferDone,
@@ -127,12 +132,24 @@ int main(int argc, char** argv){
 	tsem_init(appPriv->alsasinkEventSem, 0);
 	tsem_init(appPriv->eofSem, 0);
 
+  componentLoader=(BOSA_COMPONENTLOADER*)malloc(sizeof(BOSA_COMPONENTLOADER));
+
+	componentLoader->BOSA_CreateComponentLoader = BOSA_ST_CreateComponentLoader;
+	componentLoader->BOSA_DestroyComponentLoader = BOSA_ST_DestroyComponentLoader;
+	componentLoader->BOSA_CreateComponent = BOSA_ST_CreateComponent;
+	componentLoader->BOSA_DestroyComponent = BOSA_ST_DestroyComponent;
+	componentLoader->BOSA_ComponentNameEnum = BOSA_ST_ComponentNameEnum;
+	componentLoader->BOSA_GetRolesOfComponent = BOSA_ST_GetRolesOfComponent;
+	componentLoader->BOSA_GetComponentsOfRole = BOSA_ST_GetComponentsOfRole;
+
+  BOSA_AddComponentLoader(componentLoader);
+
 	err = OMX_Init();
 
 
 	/** Ask the core for a handle to the dummy component
 	 */
-	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.st.ffmpeg.mp3dec", NULL /*appPriv */, &mp3callbacks);
+	err = OMX_GetHandle(&appPriv->mp3handle, "OMX.st.audio_decoder.mp3", NULL /*appPriv */, &mp3callbacks);
 	err = OMX_GetHandle(&appPriv->alsasinkhandle, "OMX.st.alsa.alsasink", NULL /*appPriv */, &alsasinkcallbacks);
 
 	/** Set the number of ports for the dummy component
@@ -179,6 +196,16 @@ int main(int argc, char** argv){
 		}
 	}
 	
+
+  /** Set up the PCM parameters
+	 */
+	omxAudioParamPcmMode.nPortIndex = 0;
+	err = OMX_GetParameter(appPriv->alsasinkhandle, OMX_IndexParamAudioPcm, &omxAudioParamPcmMode);
+	DEBUG(DEB_LEV_PARAMS, "Default PCM rate is %i\n", (int)omxAudioParamPcmMode.nSamplingRate);
+	omxAudioParamPcmMode.nSamplingRate = 44100;
+	err = OMX_SetParameter(appPriv->alsasinkhandle, OMX_IndexParamAudioPcm, &omxAudioParamPcmMode);
+	DEBUG(DEB_LEV_PARAMS, "Now PCM rate is %i\n", (int)omxAudioParamPcmMode.nSamplingRate);
+
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	
@@ -192,12 +219,13 @@ int main(int argc, char** argv){
 		err = OMX_UseBuffer(appPriv->alsasinkhandle, &inAlsaBuffer2, 0, NULL, buffer_out_size, outBuffer2->pBuffer);
 	}
 
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Before locking on idle wait semaphore\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Before locking on idle wait semaphore\n");
 	tsem_down(appPriv->decoderEventSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "decoder Sem free\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "decoder Sem free\n");
 	tsem_down(appPriv->alsasinkEventSem);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "alsa sink Sem free\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "alsa sink Sem free\n");
 	
+  DEBUG(DEB_LEV_FUNCTION_NAME, "Sending OMX_StateExecuting \n");
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
 	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
 	tsem_down(appPriv->decoderEventSem);
@@ -208,11 +236,13 @@ int main(int argc, char** argv){
 		outBuffer2->nOutputPortIndex = 1;
 		outBuffer2->nInputPortIndex = 0;
 		
+    DEBUG(DEB_LEV_ERR, "---> Sending Output buffer to Mp3 Dec\n");
+
 		err = OMX_FillThisBuffer(appPriv->mp3handle, outBuffer1);
 		err = OMX_FillThisBuffer(appPriv->mp3handle, outBuffer2);
 	}
 	
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Before locking on condition and decoderMutex\n");
+	DEBUG(DEB_LEV_ERR, "---> Before locking on condition and decoderMutex\n");
 
 	
 	data_read = read(fd, inBuffer1->pBuffer, buffer_in_size);
@@ -226,11 +256,13 @@ int main(int argc, char** argv){
 	DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", inBuffer2);
 	err = OMX_EmptyThisBuffer(appPriv->mp3handle, inBuffer2);
 
+  DEBUG(DEB_LEV_ERR, "---> Sent TWO input buffer to Mp3 Dec\n");
+
 	tsem_down(appPriv->eofSem);
 
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop mp3 dec\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Stop mp3 dec\n");
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Stop alsa sink\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Stop alsa sink\n");
 	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	
 	tsem_down(appPriv->alsasinkEventSem);
@@ -238,13 +270,13 @@ int main(int argc, char** argv){
 	
 	err = OMX_SendCommand(appPriv->mp3handle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
 	err = OMX_SendCommand(appPriv->alsasinkhandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
-	DEBUG(DEB_LEV_PARAMS, "alsa sink to loaded\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "alsa sink to loaded\n");
 	if (!isTunneled) {
 		err = OMX_FreeBuffer(appPriv->alsasinkhandle, 0, inAlsaBuffer1);
 		err = OMX_FreeBuffer(appPriv->alsasinkhandle, 0, inAlsaBuffer2);
 	}
 	
-	DEBUG(DEB_LEV_PARAMS, "Mp3 dec to loaded\n");
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Mp3 dec to loaded\n");
 	
 	err = OMX_FreeBuffer(appPriv->mp3handle, 0, inBuffer1);
 	err = OMX_FreeBuffer(appPriv->mp3handle, 0, inBuffer2);
@@ -282,35 +314,37 @@ OMX_ERRORTYPE mp3EventHandler(
 	OMX_OUT OMX_U32 Data2,
 	OMX_OUT OMX_PTR pEventData)
 {
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
-	if (Data1 == OMX_CommandStateSet) {
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "State changed in ");
-		switch ((int)Data2) {
-			case OMX_StateInvalid:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateInvalid\n");
-				break;
-			case OMX_StateLoaded:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateLoaded\n");
-				break;
-			case OMX_StateIdle:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateIdle\n");
-				break;
-			case OMX_StateExecuting:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateExecuting\n");
-				break;
-			case OMX_StatePause:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StatePause\n");
-				break;
-			case OMX_StateWaitForResources:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
-				break;
-		}
-		
-	} else {
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)Data2);
-	}
-	tsem_up(appPriv->decoderEventSem);
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Hi there, I am in the %s callback\n", __func__);
+  if(eEvent==OMX_EventCmdComplete){
+	  if (Data1 == OMX_CommandStateSet) {
+		  DEBUG(DEB_LEV_SIMPLE_SEQ, "State changed in ");
+		  switch ((int)Data2) {
+			  case OMX_StateInvalid:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateInvalid\n");
+				  break;
+			  case OMX_StateLoaded:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateLoaded\n");
+				  break;
+			  case OMX_StateIdle:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateIdle\n");
+				  break;
+			  case OMX_StateExecuting:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateExecuting\n");
+				  break;
+			  case OMX_StatePause:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StatePause\n");
+				  break;
+			  case OMX_StateWaitForResources:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
+				  break;
+		  }
+      tsem_up(appPriv->decoderEventSem);
+	  } else {
+		  DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);
+		  DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)Data2);
+	  }
+  }
+	//tsem_up(appPriv->decoderEventSem);
 }
 
 OMX_ERRORTYPE mp3EmptyBufferDone(
@@ -352,8 +386,10 @@ OMX_ERRORTYPE mp3FillBufferDone(
 			DEBUG(DEB_LEV_ERR, "Ouch! In %s: no data in the output buffer!\n", __func__);
 			return OMX_ErrorNone;
 		}
-		if(eState==OMX_StateExecuting || eState==OMX_StatePause)
+    if(eState==OMX_StateExecuting || eState==OMX_StatePause){
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s:Sending output buffer to alsasink\n", __func__);
 			err = OMX_EmptyThisBuffer(appPriv->alsasinkhandle, pBuffer);
+    }
 	}
 	else {
 		DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
@@ -368,35 +404,37 @@ OMX_ERRORTYPE alsasinkEventHandler(
 	OMX_OUT OMX_U32 Data2,
 	OMX_OUT OMX_PTR pEventData)
 {
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
-	if (Data1 == OMX_CommandStateSet) {
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "State changed in ");
-		switch ((int)Data2) {
-			case OMX_StateInvalid:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateInvalid\n");
-				break;
-			case OMX_StateLoaded:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateLoaded\n");
-				break;
-			case OMX_StateIdle:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateIdle\n");
-				break;
-			case OMX_StateExecuting:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateExecuting\n");
-				break;
-			case OMX_StatePause:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StatePause\n");
-				break;
-			case OMX_StateWaitForResources:
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
-				break;
-		}
-		
-	} else {
-		DEBUG(DEB_LEV_PARAMS, "Param1 is %i\n", (int)Data1);
-		DEBUG(DEB_LEV_PARAMS, "Param2 is %i\n", (int)Data2);
-	}
-	tsem_up(appPriv->alsasinkEventSem);
+	DEBUG(DEB_LEV_FUNCTION_NAME, "Hi there, I am in the %s callback\n", __func__);
+  if(eEvent==OMX_EventCmdComplete){
+	  if (Data1 == OMX_CommandStateSet) {
+		  DEBUG(DEB_LEV_SIMPLE_SEQ, "State changed in ");
+		  switch ((int)Data2) {
+			  case OMX_StateInvalid:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateInvalid\n");
+				  break;
+			  case OMX_StateLoaded:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateLoaded\n");
+				  break;
+			  case OMX_StateIdle:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateIdle\n");
+				  break;
+			  case OMX_StateExecuting:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateExecuting\n");
+				  break;
+			  case OMX_StatePause:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StatePause\n");
+				  break;
+			  case OMX_StateWaitForResources:
+				  DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
+				  break;
+		  }
+      tsem_up(appPriv->alsasinkEventSem);
+	  } else {
+		  DEBUG(DEB_LEV_PARAMS, "Param1 is %i\n", (int)Data1);
+		  DEBUG(DEB_LEV_PARAMS, "Param2 is %i\n", (int)Data2);
+	  }
+  }
+	//tsem_up(appPriv->alsasinkEventSem);
 }
 
 OMX_ERRORTYPE alsasinkEmptyBufferDone(

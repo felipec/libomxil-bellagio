@@ -21,7 +21,7 @@
  *
  */
 
-/** @file OMX_Audio.h
+/** @file OMX_Audio.h - OpenMax IL version 1.1
  *  The structures needed by Audio components to exchange
  *  parameters and configuration data with the componenmilts.
  */
@@ -41,6 +41,18 @@ extern "C" {
 #include <OMX_Types.h>
 #include <OMX_Core.h>
 
+/** @defgroup midi MIDI
+ * @ingroup audio
+ */
+ 
+/** @defgroup effects Audio effects
+ * @ingroup audio
+ */
+
+/** @defgroup audio OpenMAX IL Audio Domain
+ * Structures for OpenMAX IL Audio domain
+ * @{
+ */
 
 /** Enumeration used to define the possible audio codings.  
  *  If "OMX_AUDIO_CodingUnused" is selected, the coding selection must 
@@ -111,7 +123,7 @@ typedef struct OMX_AUDIO_PARAM_PORTFORMATTYPE {
 } OMX_AUDIO_PARAM_PORTFORMATTYPE;
 
 
-/** PCM mode type */ 
+/** PCM mode type  */ 
 typedef enum OMX_AUDIO_PCMMODETYPE { 
     OMX_AUDIO_PCMModeLinear = 0,  /**< Linear PCM encoded data */ 
     OMX_AUDIO_PCMModeALaw,        /**< A law PCM encoded data (G.711) */ 
@@ -171,6 +183,13 @@ typedef enum OMX_AUDIO_CHANNELMODETYPE {
 } OMX_AUDIO_CHANNELMODETYPE;
 
 
+typedef enum OMX_AUDIO_MP3STREAMFORMATTYPE {
+    OMX_AUDIO_MP3StreamFormatMP1Layer3 = 0, /**< MP3 Audio MPEG 1 Layer 3 Stream format */
+    OMX_AUDIO_MP3StreamFormatMP2Layer3,     /**< MP3 Audio MPEG 2 Layer 3 Stream format */
+    OMX_AUDIO_MP3StreamFormatMP2_5Layer3,   /**< MP3 Audio MPEG2.5 Layer 3 Stream format */
+    OMX_AUDIO_MP3StreamFormatMax = 0x7FFFFFFF
+} OMX_AUDIO_MP3STREAMFORMATTYPE;
+
 /** MP3 params */
 typedef struct OMX_AUDIO_PARAM_MP3TYPE {
     OMX_U32 nSize;                 /**< size of the structure in bytes */
@@ -184,6 +203,7 @@ typedef struct OMX_AUDIO_PARAM_MP3TYPE {
     OMX_U32 nAudioBandWidth;       /**< Audio band width (in Hz) to which an encoder should
                                         limit the audio signal. Use 0 to let encoder decide */
     OMX_AUDIO_CHANNELMODETYPE eChannelMode;   /**< Channel mode enumeration */
+    OMX_AUDIO_MP3STREAMFORMATTYPE eFormat;  /**< MP3 stream format */
 } OMX_AUDIO_PARAM_MP3TYPE;
 
 
@@ -307,6 +327,7 @@ typedef struct OMX_AUDIO_PARAM_WMATYPE {
     OMX_U32 nBitRate;         /**< Bit rate of the input data.  Use 0 for variable
                                    rate or unknown bit rates */
     OMX_AUDIO_WMAFORMATTYPE eFormat; /**< Version of WMA stream / data */
+    OMX_U32 nSamplingRate;
 } OMX_AUDIO_PARAM_WMATYPE;
 
 
@@ -504,7 +525,7 @@ typedef struct OMX_AUDIO_PARAM_AMRTYPE {
     OMX_AUDIO_AMRBANDMODETYPE eAMRBandMode; /**< AMR Band Mode enumeration */ 
     OMX_U32 nBitPerSample;                  /**< Bit per sample.  If nBitPerSample = 0, 
                                                  use the value from eAMRBandMode */
-    OMX_AUDIO_AMRDTXMODETYPE  eARMDTXMode;  /**< AMR DTX Mode enumeration */
+    OMX_AUDIO_AMRDTXMODETYPE  eAMRDTXMode;  /**< AMR DTX Mode enumeration */
     OMX_AUDIO_AMRFRAMEFORMATTYPE eAMRFrameFormat; /**< AMR frame format enumeration */
 } OMX_AUDIO_PARAM_AMRTYPE;
 
@@ -646,7 +667,7 @@ typedef struct OMX_AUDIO_PARAM_QCELP13TYPE {
 
 
 /** EVRC ( CDMA, EIA/TIA-127, RCELP up to 8.55kbps coder) stream format parameters */
-typedef struct OMX_AUDIO_PARAM_EVRCFRTYPE {
+typedef struct OMX_AUDIO_PARAM_EVRCTYPE {
     OMX_U32 nSize;                /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion;     /**< OMX specification version information */
     OMX_U32 nPortIndex;           /**< port that this structure applies to */
@@ -681,7 +702,9 @@ typedef struct OMX_AUDIO_PARAM_SMVTYPE {
 } OMX_AUDIO_PARAM_SMVTYPE;
 
 
-/** MIDI Format */
+/** MIDI Format 
+ * @ingroup midi
+ */
 typedef enum OMX_AUDIO_MIDIFORMATTYPE
 {
     OMX_AUDIO_MIDIFormatUnknown = 0, /**< MIDI Format unknown or don't care */
@@ -696,7 +719,9 @@ typedef enum OMX_AUDIO_MIDIFORMATTYPE
 } OMX_AUDIO_MIDIFORMATTYPE;
 
 
-/** MIDI params */
+/** MIDI params 
+ * @ingroup midi
+ */
 typedef struct OMX_AUDIO_PARAM_MIDITYPE {
     OMX_U32 nSize;                 /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion;      /**< OMX specification version information */
@@ -714,7 +739,9 @@ typedef struct OMX_AUDIO_PARAM_MIDITYPE {
 } OMX_AUDIO_PARAM_MIDITYPE;
 
 
-/** Type of the MIDI sound bank */
+/** Type of the MIDI sound bank 
+ * @ingroup midi
+ */
 typedef enum OMX_AUDIO_MIDISOUNDBANKTYPE {
     OMX_AUDIO_MIDISoundBankUnused = 0,           /**< unused/unknown soundbank type */
     OMX_AUDIO_MIDISoundBankDLS1,                 /**< DLS version 1 */
@@ -725,7 +752,9 @@ typedef enum OMX_AUDIO_MIDISOUNDBANKTYPE {
 } OMX_AUDIO_MIDISOUNDBANKTYPE;
 
 
-/** Bank Layout describes how bank MSB & LSB are used in the DLS instrument definitions sound bank */
+/** Bank Layout describes how bank MSB & LSB are used in the DLS instrument definitions sound bank 
+ * @ingroup midi
+ */
 typedef enum OMX_AUDIO_MIDISOUNDBANKLAYOUTTYPE {
    OMX_AUDIO_MIDISoundBankLayoutUnused = 0,   /**< unused/unknown soundbank type */
    OMX_AUDIO_MIDISoundBankLayoutGM,           /**< GS layout (based on bank MSB 0x00) */
@@ -735,7 +764,9 @@ typedef enum OMX_AUDIO_MIDISOUNDBANKLAYOUTTYPE {
 } OMX_AUDIO_MIDISOUNDBANKLAYOUTTYPE;
 
 
-/** MIDI params to load/unload user soundbank */
+/** MIDI params to load/unload user soundbank 
+ * @ingroup midi
+ */
 typedef struct OMX_AUDIO_PARAM_MIDILOADUSERSOUNDTYPE {
     OMX_U32 nSize;            /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion; /**< OMX specification version information */
@@ -750,6 +781,7 @@ typedef struct OMX_AUDIO_PARAM_MIDILOADUSERSOUNDTYPE {
 
 /** Structure for Live MIDI events and MIP messages. 
  * (MIP = Maximum Instantaneous Polyphony; part of the SP-MIDI standard.) 
+ * @ingroup midi
  */
 typedef struct OMX_AUDIO_CONFIG_MIDIIMMEDIATEEVENTTYPE {
     OMX_U32 nSize;            /**< size of the structure in bytes */
@@ -762,7 +794,9 @@ typedef struct OMX_AUDIO_CONFIG_MIDIIMMEDIATEEVENTTYPE {
 } OMX_AUDIO_CONFIG_MIDIIMMEDIATEEVENTTYPE;
 
 
-/** MIDI sound bank/ program pair in a given channel */
+/** MIDI sound bank/ program pair in a given channel 
+ * @ingroup midi
+ */
 typedef struct OMX_AUDIO_CONFIG_MIDISOUNDBANKPROGRAMTYPE {
     OMX_U32 nSize;              /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion;   /**< OMX specification version information */
@@ -775,7 +809,9 @@ typedef struct OMX_AUDIO_CONFIG_MIDISOUNDBANKPROGRAMTYPE {
 } OMX_AUDIO_CONFIG_MIDISOUNDBANKPROGRAMTYPE;
 
 
-/** MIDI control */
+/** MIDI control 
+ * @ingroup midi
+ */
 typedef struct OMX_AUDIO_CONFIG_MIDICONTROLTYPE {
     OMX_U32 nSize;                /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion;     /**< OMX specification version information */
@@ -802,7 +838,9 @@ typedef struct OMX_AUDIO_CONFIG_MIDICONTROLTYPE {
 } OMX_AUDIO_CONFIG_MIDICONTROLTYPE;
 
 
-/** MIDI Playback States */
+/** MIDI Playback States 
+ * @ingroup midi
+ */
 typedef enum OMX_AUDIO_MIDIPLAYBACKSTATETYPE {
   OMX_AUDIO_MIDIPlayBackStateUnknown = 0,      /**< Unknown state or state does not map to 
   													other defined states */
@@ -834,7 +872,9 @@ typedef enum OMX_AUDIO_MIDIPLAYBACKSTATETYPE {
 } OMX_AUDIO_MIDIPLAYBACKSTATETYPE;
 
 
-/** MIDI status */
+/** MIDI status 
+ * @ingroup midi
+ */
 typedef struct OMX_AUDIO_CONFIG_MIDISTATUSTYPE {
     OMX_U32 nSize;              /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion;   /**< OMX specification version information */
@@ -866,6 +906,7 @@ typedef struct OMX_AUDIO_CONFIG_MIDISTATUSTYPE {
  *  the engine, as it encounters these Meta Events within the MIDI content. 
  *  For example, SMF files can have up to 14 types of MIDI Meta Events (copyright, 
  *  author, default tempo, etc.) scattered throughout the file. 
+ *  @ingroup midi
  */
 typedef struct OMX_AUDIO_CONFIG_MIDIMETAEVENTTYPE{ 
     OMX_U32 nSize;            /**< size of the structure in bytes */ 
@@ -876,10 +917,12 @@ typedef struct OMX_AUDIO_CONFIG_MIDIMETAEVENTTYPE{
     OMX_U32 nMetaEventSize;   /**< size of the Meta Event in bytes */ 
     OMX_U32 nTrack;           /**< track number for the meta event */
     OMX_U32 nPosition;        /**< Position of the meta-event in milliseconds */
-} OMX_AUDIO_CONFIG__MIDIMETAEVENTTYPE; 
+} OMX_AUDIO_CONFIG_MIDIMETAEVENTTYPE; 
 
 
-/** MIDI Meta Event Data structure - one per Meta Event. */ 
+/** MIDI Meta Event Data structure - one per Meta Event. 
+ * @ingroup midi
+ */ 
 typedef struct OMX_AUDIO_CONFIG_MIDIMETAEVENTDATATYPE{ 
     OMX_U32 nSize;            /**< size of the structure in bytes */ 
     OMX_VERSIONTYPE nVersion; /**< OMX specification version information */ 
@@ -1040,6 +1083,7 @@ typedef struct OMX_AUDIO_CONFIG_TREBLETYPE {
  *  sub-optimal frequency response of a system to make it sound more natural 
  *  or to create intentionally some unnatural coloring to the sound to create
  *  an effect.
+ *  @ingroup effects
  */
 typedef struct OMX_AUDIO_CONFIG_EQUALIZERTYPE {
     OMX_U32 nSize;             /**< size of the structure in bytes */
@@ -1056,10 +1100,12 @@ typedef struct OMX_AUDIO_CONFIG_EQUALIZERTYPE {
 } OMX_AUDIO_CONFIG_EQUALIZERTYPE;
 
 
-/** Stereo widening mode type */ 
+/** Stereo widening mode type 
+ * @ingroup effects
+ */ 
 typedef enum OMX_AUDIO_STEREOWIDENINGTYPE {
     OMX_AUDIO_StereoWideningHeadphones,    /**< Stereo widening for loudspeakers */
-    OMX_AUDIO_StereoWidenindLoudspeakers,  /**< Stereo widening for closely spaced loudspeakers */
+    OMX_AUDIO_StereoWideningLoudspeakers,  /**< Stereo widening for closely spaced loudspeakers */
     OMX_AUDIO_StereoWideningMax = 0x7FFFFFFF
 } OMX_AUDIO_STEREOWIDENINGTYPE;
 
@@ -1067,6 +1113,7 @@ typedef enum OMX_AUDIO_STEREOWIDENINGTYPE {
 /** Control for stereo widening, which is a special 2-channel
  *  case of the audio virtualizer effect. For example, for 5.1-channel 
  *  output, it translates to virtual surround sound. 
+ * @ingroup effects
  */ 
 typedef struct OMX_AUDIO_CONFIG_STEREOWIDENINGTYPE {
     OMX_U32 nSize;             /**< size of the structure in bytes */
@@ -1085,6 +1132,7 @@ typedef struct OMX_AUDIO_CONFIG_STEREOWIDENINGTYPE {
  *  effects simulate this by making independently modified copies of the input 
  *  signal. Modifications may include (1) delay, (2) frequency shift, and 
  *  (3) amplitude modulation.
+ * @ingroup effects
  */
 typedef struct OMX_AUDIO_CONFIG_CHORUSTYPE {
     OMX_U32 nSize;             /**< size of the structure in bytes */
@@ -1103,6 +1151,7 @@ typedef struct OMX_AUDIO_CONFIG_CHORUSTYPE {
  *  reflections. In a typical room, this consists of a dense succession of 
  *  echoes whose energy decays exponentially. The reverberation effect structure 
  *  as defined here includes both (early) reflections as well as (late) reverberations. 
+ * @ingroup effects
  */
 typedef struct OMX_AUDIO_CONFIG_REVERBERATIONTYPE {
     OMX_U32 nSize;                /**< size of the structure in bytes */
@@ -1139,7 +1188,9 @@ typedef struct OMX_AUDIO_CONFIG_REVERBERATIONTYPE {
 } OMX_AUDIO_CONFIG_REVERBERATIONTYPE;
 
 
-/** Possible settings for the Echo Cancelation structure to use */
+/** Possible settings for the Echo Cancelation structure to use 
+ * @ingroup effects
+ */
 typedef enum OMX_AUDIO_ECHOCANTYPE {
    OMX_AUDIO_EchoCanOff = 0,    /**< Echo Cancellation is disabled */
    OMX_AUDIO_EchoCanNormal,     /**< Echo Cancellation normal operation - 
@@ -1154,6 +1205,7 @@ typedef enum OMX_AUDIO_ECHOCANTYPE {
 
 /** Enable / Disable for echo cancelation, which removes undesired echo's
  *  from the audio
+ * @ingroup effects
  */ 
 typedef struct OMX_AUDIO_CONFIG_ECHOCANCELATIONTYPE {
     OMX_U32 nSize;             /**< size of the structure in bytes */
@@ -1165,6 +1217,7 @@ typedef struct OMX_AUDIO_CONFIG_ECHOCANCELATIONTYPE {
 
 /** Enable / Disable for noise reduction, which undesired noise from
  * the audio
+ * @ingroup effects
  */ 
 typedef struct OMX_AUDIO_CONFIG_NOISEREDUCTIONTYPE {
     OMX_U32 nSize;             /**< size of the structure in bytes */
@@ -1173,6 +1226,7 @@ typedef struct OMX_AUDIO_CONFIG_NOISEREDUCTIONTYPE {
     OMX_BOOL bNoiseReduction;  /**< Enable/disable for noise reduction */
 } OMX_AUDIO_CONFIG_NOISEREDUCTIONTYPE;
 
+/** @} */
 
 #ifdef __cplusplus
 }

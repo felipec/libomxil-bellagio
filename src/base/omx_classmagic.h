@@ -1,7 +1,7 @@
 #ifndef OMX_CLASSMAGIC_H_
 #define OMX_CLASSMAGIC_H_
 /**
- * @file src/baase/omx_classmagic.h
+ * @file src/base/omx_classmagic.h
  * 
  * Copyright (C) 2006  Nokia
  * @author Ukri NIEMIMUUKKO
@@ -37,8 +37,10 @@
  * 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301  USA
  *
- * 2006/05/11:  class handling helper macros version 0.2
- *
+ * $Date$
+ * Revision $Rev$
+ * Author $Author$
+ * 
  */
 
 
@@ -47,11 +49,12 @@
 #define DERIVEDCLASS(a, b) class a : public b { public:
 #define ENDCLASS(a) a##_FIELDS };
 #else
-#define CLASS(a) typedef struct a {
-#define DERIVEDCLASS(a, b) typedef struct a {
-#define ENDCLASS(a) a##_FIELDS } a;
+#define CLASS(a) typedef struct a a; \
+ struct a { 
+#define DERIVEDCLASS(a, b) typedef struct a a; \
+ struct a {
+#define ENDCLASS(a) a##_FIELDS };
 #endif
-
 
 #if 0 /*EXAMPLES*/
 /**

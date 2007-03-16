@@ -1,29 +1,31 @@
 /**
-	@file src/base/omx_base_component.h
-	
-	OpenMax base_component component. This component does not perform any multimedia
-	processing.	It is used as a base_component for new components development.
-	
-	Copyright (C) 2006  STMicroelectronics and Nokia
+  @file src/base/omx_base_component.h
 
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI, Ukri NIEMIMUUKKO
+  OpenMax base component. This component does not perform any multimedia
+  processing.	It is used as a base component for new components development.
 
-	This library is free software; you can redistribute it and/or modify it under
-	the terms of the GNU Lesser General Public License as published by the Free
-	Software Foundation; either version 2.1 of the License, or (at your option)
-	any later version.
+  Copyright (C) 2006  STMicroelectronics and Nokia
 
-	This library is distributed in the hope that it will be useful, but WITHOUT
-	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-	details.
+  @author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI, Ukri NIEMIMUUKKO
 
-	You should have received a copy of the GNU Lesser General Public License
-	along with this library; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin St, Fifth Floor, Boston, MA
-	02110-1301  USA
-	
-	2006/05/11:  OpenMAX base_component component version 0.2
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 #ifndef _OMX_BASE_COMPONENT_H_
@@ -34,182 +36,281 @@
 #include "tsemaphore.h"
 #include "queue.h"
 #include "omx_classmagic.h"
+#include <omx_base_port.h>
 
 /** Default size of the internal input buffer */
-#define DEFAULT_IN_BUFFER_SIZE  4  * 1024
+#define DEFAULT_IN_BUFFER_SIZE  4 * 1024
 /** Default size of the internal output buffer */
 #define DEFAULT_OUT_BUFFER_SIZE 8 * 1024
 
-/** Maximum number of base_component component instances */
-#define MAX_NUM_OF_COMPONENT_INSTANCES 10
-
-/**
- * Port Specific Macro's
- */
-
-#define PORT_IS_BEING_FLUSHED(port)				(port->bIsPortFlushed == OMX_FALSE)
-#define PORT_IS_ENABLED(port)					(port->sPortParam.bEnabled == OMX_TRUE)
-#define PORT_IS_POPULATED(port)					(port->sPortParam.bPopulated == OMX_TRUE)
-#define PORT_IS_TUNNELED(port)					(port->nTunnelFlags & TUNNEL_ESTABLISHED)
-#define PORT_IS_BUFFER_SUPPLIER(port)			(port->nTunnelFlags & TUNNEL_IS_SUPPLIER)
-#define PORT_IS_WAITING_FLUSH_SEMAPHORE(port)	(port->bWaitingFlushSem)
-#define IS_BUFFER_UNDER_PROCESS(port)			(port->bBufferUnderProcess==OMX_TRUE)
-
 /*Check if Component is Deinitalizing*/
 #define IS_COMPONENT_DEINIT(component_Private, exit_condition)  \
-		pthread_mutex_lock(&component_Private->exit_mutex)	,\
-		exit_condition = component_Private->bIsComponentDeinit ,\
-		pthread_mutex_unlock(&component_Private->exit_mutex) ,\
-		(exit_condition == OMX_TRUE) ? OMX_TRUE:OMX_FALSE \
-		
-/**
- * The structure for port Type.
- */
-CLASS(base_component_PortType)
-#define base_component_PortType_FIELDS \
-	/** @param pBuffer An array of pointers to buffer headers. */ \
-	OMX_BUFFERHEADERTYPE **pBuffer; \
-	/** @param nBufferState The State of the Buffer whether assigned or allocated */ \
-	OMX_U32 *nBufferState; \
-	/** @param nNumAssignedBuffers Number of buffer assigned on each port */ \
-	OMX_U32 nNumAssignedBuffers; \
-	/** @param pBufferQueue queue for buffer to be processed by the port */ \
-	queue_t* pBufferQueue; \
-	/** @param pBufferSem Semaphore for buffer queue access synchronization */ \
-	tsem_t* pBufferSem; \
-	/** @param pFullAllocationSem Semaphore used to hold the state transition until the all the buffers needed have been allocated */ \
-	tsem_t* pFullAllocationSem; \
-	/** @param transientState A state transition between Loaded to Idle or Ilde to Loaded */ \
-	OMX_STATETYPE transientState; \
-	/** @param pFlushSem Semaphore that locks the execution until the buffers have been flushed, if needed */ \
-	tsem_t* pFlushSem; \
-	/** @param bWaitingFlushSem  Boolean variables indicate whether flush sem is down */ \
-	OMX_BOOL bWaitingFlushSem; \
-	/** @param bBufferUnderProcess  Boolean variables indicate whether the port is processing any buffer */ \
-	OMX_BOOL bBufferUnderProcess; \
-	/** @param mutex Mutex used for access synchronization to the processing thread */ \
-	pthread_mutex_t mutex; \
-	/** @param sPortParam General OpenMAX port parameter */ \
-	OMX_PARAM_PORTDEFINITIONTYPE sPortParam; \
-	/** @param hTunneledComponent Handle to the tunnelled component */ \
-	OMX_HANDLETYPE hTunneledComponent; \
-	/** @param nTunneledPort Tunnelled port number */ \
-	OMX_U32 nTunneledPort; \
-	/** @param nTunnelFlags Tunnelling flag */ \
-	OMX_U32 nTunnelFlags; \
-	/** @param eBufferSupplier the type of supplier in case of tunneling */ \
-	OMX_BUFFERSUPPLIERTYPE eBufferSupplier; \
-	/** @param nNumTunnelBuffer Number of buffer to be tunnelled */ \
-	OMX_U32 nNumTunnelBuffer; \
-	/** @param nNumBufferFlushed Number of buffer Flushed */ \
-	OMX_U32 nNumBufferFlushed; \
-	/** @param bIsPortFlushed Boolean variables indicate port is being flushed at the moment */ \
-	OMX_BOOL bIsPortFlushed;
-ENDCLASS(base_component_PortType)
+                pthread_mutex_lock(&component_Private->exit_mutex)      ,\
+                exit_condition = component_Private->bIsComponentDeinit ,\
+                pthread_mutex_unlock(&component_Private->exit_mutex) ,\
+                (exit_condition == OMX_TRUE) ? OMX_TRUE:OMX_FALSE \
 
- 
-/**
- * Components Private Structure
+
+#define CHECK_ERROR(err) if(err!=OMX_ErrorNone) { \
+                          DEBUG(DEB_LEV_ERR, "In %s\n",__func__); \
+                          return err; \
+                        } \
+
+/** This const value identifies all the components that are handled
+ * by the st static component loader. This value is stored in the 
+ * first field of the st private structure
  */
-CLASS(base_component_PrivateType)
-#define base_component_PrivateType_FIELDS \
-	/** @param ports The ports of the component */ \
-	base_component_PortType **ports; \
-	/** @param bIsInit Indicate whether component has been already initialized */ \
-	OMX_BOOL bIsInit; \
-	/** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
-	OMX_PORT_PARAM_TYPE sPortTypesParam; \
-	/** @param bufferMgmtThread The main component thread that receives input buffers and sends it to the output device */ \
-	pthread_t bufferMgmtThread; \
-	/** @param bufferMgmtThreadID The main component thread ID */ \
-	OMX_S32 bufferMgmtThreadID; \
-	/** @param executingMutex The mutex that synchronizes the start of the main thread and the state transition of the component to Executing */ \
-	pthread_mutex_t executingMutex; \
-	/** @param executingCondition The executing mutex condition */ \
-	pthread_cond_t executingCondition; \
-	/** @param bIsComponentDeinit boolean flag to indicate component is deinitializing */ \
-	OMX_BOOL bIsComponentDeinit; \
-	/** @param exit_mutex mutex for the exit condition from the main component thread */ \
-	pthread_mutex_t exit_mutex; \
-	/** @param The exit mutex condition */ \
-	pthread_cond_t exit_condition; \
-	/** @param cmd_mutex Mutex uses for message access synchronization */ \
-	pthread_mutex_t cmd_mutex; \
-	/** @param pCmdSem Semaphore for message handling completion signaling */ \
-	tsem_t* pCmdSem; \
-	/** @param nGroupPriority Resource management field: component priority (common to a group of components) */ \
-	OMX_U32 nGroupPriority; \
-	/** @param nGroupID ID of a group of components that share the same logical chain */ \
-	OMX_U32 nGroupID; \
-	/** @param pMark This field holds the private data associated with a mark request, if any */ \
-	OMX_MARKTYPE *pMark; \
-	/** @param bCmdUnderProcess Boolean variable indicates whether command under process */ \
-	OMX_BOOL bCmdUnderProcess; \
-	/** @param bWaitingForCmdToFinish Boolean variable indicates whether cmdSem is waiting for command to finish */ \
-	OMX_BOOL bWaitingForCmdToFinish; \
-	/** @param flush_mutex mutex for the flush condition from buffers */ \
-	pthread_mutex_t flush_mutex;	\
-	/** @param The flush_condition condition */ \
-	pthread_cond_t flush_condition;	\
-	/** @param inbuffer Counter of input buffers. Only for debug */ \
-	OMX_U32 inbuffer; \
-	/** @param inbuffercb Counter of input buffers. Only for debug */ \
-	OMX_U32 inbuffercb; \
-	/** @param outbuffer Counter of output buffers. Only for debug */ \
-	OMX_U32 outbuffer; \
-	/** @param outbuffercb Counter of output buffers. Only for debug */ \
-	OMX_U32 outbuffercb; \
-	/** @param Init Counter of output buffers. Only for debug */ \
-	OMX_ERRORTYPE (*Init)(stComponentType* stComponent); \
-	/** @param Deinit Counter of output buffers. Only for debug */ \
-	OMX_ERRORTYPE (*Deinit)(stComponentType* stComponent); \
-	/** @param DoStateSet Counter of output buffers. Only for debug */ \
-	OMX_ERRORTYPE (*DoStateSet)(stComponentType*, OMX_U32); \
-	/** @param AllocateTunnelBuffers Counter of output buffers. Only for debug */ \
-	OMX_ERRORTYPE (*AllocateTunnelBuffers)(base_component_PortType*, OMX_U32, OMX_U32);	 \
-	/** @param FreeTunnelBuffers Counter of output buffers. Only for debug */ \
-	OMX_ERRORTYPE (*FreeTunnelBuffers)(base_component_PortType*); \
-	/** @param BufferMgmtFunction Counter of output buffers. Only for debug */ \
-	void* (*BufferMgmtFunction)(void* param);    \
-	/** @param FlushPort to Flush input/output ports */ \
-	OMX_ERRORTYPE (*FlushPort)(stComponentType* stComponent, OMX_U32 portIndex);\
-	/** @param FreeTunnelBuffers Counter of output buffers. Only for debug */ \
-	OMX_ERRORTYPE (*DomainCheck)(OMX_PARAM_PORTDEFINITIONTYPE pDef); 
-ENDCLASS(base_component_PrivateType)
+#define ST_STATIC_COMP_CODE 0xA8
+
+/** @brief enumerates all the possible types of messages 
+ * handled internally byu the component
+ */
+typedef enum INTERNAL_MESSAGE_TYPE {
+	SENDCOMMAND_MSG_TYPE = 1,/**< this flag specifies that the message send is a command */
+	ERROR_MSG_TYPE,/**< this flag specifies that the message send is an error message */
+	WARNING_MSG_TYPE /**< this flag specifies that the message send is a warning message */
+} INTERNAL_MESSAGE_TYPE;
+
+/** @brief the container of an internal message
+ * 
+ * This structure contains a generic openmax request (from send command).
+ * It is processed by the internal message handler thread
+ */
+typedef struct internalRequestMessageType{
+	int messageType; /**< the flag that specifies if the message is a command, a warning or an error */
+	int messageParam; /**< the second field of the message. Its use is the same as specified for the command in OpenMAX spec */
+	OMX_PTR pCmdData; /**< This pointer could contain some proprietary data not covered by the standard */
+} internalRequestMessageType;
 
 /**
- * This is the stComponent template from which all
- * other stComponent instances are factored by the core.
+ * @brief the base descriptor for a ST component
  */
-stComponentType* base_component_CreateComponentStruct(void);
+CLASS(omx_base_component_PrivateType)
+#define omx_base_component_PrivateType_FIELDS \
+  OMX_COMPONENTTYPE *openmaxStandComp; /**< The OpenMAX standard data structure describing a component */ \
+  omx_base_PortType **ports; /** @param ports The ports of the component */ \
+  OMX_PORT_PARAM_TYPE sPortTypesParam; /** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
+  char uniqueID; /**< ID code that identifies an ST static component*/ \
+  char* name; /**< component name */\
+  OMX_STATETYPE state; /**< The state of the component */ \
+  OMX_STATETYPE transientState; /**< The transient state in case of transition between \ 
+                              Loaded/waitForResources - Idle. It is equal to  \
+                              Invalid if the state or transition are not corect \
+                              Loaded when the transition is from Idle to Loaded \
+                              Idle when the transition is from Loaded to Idle */ \
+  OMX_CALLBACKTYPE* callbacks; /**< pointer to every client callback function, \ 
+															  as specified by the standard*/ \
+  OMX_PTR callbackData;/**< Private data that can be send with \ 
+											  the client callbacks. Not specified by the standard */ \
+  queue_t* messageQueue;/**< the queue of all the messages recevied by the component */\
+  tsem_t* messageSem;/**< the semaphore that coordinates the access to the message queue */\
+  OMX_U32 nGroupPriority; /**< @param nGroupPriority Resource management field: component priority (common to a group of components) */\
+  OMX_U32 nGroupID; /**< @param nGroupID ID of a group of components that share the same logical chain */\
+  OMX_MARKTYPE *pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
+  pthread_mutex_t flush_mutex;	/** @param flush_mutex mutex for the flush condition from buffers */ \
+  pthread_cond_t flush_all_condition;	/** @param flush_all_condition condition for the flush all buffers */ \
+  pthread_cond_t flush_condition;	/** @param The flush_condition condition */ \
+  tsem_t* bMgmtSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
+  int messageHandlerThreadID; /** @param  messageHandlerThreadID The ID of the pthread that handles the messages for the components */ \
+  pthread_t messageHandlerThread; /** @param  messageHandlerThread This field contains the reference to the thread that receives messages for the components */ \
+  int bufferMgmtThreadID; /** @param  bufferMgmtThreadID The ID of the pthread that process buffers */ \
+  pthread_t bufferMgmtThread; /** @param  bufferMgmtThread This field contains the reference to the thread that process buffers */ \
+  void* (*BufferMgmtFunction)(void* param); /** @param BufferMgmtFunction This function processes input output buffers */ \
+  OMX_ERRORTYPE (*messageHandler)(OMX_COMPONENTTYPE*,internalRequestMessageType*);/** This function receives messages from the message queue. It is needed for each Linux ST OpenMAX component */ \
+  OMX_ERRORTYPE (*DoStateSet)(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32); /**< @param DoStateSet internal function called when a generic state transition is requested*/ \
+  OMX_ERRORTYPE (*destructor)(OMX_COMPONENTTYPE *openmaxStandComp); /** Component Destructor*/
+ENDCLASS(omx_base_component_PrivateType)
 
 /** 
- * This function takes care of constructing the instance of the component.
- * It is executed upon a getHandle() call.
+ * @brief the base contructor for the openmax st components
+ * 
+ * This function is executed by the ST staic component loader.
+ * It takes care of constructing the instance of the component.
  * For the base_component component, the following is done:
  *
- * 1) Allocates the threadDescriptor structure
- * 2) Spawns the event manager thread
- * 3) Allocated base_component_PrivateType private structure
- * 4) Fill all the generic parameters, and some of the
- *    specific as an example
- * \param stComponent the ST component to be initialized
+ * 1) Fills the basic openmax structure. The fields can be overwritten
+ *    by derived components. 
+ * 3) Allocates (if needed) the omx_base_component_PrivateType private structure
+ * 
+ * @param openmaxStandComp the ST component to be initialized
+ * 
+ * @return OMX_ErrorInsufficientResources if a memory allocation fails
  */
-OMX_ERRORTYPE base_component_Constructor(stComponentType*);
+OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
 
-/** This function is called by the omx core when the component 
-	* is disposed by the IL client with a call to FreeHandle().
-	* \param stComponent the ST component to be disposed
+/** @brief the base destructor for ST openmax components
+ * 
+ * This function is called by the omx core when the component
+ * is disposed by the IL client with a call to FreeHandle().
+ * 
+ * @param openmaxStandComp the ST openmax component to be disposed
 	*/
-OMX_ERRORTYPE base_component_Destructor(stComponentType* stComponent);
+OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
-/** This is the central function for component processing. It
-	* is executed in a separate thread, is synchronized with 
-	* semaphores at each port, those are released each time a new buffer
-	* is available on the given port.
-	*/
-void* base_component_BufferMgmtFunction(void* param);
+/** Changes the state of a component taking proper actions depending on
+ * the transiotion requested. This base function cover only the state
+ * changes that do not involve any port
+ * 
+ * @param openmaxStandComp the openmax component which state is to be changed
+ * @param destinationState the requested target state
+ *
+ * @return OMX_ErrorNotImplemented if the state change is noty handled 
+ * in this base class, but needs a specific handling
+ */
+OMX_ERRORTYPE omx_base_component_DoStateSet(
+	OMX_COMPONENTTYPE *openmaxStandComp,
+	OMX_U32 destinationState);
 
+/** @brief Checks the header of a structure for consistency 
+ * with size and spec version
+ * 
+ * @param header Pointer to the structure to be checked
+ * @param size Size of the structure. it is in general obtained
+ * with a sizeof call applied to the structure
+ * 
+ * @return OMX error code. If the header has failed the check, 
+ * OMX_ErrorVersionMismatch is returned. 
+ * If the header fails the size check OMX_ErrorBadParameter is returned
+ */
+OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size);
+
+/** @brief Simply fills the first two fields in any OMX structure
+ * with the size and the version
+ * 
+ * @param header pointer to the structure to be filled
+ * @param size size of the structure. It can be obtained with 
+ * a call to sizeof of the structure type 
+ */
+void setHeader(OMX_PTR header, OMX_U32 size);
+
+/** @brief standard openmax function
+ * 
+ * it returns the version of the component. See OMX_Core.h
+ */ 
+OMX_ERRORTYPE omx_base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_STRING pComponentName,
+	OMX_OUT OMX_VERSIONTYPE* pComponentVersion,
+	OMX_OUT OMX_VERSIONTYPE* pSpecVersion,
+	OMX_OUT OMX_UUIDTYPE* pComponentUUID);
+
+/** @brief Enumerates all the role of the component.
+ * 
+ * This function is intended to be used only by a core. The ST static core 
+ * in any case does not use this function, because it can not be used before the 
+ * creation of the component, but uses a static list.
+ * It is implemented only for API completion,and it will be not overriden 
+ * by a derived component
+ * 
+ * @param hComponent handle of the component
+ * @param cRole the output string containing the n-role of the component
+ * @param nIndex the index of the role requested
+ */ 
+OMX_ERRORTYPE omx_base_component_ComponentRoleEnum(
+	OMX_IN OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_U8 *cRole,
+	OMX_IN OMX_U32 nIndex);
+
+/** @brief standard openmax function
+ * 
+ * it sets the callback functions given by the IL client. 
+ * See OMX_Component.h
+ */ 
+OMX_ERRORTYPE omx_base_component_SetCallbacks(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
+	OMX_IN  OMX_PTR pAppData);
+
+/** @brief part of the standard openmax function
+ * 
+ * This function return the parameters not related to any port.
+ * These parameters are handled in the derived components
+ * See OMX_Core.h for standard reference
+ */
+OMX_ERRORTYPE omx_base_component_GetParameter(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_INDEXTYPE nParamIndex,
+	OMX_INOUT OMX_PTR ComponentParameterStructure);
+
+/** @brief part of the standard openmax function
+ * 
+ * This function return the parameters not related to any port,
+ * These parameters are handled in the derived components
+ * See OMX_Core.h for standard reference
+ * 
+ * @return OMX_ErrorUnsupportedIndex if the index is not supported or not handled here
+ */
+OMX_ERRORTYPE omx_base_component_SetParameter(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_INDEXTYPE nParamIndex,
+	OMX_IN  OMX_PTR ComponentParameterStructure);
+
+/** @brief base GetConfig function
+ * 
+ * This base function is not implemented. If a derived component
+ * needs to support any config, it must implement a derived 
+ * version of this function and assign it to the correct pointer
+ * in the private component descriptor
+ */
+OMX_ERRORTYPE omx_base_component_GetConfig(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_INDEXTYPE nIndex,
+	OMX_INOUT OMX_PTR pComponentConfigStructure);
+
+/** @brief base SetConfig function
+ * 
+ * This base function is not implemented. If a derived component
+ * needs to support any config, it must implement a derived 
+ * version of this function and assign it to the correct pointer
+ * in the private component descriptor
+ */
+OMX_ERRORTYPE omx_base_component_SetConfig(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_INDEXTYPE nIndex,
+	OMX_IN  OMX_PTR pComponentConfigStructure);
+
+/** @brief base function not implemented
+ * 
+ * This function can be eventually implemented by a
+ * derived component if needed
+ */
+OMX_ERRORTYPE omx_base_component_GetExtensionIndex(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_STRING cParameterName,
+	OMX_OUT OMX_INDEXTYPE* pIndexType);
+
+/** @returns the state of the component
+ * 
+ * This function does not need any override by derived components
+ */
+OMX_ERRORTYPE omx_base_component_GetState(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_STATETYPE* pState);
+
+/** @brief standard SendCommand function
+ * 
+ * In general this function does not need a overwrite, but
+ * a special derived component could do it.
+ */  
+OMX_ERRORTYPE omx_base_component_SendCommand(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_COMMANDTYPE Cmd,
+	OMX_IN  OMX_U32 nParam,
+	OMX_IN  OMX_PTR pCmdData);
+
+/** @brief this standard functionality is not needed in this set
+ * of components. The destructor executes the same operation needed 
+ * 
+ * This function does anything in this implementation.
+ */
+ OMX_ERRORTYPE omx_base_component_ComponentDeInit(
+	OMX_IN  OMX_HANDLETYPE hComponent);
+
+/** \brief Component's message handler thread function
+ * Handles all messages coming from components and
+ * processes them by dispatching them back to the
+ * triggering component.
+ */
+void* compMessageHandlerFunction(void*);
 /** This is called by the OMX core in its message processing
  * thread context upon a component request. A request is made
  * by the component when some asynchronous services are needed:
@@ -218,179 +319,50 @@ void* base_component_BufferMgmtFunction(void* param);
  * 3) ...
  * \param message the message that has been passed to core
  */
-OMX_ERRORTYPE base_component_MessageHandler(coreMessage_t* message);
-
-/** This function is executed when a loaded to idle transition occurs.
- * It is responsible of allocating all necessary resources for being
- * ready to process data.
- * For base_component component, the following is done:
- * 1) Put the component in IDLE state
- *	2) Spawn the buffer management thread.
- * \param stComponent the ST component to startup
- */
-OMX_ERRORTYPE base_component_Init(stComponentType* stComponent);
-
-/** FIXME comment this
- * 
- */
-OMX_ERRORTYPE base_component_Deinit(stComponentType* stComponent);
-
-/** Changes the state of a component taking proper actions depending on
- * the transiotion requested
- * \param stComponent the ST component which state is to be changed
- * \param destinationState the requested target state.
- */
-OMX_ERRORTYPE base_component_DoStateSet(stComponentType*, OMX_U32);
-
-/** Disables the specified port. This function is called due to a request by the IL client
-	* @param stComponent the component which owns the port to be disabled
-	* @param portIndex the ID of the port to be disabled
-	*/
-OMX_ERRORTYPE base_component_DisablePort(stComponentType* stComponent, OMX_U32 portIndex);
-
-/** Enables the specified port. This function is called due to a request by the IL client
-	* @param stComponent the component which owns the port to be enabled
-	* @param portIndex the ID of the port to be enabled
-	*/
-OMX_ERRORTYPE base_component_EnablePort(stComponentType* stComponent, OMX_U32 portIndex);
-
-/** Flushes all the buffers under processing by the given port. 
-	* This function si called due to a state change of the component, typically
-	* @param stComponent the component which owns the port to be flushed
-	* @param portIndex the ID of the port to be flushed
-	*/
-OMX_ERRORTYPE base_component_FlushPort(stComponentType* stComponent, OMX_U32 portIndex);
-
-/** Allocate buffers in case of a tunneled port.
-	* The operations performed are:
-	*  - Free any buffer associated with the list of buffers of the specified port
-	*  - Allocate the MAX number of buffers for that port, with the specified size.
-	* @param base_component_Port the port of the alsa component that must be tunneled
-	* @param portIndex index of the port to be tunneled
-	* @param bufferSize Size of the buffers to be allocated
-	*/
-OMX_ERRORTYPE base_component_AllocateTunnelBuffers(base_component_PortType* base_component_Port, OMX_U32 portIndex, OMX_U32 bufferSize);
-
-/** Free buffer in case of a tunneled port.
-	* The operations performed are:
-	*  - Free any buffer associated with the list of buffers of the specified port
-	*  - Free the MAX number of buffers for that port, with the specified size.
-	* @param base_component_Port the port of the alsa component on which tunnel buffers must be released
-	*/
-OMX_ERRORTYPE base_component_FreeTunnelBuffers(base_component_PortType* base_component_Port);
-
-/** Set Callbacks. It stores in the component private structure the pointers to the user application callbacs
-	* @param hComponent the handle of the component
-	* @param pCallbacks the OpenMAX standard structure that holds the callback pointers
-	* @param pAppData a pointer to a private structure, not covered by OpenMAX standard, in needed
- */
-OMX_ERRORTYPE base_component_SetCallbacks(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
-	OMX_IN  OMX_PTR pAppData);
-
-/** The panic function that exits from the application. This function is only for debug purposes and should be removed in the next releases */
-//void base_component_Panic();
-
-/** Component entry points declarations */
-OMX_ERRORTYPE base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_STRING pComponentName,
-	OMX_OUT OMX_VERSIONTYPE* pComponentVersion,
-	OMX_OUT OMX_VERSIONTYPE* pSpecVersion,
-	OMX_OUT OMX_UUIDTYPE* pComponentUUID);
-
-OMX_ERRORTYPE base_component_GetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_INOUT OMX_PTR ComponentParameterStructure);
-
-OMX_ERRORTYPE base_component_SetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_IN  OMX_PTR ComponentParameterStructure);
-
-OMX_ERRORTYPE base_component_GetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_INOUT OMX_PTR pComponentConfigStructure);
-
-OMX_ERRORTYPE base_component_SetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_IN  OMX_PTR pComponentConfigStructure);
-
-OMX_ERRORTYPE base_component_GetExtensionIndex(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_STRING cParameterName,
-	OMX_OUT OMX_INDEXTYPE* pIndexType);
-
-OMX_ERRORTYPE base_component_GetState(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_STATETYPE* pState);
-
-OMX_ERRORTYPE base_component_UseBuffer(
-	OMX_IN OMX_HANDLETYPE hComponent,
-	OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
-	OMX_IN OMX_U32 nPortIndex,
-	OMX_IN OMX_PTR pAppPrivate,
-	OMX_IN OMX_U32 nSizeBytes,
-	OMX_IN OMX_U8* pBuffer);
-
-OMX_ERRORTYPE base_component_AllocateBuffer(
-	OMX_IN OMX_HANDLETYPE hComponent,
-	OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,
-	OMX_IN OMX_U32 nPortIndex,
-	OMX_IN OMX_PTR pAppPrivate,
-	OMX_IN OMX_U32 nSizeBytes);
-
-OMX_ERRORTYPE base_component_FreeBuffer(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_U32 nPortIndex,
-	OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
-
-OMX_ERRORTYPE base_component_SendCommand(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_COMMANDTYPE Cmd,
-	OMX_IN  OMX_U32 nParam,
-	OMX_IN  OMX_PTR pCmdData);
-
-OMX_ERRORTYPE base_component_ComponentDeInit(
-	OMX_IN  OMX_HANDLETYPE hComponent);
-	  
-OMX_ERRORTYPE base_component_EmptyThisBuffer(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
-
-OMX_ERRORTYPE base_component_FillThisBuffer(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
-
-OMX_ERRORTYPE base_component_ComponentTunnelRequest(
-	OMX_IN  OMX_HANDLETYPE hComp,
-	OMX_IN  OMX_U32 nPort,
-	OMX_IN  OMX_HANDLETYPE hTunneledComp,
-	OMX_IN  OMX_U32 nTunneledPort,
-	OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup);
+OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandComp,internalRequestMessageType* message);
 
 /**
- * Set/Reset Port Flush Flag
+ * This function verify Component State and Structure header
  */
-void base_component_SetPortFlushFlag(stComponentType* stComponent, OMX_S32 index, OMX_BOOL value);
-/**
- * Set Number of Buffer Flushed with the value Specified
- */
-void base_component_SetNumBufferFlush(stComponentType* stComponent, OMX_S32 index, OMX_S32 value);
-/**
- * Returns Input Buffer to the IL client or Tunneled Component
- */
-void base_component_returnInputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pInputBuffer,base_component_PortType *pPort);
-/**
- * Returns Output Buffer to the IL client or Tunneled Component
- */
-void base_component_returnOutputBuffer(stComponentType* stComponent,OMX_BUFFERHEADERTYPE* pOutputBuffer,base_component_PortType *pPort);
-/**
- * Base Class Function to Check Domain of the Tunneled Component
- */
-OMX_ERRORTYPE base_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
+OMX_ERRORTYPE omx_base_component_ParameterSanityCheck(
+            OMX_IN  OMX_HANDLETYPE hComponent,
+            OMX_IN  OMX_U32 nPortIndex,
+            OMX_IN  OMX_PTR pStructure,
+            OMX_IN  size_t size);
 
+OMX_ERRORTYPE omx_base_component_AllocateBuffer(
+            OMX_IN OMX_HANDLETYPE hComponent,
+            OMX_INOUT OMX_BUFFERHEADERTYPE** ppBuffer,
+            OMX_IN OMX_U32 nPortIndex,
+            OMX_IN OMX_PTR pAppPrivate,
+            OMX_IN OMX_U32 nSizeBytes);
+
+OMX_ERRORTYPE omx_base_component_UseBuffer(
+            OMX_IN OMX_HANDLETYPE hComponent,
+            OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
+            OMX_IN OMX_U32 nPortIndex,
+            OMX_IN OMX_PTR pAppPrivate,
+            OMX_IN OMX_U32 nSizeBytes,
+            OMX_IN OMX_U8* pBuffer);
+
+OMX_ERRORTYPE omx_base_component_FreeBuffer(   
+            OMX_IN  OMX_HANDLETYPE hComponent,
+            OMX_IN  OMX_U32 nPortIndex,
+            OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE omx_base_component_EmptyThisBuffer(
+            OMX_IN  OMX_HANDLETYPE hComponent,
+            OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE omx_base_component_FillThisBuffer(
+            OMX_IN  OMX_HANDLETYPE hComponent,
+            OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE omx_base_component_ComponentTunnelRequest(
+            OMX_IN  OMX_HANDLETYPE hComp,
+            OMX_IN  OMX_U32 nPort,
+            OMX_IN  OMX_HANDLETYPE hTunneledComp,
+            OMX_IN  OMX_U32 nTunneledPort,
+            OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup);
+ 
 #endif // _OMX_BASE_COMPONENT_H_

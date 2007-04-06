@@ -5,8 +5,6 @@
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
-  @author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI, Ukri NIEMIMUUKKO
-
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
   Software Foundation; either version 2.1 of the License, or (at your option)
@@ -22,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-03-16 10:01:36 +0100 (Fri, 16 Mar 2007) $
-  Revision $Rev: 711 $
-  Author $Author: pankaj_sen $
+  $Date: 2007-03-30 15:59:17 +0200 (Fri, 30 Mar 2007) $
+  Revision $Rev: 756 $
+  Author $Author: giulio_urlini $
 
 */
 
@@ -43,8 +41,7 @@
 #define PORT_IS_POPULATED(pPort)                                 (pPort->sPortParam.bPopulated == OMX_TRUE)
 #define PORT_IS_TUNNELED(pPort)                                  (pPort->nTunnelFlags & TUNNEL_ESTABLISHED)
 #define PORT_IS_BUFFER_SUPPLIER(pPort)                           (pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER)
-#define PORT_IS_WAITING_FLUSH_SEMAPHORE(pPort)                   (pPort->bWaitingFlushSem==OMX_TRUE)
-#define IS_BUFFER_UNDER_PROCESS(pPort)                           (pPort->bBufferUnderProcess==OMX_TRUE)
+#define PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort)                (pPort->nTunnelFlags== (TUNNEL_ESTABLISHED | TUNNEL_IS_SUPPLIER))
 
 /** The following enum values are used to characterize each buffer 
   * allocated or assigned to the component. A buffer list is 
@@ -74,8 +71,10 @@ typedef enum BUFFER_STATUS_FLAG {
   BUFFER_FREE = 0,
   BUFFER_ALLOCATED = 0x0001,  /**< This flag is applied to a buffer when it is allocated
 							   by the given port of the component */
-  BUFFER_ASSIGNED = 0x0002 /**< This flag is applied to a buffer when it is assigned
+  BUFFER_ASSIGNED = 0x0002, /**< This flag is applied to a buffer when it is assigned
 							  from another port or by the IL client */
+  HEADER_ALLOCATED = 0x0004 /**< This flag is applied to a buffer when buffer header is allocated 
+							  by the given port of the component */
   } BUFFER_STATUS_FLAG;
 
 /** @brief the status of a port related to the tunneling with another component
@@ -105,25 +104,19 @@ CLASS(omx_base_PortType)
   OMX_BUFFERSUPPLIERTYPE eBufferSupplier; /**< @param eBufferSupplier the type of supplier in case of tunneling */\
   OMX_U32 nNumTunnelBuffer; /**< @param nNumTunnelBuffer Number of buffer to be tunnelled */\
   tsem_t* pAllocSem; /**< @param pFlushSem Semaphore that locks the execution until the buffers have been flushed, if needed */ \
-  OMX_BOOL bWaitingFlushSem; /**< @param bWaitingFlushSem  Boolean variables indicate whether flush sem is down */ \
-  OMX_BOOL bBufferUnderProcess; /**< @param bBufferUnderProcess  Boolean variables indicate whether the port is processing any buffer */ \
   OMX_U32 nNumBufferFlushed; /**< @param nNumBufferFlushed Number of buffer Flushed */\
   OMX_BOOL bIsPortFlushed;/**< @param bIsPortFlushed Boolean variables indicate port is being flushed at the moment */ \
-  pthread_mutex_t mutex; /** @param mutex Mutex used for access synchronization to the processing thread */ \
   queue_t* pBufferQueue; /**< @param pBufferQueue queue for buffer to be processed by the port */\
   tsem_t* pBufferSem; /**< @param pBufferSem Semaphore for buffer queue access synchronization */\
   OMX_U32 nNumAssignedBuffers; /**< @param nNumAssignedBuffers Number of buffer assigned on each port */\
   OMX_PARAM_PORTDEFINITIONTYPE sPortParam; /**< @param sPortParam General OpenMAX port parameter */\
   OMX_BUFFERHEADERTYPE **pInternalBufferStorage; /**< This array contains the reference to all the buffers hadled by this port and already registered*/\
   BUFFER_STATUS_FLAG *bBufferStateAllocated; /**< @param bBufferStateAllocated The State of the Buffer whether assigned or allocated */\
-  OMX_COMPONENTTYPE *standCompContainer; /**< The openmax compoennt reference that contains this port */\ 
-  OMX_BOOL bIsEnabled;/**< Indicates if the port is enabled */ \
+  OMX_COMPONENTTYPE *standCompContainer;/**< The openmax compoennt reference that contains this port */\ 
   OMX_BOOL bIsTransientToEnabled;/**< It indicates that the port is going from disabled to enabled */ \
   OMX_BOOL bIsTransientToDisabled;/**< It indicates that the port is going from enabled to disabled */ \
-  OMX_BOOL bIsInputPort; /**< It indicates if the port is an input */ \
   OMX_BOOL bIsFullOfBuffers; /**< It indicates if the port has all the buffers needed */ \
   OMX_BOOL bIsEmptyOfBuffers;/**< It indicates if the port has no buffers*/ \
-  OMX_U32 nPortIndex; /**< Stores the index of the port related to the component container */ \
   OMX_ERRORTYPE (*PortConstructor)(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput); /**< The contructor of the port. It fills all the other function pointers */ \
   OMX_ERRORTYPE (*PortDestructor)(omx_base_PortType *openmaxStandPort); /**< The destructor of the port*/ \
   OMX_ERRORTYPE (*Port_DisablePort)(omx_base_PortType *openmaxStandPort); /**< Disables the port */ \
@@ -132,6 +125,8 @@ CLASS(omx_base_PortType)
   OMX_ERRORTYPE (*Port_AllocateBuffer)(omx_base_PortType *openmaxStandPort,OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_PTR pAppPrivate,OMX_IN OMX_U32 nSizeBytes);/**< Replaces the AllocateBuffer call for the base port. */	 \
   OMX_ERRORTYPE (*Port_UseBuffer)(omx_base_PortType *openmaxStandPort,OMX_BUFFERHEADERTYPE** ppBufferHdr,OMX_U32 nPortIndex,OMX_PTR pAppPrivate,OMX_U32 nSizeBytes,OMX_U8* pBuffer);/**< The standard use buffer function applied to the port class */ \
   OMX_ERRORTYPE (*Port_FreeBuffer)(omx_base_PortType *openmaxStandPort,OMX_U32 nPortIndex,OMX_BUFFERHEADERTYPE* pBuffer); /**< The standard free buffer function applied to the port class */ \
+  OMX_ERRORTYPE (*Port_AllocateTunnelBuffer)(omx_base_PortType *openmaxStandPort,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_U32 nSizeBytes);/**< AllocateTunnelBuffer call for the base port. */	 \
+  OMX_ERRORTYPE (*Port_FreeTunnelBuffer)(omx_base_PortType *openmaxStandPort,OMX_U32 nPortIndex); /**< The free buffer function used to free tunnelled buffers */ \
   OMX_ERRORTYPE (*BufferProcessedCallback)(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer);/**< Holds the EmptyBufferDone or FillBufferDone callback, if the port is input or output port */ \
   OMX_ERRORTYPE (*FlushProcessingBuffers)(omx_base_PortType *openmaxStandPort); /**< release all the buffers currently under processing */ \
   OMX_ERRORTYPE (*ReturnBufferFunction)(omx_base_PortType* openmaxStandPort,OMX_BUFFERHEADERTYPE* pBuffer); /**< Call appropriate function to return buffers to peer or IL Client*/ \
@@ -187,8 +182,8 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort);
  * the nature of the port, that can be an input or output port.
  */
 OMX_ERRORTYPE base_port_SendBufferFunction(
-	omx_base_PortType *openmaxStandPort,
-	OMX_BUFFERHEADERTYPE* pBuffer);
+  omx_base_PortType *openmaxStandPort,
+  OMX_BUFFERHEADERTYPE* pBuffer);
 
 /** @brief Called by the standard allocate buffer, it implements a base functionality.
  *  
@@ -199,11 +194,11 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
  * bIsFullOfBuffers becomes equal to OMX_TRUE
  */
 OMX_ERRORTYPE base_port_AllocateBuffer(
-	omx_base_PortType *openmaxStandPort,
-	OMX_BUFFERHEADERTYPE** pBuffer,
-	OMX_U32 nPortIndex,
-	OMX_PTR pAppPrivate,
-	OMX_U32 nSizeBytes);
+  omx_base_PortType *openmaxStandPort,
+  OMX_BUFFERHEADERTYPE** pBuffer,
+  OMX_U32 nPortIndex,
+  OMX_PTR pAppPrivate,
+  OMX_U32 nSizeBytes);
 
 /** @brief Called by the standard use buffer, it implements a base functionality.
  *  
@@ -214,12 +209,12 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
  * bIsFullOfBuffers becomes equal to OMX_TRUE
  */
 OMX_ERRORTYPE base_port_UseBuffer(
-	omx_base_PortType *openmaxStandPort,
-	OMX_BUFFERHEADERTYPE** ppBufferHdr,
-	OMX_U32 nPortIndex,
-	OMX_PTR pAppPrivate,
-	OMX_U32 nSizeBytes,
-	OMX_U8* pBuffer);
+  omx_base_PortType *openmaxStandPort,
+  OMX_BUFFERHEADERTYPE** ppBufferHdr,
+  OMX_U32 nPortIndex,
+  OMX_PTR pAppPrivate,
+  OMX_U32 nSizeBytes,
+  OMX_U8* pBuffer);
 
 /** @brief Called by the standard function.
  * 
@@ -227,17 +222,19 @@ OMX_ERRORTYPE base_port_UseBuffer(
  * When all the bufers are done, the variable bIsEmptyOfBuffers is set to OMX_TRUE
  */
 OMX_ERRORTYPE base_port_FreeBuffer(
-	omx_base_PortType *openmaxStandPort,
-	OMX_U32 nPortIndex,
-	OMX_BUFFERHEADERTYPE* pBuffer);
+  omx_base_PortType *openmaxStandPort,
+  OMX_U32 nPortIndex,
+  OMX_BUFFERHEADERTYPE* pBuffer);
 
 /** @brief Releases buffers under processing.
+ * 
  * This function must be implemented in the derived classes, for the
  * specific processing
  */
 OMX_ERRORTYPE base_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort);
 
 /** @brief Returns buffers when processed.
+ * 
  * Call appropriate function to return buffers to peer or IL Client
  */ 
 
@@ -253,6 +250,19 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(
   OMX_IN  OMX_HANDLETYPE hTunneledComp,
   OMX_IN  OMX_U32 nTunneledPort,
   OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup); 
+
+/** @brief Allocate Buffers for tunneling use
+ */ 
+OMX_ERRORTYPE base_port_AllocateTunnelBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_IN OMX_U32 nPortIndex,
+  OMX_IN OMX_U32 nSizeBytes);
+
+/** @brief Free buffers used in tunnel
+ */ 
+OMX_ERRORTYPE base_port_FreeTunnelBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_U32 nPortIndex);
 
 
 #endif /*OMX_BASE_PORT_H_*/

@@ -3,9 +3,7 @@
 	
  Implements a simple LIFO structure used for queueing OMX buffers.
 	
-	Copyright (C) 2006  STMicroelectronics
-
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +20,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/05/11:  Buffer queue version 0.2
+	$Date$
+	Revision $Rev$
+	Author $Author$
 */
 
 #include <stdio.h>
@@ -33,6 +33,11 @@
 #include "queue.h"
 #include "omx_comp_debug_levels.h"
 
+/** Initialize a queue descriptor
+ * 
+ * @param queue The queue descriptor to initialize. 
+ * The user needs to allocate the queue
+ */
 void queue_init(queue_t* queue)
 {
 	int i;
@@ -51,6 +56,11 @@ void queue_init(queue_t* queue)
 	current->q_forw = queue->first;
 }
 
+/** Deinitialize a queue descriptor
+ * flushing all of its internal data
+ * 
+ * @param queue the queue descriptor to dump
+ */
 void queue_deinit(queue_t* queue)
 {
 	int i;
@@ -63,11 +73,18 @@ void queue_deinit(queue_t* queue)
  			queue->first = current;
  		}
  	}
-
-  if(queue->first)
+  if(queue->first) {
     free(queue->first);
+		queue->first = NULL;
+	}
 }
 
+/** Enqueue an element to the given queue descriptor
+ * 
+ * @param queue the queue descritpor where to queue data
+ * 
+ * @param data the data to be enqueued
+ */
 void queue(queue_t* queue, void* data)
 {
 	if (queue->last->data != NULL) {
@@ -78,6 +95,13 @@ void queue(queue_t* queue, void* data)
 	queue->nelem++;
 }
 
+/** Dequeue an element from the given queue descriptor
+ * 
+ * @param queue the queue descriptor from which to dequeue the element
+ * 
+ * @return the element that has bee dequeued. If the queue is empty
+ *  a NULL value is returned
+ */
 void* dequeue(queue_t* queue)
 {
 	void* data;
@@ -92,6 +116,12 @@ void* dequeue(queue_t* queue)
 	return data;
 }
 
+/** Returns the number of elements hold in the queue
+ * 
+ * @param queue the requested queue
+ * 
+ * @return the number of elements in the queue
+ */
 int getquenelem(queue_t* queue)
 {
 	return queue->nelem;

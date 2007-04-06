@@ -686,8 +686,7 @@ typedef struct OMX_VIDEO_PARAM_WMVTYPE {
 typedef enum OMX_VIDEO_RVFORMATTYPE {
     OMX_VIDEO_RVFormatUnused = 0, /**< Format unused or unknown */
     OMX_VIDEO_RVFormat8,          /**< Real Video format 8 */
-    OMX_VIDEO_RVFormat9,          /**< Real Video format 9 */
-    OMX_VIDEO_RVFormatG2,         /**< Real Video Format G2 */
+    OMX_VIDEO_RVFormat9,          /**< Real video format 9 */
     OMX_VIDEO_RVFormatMax = 0x7FFFFFFF
 } OMX_VIDEO_RVFORMATTYPE;
 
@@ -700,15 +699,7 @@ typedef enum OMX_VIDEO_RVFORMATTYPE {
  *  nVersion           : OMX specification version information 
  *  nPortIndex         : Port that this structure applies to
  *  eFormat            : Version of RV stream / data
- *  nBitsPerPixel      : Bits per pixel coded in the frame
- *  nPaddedWidth       : Padded width in pixel of a video frame
- *  nPaddedHeight      : Padded Height in pixels of a video frame
- *  nFrameRate         : Rate of video in frames per second
- *  nBitstreamFlags    : Flags which internal information about the bitstream
- *  nBitstreamVersion  : Bitstream version
- *  nMaxEncodeFrameSize: Max encoded frame size
  *  bEnablePostFilter  : Turn on/off post filter
- *  bEnableTemporalInterpolation : Turn on/off temporal interpolation
  *  bEnableLatencyMode : When enabled, the decoder does not display a decoded 
  *                       frame until it has detected that no enhancement layer 
  *  					 frames or dependent B frames will be coming. This 
@@ -720,16 +711,8 @@ typedef struct OMX_VIDEO_PARAM_RVTYPE {
     OMX_VERSIONTYPE nVersion;
     OMX_U32 nPortIndex;
     OMX_VIDEO_RVFORMATTYPE eFormat;
-    OMX_U16 nBitsPerPixel;
-    OMX_U16 nPaddedWidth;
-    OMX_U16 nPaddedHeight;
-    OMX_U32 nFrameRate;
-    OMX_U32 nBitstreamFlags;
-    OMX_U32 nBitstreamVersion;
-    OMX_U32 nMaxEncodeFrameSize;
     OMX_BOOL bEnablePostFilter;
-    OMX_BOOL bEnableTemporalInterpolation;
-    OMX_BOOL bEnableLatencyMode;
+    OMX_BOOL bEnableLatencyMode;									
 } OMX_VIDEO_PARAM_RVTYPE;
 
 

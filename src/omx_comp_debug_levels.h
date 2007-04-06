@@ -5,9 +5,7 @@
 	be composed with binary OR.
 	The debug levels defined here belong to OpenMAX components and IL core
 	
-	Copyright (C) 2007  STMicroelectronics
-
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -70,8 +68,7 @@
 /** \def DEBUG_LEVEL is the current level do debug output on standard err */
 #define DEBUG_LEVEL (DEB_LEV_ERR)
 #if DEBUG_LEVEL > 0
-static int omxcore_debug = DEBUG_LEVEL;
-#define DEBUG(n, args...) do { if (omxcore_debug & (n)) fprintf(stderr, args); } while (0)
+#define DEBUG(n, args...) do { if (DEBUG_LEVEL & (n)){fprintf(stderr, "OMX-"); fprintf(stderr, args);} } while (0)
 #else
 #define DEBUG(n, args...) 
 #endif

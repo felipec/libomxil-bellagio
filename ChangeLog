@@ -1,7 +1,12 @@
-New Bellagio architecture based on OpenMAX 1.1 developed by Nokia and STMicroelectronics for Linux distributions
+Public Release 0.3 of the OpenMAX core developed by Nokia and STMicroelectronics for Linux distributions
 
-Major additions to the 0.2.1
-- New hierarchy architecture:
-	- more functionalities on ports
-	- component loader mechanism
+Major additions to the 0.2
+- New port classes
+The components are:
+- multiple formats audio decoder component 
+  that supports mp3 and ogg audio formats
+- alsa sink component
+- all the other components are NOT compatible with the new architecture.
+  They have been removed and will be ported to the new architecture in a 
+  further delivery
 

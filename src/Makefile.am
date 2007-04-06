@@ -17,5 +17,5 @@ include_HEADERS = component_loader.h st_static_component_loader.h
 SUBDIRS += base . components
 
 # addition of base and n-port classes for component development
-libomxil_la_LIBADD += base/libomxnewch.la
+libomxil_la_LIBADD += base/libomxbase.la
 

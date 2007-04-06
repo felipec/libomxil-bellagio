@@ -7,8 +7,6 @@
 	
 	Copyright (C) 2007  STMicroelectronics and Nokia
 
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI, Ukri NIEMIMUUKKO
-
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
 	Software Foundation; either version 2.1 of the License, or (at your option)
@@ -24,9 +22,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-03-12 07:45:54 +0100 (Mon, 12 Mar 2007) $
-	Revision $Rev: 703 $
-	Author $Author: pankaj_sen $
+	$Date: 2007-04-03 11:40:37 +0200 (Tue, 03 Apr 2007) $
+	Revision $Rev: 771 $
+	Author $Author: giulio_urlini $
 
 */
 
@@ -44,7 +42,6 @@
 #define OMX_BASE_FILTER_INPUTPORT_INDEX 0
 #define OMX_BASE_FILTER_OUTPUTPORT_INDEX 1
 #define OMX_BASE_FILTER_ALLPORT_INDEX -1
-//#define MIN_PAYLOAD_ALLOWED 10
 
 /** Base Filter component private structure.
  */
@@ -56,8 +53,20 @@ DERIVEDCLASS(omx_base_filter_PrivateType, omx_base_component_PrivateType)
   void (*BufferMgmtCallback)(OMX_COMPONENTTYPE* openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer);
 ENDCLASS(omx_base_filter_PrivateType)
 
-/* Component private entry points declaration */
+/** 
+ * @brief the base filter contructor for the openmax st components
+ * 
+ * @param openmaxStandComp the ST component to be initialized
+ * 
+ * @return OMX_ErrorInsufficientResources if a memory allocation fails
+ */
 OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
+
+/** @brief the base filter destructor for ST openmax components
+ * 
+ * @param openmaxStandComp the ST openmax component to be disposed
+ */
+OMX_ERRORTYPE omx_base_filter_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 /** This is the central function for component processing. It
  * is executed in a separate thread, is synchronized with 
@@ -65,11 +74,5 @@ OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OM
  * is available on the given port.
  */
 void* omx_base_filter_BufferMgmtFunction(void* param);
-/** Flushes all the buffers under processing by the given port. 
- * This function si called due to a state change of the component, typically
- * @param stComponent the component which owns the port to be flushed
- * @param portIndex the ID of the port to be flushed
- */
-OMX_ERRORTYPE omx_base_filter_FlushProcessingBuffers(OMX_COMPONENTTYPE *openmaxStandComp,OMX_U32 portIndex);
 
 #endif //_OMX_BASE_FILTER_COMPONENT_H_

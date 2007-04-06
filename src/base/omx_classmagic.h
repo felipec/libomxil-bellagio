@@ -1,47 +1,46 @@
+/**
+  @file src/base/omx_classmagic.h
+	  
+  This file contains class handling helper macros
+  It is left as an exercise to the reader how they do the magic (FIXME)
+  
+  Usage Rules:
+  1) include this file
+  2) if your don't inherit, start your class with CLASS(classname)
+  3) if you inherit something, start your class with 
+  	DERIVEDCLASS(classname, inheritedclassname)
+  4) end your class with ENDCLASS(classname)
+  5) define your class variables with a #define classname_FIELDS inheritedclassname_FIELDS
+  	inside your class and always add a backslash at the end of line (except last)
+  6) if you want to use doxygen, use C-style comments inside the #define, and
+  	enable macro expansion in doxyconf and predefine DOXYGEN_PREPROCESSING there, etc.
+  
+  See examples at the end of this file (in #if 0 block)
+  
+  Copyright (C) 2007  STMicroelectronics and Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+
+  $Date$
+  Revision $Rev$
+  Author $Author$
+
+*/
 #ifndef OMX_CLASSMAGIC_H_
 #define OMX_CLASSMAGIC_H_
-/**
- * @file src/base/omx_classmagic.h
- * 
- * Copyright (C) 2006  Nokia
- * @author Ukri NIEMIMUUKKO
- * 
- * This file contains class handling helper macros
- * It is left as an exercise to the reader how they do the magic (FIXME)
- * 
- * Usage Rules:
- * 1) include this file
- * 2) if your don't inherit, start your class with CLASS(classname)
- * 3) if you inherit something, start your class with 
- * 	DERIVEDCLASS(classname, inheritedclassname)
- * 4) end your class with ENDCLASS(classname)
- * 5) define your class variables with a #define classname_FIELDS inheritedclassname_FIELDS
- * 	inside your class and always add a backslash at the end of line (except last)
- * 6) if you want to use doxygen, use C-style comments inside the #define, and
- * 	enable macro expansion in doxyconf and predefine DOXYGEN_PREPROCESSING there, etc.
- * 
- * See examples at the end of this file (in #if 0 block)
- * 
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301  USA
- *
- * $Date$
- * Revision $Rev$
- * Author $Author$
- * 
- */
 
 
 #ifdef DOXYGEN_PREPROCESSING

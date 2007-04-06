@@ -37,15 +37,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
-/* Specific include files */
+/* Specific include files for mp3 decoding*/
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
+/* Specific include files for vorbis decoding */
+#include <vorbis/codec.h>
+#include <math.h>
 
 #define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3"
-#define AUDIO_DEC_WMA_NAME "OMX.st.audio_decoder.wma"
+#define AUDIO_DEC_VORBIS_NAME "OMX.st.audio_decoder.ogg"
 #define AUDIO_DEC_MP3_ROLE "audio_decoder.mp3"
-#define AUDIO_DEC_WMA_ROLE "audio_decoder.wma"
+#define AUDIO_DEC_VORBIS_ROLE "audio_decoder.ogg"
 
 /** Mp3 Decoder component port structure.
  */
@@ -55,7 +58,7 @@ DERIVEDCLASS(omx_audiodec_component_PortType, omx_base_PortType)
 	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
 ENDCLASS(omx_audiodec_component_PortType)
 
-/** Mp3Dec component private structure.
+/** AudioDec component private structure.
  */
 DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_audiodec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
@@ -67,8 +70,8 @@ DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
   tsem_t* avCodecSyncSem; \
   /** @param pAudioMp3 Referece to OMX_AUDIO_PARAM_MP3TYPE structure*/	\
   OMX_AUDIO_PARAM_MP3TYPE pAudioMp3;	\
-  /** @param pAudioWMA Reference to OMX_AUDIO_PARAM_WMATYPE structure */ \
-  OMX_AUDIO_PARAM_WMATYPE pAudioWma;	\
+	/** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
+  OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/	\
   OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;	\
   /** @param avcodecReady boolean flag that is true when the audio coded has been initialized */ \
@@ -99,6 +102,11 @@ OMX_ERRORTYPE omx_audiodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
 OMX_ERRORTYPE omx_audio_decoder_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
 
 void omx_audiodec_component_BufferMgmtCallback(
+	OMX_COMPONENTTYPE *openmaxStandComp,
+	OMX_BUFFERHEADERTYPE* inputbuffer,
+	OMX_BUFFERHEADERTYPE* outputbuffer);
+	
+void omx_audiodec_component_BufferMgmtCallbackVorbis(
 	OMX_COMPONENTTYPE *openmaxStandComp,
 	OMX_BUFFERHEADERTYPE* inputbuffer,
 	OMX_BUFFERHEADERTYPE* outputbuffer);

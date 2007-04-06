@@ -1,22 +1,22 @@
-Bellagio OpenMAX Integration Layer  1.1 project 
+Bellagio OpenMAX Integration Layer 1.1 project
+Release 0.3
 
-This is an opensource implementation of the OpenMAX Integration Layer (IL) API, specified
-by the Khronos group (see http://www.khronos.org/openmax).
+This is an opensource implementation of the OpenMAX Integration Layer (IL) API ver. 1.1,
+specified by the Khronos group (see http://www.khronos.org/openmax).
 
 This package includes the libomxil shared library together with the following OpenMAX 
 components (built as separate shared objects and loaded at runtime):
 - OMX alsa sink component
-- OMX audio decoder based on ffmpeg library that supports the following audio formats:
+- OMX audio decoder based on ffmpeg/vorbis libraries that supports the following audio formats:
   - MP3
-  - WMA (still under debug process)
-- OMX volume control component
+  - OGG
+- OMX Audio decoder based on mad library that supports the MP3 audio format
+- OMX Audio decoder based on vorbis that supports the OGG audio format
 
-The following simple test applications are provided:
+The following simple test application is provided:
 
-test/components/alsasink/omxalsasinktest
-test/components/ffmpeg/omxmp3dectest
-test/components/ffmpeg/omx11audiodectest
-test/components/audio_effects/omxvolcontroltest
+test/components/audio/omxaudiodectest
+
 
 Check the distribution build:
 
@@ -30,23 +30,43 @@ with the command:
 
 /usr/local/bin/omxregister
 
+NOTE: The old components of the 0.2 version are NOT compatible with new omxregister script
+
 that will create a file .omxregistry in the $HOME directory that will
 contain all the components installed by default in
 /usr/local/lib/omxcomponents
-If the components are installed in a different directory, the omxregister 
-command should be called as follows:
-/usr/local/bin/omxregister component_installation_path
 
+other options of the omxregister application are:
 
-The test description is unde rdevelopment
+"directory_name" specify a different path for the installed libs
+-v print a verbose report of the registration process
+-h print the on line help
+
+Now, run the tests:
+
+Usage: omx11audiodectest [-o outfile] [-tmdh] filename\n");
+
+-o outfile: If this option is specified, the decoded stream is written to outfile
+-s single_ogg: Use the single role ogg decoder instead of the default one
+-t: The audio decoder is tunneled with the alsa sink
+-m: For mp3 decoding use the mad library
+-d: If no output is specified, and no playback is specified,
+    this flag activated the print of the stream directly on std out
+-h: Displays this help
 
 HOW TO ADD A NEW COMPONENT
-this description and a related document is under construction
-
--Test building with
- ./configure
- ./make
- ./make install
+-Add, in the src/components directory, a directory that will contain your component.
+-Put your source and header files in there.
+-Add a file named library_entry_point.c if you want to develop a component loaded by the
+ default component loader. This file must contains a function named omx_component_library_Setup.
+ See the other library entry points for reference.
+-Edit the configure.in file and add new rules according to your needs.
+ In particular, you may want to add some library dependencies that are
+ needed by the src/Makefile.am
+ Also, remember to add the path of your Makefile in the AC_OUTPUT directive.
+-Edit the src/components/Makefile.am file and add rules for building your component.
+-Edit the src/Makefile.am file and add rules for building your component.
+-Create a src/components/yourcomponentdirectory/Makefile.am file.
 
 -If you have some test programs, put their sources into the 'test' directory.
  Edit the test/Makefile.am file to add rules for building them.
@@ -54,11 +74,12 @@ this description and a related document is under construction
  make check
 -To build RPM:
  make dist
- cp libomxil-0.2.9.tar.gz /usr/src/redhat/SOURCES/
+ cp libomxil-B-0.3.tar.gz /usr/src/redhat/SOURCES/
  rpmbuild -ba libomxil.spec
 
 This version has been tested on:
-not yet
+FC4 (with ffmpeg-0.4.9, libmad 0.15.1b, libvorbis 1.1.0-2)
+FC6 (ffmpeg not working, libmad 0.15.1b, libvorbis 1.1.2-1)
 
-Last modified: Mar 16th, 2007.
+Last modified: Apr 4th, 2007.
 

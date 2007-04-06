@@ -33,11 +33,11 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 		return OMX_ErrorInsufficientResources;
 	}
 	strcpy(stComponents[0]->name, "OMX.st.audio_decoder");
-	stComponents[0]->name_specific_length = 2;
+	stComponents[0]->name_specific_length = 2; 
 	stComponents[0]->constructor = omx_audiodec_component_Constructor;	
 	stComponents[0]->destructor = omx_audiodec_component_Destructor;	
 	
-  	stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
+  stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
 	stComponents[0]->role_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
 
 	for(i=0;i<stComponents[0]->name_specific_length;i++) {
@@ -54,10 +54,10 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 	}
 
 	strcpy(stComponents[0]->name_specific[0], "OMX.st.audio_decoder.mp3");
-	strcpy(stComponents[0]->name_specific[1], "OMX.st.audio_decoder.wma");
+	strcpy(stComponents[0]->name_specific[1], "OMX.st.audio_decoder.ogg");
 	strcpy(stComponents[0]->role_specific[0], "audio_decoder.mp3");
-	strcpy(stComponents[0]->role_specific[1], "audio_decoder.wma");
+	strcpy(stComponents[0]->role_specific[1], "audio_decoder.ogg");
 
-  	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
+  DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
 	return 1;
 }

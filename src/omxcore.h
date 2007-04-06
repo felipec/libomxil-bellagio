@@ -4,9 +4,7 @@
 	OpenMax Integration Layer Core. This library implements the OpenMAX core
 	responsible for environment setup, components tunneling and communication.
 	
-	Copyright (C) 2006  STMicroelectronics
-
-	@author Pankaj SEN, Giulio URLINI
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free

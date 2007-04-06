@@ -12,9 +12,7 @@
 	
 	omxregister installation_path
 	
-	Copyright (C) 2007  STMicroelectronics
-
-	@author Pankaj SEN, Giulio URLINI
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -47,6 +45,9 @@
 
 #include "st_static_component_loader.h"
 
+/** String element to be put in the .omxregistry file to indicate  an
+ * OpenMAX component and its roles
+ */
 #define ARROW " ==> "
 
 /** @brief Creates a list of components on a registry file
@@ -68,12 +69,10 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 	char omxregistryfile[200];
   char *buffer; // TODO :Verify what should be buffer type
   int (*fptr)(void *);
-
-
 	stLoaderComponentType **stComponents;
-
 	*ncomponents = 0;
 	*nroles=0;
+
 	memset(omxregistryfile, 0, sizeof(omxregistryfile));
 	strcat(omxregistryfile, getenv("HOME"));
 	strcat(omxregistryfile, "/.omxregistry");
@@ -135,11 +134,13 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 							strcat(buffer, "\n");
 							// insert any name of component
 							strcat(buffer, ARROW);
+							if (verbose) {printf("Component %s registered\n", stComponents[i]->name);}
 							strcat(buffer, stComponents[i]->name);
 							if (stComponents[i]->name_specific_length>0) {
 								*nroles += stComponents[i]->name_specific_length;
 								strcat(buffer, ARROW);
 								for(j=0;j<stComponents[i]->name_specific_length;j++){
+									if (verbose) {printf("Specific role %s registered\n", stComponents[i]->name_specific[j]);}
 									strcat(buffer, stComponents[i]->name_specific[j]);
 									strcat(buffer, ":");
 								}
@@ -155,6 +156,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 	}
 
   free(buffer);
+	buffer = NULL;
 	fclose(omxregistryfp);
 	return 0;
 }
@@ -166,28 +168,46 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
  */
 int main(int argc, char** argv) {
 	char* componentspath;
-	DIR *dirp = NULL;
-	struct dirent *dp;
-
-	void* handle;
-	int i = 0;
 	int ncomponents,nroles;
 	int err;
   int verbose=0;
 	
 	if(argc == 1){
 		componentspath = OMXILCOMPONENTSPATH;
-	}else if(argc == 2) {
-		componentspath = argv[1];
+	}else if(argc >= 2) {
+		if(*(argv[1]) == '-') {
+			if (*(argv[1]+1) == 'v') {
+				verbose = 1;
+				if (argc > 2) {
+					componentspath = argv[2];
+				} else {
+					componentspath = OMXILCOMPONENTSPATH;
+				}
+			} else if (*(argv[1]+1) == 'h') {
+				DEBUG(DEB_LEV_ERR, "Usage: %s [-v] [-h] [componentspath]\n", argv[0]);
+				exit(0);
+			} else {
+				DEBUG(DEB_LEV_ERR, "Usage: %s [-v] [-h] [componentspath]\n", argv[0]);
+				exit(-EINVAL);
+			}
+		} else {
+			componentspath = argv[1];
+		}
+
 	} else {
-		DEBUG(DEB_LEV_ERR, "Usage: %s [componentspath]\n", argv[0]);
+		DEBUG(DEB_LEV_ERR, "Usage: %s [-v] [-h] [componentspath]\n", argv[0]);
 		exit(-EINVAL);
 	}
 
 	err = buildComponentsList(componentspath, &ncomponents,&nroles,verbose);
 	if(err)
 		DEBUG(DEB_LEV_ERR, "Error registering OpenMAX components with ST static component loader %s\n", strerror(err));
-	else
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "%i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
+	else {
+		if (verbose) {
+			printf("%i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
+		} else {
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "%i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
+		}
+	}
 	return 0;
 }

@@ -1,35 +1,37 @@
 /**
- * @file src/components/alsa/omx_alsasink_component.c
- * 
- * OpenMax alsa sink component. This component is an audio sink that uses ALSA library.
- * 
- * Copyright (C) 2006  Nokia and STMicroelectronics
- * @author Ukri NIEMIMUUKKO, Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
- * 
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301  USA
- *
- * 2006/05/11:  audio alsa sink component version 0.2
- *
- */
+	@file src/components/alsa/omx_alsasink_component.c
+	
+  OpenMax alsa sink component. This component is an audio sink that uses ALSA library.
+	
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
+	This library is free software; you can redistribute it and/or modify it under
+	the terms of the GNU Lesser General Public License as published by the Free
+	Software Foundation; either version 2.1 of the License, or (at your option)
+	any later version.
+
+	This library is distributed in the hope that it will be useful, but WITHOUT
+	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+	details.
+
+	You should have received a copy of the GNU Lesser General Public License
+	along with this library; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin St, Fifth Floor, Boston, MA
+	02110-1301  USA
+	
+	$Date$
+	Revision $Rev$
+	Author $Author$
+
+*/
 
 #include <omxcore.h>
 #include <omx_alsasink_component.h>
 
-/** Maximum Number of base_component Instance*/
+#define MAX_COMPONENT_ALSASINK 1
+
+/** Maximum Number of AlsaSink Instance*/
 OMX_U32 noAlsasinkInstance=0;
 
 /** The Constructor 
@@ -40,7 +42,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 	omx_alsasink_component_PortType *pPort;
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private;
 
-	if (!openmaxStandComp->pComponentPrivate) {
+ 	if (!openmaxStandComp->pComponentPrivate) {
 		openmaxStandComp->pComponentPrivate = calloc(1, sizeof(omx_alsasink_component_PrivateType));
 		if(openmaxStandComp->pComponentPrivate==NULL)
 			return OMX_ErrorInsufficientResources;
@@ -102,8 +104,10 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 	pPort->omxAudioParamPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
 	pPort->omxAudioParamPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
 
+  omx_alsasink_component_Private->destructor = omx_alsasink_component_Destructor;
+
 	noAlsasinkInstance++;
-	if(noAlsasinkInstance > MAX_NUM_OF_alsasink_component_INSTANCES) 
+	if(noAlsasinkInstance > MAX_COMPONENT_ALSASINK) 
 		return OMX_ErrorInsufficientResources;
 	
 	/* Allocate the playback handle and the hardware parameter structure */
@@ -135,9 +139,10 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 	omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioInit, &omx_alsasink_component_Private->sPortTypesParam);
 	pPort->AudioPCMConfigured	= 0;
 
-	//omx_alsasink_component_Private->Init = &omx_alsasink_component_Init;
-	//omx_alsasink_component_Private->DomainCheck	 = &omx_alsasink_component_DomainCheck;
-  omx_alsasink_component_Private->destructor = omx_alsasink_component_Destructor;
+  if (!pPort->AudioPCMConfigured) {
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface in the Init function\n");
+		omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioPcm, &pPort->omxAudioParamPcmMode);
+	}
 
 	return err;
 }
@@ -149,13 +154,13 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 
 	omx_alsasink_component_PortType* pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
-	noAlsasinkInstance--;
-
 	if(pPort->hw_params)
 		snd_pcm_hw_params_free (pPort->hw_params);
 	if(pPort->playback_handle)
 		snd_pcm_close(pPort->playback_handle);
 	
+  noAlsasinkInstance--;
+
 	return omx_base_sink_Destructor(openmaxStandComp);
 
 }
@@ -167,7 +172,6 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 OMX_ERRORTYPE omx_alsasink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
 {
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-	OMX_ERRORTYPE err = OMX_ErrorNone;
 	omx_alsasink_component_PortType *pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 	
 	//omx_base_component_Init(stComponent);
@@ -207,10 +211,10 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 	/* Feed it to ALSA */
 	frameSize = (pPort->omxAudioParamPcmMode.nChannels * pPort->omxAudioParamPcmMode.nBitPerSample) >> 3;
 	DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n", 
-		frameSize,pPort->omxAudioParamPcmMode.nChannels,inputbuffer->nFilledLen);
+		(int)frameSize, (int)pPort->omxAudioParamPcmMode.nChannels, (int)inputbuffer->nFilledLen);
 
   if(inputbuffer->nFilledLen < frameSize){
-    DEBUG(DEB_LEV_ERR, "Ouch!! In %s input buffer filled len(%d) less than frame size(%d)\n",__func__,inputbuffer->nFilledLen,frameSize);
+    DEBUG(DEB_LEV_ERR, "Ouch!! In %s input buffer filled len(%d) less than frame size(%d)\n",__func__, (int)inputbuffer->nFilledLen, (int)frameSize);
 		return;
   }
 
@@ -227,7 +231,8 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 			} else {
 				DEBUG(DEB_LEV_ERR, "Cannot send any data to the audio device %s (%s)\n", "default", snd_strerror (written));
         DEBUG(DEB_LEV_ERR, "IB FilledLen=%d,totalBuffer=%d,frame size=%d,offset=%d\n", 
-          inputbuffer->nFilledLen,totalBuffer,frameSize,offsetBuffer);
+          (int)inputbuffer->nFilledLen, (int)totalBuffer, (int)frameSize, (int)offsetBuffer);
+        break;
 				return;
 			}
 		}
@@ -268,9 +273,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 {
 	OMX_ERRORTYPE err = OMX_ErrorNone;
 	OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
-	OMX_AUDIO_PARAM_PCMMODETYPE* pAudioPcmMode;
 	OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
-	OMX_PARAM_PORTDEFINITIONTYPE *pPortDef ;
 	OMX_U32 portIndex;
 	
 	/* Check which structure we are being fed and make control its header */
@@ -297,8 +300,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 		case OMX_IndexParamAudioInit:
 			/*Check Structure Header*/
 			checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
-			if (err != OMX_ErrorNone)
-				return err;
+      CHECK_ERROR(err,"Header Check");
 			memcpy(&omx_alsasink_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
 			break;	
 		case OMX_IndexParamAudioPortFormat:
@@ -306,8 +308,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 			portIndex = pAudioPortFormat->nPortIndex;
 			/*Check Structure Header and verify component state*/
 			err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-			if (err != OMX_ErrorNone)
-					return err;
+      CHECK_ERROR(err,"Parameter Check");
 			if (portIndex < 1) {
 				memcpy(&pPort->sAudioParam,pAudioPortFormat,sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
 			} else {
@@ -462,8 +463,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 			pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
 			/*Check Structure Header and verify component state*/
 			err = omx_base_component_ParameterSanityCheck(hComponent, pAudioMp3->nPortIndex, pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
-			if (err != OMX_ErrorNone)
-				return err;
+      CHECK_ERROR(err,"Parameter Check");
 		break;
 		default: /*Call the base component function*/
 			return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -476,12 +476,7 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
 	OMX_IN  OMX_INDEXTYPE nParamIndex,
 	OMX_INOUT OMX_PTR ComponentParameterStructure)
 {
-	OMX_PRIORITYMGMTTYPE* pPrioMgmt;
 	OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;	
-	OMX_PARAM_PORTDEFINITIONTYPE *pPortDef;
-	OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
-	OMX_PORT_PARAM_TYPE* pPortDomains;
-	OMX_U32 portIndex;
 	
 	OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
 	omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;

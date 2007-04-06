@@ -1,34 +1,32 @@
 /**
- * @file src/base/omx_base_sink.h
- * 
- * OpenMax base sink component. This component is an audio sink that uses ALSA library.
- * 
- * OpenMax base sink component. This component does not perform any multimedia
- * processing. It derives from base component and contains a single port. It can be used 
- * as base class for sink and source components.
- * 
- * Copyright (C) 2006  Nokia and STMicroelectronics
- * @author Ukri NIEMIMUUKKO, Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
- * 
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301  USA
- *
- * 2006/05/11:  base sink component version 0.2
- *
- */
+  @file src/base/omx_base_sink.h
+	  
+  OpenMax base sink component. This component does not perform any multimedia
+  processing. It derives from base component and contains a single port. It can be used 
+  as base class for sink components.
 
+  Copyright (C) 2007  STMicroelectronics and Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+
+  $Date: 2007-04-03 12:45:48 +0200 (Tue, 03 Apr 2007) $
+  Revision $Rev: 773 $
+  Author $Author: giulio_urlini $
+
+*/
 
 #ifndef _OMX_BASE_SINK_COMPONENT_H_
 #define _OMX_BASE_SINK_COMPONENT_H_
@@ -52,8 +50,13 @@ DERIVEDCLASS(omx_base_sink_PrivateType, omx_base_component_PrivateType)
 	void (*BufferMgmtCallback)(OMX_COMPONENTTYPE* openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer);
 ENDCLASS(omx_base_sink_PrivateType)
 
-/* Component private entry points declaration */
+/** Base sink contructor
+ */
 OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
+
+/** The base sink destructor. It simply calls the base destructor
+ */
+OMX_ERRORTYPE omx_base_sink_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 /** This is the central function for component processing. It
  * is executed in a separate thread, is synchronized with 
@@ -61,11 +64,5 @@ OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_
  * is available on the given port.
  */
 void* omx_base_sink_BufferMgmtFunction(void* param);
-/** Flushes all the buffers under processing by the given port. 
- * This function si called due to a state change of the component, typically
- * @param stComponent the component which owns the port to be flushed
- * @param portIndex the ID of the port to be flushed
- */
-OMX_ERRORTYPE omx_base_sink_FlushPort(OMX_COMPONENTTYPE *openmaxStandComp,OMX_U32 portIndex);
 
 #endif //_OMX_BASE_SINK_COMPONENT_H_

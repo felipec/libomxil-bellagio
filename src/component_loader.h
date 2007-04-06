@@ -4,9 +4,7 @@
 	OpenMax Component loader APIs. This header file specifies the entry point
 	that a component loader must provide.
 		
-	Copyright (C) 2006  STMicroelectronics
-
-	@author Giulio URLINI, Pankaj SEN
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -23,9 +21,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-03-02 12:15:42 +0100 (Fri, 02 Mar 2007) $
-	Revision $Rev: 690 $
-	Author $Author: pankaj_sen $
+	$Date: 2007-04-05 16:39:38 +0200 (Thu, 05 Apr 2007) $
+	Revision $Rev: 787 $
+	Author $Author: giulio_urlini $
 */
 
 #ifndef __COMPONENT_LOADER_H__
@@ -57,7 +55,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 * This data structure is passed every time a function of this loader is called.
 	 * @return OMX_ErrorInsufficientResources if the component loader can not be constructed
 	 */
-	OMX_ERRORTYPE (*BOSA_CreateComponentLoader)(BOSA_ComponentLoaderHandle loaderHandle);
+	OMX_ERRORTYPE (*BOSA_CreateComponentLoader)(BOSA_ComponentLoaderHandle *loaderHandle);
 	
 	/** @brief The destructor of the component loader  
 	 * 
@@ -97,20 +95,6 @@ typedef struct BOSA_COMPONENTLOADER
 		OMX_STRING cComponentName,
 		OMX_PTR pAppData,
 		OMX_CALLBACKTYPE* pCallBacks);
-	
-	/** @brief The component destructor of current component loader
-	 * 
-	 * This function implements the OMX_FreeHandle funtion for the 
-	 * specific component loader.
-	 * 
-	 * @param loaderHandle Private data of the component loader
-	 * @param pHandle The handle of the component
-	 * 
-	 * @return OMX_ErrorNone
-	 */
-	OMX_ERRORTYPE (*BOSA_DestroyComponent)(
-		BOSA_ComponentLoaderHandle loaderHandle,
-		OMX_HANDLETYPE pHandle);
 	
 	/** @brief An enumeartor of the components handled by the current component loader.
 	 * 
@@ -216,17 +200,8 @@ typedef struct BOSA_COMPONENTLOADER
 	 * The current loader specified by this structure is described with this
 	 * generic pointer that contains the private data of the loader.
 	 */
-	BOSA_ComponentLoaderHandle storeHandler;
-	/// TODO change the name to handler 
+	BOSA_ComponentLoaderHandle componentLoaderHandler;
 	
 } BOSA_COMPONENTLOADER;
-
-/** Implementation specific function that loads in the core a 
- * new component loader structure. This function is a possible 
- * entry point for a new component loader, another approach could be
- * a fixed include file that specifies the functions of any component 
- * loader. @todo Check what's the best solution
- */
-OMX_ERRORTYPE BOSA_AddComponentLoader(BOSA_COMPONENTLOADER* componentLoader);
 
 #endif /*__COMPONENT_LOADER_H__*/

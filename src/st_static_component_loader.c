@@ -3,9 +3,7 @@
 	
 	ST specific component loader for local components.
 	
-	Copyright (C) 2007  STMicroelectronics
-
-	@author Giulio URLINI, Pankaj SEN
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -22,9 +20,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-03-16 10:01:36 +0100 (Fri, 16 Mar 2007) $
-	Revision $Rev: 711 $
-	Author $Author: pankaj_sen $
+	$Date: 2007-04-05 16:39:38 +0200 (Thu, 05 Apr 2007) $
+	Revision $Rev: 787 $
+	Author $Author: giulio_urlini $
 */
 
 #define _GNU_SOURCE
@@ -43,36 +41,15 @@
  * 
  * This function allocates memory for the component loader and initialize other function pointer
  */
-OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER** componentLoader)
+void st_static_InitComponentLoader()
 {
-  *componentLoader=(BOSA_COMPONENTLOADER *)calloc(1,sizeof(BOSA_COMPONENTLOADER));
-
-  DEBUG(DEB_LEV_ERR, "In %s componentLoader %x \n",__func__,(int)*componentLoader);
-
-	(*componentLoader)->BOSA_CreateComponentLoader = &BOSA_ST_CreateComponentLoader;
-	(*componentLoader)->BOSA_DestroyComponentLoader = &BOSA_ST_DestroyComponentLoader;
-	(*componentLoader)->BOSA_CreateComponent = &BOSA_ST_CreateComponent;
-	(*componentLoader)->BOSA_DestroyComponent = &BOSA_ST_DestroyComponent;
-	(*componentLoader)->BOSA_ComponentNameEnum = &BOSA_ST_ComponentNameEnum;
-	(*componentLoader)->BOSA_GetRolesOfComponent = &BOSA_ST_GetRolesOfComponent;
-	(*componentLoader)->BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
-
-  return OMX_ErrorNone;
-
+	st_static_loader.BOSA_CreateComponentLoader = &BOSA_ST_CreateComponentLoader;
+	st_static_loader.BOSA_DestroyComponentLoader = &BOSA_ST_DestroyComponentLoader;
+	st_static_loader.BOSA_CreateComponent = &BOSA_ST_CreateComponent;
+	st_static_loader.BOSA_ComponentNameEnum = &BOSA_ST_ComponentNameEnum;
+	st_static_loader.BOSA_GetRolesOfComponent = &BOSA_ST_GetRolesOfComponent;
+	st_static_loader.BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
 }
-
-/** @brief The destructor of the ST specific component loader. 
- * 
- * This function frees component loader
- */
-OMX_ERRORTYPE BOSA_ST_DeinitComponentLoader(BOSA_COMPONENTLOADER *componentLoader)
-{
-  free(componentLoader);
-
-  return OMX_ErrorNone;
-}
-
-int listindex=0;
 
 /** @brief the ST static loader contructor
  * 
@@ -92,10 +69,10 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
 	stLoaderComponentType** stComponentsTemp;
 	void* handle;
 	size_t len;
-  int (*fptr)(void *);
+  int (*fptr)(stLoaderComponentType **stComponents);
 	int i;
-	//int listindex=0;
 	int index;
+	int listindex;
 
 	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	memset(omxregistryfile, 0, sizeof(omxregistryfile));
@@ -116,8 +93,9 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
 			continue;
 		}
 	}
-  templateList = calloc(num_of_comp,sizeof (stLoaderComponentType*));
-	for (i = 0; i<num_of_comp; i++) {
+
+  templateList = calloc(num_of_comp + 1,sizeof (stLoaderComponentType*));
+	for (i = 0; i <= num_of_comp; i++) {
 		templateList[i] = NULL;
 	}
 	fseek(omxregistryfp, 0, 0);
@@ -131,7 +109,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
 		while (*(line+index)!= '\n') index++;
 		*(line+index) = 0;
 		strcpy(libname, line);
-    DEBUG(DEB_LEV_ERR, "libname: %s\n",libname);
+    DEBUG(DEB_LEV_FULL_SEQ, "libname: %s\n",libname);
 		if((handle = dlopen(libname, RTLD_NOW)) == NULL) {
 			DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", libname, dlerror());
 		} else {
@@ -146,20 +124,20 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
 				(*fptr)(stComponentsTemp);
 				for (i = 0; i<num_of_comp; i++) {
 					templateList[listindex + i] = stComponentsTemp[i];
-          DEBUG(DEB_LEV_ERR, "In %s comp name[%d]=%s\n",__func__,listindex + i,templateList[listindex + i]->name);
+          DEBUG(DEB_LEV_FULL_SEQ, "In %s comp name[%d]=%s\n",__func__,listindex + i,templateList[listindex + i]->name);
 				}
         free(stComponentsTemp);
+				stComponentsTemp = NULL;
         listindex+= i;
-				if (listindex >= MAXCOMPONENTS) {
-					DEBUG(DEB_LEV_ERR, "Reached the maximum number of component allowed. No more components are registered");
-					break;
-				}
 			}
 		}
 	}
-	if(line)
+	if(line) {
 		free(line);
+		line = NULL;
+	}
 	free(libname);
+	libname = NULL;
 	fclose(omxregistryfp);
   *loaderHandle = templateList;
 	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
@@ -176,54 +154,46 @@ OMX_ERRORTYPE BOSA_ST_DestroyComponentLoader(BOSA_ComponentLoaderHandle loaderHa
 	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loaderHandle;
  
-  DEBUG(DEB_LEV_ERR, "In %s listindex=%d\n", __func__,listindex);
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
-	//for(i = 0; i<MAXCOMPONENTS; i++) {
-  for(i = 0; i<listindex; i++) {
-		if (templateList[i]) {
-      DEBUG(DEB_LEV_ERR, "In %s i=%d\n", __func__,i);
-
-      //TODO: Giving segmentation fault.
-      
-      if(templateList[i]->name_requested){
-        free(templateList[i]->name_requested);
-        templateList[i]->name_requested=NULL;
-      }
-      
-      for(j=0;j<templateList[i]->name_specific_length;j++){
-        if(templateList[i]->name_specific[j]) {
-          free(templateList[i]->name_specific[j]);
-          templateList[i]->name_specific[j]=NULL;
-        }
-        if(templateList[i]->role_specific[j]){
-          free(templateList[i]->role_specific[j]);
-          templateList[i]->role_specific[j]=NULL;
-        }
-      }
-
-      if(templateList[i]->name_specific){
-        free(templateList[i]->name_specific);	
-        templateList[i]->name_specific=NULL;
-      }
-      if(templateList[i]->role_specific){
-        free(templateList[i]->role_specific);
-        templateList[i]->role_specific=NULL;
-      }
-      if(templateList[i]->name){
-        free(templateList[i]->name);
-        templateList[i]->name=NULL;
-      }
-      
-      
-      free(templateList[i]);
-			templateList[i] = NULL;
+  i = 0;
+	while(templateList[i]) {
+		if(templateList[i]->name_requested){
+			free(templateList[i]->name_requested);
+			templateList[i]->name_requested=NULL;
 		}
+      
+		for(j = 0 ; j < templateList[i]->name_specific_length; j++){
+			if(templateList[i]->name_specific[j]) {
+				free(templateList[i]->name_specific[j]);
+				templateList[i]->name_specific[j]=NULL;
+			}
+			if(templateList[i]->role_specific[j]){
+				free(templateList[i]->role_specific[j]);
+				templateList[i]->role_specific[j]=NULL;
+			}
+		}
+
+		if(templateList[i]->name_specific){
+			free(templateList[i]->name_specific);	
+			templateList[i]->name_specific=NULL;
+		}
+		if(templateList[i]->role_specific){
+			free(templateList[i]->role_specific);
+			templateList[i]->role_specific=NULL;
+		}
+		if(templateList[i]->name){
+			free(templateList[i]->name);
+			templateList[i]->name=NULL;
+		}
+		free(templateList[i]);
+		templateList[i] = NULL;
+		i++;
 	}
-  
-  if(templateList) {
-    free(templateList);
-    templateList=NULL;
-  }
+	if(templateList) {
+		free(templateList);
+		templateList=NULL;
+	}
 	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return OMX_ErrorNone;
 }
@@ -241,39 +211,36 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
 	OMX_IN  OMX_STRING cComponentName,
 	OMX_IN  OMX_PTR pAppData,
 	OMX_IN  OMX_CALLBACKTYPE* pCallBacks) {
-	
-	int i, j, err = OMX_ErrorNone;
+
+	int i, j;
 	int componentPosition = -1;
 	OMX_ERRORTYPE eError = OMX_ErrorNone;
 	stLoaderComponentType** templateList;
 	OMX_COMPONENTTYPE *openmaxStandComp;
-		
+
 	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loaderHandle;
-	for(i=0;i<MAXCOMPONENTS;i++) {
-		if(templateList[i]) {
-			if(!strcmp(templateList[i]->name, cComponentName)) {
+	i = 0;
+	while(templateList[i]) {
+		if(!strcmp(templateList[i]->name, cComponentName)) {
 			//given component name matches with the general component names
-				componentPosition = i;
-				break;
-			} else {
-				for(j=0;j<templateList[i]->name_specific_length;j++) {
-					if(!strcmp(templateList[i]->name_specific[j], cComponentName)) {
-						//given component name matches with specific component names
-            componentPosition = i;
-						break;
-					}
+			componentPosition = i;
+			break;
+		} else {
+			for(j=0;j<templateList[i]->name_specific_length;j++) {
+				if(!strcmp(templateList[i]->name_specific[j], cComponentName)) {
+					//given component name matches with specific component names
+					componentPosition = i;
+					break;
 				}
-        if(componentPosition != -1)
-						break;
+			}
+			if(componentPosition != -1) {
+				break;
 			}
 		}
-    else {
-      DEBUG(DEB_LEV_ERR, "In %s Template List Null\n", __func__);
-      exit(1);
-    }
+		i++;
 	}
-	if (componentPosition == MAXCOMPONENTS) {
+	if (componentPosition == -1) {
 		DEBUG(DEB_LEV_ERR, "Component not fount with current ST static component loader.\n");
 		return OMX_ErrorComponentNotFound;
 	}
@@ -290,52 +257,18 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
 	if (!openmaxStandComp) {
 		return OMX_ErrorInsufficientResources;
 	}
-	eError=templateList[componentPosition]->constructor(openmaxStandComp,cComponentName);
+	eError = templateList[componentPosition]->constructor(openmaxStandComp,cComponentName);
+	if (eError != OMX_ErrorNone) {
+		DEBUG(DEB_LEV_ERR, "Error during component construction\n");
+		free(openmaxStandComp);
+		openmaxStandComp = NULL;
+		return OMX_ErrorComponentNotFound;	
+	}
 	*pHandle = openmaxStandComp;
 	((OMX_COMPONENTTYPE*)*pHandle)->SetCallbacks(*pHandle, pCallBacks, pAppData);
 	DEBUG(DEB_LEV_FULL_SEQ, "Template %s found returning from OMX_GetHandle\n", cComponentName);
 	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return eError;
-}
-
-/** @brief This function simply de-allocates the memory 
- * allocated by the CreteComponent function
- */
-OMX_ERRORTYPE BOSA_ST_DestroyComponent(
-		BOSA_ComponentLoaderHandle loaderHandle,
-		OMX_HANDLETYPE pHandle) {
-	int i, j;
-  
-  ((OMX_COMPONENTTYPE*)pHandle)->ComponentDeInit(pHandle);
-
-  //TODO: Giving segmentation fault with test harness;
-  //free((OMX_COMPONENTTYPE*)pHandle);
-  /*
-	stLoaderComponentType** templateList;
-	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-	templateList = (stLoaderComponentType**)loaderHandle;
-	componentPrivateData = (base_component_PrivateType*)pHandle->pComponentPrivate;
-	if ((componentPrivateData == NULL) || (componentPrivateData->uniqueID != ST_STATIC_COMP_CODE)) {
-		//the component is not handled by this component loader
-		return OMX_ErrorComponentNotFound;
-	}
-	for (i = 0; i<MAXCOMPONENTS; i++) {
-		if (templateList[i]) {
-			if (!strcmp(componentPrivateData->name, templateList[i]->name)) {
-				templateList[i]->destructor(pHandle);
-			} else {
-				for(j=0;j<templateList[i]->name_specific_length;j++) {
-					if(!strcmp(templateList[i]->name_specific[j], componentPrivateData->name)) {
-						templateList[i]->destructor(pHandle);
-					}
-				}
-			}
-		}
-	}
-	free(pHandle);
-	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
-  */
-	return OMX_ErrorNone;
 }
 
 /** @brief This function search for the index from 0 to end of the list
@@ -357,26 +290,29 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
 	templateList = (stLoaderComponentType**)loaderHandle;
 	i = 0;
 	while(templateList[i]) {
-		DEBUG(DEB_LEV_FUNCTION_NAME, "Inside while loop %s %i %i\n", __func__, index, nIndex);
 		if (index == nIndex) {
 			strncpy(cComponentName, templateList[i]->name, nNameLength);
 			found = 1;
 			break;
 		}
 		index++;
-		for (j = 0; j<templateList[i]->name_specific_length;j++) {
-      DEBUG(DEB_LEV_FUNCTION_NAME, "Inside for loop %s %i %i\n", __func__, index, nIndex);
-			if (index == nIndex) {
-				strncpy(cComponentName,templateList[i]->name_specific[j], nNameLength);
-				found = 1;
-				break;
+		if (templateList[i]->name_specific_length > 1) {
+			for (j = 0; j<templateList[i]->name_specific_length; j++) {
+				if (index == nIndex) {
+					strncpy(cComponentName,templateList[i]->name_specific[j], nNameLength);
+					found = 1;
+					break;
+				}
+				index++;
 			}
-			index++;
+		}
+		if (found) {
+			break;
 		}
 		i++;
 	}
 	if (!found) {
-		DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s not found\n", __func__);
+		DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s with OMX_ErrorNoMore\n", __func__);
 		return OMX_ErrorNoMore;
 	}
 	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
@@ -401,44 +337,44 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
 	int found = 0;
 	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loaderHandle;
-	
-	for(i = 0; i<MAXCOMPONENTS; i++) {
-		if (templateList[i]) {
-			if(!strcmp(templateList[i]->name, compName)) {
-				DEBUG(DEB_LEV_SIMPLE_SEQ, "Found requested template %s IN GENERAL COMPONENT\n", compName);
-				// set the no of roles field
-				*pNumRoles = templateList[i]->name_specific_length;
-				if(roles == NULL) {
-					return OMX_ErrorNone;
+	*pNumRoles = 0;
+	i = 0;
+	while (templateList[i]) {
+		if(!strcmp(templateList[i]->name, compName)) {
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "Found requested template %s IN GENERAL COMPONENT\n", compName);
+			// set the no of roles field
+			*pNumRoles = templateList[i]->name_specific_length;
+			if(roles == NULL) {
+				return OMX_ErrorNone;
+			}
+			//append the roles
+			for (index = 0; index < templateList[i]->name_specific_length; index++) {
+				if (index < max_roles) {
+					strcpy ((char*)*(roles+index), templateList[i]->role_specific[index]);
 				}
-				//append the roles
-				for (index = 0; index < templateList[i]->name_specific_length; index++) {
-					if (index < max_roles) {
-						strcpy (*(roles+index), templateList[i]->role_specific[index]);
+			}
+			found = 1;
+		} else {
+			for(j=0;j<templateList[i]->name_specific_length;j++) {
+				if(!strcmp(templateList[i]-> name_specific[j], compName)) {
+					DEBUG(DEB_LEV_SIMPLE_SEQ, "Found requested component %s IN SPECIFIC COMPONENT \n", compName);
+					*pNumRoles = 1;
+					found = 1;
+					if(roles == NULL) {
+						return OMX_ErrorNone;
 					}
-				}
-				found = 1;
-			} else {
-				for(j=0;j<templateList[i]->name_specific_length;j++) {
-					if(!strcmp(templateList[i]-> name_specific[j], compName)) {
-						DEBUG(DEB_LEV_SIMPLE_SEQ, "Found requested component %s IN SPECIFIC COMPONENT \n", compName);
-						*pNumRoles = 1;
-						found = 1;
-						if(roles == NULL) {
-							return OMX_ErrorNone;
-						}
-						if (max_roles > 0) {
-							strcpy (*roles , templateList[i]->role_specific[j]);
-						}
+					if (max_roles > 0) {
+						strcpy ((char*)*roles , templateList[i]->role_specific[j]);
 					}
 				}
 			}
 		}
+		i++;
 		if(found) {
 			break;
 		}
 	}
-	if(i == MAXCOMPONENTS) {
+	if(!found) {
 		DEBUG(DEB_LEV_ERR, "no component match in whole template list has been found\n");
 		*pNumRoles = 0;
 		return OMX_ErrorComponentNotFound;
@@ -460,26 +396,27 @@ OMX_API OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole (
 	OMX_U8  **compNames) {
 	
 	stLoaderComponentType** templateList;
-	int i,j;
+	int i = 0,j = 0;
 	int num_comp = 0;
 	int max_entries = *pNumComps;
 
 	DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loaderHandle;
-  for(i=0;i<MAXCOMPONENTS;i++) {
-		if(templateList[i]) {
-			for (j = 0; j<templateList[i]->name_specific_length; j++) {
-			  if (!strcmp(templateList[i]->role_specific[j], role)) {
-					if (compNames != NULL) {
-						if (num_comp < max_entries) {
-							strcpy(((*compNames)+num_comp), templateList[i]->name);
-						}
+  i = 0;
+	while(templateList[i]) {
+		for (j = 0; j<templateList[i]->name_specific_length; j++) {
+		  if (!strcmp(templateList[i]->role_specific[j], role)) {
+				if (compNames != NULL) {
+					if (num_comp < max_entries) {
+						strcpy((char*)(compNames[num_comp]), templateList[i]->name);
 					}
-					num_comp++;
 				}
+				num_comp++;
 			}
 		}
+		i++;
 	}
+
 	*pNumComps = num_comp;
 	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return OMX_ErrorNone;

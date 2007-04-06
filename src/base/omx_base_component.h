@@ -4,9 +4,7 @@
   OpenMax base component. This component does not perform any multimedia
   processing.	It is used as a base component for new components development.
 
-  Copyright (C) 2006  STMicroelectronics and Nokia
-
-  @author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI, Ukri NIEMIMUUKKO
+  Copyright (C) 2007  STMicroelectronics and Nokia
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -51,16 +49,10 @@
                 (exit_condition == OMX_TRUE) ? OMX_TRUE:OMX_FALSE \
 
 
-#define CHECK_ERROR(err) if(err!=OMX_ErrorNone) { \
-                          DEBUG(DEB_LEV_ERR, "In %s\n",__func__); \
-                          return err; \
-                        } \
-
-/** This const value identifies all the components that are handled
- * by the st static component loader. This value is stored in the 
- * first field of the st private structure
- */
-#define ST_STATIC_COMP_CODE 0xA8
+#define CHECK_ERROR(err,str) if(err!=OMX_ErrorNone) { \
+                                DEBUG(DEB_LEV_ERR, "In %s %s Error=%x\n",__func__,str,err); \
+                                return err; \
+                              } \
 
 /** @brief enumerates all the possible types of messages 
  * handled internally byu the component
@@ -111,6 +103,7 @@ CLASS(omx_base_component_PrivateType)
   pthread_cond_t flush_all_condition;	/** @param flush_all_condition condition for the flush all buffers */ \
   pthread_cond_t flush_condition;	/** @param The flush_condition condition */ \
   tsem_t* bMgmtSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
+  tsem_t* bStateSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
   int messageHandlerThreadID; /** @param  messageHandlerThreadID The ID of the pthread that handles the messages for the components */ \
   pthread_t messageHandlerThread; /** @param  messageHandlerThread This field contains the reference to the thread that receives messages for the components */ \
   int bufferMgmtThreadID; /** @param  bufferMgmtThreadID The ID of the pthread that process buffers */ \
@@ -297,27 +290,35 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
 	OMX_IN  OMX_U32 nParam,
 	OMX_IN  OMX_PTR pCmdData);
 
-/** @brief this standard functionality is not needed in this set
- * of components. The destructor executes the same operation needed 
+/** @brief This standard functionality is called when the component is
+ * destroyed in the FreeHandle standard call. 
  * 
- * This function does anything in this implementation.
+ * In this way the implementation of the FreeHandle is standard, 
+ * and it does not need a support by a specific component loader.
+ * The implementaiton of the ComponentDeInit contains the 
+ * implementation specific part of the destroying phase.
  */
  OMX_ERRORTYPE omx_base_component_ComponentDeInit(
 	OMX_IN  OMX_HANDLETYPE hComponent);
 
-/** \brief Component's message handler thread function
+/** @brief Component's message handler thread function
+ * 
  * Handles all messages coming from components and
  * processes them by dispatching them back to the
  * triggering component.
  */
 void* compMessageHandlerFunction(void*);
-/** This is called by the OMX core in its message processing
- * thread context upon a component request. A request is made
- * by the component when some asynchronous services are needed:
+
+/** This is called by the component message entry point. 
+ * In thea base version this function is named compMessageHandlerFunction
+ * 
+ * A request is made by the component when some asynchronous services are needed:
  * 1) A SendCommand() is to be processed
  * 2) An error needs to be notified
  * 3) ...
- * \param message the message that has been passed to core
+ *
+ * @param openmaxStandComp the component itself
+ * @param message the message that has been passed to core
  */
 OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandComp,internalRequestMessageType* message);
 

@@ -5,9 +5,7 @@
 	be composed with binary OR.
 	The debug levels defined here belong to the test applications
 	
-	Copyright (C) 2006  STMicroelectronics
-
-	@author Diego MELPIGNANO, Pankaj SEN, David SIORPAES, Giulio URLINI
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -24,7 +22,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	2006/05/11:  Debug Level for tests version 0.2
+	$Date$
+	Revision $Rev$
+	Author $Author$
 
 */
 
@@ -47,16 +47,25 @@
  * seriously compromised
  */
 #define DEB_LEV_FULL_SEQ   8
+/** Messages that indicates the beginning and the end of a function.
+ * It can be used to trace the execution
+ */
+#define DEB_LEV_FUNCTION_NAME 16
+
+/** Messages that are the default test application output. These message should be 
+	* shown every time
+	*/
+#define DEFAULT_MESSAGES 32
+
 /** All the messages - max value
  */
-#define DEB_ALL_MESS   15
+#define DEB_ALL_MESS   255
 
 
 /** \def DEBUG_LEVEL is the current level do debug output on standard err */
-#define DEBUG_LEVEL (DEB_LEV_ERR)
+#define DEBUG_LEVEL (DEB_LEV_ERR | DEFAULT_MESSAGES)
 #if DEBUG_LEVEL > 0
-static int omxtestapp_debug = DEBUG_LEVEL;
-#define DEBUG(n, args...) do { if (omxtestapp_debug & (n)) fprintf(stderr, args); } while (0)
+#define DEBUG(n, args...) do { if (DEBUG_LEVEL & (n)){fprintf(stderr, args);} } while (0)
 #else
 #define DEBUG(n, args...)
 #endif

@@ -1,20 +1,17 @@
 SUBDIRS = 
 
-
 if WITH_FFMPEGCOMPONENTS
 SUBDIRS+=ffmpeg
+endif
+
+if WITH_MADCOMPONENTS
+SUBDIRS+=mad
 endif 
 
-if WITH_ALSACOMPONENT
+if WITH_ALSASINK
 SUBDIRS+=alsa
 endif 
 
-#if WITH_AUDIOEFFECTS
-#SUBDIRS+=audio_effects
-#endif
-
-#if WITH_MADCOMPONENTS
-#SUBDIRS+=mad
-#endif
-
-
+if WITH_VORBISCOMPONENTS
+SUBDIRS+=vorbis
+endif

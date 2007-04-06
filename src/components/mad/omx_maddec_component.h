@@ -1,31 +1,31 @@
 /**
- * @file src/components/mad/omx_maddec_component.h
- * 
- * This component implements and mp3 decoder. The Mp3 decoder is based on mad
- * software library.
- *
- * Copyright (C) 2006  Nokia and STMicroelectronics
- * @author Pankaj SEN,Ukri NIEMIMUUKKO, Diego MELPIGNANO, David SIORPAES, Giulio URLINI, SOURYA BHATTACHARYYA
- * 
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301  USA
- *
- * 2006/10/17:  mad mp3 decoder component version 0.2
- *
- */
+	@file src/components/mad/omx_maddec_component.h
+	
+	This component implements and mp3 decoder based on mad
+	software library.
+	
+	Copyright (C) 2007  STMicroelectronics and Nokia
 
+	This library is free software; you can redistribute it and/or modify it under
+	the terms of the GNU Lesser General Public License as published by the Free
+	Software Foundation; either version 2.1 of the License, or (at your option)
+	any later version.
+
+	This library is distributed in the hope that it will be useful, but WITHOUT
+	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+	details.
+
+	You should have received a copy of the GNU Lesser General Public License
+	along with this library; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin St, Fifth Floor, Boston, MA
+	02110-1301  USA
+	
+	$Date: 2007-04-04 08:35:40 +0200 (Wed, 04 Apr 2007) $
+	Revision $Rev: 783 $
+	Author $Author: sourya_bhattacharyya $
+
+*/
 
 #ifndef _OMX_MADDEC_COMPONENT_H_
 #define _OMX_MADDEC_COMPONENT_H_
@@ -36,23 +36,21 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <base_filter_component.h>
+#include <omx_base_filter.h>
 
 //specific include files
-#include <mad.h>  //placed in /usr/local/include
+#include <mad.h>  
 
 
-#define AUDIO_DEC_BASE_NAME "OMX.st.mad.audio_decoder"
-#define AUDIO_DEC_MP3_NAME "OMX.st.mad.audio_decoder.mp3"
-//#define AUDIO_DEC_WMA_NAME "OMX.st.audio_decoder.wma"
-#define AUDIO_DEC_MP3_ROLE "mad.audio_decoder.mp3"
-//#define AUDIO_DEC_WMA_ROLE "audio_decoder.wma"
+#define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
+#define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3.mad"
+#define AUDIO_DEC_MP3_ROLE "mad_decoder.mp3"
 
 
 /** Mp3 mad Decoder component port structure.
  */
-DERIVEDCLASS(omx_maddec_component_PortType, base_component_PortType)
-#define omx_maddec_component_PortType_FIELDS base_component_PortType_FIELDS \
+DERIVEDCLASS(omx_maddec_component_PortType, omx_base_PortType)
+#define omx_maddec_component_PortType_FIELDS omx_base_PortType_FIELDS \
 	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
 	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
 ENDCLASS(omx_maddec_component_PortType)
@@ -62,10 +60,14 @@ ENDCLASS(omx_maddec_component_PortType)
 
 /** Mp3Dec mad component private structure.
  */
-DERIVEDCLASS(omx_maddec_component_PrivateType, base_filter_component_PrivateType)
-#define omx_maddec_component_PrivateType_FIELDS base_filter_component_PrivateType_FIELDS \
-	/** @param decoder structure pointer to mad decoder structure */ \
-	struct mad_decoder *decoder;  \
+DERIVEDCLASS(omx_maddec_component_PrivateType, omx_base_filter_PrivateType)
+#define omx_maddec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
+	/** @param stream structure pointer to mad stream structure */ \
+	struct mad_stream *stream;  \
+	/** @param frame structure pointer to mad frame structure */ \
+	struct mad_frame *frame;  \
+	/** @param synth structure pointer to mad synth structure */ \
+	struct mad_synth *synth;  \
 	/** @param semaphore for mad decoder access syncrhonization */\
 	tsem_t* madDecSyncSem; \
 	/** @param pAudioMp3 Referece to OMX_AUDIO_PARAM_MP3TYPE structure*/	\
@@ -96,14 +98,14 @@ ENDCLASS(omx_maddec_component_PrivateType)
 
 
 /* Component private entry points declaration */
-OMX_ERRORTYPE omx_maddec_component_Constructor(stComponentType*);
-OMX_ERRORTYPE omx_maddec_component_Destructor(stComponentType*);
-OMX_ERRORTYPE omx_maddec_component_Init(stComponentType* stComponent);
-OMX_ERRORTYPE omx_maddec_component_Deinit(stComponentType* stComponent);
-OMX_ERRORTYPE omx_mad_decoder_MessageHandler(coreMessage_t* message);
+OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
+OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
+OMX_ERRORTYPE omx_maddec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
+OMX_ERRORTYPE omx_maddec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp);
+OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
 
 void omx_maddec_component_BufferMgmtCallback(
-	stComponentType* stComponent,
+	OMX_COMPONENTTYPE *openmaxStandComp,
 	OMX_BUFFERHEADERTYPE* inputbuffer,
 	OMX_BUFFERHEADERTYPE* outputbuffer);
 
@@ -126,15 +128,16 @@ OMX_ERRORTYPE omx_maddec_component_GetConfig(
 	OMX_IN  OMX_HANDLETYPE hComponent,
 	OMX_IN  OMX_INDEXTYPE nIndex,
 	OMX_INOUT OMX_PTR pComponentConfigStructure);
-
+/*
 OMX_ERRORTYPE omx_maddec_component_ComponentRoleEnum(
 	OMX_IN OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_STRING cRole,
 	OMX_IN OMX_U32 nNameLength,
 	OMX_IN OMX_U32 nIndex);
-
+*/
 /**Check Domain of the Tunneled Component*/
 OMX_ERRORTYPE omx_maddec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
 
+void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 
 #endif //_OMX_MADDEC_COMPONENT_H_

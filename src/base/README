@@ -1,9 +1,0 @@
-This folder contains the base classes used to implement the new hierarchical components.
-
-It provides a base class for common functionality, and three components, a filter, a sink and a source.
-Each final component that is one or two port can be derived from these base classes.
-A base port class is also provided. It is used by the base components for the port handling, 
-but it can be sued as a base class if some implementation needs to override also the port functionalities.
-
-These base components are included in the omil library, with the core functionality,
-that each final component must include.

@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-04-06 13:15:30 +0200 (Fri, 06 Apr 2007) $
-  Revision $Rev: 788 $
-  Author $Author: giulio_urlini $
+  $Date: 2007-05-18 07:23:35 +0200 (Fri, 18 May 2007) $
+  Revision $Rev: 863 $
+  Author $Author: pankaj_sen $
 */
 
 #include <omxcore.h>
@@ -80,11 +80,11 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
   OMX_BUFFERHEADERTYPE* pInputBuffer=NULL;
   OMX_COMPONENTTYPE* target_component;
   OMX_BOOL isInputBufferNeeded=OMX_TRUE;
-  static int inBufExchanged=0;
+  int inBufExchanged=0;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n", __func__);
   while(omx_base_component_Private->state == OMX_StateIdle || omx_base_component_Private->state == OMX_StateExecuting ||  omx_base_component_Private->state == OMX_StatePause || 
-    omx_base_component_Private->transientState == OMX_StateIdle){
+    omx_base_component_Private->transientState == OMX_TransStateLoadedToIdle){
 
     /*Wait till the ports are being flushed*/
     pthread_mutex_lock(&omx_base_sink_Private->flush_mutex);
@@ -107,10 +107,10 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
     pthread_mutex_unlock(&omx_base_sink_Private->flush_mutex);
 
     /*No buffer to process. So wait here*/
-    if(pInputSem->semval==0 && 
+    if((pInputSem->semval==0 && isInputBufferNeeded==OMX_TRUE ) && 
       (omx_base_sink_Private->state != OMX_StateLoaded && omx_base_sink_Private->state != OMX_StateInvalid)) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for input buffer \n");
-      tsem_wait(omx_base_sink_Private->bMgmtSem);
+      tsem_down(omx_base_sink_Private->bMgmtSem);
     }
 
     if(omx_base_sink_Private->state == OMX_StateLoaded || omx_base_sink_Private->state == OMX_StateInvalid) {
@@ -168,8 +168,8 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
         pInputBuffer->nFilledLen = 0;
       }
       /*Input Buffer has been completely consumed. So, get new input buffer*/
-      if(pInputBuffer->nFilledLen==0)
-        isInputBufferNeeded = OMX_TRUE;
+      //if(pInputBuffer->nFilledLen==0)
+      //  isInputBufferNeeded = OMX_TRUE;
 
       if(omx_base_sink_Private->state==OMX_StatePause && !PORT_IS_BEING_FLUSHED(pInPort)) {
         /*Waiting at paused state*/
@@ -181,6 +181,7 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
         pInPort->ReturnBufferFunction(pInPort,pInputBuffer);
         inBufExchanged--;
         pInputBuffer=NULL;
+        isInputBufferNeeded = OMX_TRUE;
       }
 
     }

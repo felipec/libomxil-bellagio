@@ -1,21 +1,30 @@
 Bellagio OpenMAX Integration Layer 1.1 project
-Release 0.3
+Release 0.3.1
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API ver. 1.1,
 specified by the Khronos group (see http://www.khronos.org/openmax).
 
 This package includes the libomxil shared library together with the following OpenMAX 
 components (built as separate shared objects and loaded at runtime):
+AUDIO
 - OMX alsa sink component
 - OMX audio decoder based on ffmpeg/vorbis libraries that supports the following audio formats:
   - MP3
   - OGG
-- OMX Audio decoder based on mad library that supports the MP3 audio format
-- OMX Audio decoder based on vorbis that supports the OGG audio format
+- OMX audio decoder based on mad library that supports the MP3 audio format
+- OMX audio decoder based on vorbis that supports the OGG audio format
+- OMX audio volume control
+- OMX audio file reader for ffmpeg components
+VIDEO
+- OMX video decoder decoding input mpeg4 or h264 format file (in h264 format, there is no interlacing support) to produce  output .yuv file.
+- OMX video color converter component converting from decoded output .yuv file to produce .rgb file.
+- OMX video sink component which uses the frame buffer to display the color converter component output .rgb file.
 
 The following simple test application is provided:
 
 test/components/audio/omxaudiodectest
+test/components/audio_effects/omxvolcontroltest
+test/components/video/omxvideodectest
 
 
 Check the distribution build:
@@ -30,7 +39,7 @@ with the command:
 
 /usr/local/bin/omxregister
 
-NOTE: The old components of the 0.2 version are NOT compatible with new omxregister script
+NOTE: The old components of the 0.2 versions are NOT compatible with new omxregister script
 
 that will create a file .omxregistry in the $HOME directory that will
 contain all the components installed by default in
@@ -44,17 +53,90 @@ other options of the omxregister application are:
 
 Now, run the tests:
 
-Usage: omx11audiodectest [-o outfile] [-tmdh] filename\n");
 
--o outfile: If this option is specified, the decoded stream is written to outfile
--s single_ogg: Use the single role ogg decoder instead of the default one
--t: The audio decoder is tunneled with the alsa sink
--m: For mp3 decoding use the mad library
--d: If no output is specified, and no playback is specified,
-    this flag activated the print of the stream directly on std out
--h: Displays this help
+AUDIO DECODER AND SINK COMPONENT USAGE
+-------------------------------------
+Usage: omxaudiodectest [-o outfile] [-stmdgh] filename
+
+       -o outfile: If this option is specified, the decoded stream is written to outfile
+                   This option can't be used with '-t' 
+       -s single_ogg: Use the single role ogg decoder instead of the default one. Can't be used with -m or .mp3 file
+       -t: The audio decoder is tunneled with the alsa sink
+       -m: For mp3 decoding use the mad library. Can't be used with -s or .ogg file
+       -d: If no output is specified, and no playback is specified,
+           this flag activated the print of the stream directly on std out
+       -g: Gain of the audio sink[0...100]
+       -h: Displays this help
+
+VIDEO DECODER, COLOR CONVERTER AND SINK COMPONENT USAGE
+-------------------------------------------------------
+
+Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filename
+
+ -o outfile: If this option is specified, the output is written to user specified outfile
+	     Else, the output is written in the same directory of input file
+		the file name looks like input_filename_app.yuv/rgb depending on input option
+	     If the color conv option (-c) is specified then outfile will be .rgb file
+	     Else outfile will be in .yuv format
+ 	     N.B : This option is not needed if you use the sink component
+
+ -c : Color conv option - input file is decoded and color converted in outfile(.rgb file)
+ -h: Displays this help
+ -f : input format specification in case of color conv comp usage
+      The available input formats are -
+	- OMX_COLOR_Format24bitRGB888  (default format)
+	- OMX_COLOR_Format24bitBGR888
+	- OMX_COLOR_Format32bitBGRA8888
+	- OMX_COLOR_Format32bitARGB8888
+	- OMX_COLOR_Format16bitARGB1555
+	- OMX_COLOR_Format16bitRGB565
+	- OMX_COLOR_Format16bitBGR565
+
+ -s: Uses the video sink component to display the output of the color converter(.rgb file)
+
+ input_filename : user specified input file name - please specify the full path name
+
+ -t: Tunneling option - if this option is selected then by default the color converter and 
+           video sink components are selected even if those two options are not specified - 
+           the components are tunneled between themselves
+
+
+N.B : The input picture resolution can be maximum 640x480 for decoding and displaying
+
+
+FRAME BUFFER SUPPORT 
+--------------------
+The video sink component, if used via specifying -s option mentioned above, uses machine's available framebuffer /dev/fb0.
+
+Users are requested to check if there is framebuffer support in their machine by command fbset -i.
+
+If the output looks like - "open /dev/fb0 - no such file or directory" then there is no frame buffer support 
+Then go to /etc/grub.conf file in your machine, append in the kernel arguement, the following words, seperated by a space  in between -
+  video=vesafb
+  vga=0x305
+Save the file, restart the machine, type the fbset -i command and you can see there is framebuffer support having followingconfigurations - 
+  framebuffer name : VESA VGA
+  Resolution - 1024x768
+  Pixel Depth - 8
+  rgba - 8/0,8/0,8/0,8/0
+
+The users having in their machine, framebuffer of different configuration, are also request to change the configuration as mentioned above.
+
+
+EXAMPLE COMMANDS FOR VIDEO APPLICATION
+--------------------------------------
+
+1) omxvideodectest -c -s temp_qcif.m4v
+2) omxvideodectest -c -s -f OMX_COLOR_Format16bitRGB565 temp_qcif.m4v
+3) omxvideodectest -o out.rgb -c input_cif.264
+4) omxvideodectest -o out -c -f OMX_COLOR_Format16bitRGB565 temp_qcif.m4v
+5) omxvideodectest -o out.yuv temp_qcif.m4v
+6) omxvideodectest -t input_cif.264
+7) omxvideodectest -t -f OMX_COLOR_Format16bitRGB565 temp_qcif.m4v
+
 
 HOW TO ADD A NEW COMPONENT
+--------------------------
 -Add, in the src/components directory, a directory that will contain your component.
 -Put your source and header files in there.
 -Add a file named library_entry_point.c if you want to develop a component loaded by the
@@ -70,16 +152,24 @@ HOW TO ADD A NEW COMPONENT
 
 -If you have some test programs, put their sources into the 'test' directory.
  Edit the test/Makefile.am file to add rules for building them.
+
+In order to add the new directories to the build tree, the autotools must be used:
+the version supported is automake-1.9.
+
+the line to be executed with this distribution is:
+autoreconf -i
+
 -Check correct building of your tests with:
  make check
 -To build RPM:
  make dist
- cp libomxil-B-0.3.tar.gz /usr/src/redhat/SOURCES/
+ cp libomxil-B-0.3.1.tar.gz /usr/src/redhat/SOURCES/
  rpmbuild -ba libomxil.spec
 
 This version has been tested on:
-FC4 (with ffmpeg-0.4.9, libmad 0.15.1b, libvorbis 1.1.0-2)
-FC6 (ffmpeg not working, libmad 0.15.1b, libvorbis 1.1.2-1)
+FC4 2.6.11-1.1369_fc4 (with ffmpeg-0.4.9-0.3.20051207, libmad 0.15.1b, libvorbis 1.1.0-2)
+FC6 2.6.20-1.2933.fc6 (with ffmpeg 0.4.9-0.35.20070204, libmad 0.15.1b, libvorbis 1.1.2-1)
+UBUNTU 2.6.17-11-generic
 
-Last modified: Apr 4th, 2007.
+Last modified: May 22, 2007.
 

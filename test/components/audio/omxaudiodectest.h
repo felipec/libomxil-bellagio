@@ -1,12 +1,11 @@
 /**
-	@file test/components/audio/omxaudiodectest.h
+	@file test/components/testaudio/omx_audiodectest.h
 	
-	Test application that uses two OpenMAX components, an audio decoder and 
-	an alsa sink. The application receives an compressed audio stream on input port
+	Test application that uses three OpenMAX components, a file reader,an audio decoder 
+	and an alsa sink. The application receives an compressed audio stream on input port
 	from a file, decodes it and sends it to the alsa sink, or to a file or standard output.
 	The audio formats supported are:
-	mp3 (ffmpeg and mad)
-	ogg (libvorbis)
+	mp3 (ffmpeg)
 	
 	Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -25,9 +24,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-04-03 11:50:55 +0200 (Tue, 03 Apr 2007) $
-	Revision $Rev: 772 $
-	Author $Author: giulio_urlini $
+	$Date: 2007-05-10 13:09:26 +0200 (Thu, 10 May 2007) $
+	Revision $Rev: 844 $
+	Author $Author: pankaj_sen $
 */
 
 #ifndef __OMXAUDIODECTEST_H__
@@ -41,17 +40,21 @@
 
 #include "tsemaphore.h"
 
-#include <ffmpeg/avcodec.h>
-#include <ffmpeg/avformat.h>
+//#include <ffmpeg/avcodec.h>
+//#include <ffmpeg/avformat.h>
 
 #include <user_debug_levels.h>
 
 typedef struct appPrivateType{
+	tsem_t* filereaderEventSem;
 	tsem_t* decoderEventSem;
 	tsem_t* sinkEventSem;
+  tsem_t* volumeEventSem;
 	tsem_t* eofSem;
 	OMX_HANDLETYPE audiodechandle;
 	OMX_HANDLETYPE audiosinkhandle;
+	OMX_HANDLETYPE filereaderhandle;
+  OMX_HANDLETYPE volumehandle;
 }appPrivateType;
 
 #define BUFFER_IN_SIZE 4096
@@ -94,5 +97,37 @@ OMX_ERRORTYPE audiosinkEmptyBufferDone(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+	
+OMX_ERRORTYPE filereaderEventHandler(
+	OMX_OUT OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_PTR pAppData,
+	OMX_OUT OMX_EVENTTYPE eEvent,
+	OMX_OUT OMX_U32 Data1,
+	OMX_OUT OMX_U32 Data2,
+	OMX_OUT OMX_PTR pEventData);
+	
+OMX_ERRORTYPE filereaderFillBufferDone(
+	OMX_OUT OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_PTR pAppData,
+	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE volumeEventHandler(
+	OMX_OUT OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_PTR pAppData,
+	OMX_OUT OMX_EVENTTYPE eEvent,
+	OMX_OUT OMX_U32 Data1,
+	OMX_OUT OMX_U32 Data2,
+	OMX_OUT OMX_PTR pEventData);
+
+OMX_ERRORTYPE volumeEmptyBufferDone(
+	OMX_OUT OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_PTR pAppData,
+	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE volumeFillBufferDone(
+	OMX_OUT OMX_HANDLETYPE hComponent,
+	OMX_OUT OMX_PTR pAppData,
+	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
 #endif
+

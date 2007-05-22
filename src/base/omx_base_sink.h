@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-04-03 12:45:48 +0200 (Tue, 03 Apr 2007) $
-  Revision $Rev: 773 $
-  Author $Author: giulio_urlini $
+  $Date: 2007-05-07 14:41:50 +0200 (Mon, 07 May 2007) $
+  Revision $Rev: 828 $
+  Author $Author: pankaj_sen $
 
 */
 
@@ -46,8 +46,8 @@
  */
 DERIVEDCLASS(omx_base_sink_PrivateType, omx_base_component_PrivateType)
 #define omx_base_sink_PrivateType_FIELDS omx_base_component_PrivateType_FIELDS \
-	/** @param BufferMgmtCallback function pointer for algorithm callback */ \
-	void (*BufferMgmtCallback)(OMX_COMPONENTTYPE* openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer);
+  /** @param BufferMgmtCallback function pointer for algorithm callback */ \
+  void (*BufferMgmtCallback)(OMX_COMPONENTTYPE* openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer);
 ENDCLASS(omx_base_sink_PrivateType)
 
 /** Base sink contructor

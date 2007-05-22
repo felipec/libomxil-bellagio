@@ -1,28 +1,28 @@
 /**
-	@file src/queue.h
-	
- Implements a simple LIFO structure used for queueing OMX buffers.
-	
-	Copyright (C) 2007  STMicroelectronics and Nokia
+  @file src/queue.h
 
-	This library is free software; you can redistribute it and/or modify it under
-	the terms of the GNU Lesser General Public License as published by the Free
-	Software Foundation; either version 2.1 of the License, or (at your option)
-	any later version.
+  Implements a simple LIFO structure used for queueing OMX buffers.
 
-	This library is distributed in the hope that it will be useful, but WITHOUT
-	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-	details.
+  Copyright (C) 2007  STMicroelectronics and Nokia
 
-	You should have received a copy of the GNU Lesser General Public License
-	along with this library; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin St, Fifth Floor, Boston, MA
-	02110-1301  USA
-	
-	$Date$
-	Revision $Rev$
-	Author $Author$
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #ifndef __TQUEUE_H__
@@ -35,16 +35,17 @@
  */
 typedef struct qelem_t qelem_t;
 struct qelem_t{
-	qelem_t* q_forw;
-	void* data;
+  qelem_t* q_forw;
+  void* data;
 };
 
 /** This structure contains the queue
  */
 typedef struct queue_t{
-	qelem_t* first; /**< Output buffer queue head */
-	qelem_t* last; /**< Output buffer queue tail */
-	int nelem; /**< Number of elements in the queue */
+  qelem_t* first; /**< Output buffer queue head */
+  qelem_t* last; /**< Output buffer queue tail */
+  int nelem; /**< Number of elements in the queue */
+  pthread_mutex_t mutex;
 } queue_t;
 
 /** Initialize a queue descriptor

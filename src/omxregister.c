@@ -12,7 +12,7 @@
 	
 	omxregister installation_path
 	
-	Copyright (C) 2007  STMicroelectronics and Nokia
+  Copyright (C) 2007  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -50,6 +50,8 @@
  */
 #define ARROW " ==> "
 
+#define ELEMENT_STRING_LENGTH 512
+
 /** @brief Creates a list of components on a registry file
  * 
  * This function 
@@ -62,13 +64,13 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 	DIR *dirp = NULL;
 	struct dirent *dp;
 	
-  void* handle;
+  	void* handle;
 	int i = 0,num_of_comp;
 	int j;
 	FILE* omxregistryfp;
 	char omxregistryfile[200];
-  char *buffer; // TODO :Verify what should be buffer type
-  int (*fptr)(void *);
+  	char *buffer; // TODO :Verify what should be buffer type
+  	int (*fptr)(void *);
 	stLoaderComponentType **stComponents;
 	*ncomponents = 0;
 	*nroles=0;
@@ -77,7 +79,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 	strcat(omxregistryfile, getenv("HOME"));
 	strcat(omxregistryfile, "/.omxregistry");
 
-  buffer = (char*)malloc(sizeof(char)*256);
+  	buffer = (char*)malloc(sizeof(char)*ELEMENT_STRING_LENGTH);
 	/* Populate the registry file */
 	dirp = opendir(componentspath);
 	if(dirp == NULL){
@@ -123,6 +125,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 						memset(buffer, 0, sizeof(buffer));
 						// insert first of all the name of the library
 						strcat(buffer, lib_absolute_path);
+            					strcat(buffer, "\n");
 						for (i = 0; i<num_of_comp; i++) {
 							DEBUG(DEB_LEV_PARAMS, "Found component %s version=%d.%d.%d.%d in shared object %s\n",
 									stComponents[i]-> name,
@@ -131,7 +134,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 									stComponents[i]->componentVersion.s.nRevision,
 									stComponents[i]->componentVersion.s.nStep, 
 									lib_absolute_path);
-							strcat(buffer, "\n");
+							//strcat(buffer, "\n");
 							// insert any name of component
 							strcat(buffer, ARROW);
 							if (verbose) {printf("Component %s registered\n", stComponents[i]->name);}
@@ -147,6 +150,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 							}
 							strcat(buffer, "\n");
 							fwrite(buffer, 1, strlen(buffer), omxregistryfp);
+              						strcpy(buffer,"\0");
 							(*ncomponents)++;
 						}
 					}
@@ -154,8 +158,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 			}
 		}
 	}
-
-  free(buffer);
+  	free(buffer);
 	buffer = NULL;
 	fclose(omxregistryfp);
 	return 0;
@@ -170,7 +173,7 @@ int main(int argc, char** argv) {
 	char* componentspath;
 	int ncomponents,nroles;
 	int err;
-  int verbose=0;
+  	int verbose=0;
 	
 	if(argc == 1){
 		componentspath = OMXILCOMPONENTSPATH;

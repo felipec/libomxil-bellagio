@@ -22,9 +22,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-04-06 13:15:30 +0200 (Fri, 06 Apr 2007) $
-	Revision $Rev: 788 $
-	Author $Author: giulio_urlini $
+	$Date: 2007-05-18 07:23:35 +0200 (Fri, 18 May 2007) $
+	Revision $Rev: 863 $
+	Author $Author: pankaj_sen $
 
 */
 
@@ -89,7 +89,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
 
   DEBUG(DEB_LEV_FULL_SEQ, "In %s \n", __func__);
   while(omx_base_filter_Private->state == OMX_StateIdle || omx_base_filter_Private->state == OMX_StateExecuting ||  omx_base_filter_Private->state == OMX_StatePause || 
-    omx_base_filter_Private->transientState == OMX_StateIdle){
+    omx_base_filter_Private->transientState == OMX_TransStateLoadedToIdle){
 
     /*Wait till the ports are being flushed*/
     pthread_mutex_lock(&omx_base_filter_Private->flush_mutex);
@@ -126,11 +126,23 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
     pthread_mutex_unlock(&omx_base_filter_Private->flush_mutex);
 
     /*No buffer to process. So wait here*/
-    if(((isInputBufferNeeded==OMX_TRUE && pInputSem->semval==0)|| (isOutputBufferNeeded==OMX_TRUE && pOutputSem->semval==0)) && 
+    if((isInputBufferNeeded==OMX_TRUE && pInputSem->semval==0) && 
       (omx_base_filter_Private->state != OMX_StateLoaded && omx_base_filter_Private->state != OMX_StateInvalid)) {
       //Signalled from EmptyThisBuffer or FillThisBuffer or some thing else
       DEBUG(DEB_LEV_FULL_SEQ, "Waiting for input and output buffer \n");
-      tsem_wait(omx_base_filter_Private->bMgmtSem);
+      tsem_down(omx_base_filter_Private->bMgmtSem);
+      
+    }
+    if(omx_base_filter_Private->state == OMX_StateLoaded || omx_base_filter_Private->state == OMX_StateInvalid) {
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
+      break;
+    }
+    if((isOutputBufferNeeded==OMX_TRUE && pOutputSem->semval==0) && 
+      (omx_base_filter_Private->state != OMX_StateLoaded && omx_base_filter_Private->state != OMX_StateInvalid) &&
+       !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
+      //Signalled from EmptyThisBuffer or FillThisBuffer or some thing else
+      DEBUG(DEB_LEV_FULL_SEQ, "Waiting for input and output buffer \n");
+      tsem_down(omx_base_filter_Private->bMgmtSem);
       
     }
     if(omx_base_filter_Private->state == OMX_StateLoaded || omx_base_filter_Private->state == OMX_StateInvalid) {
@@ -162,7 +174,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
     }
 
     if(isInputBufferNeeded==OMX_FALSE && isOutputBufferNeeded==OMX_FALSE) {
-      if(pInputBuffer->nFlags==OMX_BUFFERFLAG_EOS) {
+       if(pInputBuffer->nFlags==OMX_BUFFERFLAG_EOS) {
         DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pInputBuffer->nFilledLen);
         pOutputBuffer->nFlags=pInputBuffer->nFlags;
         pInputBuffer->nFlags=0;
@@ -207,7 +219,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       if(pInputBuffer->nFilledLen==0)
         isInputBufferNeeded = OMX_TRUE;
 
-      if(omx_base_filter_Private->state==OMX_StatePause ) {
+      if(omx_base_filter_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
         /*Waiting at paused state*/
         tsem_wait(omx_base_component_Private->bStateSem);
       }
@@ -223,7 +235,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
 
     DEBUG(DEB_LEV_FULL_SEQ, "Input buffer arrived\n");
 
-    if(omx_base_filter_Private->state==OMX_StatePause ) {
+    if(omx_base_filter_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
       /*Waiting at paused state*/
       tsem_wait(omx_base_component_Private->bStateSem);
     }

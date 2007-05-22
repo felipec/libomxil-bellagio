@@ -54,13 +54,38 @@
                                 return err; \
                               } \
 
+
+typedef struct OMX_VENDOR_EXTRADATATYPE  {
+  OMX_U32 nPortIndex;
+  OMX_U32 nDataSize;   // Size of the supporting data to follow
+  OMX_U8  *pData;     // Supporting data hint  
+} OMX_VENDOR_EXTRADATATYPE;
+
+/** this is the list of custom vendor index */
+typedef enum OMX_INDEXVENDORTYPE {	
+  /** only one index for file reader component input file */ 
+  OMX_IndexVendorFileReadInputFilename = 0xFF000001,
+  OMX_IndexVendorExtraData = 0xFF000002
+} OMX_INDEXVENDORTYPE;
+
+/** This enum defines the transition states of the Component*/
+typedef enum OMX_TRANS_STATETYPE
+{
+    OMX_TransStateInvalid,
+    OMX_TransStateLoadedToIdle,      
+    OMX_TransStateIdleToExecuting,        
+    OMX_TransStateExecutingToIdle,   
+    OMX_TransStateIdleToLoaded,       
+    OMX_TransStateMax = 0X7FFFFFFF
+} OMX_TRANS_STATETYPE;
+
 /** @brief enumerates all the possible types of messages 
  * handled internally byu the component
  */
 typedef enum INTERNAL_MESSAGE_TYPE {
-	SENDCOMMAND_MSG_TYPE = 1,/**< this flag specifies that the message send is a command */
-	ERROR_MSG_TYPE,/**< this flag specifies that the message send is an error message */
-	WARNING_MSG_TYPE /**< this flag specifies that the message send is a warning message */
+  SENDCOMMAND_MSG_TYPE = 1,/**< this flag specifies that the message send is a command */
+  ERROR_MSG_TYPE,/**< this flag specifies that the message send is an error message */
+  WARNING_MSG_TYPE /**< this flag specifies that the message send is a warning message */
 } INTERNAL_MESSAGE_TYPE;
 
 /** @brief the container of an internal message
@@ -69,9 +94,9 @@ typedef enum INTERNAL_MESSAGE_TYPE {
  * It is processed by the internal message handler thread
  */
 typedef struct internalRequestMessageType{
-	int messageType; /**< the flag that specifies if the message is a command, a warning or an error */
-	int messageParam; /**< the second field of the message. Its use is the same as specified for the command in OpenMAX spec */
-	OMX_PTR pCmdData; /**< This pointer could contain some proprietary data not covered by the standard */
+  int messageType; /**< the flag that specifies if the message is a command, a warning or an error */
+  int messageParam; /**< the second field of the message. Its use is the same as specified for the command in OpenMAX spec */
+  OMX_PTR pCmdData; /**< This pointer could contain some proprietary data not covered by the standard */
 } internalRequestMessageType;
 
 /**
@@ -85,7 +110,7 @@ CLASS(omx_base_component_PrivateType)
   char uniqueID; /**< ID code that identifies an ST static component*/ \
   char* name; /**< component name */\
   OMX_STATETYPE state; /**< The state of the component */ \
-  OMX_STATETYPE transientState; /**< The transient state in case of transition between \ 
+  OMX_TRANS_STATETYPE transientState; /**< The transient state in case of transition between \ 
                               Loaded/waitForResources - Idle. It is equal to  \
                               Invalid if the state or transition are not corect \
                               Loaded when the transition is from Idle to Loaded \

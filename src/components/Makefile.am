@@ -2,6 +2,16 @@ SUBDIRS =
 
 if WITH_FFMPEGCOMPONENTS
 SUBDIRS+=ffmpeg
+SUBDIRS+=filereader
+endif
+
+if WITH_FFMPEGCOMPONENTS_2
+SUBDIRS+=ffmpeg
+SUBDIRS+=filereader
+endif
+
+if WITH_AUDIOEFFECTS
+SUBDIRS+=audio_effects
 endif
 
 if WITH_MADCOMPONENTS
@@ -14,4 +24,8 @@ endif
 
 if WITH_VORBISCOMPONENTS
 SUBDIRS+=vorbis
+endif
+
+if WITH_FBDEV_VIDEOSINK
+SUBDIRS+=fbdev
 endif

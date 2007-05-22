@@ -1,9 +1,9 @@
 Name: libomxil-B
-Version: 0.3
+Version: 0.3.1
 Release: 0
 License: GNU LGPL
 Group: System Environment/Libraries
-Source: libomxil-B-0.3.tar.gz
+Source: libomxil-B-0.3.1.tar.gz
 Summary: OpenMAX Integration Layer 1.1 library and components.
 Vendor: STMicroelectronics
 
@@ -46,19 +46,47 @@ make install
 /usr/local/include/OMX_Video.h
 /usr/local/lib/libomxil.a
 /usr/local/lib/libomxil.la
-/usr/local/lib/libomxil.so.0.0.0
 /usr/local/lib/libomxil.so.0
+/usr/local/lib/libomxil.so.0.0.0
 /usr/local/lib/omxilcomponents/libomxalsa.a
 /usr/local/lib/omxilcomponents/libomxalsa.la
 /usr/local/lib/omxilcomponents/libomxalsa.so
 /usr/local/lib/omxilcomponents/libomxalsa.so.0
 /usr/local/lib/omxilcomponents/libomxalsa.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxfbdev.a
+/usr/local/lib/omxilcomponents/libomxfbdev.la
+/usr/local/lib/omxilcomponents/libomxfbdev.so
+/usr/local/lib/omxilcomponents/libomxfbdev.so.0
+/usr/local/lib/omxilcomponents/libomxfbdev.so.0.0.0
 /usr/local/lib/omxilcomponents/libomxffmpeg.a
 /usr/local/lib/omxilcomponents/libomxffmpeg.la
 /usr/local/lib/omxilcomponents/libomxffmpeg.so
 /usr/local/lib/omxilcomponents/libomxffmpeg.so.0
 /usr/local/lib/omxilcomponents/libomxffmpeg.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxfilereader.a
+/usr/local/lib/omxilcomponents/libomxfilereader.la
+/usr/local/lib/omxilcomponents/libomxfilereader.so
+/usr/local/lib/omxilcomponents/libomxfilereader.so.0
+/usr/local/lib/omxilcomponents/libomxfilereader.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxmad.a
+/usr/local/lib/omxilcomponents/libomxmad.la
+/usr/local/lib/omxilcomponents/libomxmad.so
+/usr/local/lib/omxilcomponents/libomxmad.so.0
+/usr/local/lib/omxilcomponents/libomxmad.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxvolcontrol.a
+/usr/local/lib/omxilcomponents/libomxvolcontrol.la
+/usr/local/lib/omxilcomponents/libomxvolcontrol.so
+/usr/local/lib/omxilcomponents/libomxvolcontrol.so.0
+/usr/local/lib/omxilcomponents/libomxvolcontrol.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxvorbis.a
+/usr/local/lib/omxilcomponents/libomxvorbis.la
+/usr/local/lib/omxilcomponents/libomxvorbis.so
+/usr/local/lib/omxilcomponents/libomxvorbis.so.0
+/usr/local/lib/omxilcomponents/libomxvorbis.so.0.0.0
+
 %changelog
+* Tue May 22 2007 Giulio Urlini
+- Bellagio 0.3.1 release
 * Fri Apr 06 2007 Giulio Urlini
 - Bellagio 0.3 release
 * Fri Feb 24 2006 David Siorpaes

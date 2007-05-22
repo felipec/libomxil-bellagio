@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-03-30 15:59:17 +0200 (Fri, 30 Mar 2007) $
-  Revision $Rev: 756 $
-  Author $Author: giulio_urlini $
+  $Date: 2007-05-10 11:11:04 +0200 (Thu, 10 May 2007) $
+  Revision $Rev: 842 $
+  Author $Author: pankaj_sen $
 
 */
 
@@ -37,6 +37,7 @@
  * Port Specific Macro's
  */
 #define PORT_IS_BEING_FLUSHED(pPort)                             (pPort->bIsPortFlushed == OMX_TRUE)
+#define PORT_IS_BEING_DISABLED(pPort)                            (pPort->bIsTransientToDisabled == OMX_TRUE)
 #define PORT_IS_ENABLED(pPort)                                   (pPort->sPortParam.bEnabled == OMX_TRUE)
 #define PORT_IS_POPULATED(pPort)                                 (pPort->sPortParam.bPopulated == OMX_TRUE)
 #define PORT_IS_TUNNELED(pPort)                                  (pPort->nTunnelFlags & TUNNEL_ESTABLISHED)
@@ -112,7 +113,7 @@ CLASS(omx_base_PortType)
   OMX_PARAM_PORTDEFINITIONTYPE sPortParam; /**< @param sPortParam General OpenMAX port parameter */\
   OMX_BUFFERHEADERTYPE **pInternalBufferStorage; /**< This array contains the reference to all the buffers hadled by this port and already registered*/\
   BUFFER_STATUS_FLAG *bBufferStateAllocated; /**< @param bBufferStateAllocated The State of the Buffer whether assigned or allocated */\
-  OMX_COMPONENTTYPE *standCompContainer;/**< The openmax compoennt reference that contains this port */\ 
+  OMX_COMPONENTTYPE *standCompContainer;/**< The openmax compoennt reference that contains this port */\
   OMX_BOOL bIsTransientToEnabled;/**< It indicates that the port is going from disabled to enabled */ \
   OMX_BOOL bIsTransientToDisabled;/**< It indicates that the port is going from enabled to disabled */ \
   OMX_BOOL bIsFullOfBuffers; /**< It indicates if the port has all the buffers needed */ \

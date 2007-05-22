@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src include test
-EXTRA_DIST = libomxil.spec doxy_config reconf
+EXTRA_DIST = libomxil.spec Doxyfile
 libomxildocdir = ${prefix}/doc/omxil
 libomxildoc_DATA = \
         README\

@@ -1,5 +1,34 @@
-Public Release 0.3 of the OpenMAX core developed by Nokia and STMicroelectronics for Linux distributions
+Public Release 0.3.1 of the OpenMAX core developed by Nokia and STMicroelectronics for Linux distributions
 
+Release 0.3.1
+- New video components:
+  - ffmpeg based MPEG4/H.264 decoder
+  - color converter component YUV -> RGB
+  - video renderer based on devFB
+- New audio component:
+  - audio file reader based on ffmpeg audio format
+  - volume component
+Fixed known bugs:
+  - FFMPEG audio decoder now works on FC6 and other distributions with
+  the latest ffmpeg release (0.4.9-0.35.20070204)
+Known pending bugs:
+  -some ogg streams can not be decoded properly
+  -the tunneling between file reader, mp3 dec based on ffmpeg - alsa sink ends in a deadlock sometimes.
+   This behavior has been detected some times using FC6 and UBUNTU, not with the FC4
+
+Full list of components:
+Audio:
+  - ogg decoder based on libvorbis (stand alone components, and multiple roles component)
+  - mp3 decoder based on mad decoder
+  - mp3 decoder based on ffmpeg (multiple roles component)
+  - volume component
+  - alsa audio sink
+  - ffmpeg audio file reader (to be used with mp3 ffmpeg decoder)
+Video:
+  - MPEG4 decoder based on ffmpeg (multiple roles component)
+  - H.264 decoder based on ffmpeg (multiple roles component)
+  - Color converter based on ffmpeg
+  - video renderer based on devFB
 Major additions to the 0.2
 - New port classes
 The components are:

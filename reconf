@@ -1,8 +1,0 @@
-#!/bin/bash
-rm -f config.cache
-libtoolize
-aclocal
-autoconf
-automake -a
-exit
-

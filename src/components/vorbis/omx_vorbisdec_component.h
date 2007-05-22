@@ -1,29 +1,29 @@
 /**
-	@file src/components/vorbis/omx_vorbisdec_component.h
-	
+  @file src/components/vorbis/omx_vorbisdec_component.h
+
   This component implements a ogg-vorbis decoder. The vorbis decoder is based on libvorbis
   software library.
-	
-	Copyright (C) 2007  STMicroelectronics and Nokia
 
-	This library is free software; you can redistribute it and/or modify it under
-	the terms of the GNU Lesser General Public License as published by the Free
-	Software Foundation; either version 2.1 of the License, or (at your option)
-	any later version.
+  Copyright (C) 2007  STMicroelectronics and Nokia
 
-	This library is distributed in the hope that it will be useful, but WITHOUT
-	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-	details.
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
 
-	You should have received a copy of the GNU Lesser General Public License
-	along with this library; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin St, Fifth Floor, Boston, MA
-	02110-1301  USA
-	
-	$Date: 2007-04-05 12:45:25 +0200 (Thu, 05 Apr 2007) $
-	Revision $Rev: 786 $
-	Author $Author: giulio_urlini $
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+
+  $Date: 2007-05-18 13:49:36 +0200 (Fri, 18 May 2007) $
+  Revision $Rev: 864 $
+  Author $Author: pankaj_sen $
 
 */
 
@@ -50,8 +50,8 @@
  */
 DERIVEDCLASS(omx_vorbisdec_component_PortType, omx_base_PortType)
 #define omx_vorbisdec_component_PortType_FIELDS omx_base_PortType_FIELDS \
-	/** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-	OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
+  /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
+  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
 ENDCLASS(omx_vorbisdec_component_PortType)
 
 /** Vorbisdec component private structure.

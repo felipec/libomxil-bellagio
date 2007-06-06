@@ -21,9 +21,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-	Revision $Rev: 872 $
-	Author $Author: giulio_urlini $
+	$Date: 2007-06-05 06:20:07 +0200 (Tue, 05 Jun 2007) $
+	Revision $Rev: 918 $
+	Author $Author: pankaj_sen $
 */
 
 #include <OMX_Core.h>
@@ -31,8 +31,13 @@
 
 #include <pthread.h>
 #include <sys/stat.h>
-
 #include "tsemaphore.h"
+
+/** Specification version*/
+#define VERSIONMAJOR    1
+#define VERSIONMINOR    1
+#define VERSIONREVISION 0
+#define VERSIONSTEP     0
 
 /* Application's private data */
 typedef struct appPrivateType{

@@ -134,7 +134,6 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 									stComponents[i]->componentVersion.s.nRevision,
 									stComponents[i]->componentVersion.s.nStep, 
 									lib_absolute_path);
-							//strcat(buffer, "\n");
 							// insert any name of component
 							strcat(buffer, ARROW);
 							if (verbose) {printf("Component %s registered\n", stComponents[i]->name);}

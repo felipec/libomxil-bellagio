@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 */
 
@@ -36,20 +36,15 @@
 /** output length arguement passed along decoding function */
 #define OUTPUT_LEN_STANDARD_FFMPEG 192000
 
-/** Maximum Number of Audio Component Instance*/
+/** Number of Audio Component Instance*/
 OMX_U32 noAudioDecInstance=0;
 
-
-//global variable specifically for vorbis format
-                                                                                                                             
 /** The Constructor 
  */
-
 OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
 
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private;
-  omx_audiodec_component_PortType *outPort;
   OMX_S32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
@@ -126,15 +121,7 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     tsem_init(omx_audiodec_component_Private->avCodecSyncSem, 0);
   }
 
-
-  SetInternalParameters(openmaxStandComp);
-
-  outPort = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
-  setHeader(&outPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-  outPort->sAudioParam.nPortIndex = 1;
-  outPort->sAudioParam.nIndex = 0;
-  outPort->sAudioParam.eEncoding = OMX_AUDIO_CodingPCM;
-
+  omx_audiodec_component_SetInternalParameters(openmaxStandComp);
 
   //settings of output port
   //output is pcm mode for all decoders - so generalise it 
@@ -163,7 +150,7 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   av_register_all();
   omx_audiodec_component_Private->avCodecContext = avcodec_alloc_context();
                                          
-  omx_audiodec_component_Private->messageHandler = omx_audio_decoder_MessageHandler;
+  omx_audiodec_component_Private->messageHandler = omx_audiodec_component_MessageHandler;
   omx_audiodec_component_Private->destructor = omx_audiodec_component_Destructor;
   openmaxStandComp->SetParameter = omx_audiodec_component_SetParameter;
   openmaxStandComp->GetParameter = omx_audiodec_component_GetParameter;
@@ -274,7 +261,7 @@ void omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_PrivateType* 
      
 }
 
-void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
+void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private;
   omx_audiodec_component_PortType *pPort;
 
@@ -369,21 +356,9 @@ OMX_ERRORTYPE omx_audiodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   return err;
 }
 
-/*Deprecated function. May or may not be used in future version*/
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_audiodec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef) {
-  if(pDef.eDomain!=OMX_PortDomainAudio)
-    return OMX_ErrorPortsNotCompatible;
-  else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax)
-    return OMX_ErrorPortsNotCompatible;
-
-  return OMX_ErrorNone;
-}
-
 /** buffer management callback function for mp3 decoding in new standard 
  * of ffmpeg library 
  */
-  
 void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer, OMX_BUFFERHEADERTYPE* pOutputBuffer) 
 {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
@@ -399,7 +374,7 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   pOutputBuffer->nOffset=0;
   /** resetting output length to a predefined value */
   output_length = OUTPUT_LEN_STANDARD_FFMPEG;
-#ifdef FFMPEG_DECODER_VERSION=2
+#ifdef FFMPEG_DECODER_VERSION
   len  = avcodec_decode_audio2(omx_audiodec_component_Private->avCodecContext,
                               (short*)(pOutputBuffer->pBuffer),
                               &output_length,
@@ -457,31 +432,6 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   /** return output buffer */
 }
 
-OMX_ERRORTYPE omx_audiodec_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure) 
-{
-
-  switch (nIndex) {
-  default: // delegate to superclass
-    return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return OMX_ErrorNone;
-}
-
-OMX_ERRORTYPE omx_audiodec_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure)
-{
-  switch (nIndex) {
-  default: // delegate to superclass
-    return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return OMX_ErrorNone;
-}
-
 OMX_ERRORTYPE omx_audiodec_component_SetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,
@@ -508,8 +458,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
     /*Check Structure Header*/
-    err = checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
-    CHECK_ERROR(err,"Check Header");
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(&omx_audiodec_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
     break;	
   case OMX_IndexParamAudioPortFormat:
@@ -569,7 +518,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
     } else {
       return OMX_ErrorBadParameter;
     }
-    SetInternalParameters(openmaxStandComp);
+    omx_audiodec_component_SetInternalParameters(openmaxStandComp);
     break;
 		
   case OMX_IndexParamAudioMp3:
@@ -600,6 +549,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
   omx_audiodec_component_PortType *port;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
 
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = (omx_audiodec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
@@ -610,12 +560,12 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
-    setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(ComponentParameterStructure, &omx_audiodec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
     break;		
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
     if (pAudioPortFormat->nPortIndex <= 1) {
       port = (omx_audiodec_component_PortType *)omx_audiodec_component_Private->ports[pAudioPortFormat->nPortIndex];
       memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -625,7 +575,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
     break;		
   case OMX_IndexParamAudioPcm:
     pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-    setHeader(pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PCMMODETYPE);
     if (pAudioPcmMode->nPortIndex > 1) {
       return OMX_ErrorBadPortIndex;
     }
@@ -636,7 +586,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
     if (pAudioMp3->nPortIndex != 0) {
       return OMX_ErrorBadPortIndex;
     }
-    setHeader(pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_MP3TYPE);
     memcpy(pAudioMp3,&omx_audiodec_component_Private->pAudioMp3,sizeof(OMX_AUDIO_PARAM_MP3TYPE));
     break;
 		
@@ -645,14 +595,14 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
     if (pAudioVorbis->nPortIndex != 0) {
        return OMX_ErrorBadPortIndex;
     }
-    setHeader(pAudioVorbis, sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_VORBISTYPE);
     memcpy(pAudioVorbis,&omx_audiodec_component_Private->pAudioVorbis,sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
     break;
 	
 		
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    setHeader(pComponentRole, sizeof(OMX_PARAM_COMPONENTROLETYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PARAM_COMPONENTROLETYPE);
 
     if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
       strcpy((char*)pComponentRole->cRole, AUDIO_DEC_MP3_ROLE);
@@ -668,7 +618,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE omx_audio_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp,internalRequestMessageType *message)
+OMX_ERRORTYPE omx_audiodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp,internalRequestMessageType *message)
 {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = (omx_audiodec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
   OMX_ERRORTYPE err;

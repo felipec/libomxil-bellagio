@@ -20,8 +20,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-04-27 14:41:59 +0200 (Fri, 27 Apr 2007) $
-  Revision $Rev: 802 $
+  $Date: 2007-06-01 15:50:42 +0200 (Fri, 01 Jun 2007) $
+  Revision $Rev: 906 $
   Author $Author: giulio_urlini $
 */
 
@@ -46,7 +46,6 @@ typedef struct stLoaderComponentType{
   char** role_specific; /**< Strings those represent the names of the specifc format components */
   char* name_requested; /**< This parameter is used to send to the component the string requested by the IL Client */
   OMX_ERRORTYPE (*constructor)(OMX_COMPONENTTYPE*,OMX_STRING cComponentName); /**< constructor function pointer for each Linux ST OpenMAX component */
-  OMX_ERRORTYPE (*destructor)(OMX_COMPONENTTYPE*); /**< constructor function pointer for each Linux ST OpenMAX component */
 } stLoaderComponentType;
 
 /** @brief The initialization of the ST specific component loader. 

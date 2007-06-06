@@ -25,8 +25,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-04-05 12:45:25 +0200 (Thu, 05 Apr 2007) $
-	Revision $Rev: 786 $
+	$Date: 2007-06-01 15:50:42 +0200 (Fri, 01 Jun 2007) $
+	Revision $Rev: 906 $
 	Author $Author: giulio_urlini $
 
 */
@@ -66,7 +66,6 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 	strcpy(stComponents[0]->name, "OMX.st.audio_decoder.ogg.single");
 	stComponents[0]->name_specific_length = 1; 
 	stComponents[0]->constructor = omx_vorbisdec_component_Constructor;
-	stComponents[0]->destructor = omx_vorbisdec_component_Destructor;
 
 	stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));
 	stComponents[0]->role_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));

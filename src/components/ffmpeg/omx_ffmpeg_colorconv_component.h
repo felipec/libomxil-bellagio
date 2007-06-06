@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
-  Author $Author: giulio_urlini $
+  $Date: 2007-06-06 06:39:29 +0200 (Wed, 06 Jun 2007) $
+  Revision $Rev: 923 $
+  Author $Author: pankaj_sen $
 */
 
 #ifndef _OMX_FFMPEG_COLORCONV_COMPONENT_H_
@@ -41,6 +41,7 @@
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/avutil.h>
+#include <ffmpeg/swscale.h>
 
 #define COLOR_CONV_BASE_NAME "OMX.st.video_colorconv"
 #define COLOR_CONV_FFMPEG_NAME "OMX.st.video_colorconv"
@@ -123,11 +124,6 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
   OMX_IN  OMX_INDEXTYPE nIndex,
   OMX_INOUT OMX_PTR pComponentConfigStructure);
 
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_ffmpeg_colorconv_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
-
-/** function prototypes */
-
 /** finds pixel format */
 enum PixelFormat find_ffmpeg_pxlfmt(OMX_COLOR_FORMATTYPE omx_pxlfmt);
 
@@ -142,4 +138,4 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
 					        OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat );
 
 
-#endif //_OMX_FFMPEG_COLORCONV_COMPONENT_H_
+#endif

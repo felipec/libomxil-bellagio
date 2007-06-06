@@ -21,9 +21,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-	Revision $Rev: 872 $
-	Author $Author: giulio_urlini $
+	$Date: 2007-06-05 06:20:07 +0200 (Tue, 05 Jun 2007) $
+	Revision $Rev: 918 $
+	Author $Author: pankaj_sen $
 */
 
 #include <stdio.h>
@@ -44,6 +44,7 @@
 #include "omxvolcontroltest.h"
 #include "tsemaphore.h"
 
+
 /* Application private date: should go in the component field (segs...) */
 appPrivateType* appPriv;
 int fd = 0;
@@ -55,6 +56,16 @@ OMX_CALLBACKTYPE callbacks = { .EventHandler = volcEventHandler,
                                .EmptyBufferDone = volcEmptyBufferDone,
                                .FillBufferDone = volcFillBufferDone,
 };
+
+static void setHeader(OMX_PTR header, OMX_U32 size) {
+  OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
+  *((OMX_U32*)header) = size;
+
+  ver->s.nVersionMajor = VERSIONMAJOR;
+  ver->s.nVersionMinor = VERSIONMINOR;
+  ver->s.nRevision = VERSIONREVISION;
+  ver->s.nStep = VERSIONSTEP;
+}
 
 
 int main(int argc, char** argv) {
@@ -104,13 +115,14 @@ int main(int argc, char** argv) {
   /** Set the number of ports for the parameter structure
     */
   param.nPorts = 2;
+  setHeader(&param, sizeof(OMX_PORT_PARAM_TYPE));
   err = OMX_GetParameter(handle, OMX_IndexParamAudioInit, &param);
   if(err != OMX_ErrorNone){
     DEBUG(DEB_LEV_ERR, "Error in getting OMX_PORT_PARAM_TYPE parameter\n");
     exit(1);
   }
 
-  paramPort.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+  setHeader(&paramPort, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
   paramPort.nPortIndex = 0;
   err = OMX_GetParameter(handle, OMX_IndexParamPortDefinition, &paramPort);
 

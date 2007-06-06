@@ -22,8 +22,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-04-03 11:40:37 +0200 (Tue, 03 Apr 2007) $
-	Revision $Rev: 771 $
+	$Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+	Revision $Rev: 924 $
 	Author $Author: giulio_urlini $
 
 */
@@ -39,8 +39,16 @@
 #include <stdlib.h>
 #include <omx_base_component.h>
 
+/** OMX_BASE_FILTER_INPUTPORT_INDEX is the index of any input port for the derived components
+ */
 #define OMX_BASE_FILTER_INPUTPORT_INDEX 0
+
+/** OMX_BASE_FILTER_OUTPUTPORT_INDEX is the index of any output port for the derived components
+ */
 #define OMX_BASE_FILTER_OUTPUTPORT_INDEX 1
+
+/** OMX_BASE_FILTER_ALLPORT_INDEX as the standard specifies, the -1 value for port index is used to point to all the ports
+ */
 #define OMX_BASE_FILTER_ALLPORT_INDEX -1
 
 /** Base Filter component private structure.
@@ -75,4 +83,4 @@ OMX_ERRORTYPE omx_base_filter_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
  */
 void* omx_base_filter_BufferMgmtFunction(void* param);
 
-#endif //_OMX_BASE_FILTER_COMPONENT_H_
+#endif

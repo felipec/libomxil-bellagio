@@ -38,8 +38,7 @@
  * @param queue The queue descriptor to initialize. 
  * The user needs to allocate the queue
  */
-void queue_init(queue_t* queue)
-{
+void queue_init(queue_t* queue) {
   int i;
   qelem_t* newelem;
   qelem_t* current;
@@ -63,8 +62,7 @@ void queue_init(queue_t* queue)
  * 
  * @param queue the queue descriptor to dump
  */
-void queue_deinit(queue_t* queue)
-{
+void queue_deinit(queue_t* queue) {
   int i;
   qelem_t* current;
   current = queue->first;
@@ -88,8 +86,7 @@ void queue_deinit(queue_t* queue)
  * 
  * @param data the data to be enqueued
  */
-void queue(queue_t* queue, void* data)
-{
+void queue(queue_t* queue, void* data) {
   if (queue->last->data != NULL) {
     return;
   }
@@ -107,8 +104,7 @@ void queue(queue_t* queue, void* data)
  * @return the element that has bee dequeued. If the queue is empty
  *  a NULL value is returned
  */
-void* dequeue(queue_t* queue)
-{
+void* dequeue(queue_t* queue) {
   void* data;
   if (queue->first->data == NULL) {
     return NULL;
@@ -129,8 +125,7 @@ void* dequeue(queue_t* queue)
  * 
  * @return the number of elements in the queue
  */
-int getquenelem(queue_t* queue)
-{
+int getquenelem(queue_t* queue) {
   int qelem;
   pthread_mutex_lock(&queue->mutex);
   qelem = queue->nelem;

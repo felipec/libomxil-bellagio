@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 
 */
@@ -109,8 +109,6 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 
   openmaxStandComp->SetParameter  = omx_filereader_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_filereader_component_GetParameter;
-  openmaxStandComp->SetConfig     = omx_filereader_component_SetConfig;
-  openmaxStandComp->GetConfig     = omx_filereader_component_GetConfig;
 
   /* Write in the default paramenters */
   omx_filereader_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioInit, &omx_filereader_component_Private->sPortTypesParam);
@@ -295,25 +293,6 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   return OMX_ErrorNone;
 }
 
-/*Deprecated function. May or May not be used in future version*/
-
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_filereader_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef){
-	
-  /** domain is for the momemnt limited in audio
-    * in future, video domain can be added 
-    * or a seperate file reader is also possible 
-    */ 
-  if(pDef.eDomain!=OMX_PortDomainAudio) {
-    return OMX_ErrorPortsNotCompatible;
-  } else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax) {
-    return OMX_ErrorPortsNotCompatible;
-  }	
-  DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
-
-  return OMX_ErrorNone;
-}
-
 /** 
  * This function processes the input file and returns packet by packet as an output data
  * this packet is used in audio decoder component for decoding
@@ -355,24 +334,6 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   
   /** return the current output buffer */
   DEBUG(DEB_LEV_FULL_SEQ, "One output buffer %x len=%d is full returning\n", (int)pOutputBuffer->pBuffer, (int)pOutputBuffer->nFilledLen);
-}
-
-OMX_ERRORTYPE omx_filereader_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure) {
-
-  /*Call the base component function*/
-  return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
-}
-
-OMX_ERRORTYPE omx_filereader_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure) {
-
-  /*Call the base component function*/
-  return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
 }
 
 OMX_ERRORTYPE omx_filereader_component_SetParameter(
@@ -454,6 +415,7 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;	
   OMX_VENDOR_EXTRADATATYPE sExtraData;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
@@ -468,12 +430,12 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
-    setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(ComponentParameterStructure, &omx_filereader_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
     break;		
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
     if (pAudioPortFormat->nPortIndex < 1) {
       memcpy(pAudioPortFormat, &pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {

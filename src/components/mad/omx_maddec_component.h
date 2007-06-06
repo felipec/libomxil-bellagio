@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 
 */
@@ -93,7 +93,9 @@ DERIVEDCLASS(omx_maddec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param audio_coding_type Field that indicate the supported audio format of audio decoder */ \
   OMX_U8 audio_coding_type;  \
   /** @param temporary_buffer temporary buffer used for audio decoding */ \
-  OMX_BUFFERHEADERTYPE *temporary_buffer;
+  OMX_BUFFERHEADERTYPE *temporary_buffer; \
+  /** @param need_mad_stream boolean indicate whether new mad stream required */ \
+  OMX_U32 need_mad_stream;
 ENDCLASS(omx_maddec_component_PrivateType)
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -111,11 +113,6 @@ void omx_maddec_component_BufferMgmtCallback(
   OMX_BUFFERHEADERTYPE* inputbuffer,
   OMX_BUFFERHEADERTYPE* outputbuffer);
 
-OMX_ERRORTYPE omx_maddec_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure);
-
 OMX_ERRORTYPE omx_maddec_component_GetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,
@@ -126,13 +123,6 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
 
-OMX_ERRORTYPE omx_maddec_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure);
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_maddec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
+void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 
-void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
-
-#endif //_OMX_MADDEC_COMPONENT_H_
+#endif

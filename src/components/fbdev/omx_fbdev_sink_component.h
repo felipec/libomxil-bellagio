@@ -22,8 +22,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 */
 
@@ -118,9 +118,6 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
   OMX_IN  OMX_INDEXTYPE nIndex,
   OMX_INOUT OMX_PTR pComponentConfigStructure);
 
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_fbdev_sink_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
-
 /** function prototypes of some internal functions */
 
 /** finds openmax standard pixel format from screen info */
@@ -146,4 +143,4 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
  *  instance, to compute the duration of call. */
 long GetTime();
 
-#endif //_OMX_FBDEV_SINK_COMPONENT_H_
+#endif

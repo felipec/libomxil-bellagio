@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-18 07:23:35 +0200 (Fri, 18 May 2007) $
-  Revision $Rev: 863 $
-  Author $Author: pankaj_sen $
+  $Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+  Revision $Rev: 924 $
+  Author $Author: giulio_urlini $
 */
 
 #include <omxcore.h>
@@ -125,7 +125,7 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
       isInputBufferNeeded=OMX_FALSE;
       pInputBuffer = dequeue(pInputQueue);
       if(pInputBuffer == NULL){
-        DEBUG(DEB_LEV_ERR, "What the hell!! had NULL input buffer!!\n");
+        DEBUG(DEB_LEV_ERR, "Had NULL input buffer!!\n");
         break;
       }
     }
@@ -168,8 +168,6 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
         pInputBuffer->nFilledLen = 0;
       }
       /*Input Buffer has been completely consumed. So, get new input buffer*/
-      //if(pInputBuffer->nFilledLen==0)
-      //  isInputBufferNeeded = OMX_TRUE;
 
       if(omx_base_sink_Private->state==OMX_StatePause && !PORT_IS_BEING_FLUSHED(pInPort)) {
         /*Waiting at paused state*/

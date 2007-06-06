@@ -21,8 +21,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-04-05 16:39:38 +0200 (Thu, 05 Apr 2007) $
-	Revision $Rev: 787 $
+	$Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+	Revision $Rev: 921 $
 	Author $Author: giulio_urlini $
 */
 
@@ -204,4 +204,4 @@ typedef struct BOSA_COMPONENTLOADER
 	
 } BOSA_COMPONENTLOADER;
 
-#endif /*__COMPONENT_LOADER_H__*/
+#endif

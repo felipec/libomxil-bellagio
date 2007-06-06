@@ -22,8 +22,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:41:52 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 874 $
+  $Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+  Revision $Rev: 924 $
   Author $Author: giulio_urlini $
 
 */
@@ -39,7 +39,12 @@
 #include <stdlib.h>
 
 
+/** OMX_BASE_SOURCE_OUTPUTPORT_INDEX is the index of any output port for the derived components
+ */
 #define OMX_BASE_SOURCE_OUTPUTPORT_INDEX 0
+
+/** OMX_BASE_SOURCE_ALLPORT_INDEX as the standard specifies, the -1 value for port index is used to point to all the ports
+ */
 #define OMX_BASE_SOURCE_ALLPORT_INDEX -1
 
 /** base source component private structure.
@@ -65,5 +70,5 @@ OMX_ERRORTYPE omx_base_source_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
  */
 void* omx_base_source_BufferMgmtFunction(void* param);
 
-#endif //_OMX_BASE_SOURCE_COMPONENT_H_
+#endif
 

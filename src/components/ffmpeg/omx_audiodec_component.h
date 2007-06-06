@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 */
 
@@ -36,12 +36,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
-/* Specific include files for mp3 decoding*/
+/* Specific include files for ffmpeg*/
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
-/* Specific include files for vorbis decoding */
-#include <vorbis/codec.h>
-#include <math.h>
 
 #define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3"
@@ -49,7 +46,7 @@
 #define AUDIO_DEC_MP3_ROLE "audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_ROLE "audio_decoder.ogg"
 
-/** Mp3 Decoder component port structure.
+/** Audio Decoder component port structure.
  */
 DERIVEDCLASS(omx_audiodec_component_PortType, omx_base_PortType)
 #define omx_audiodec_component_PortType_FIELDS omx_base_PortType_FIELDS \
@@ -98,18 +95,13 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_audiodec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_audiodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp);
-OMX_ERRORTYPE omx_audio_decoder_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
+OMX_ERRORTYPE omx_audiodec_component_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
 
 void omx_audiodec_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
   OMX_BUFFERHEADERTYPE* inputbuffer,
   OMX_BUFFERHEADERTYPE* outputbuffer);
 	
-OMX_ERRORTYPE omx_audiodec_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure);
-
 OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,
@@ -120,20 +112,12 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
 
-OMX_ERRORTYPE omx_audiodec_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure);
-
 OMX_ERRORTYPE omx_audiodec_component_ComponentRoleEnum(
   OMX_IN OMX_HANDLETYPE hComponent,
   OMX_OUT OMX_U8 *cRole,
   OMX_IN OMX_U32 nIndex);
 
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_audiodec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
-
-void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
+void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 
 
-#endif //_OMX_MP3DEC_COMPONENT_H_
+#endif

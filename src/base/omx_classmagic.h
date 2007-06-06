@@ -96,4 +96,4 @@ ENDCLASS(C)
 
 #endif /* 0 */
 
-#endif /*OMX_CLASSMAGIC_H_*/
+#endif

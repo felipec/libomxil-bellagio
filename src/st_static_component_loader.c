@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-08 11:19:34 +0200 (Tue, 08 May 2007) $
-  Revision $Rev: 834 $
-  Author $Author: pankaj_sen $
+  $Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+  Revision $Rev: 924 $
+  Author $Author: giulio_urlini $
 */
 
 #define _GNU_SOURCE
@@ -37,7 +37,15 @@
 
 #include "st_static_component_loader.h"
 
+/** This pointer holds and handle allocate by this loader and requested by
+ * some application. If the IL client does not de-allocate it calling 
+ * explicitely the FreeHandle function, any pending handle is release at the
+ * end, when the global function OMX_Deinit is called. This list takes track of
+ * any handle
+ */
 void *handleLibList[100];
+/** Current number of handles already allocated by this loader
+ */
 OMX_U32 numLib=0;
 
 /** @brief The initialization of the ST specific component loader. 

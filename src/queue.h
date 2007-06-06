@@ -28,6 +28,7 @@
 #ifndef __TQUEUE_H__
 #define __TQUEUE_H__
 
+#include <pthread.h>
 /** Maximum number of elements in a queue 
  */
 #define MAX_QUEUE_ELEMENTS 10

@@ -22,8 +22,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:41:52 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 874 $
+  $Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+  Revision $Rev: 924 $
   Author $Author: giulio_urlini $
 */
 
@@ -124,7 +124,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
       isOutputBufferNeeded = OMX_FALSE;
       pOutputBuffer = dequeue(pOutputQueue);
       if(pOutputBuffer == NULL){
-        DEBUG(DEB_LEV_ERR, "What the hell!! had NULL output buffer!!\n");
+        DEBUG(DEB_LEV_ERR, "Had NULL output buffer!!\n");
         break;
       }
     }

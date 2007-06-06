@@ -22,8 +22,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-04 11:59:17 +0200 (Mon, 04 Jun 2007) $
+  Revision $Rev: 913 $
   Author $Author: giulio_urlini $
 */
 
@@ -265,15 +265,6 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   }
   return OMX_ErrorNone;
 }
-
-/** Check Domain of the Tunneled Component */
-OMX_ERRORTYPE omx_fbdev_sink_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef){
-  if(pDef.eDomain!=OMX_PortDomainVideo) {
-    return OMX_ErrorPortsNotCompatible;
-  }
-  return OMX_ErrorNone;
-}
-
 
 /**	This function takes two inputs - 
   * @param width is the input picture width
@@ -1132,8 +1123,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
   switch(nParamIndex) {
     case OMX_IndexParamVideoInit:
       /*Check Structure Header*/
-      checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
-      CHECK_ERROR(err, "Check Header");
+      CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
       memcpy(&omx_fbdev_sink_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
       break;
     case OMX_IndexParamPortDefinition:
@@ -1203,7 +1193,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;	
-
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
   omx_fbdev_sink_component_PortType *port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];	
@@ -1214,12 +1204,12 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
     case OMX_IndexParamVideoInit:
-      setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
+      CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
       memcpy(ComponentParameterStructure, &omx_fbdev_sink_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
       break;		
     case OMX_IndexParamVideoPortFormat:
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-      setHeader(pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+      CHECK_HEADER(err,ComponentParameterStructure,OMX_VIDEO_PARAM_PORTFORMATTYPE);
       if (pVideoPortFormat->nPortIndex < 1) {
         memcpy(pVideoPortFormat, &port->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
       } else {
@@ -1243,7 +1233,6 @@ OMX_ERRORTYPE omx_fbdev_sink_component_MessageHandler(OMX_COMPONENTTYPE* openmax
   eState = omx_fbdev_sink_component_Private->state; //storing current state
 
   if (message->messageType == OMX_CommandStateSet){
-    //if ((message->messageParam == OMX_StateIdle ) && (omx_fbdev_sink_component_Private->state == OMX_StateLoaded)) {
     if ((message->messageParam == OMX_StateExecuting ) && (omx_fbdev_sink_component_Private->state == OMX_StateIdle)) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s sink component from loaded to idle \n", __func__);
       err = omx_fbdev_sink_component_Init(openmaxStandComp);

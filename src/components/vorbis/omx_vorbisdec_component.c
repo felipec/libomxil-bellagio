@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-18 13:49:36 +0200 (Fri, 18 May 2007) $
-  Revision $Rev: 864 $
-  Author $Author: pankaj_sen $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
+  Author $Author: giulio_urlini $
 
 */
 
@@ -150,7 +150,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
     tsem_init(omx_vorbisdec_component_Private->avCodecSyncSem, 0);
   }
 
-  SetInternalParameters(openmaxStandComp);
+  omx_vorbisdec_component_SetInternalParameters(openmaxStandComp);
 
   outPort = (omx_vorbisdec_component_PortType *) omx_vorbisdec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   setHeader(&outPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -225,7 +225,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Destructor(OMX_COMPONENTTYPE *openmaxStand
 
 /** sets some parameters of the private structure for decoding */
 
-void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
+void omx_vorbisdec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_vorbisdec_component_PrivateType* omx_vorbisdec_component_Private;
   omx_vorbisdec_component_PortType *pPort;
 
@@ -296,17 +296,6 @@ OMX_ERRORTYPE omx_vorbisdec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp
   return err;
 }
 
-
-/*Deprecated function. May or may not be used in future version*/
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_vorbisdec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef) {
-  if(pDef.eDomain != OMX_PortDomainAudio)
-    return OMX_ErrorPortsNotCompatible;
-  else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax)
-    return OMX_ErrorPortsNotCompatible;
-
-  return OMX_ErrorNone;
-}
 
 /** central buffer management function 
   * @param inputbuffer contains the input ogg file content
@@ -537,40 +526,6 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
   DEBUG(DEB_LEV_FULL_SEQ, "One output buffer %x len=%d is full returning\n", (int)outputbuffer->pBuffer, (int)outputbuffer->nFilledLen);	
 }
 
-/** setting configuration values
-	* @param hComponent is handle of component
-	* @param nIndex is the indextype of the configuration
-	* @param pComponentConfigStructure is the input structure containing configuration setings
-	*/
-OMX_ERRORTYPE omx_vorbisdec_component_SetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_IN  OMX_PTR pComponentConfigStructure) {
-		
-  switch (nIndex) {
-  default: // delegate to superclass
-    return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return OMX_ErrorNone;
-}
-
-/** getting configuration values 
-	* @param hComponent is handle of component
-	* @param nIndex is the indextype of the configuration
-	* @param pComponentConfigStructure is the structure to contain obtained configuration setings
-	*/
-OMX_ERRORTYPE omx_vorbisdec_component_GetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_INOUT OMX_PTR pComponentConfigStructure)	{
-
-  switch (nIndex) {
-  default: // delegate to superclass
-    return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return OMX_ErrorNone;
-}
-
 /** setting parameter values
 	* @param hComponent is handle of component
 	* @param nParamIndex is the indextype of the parameter
@@ -601,8 +556,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
 
   case OMX_IndexParamAudioInit:
     /** Check Structure Header */
-    err = checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
-    CHECK_ERROR(err, "Check Header");
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(&omx_vorbisdec_component_Private->sPortTypesParam, ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
     break;	
 			
@@ -648,7 +602,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
     } else {
       return OMX_ErrorBadParameter;
     }
-    SetInternalParameters(openmaxStandComp);
+    omx_vorbisdec_component_SetInternalParameters(openmaxStandComp);
     break;
 
   default: /*Call the base component function*/
@@ -672,7 +626,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
   OMX_AUDIO_PARAM_VORBISTYPE *pAudioVorbis; 
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   omx_vorbisdec_component_PortType *port;
-
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_vorbisdec_component_PrivateType* omx_vorbisdec_component_Private = (omx_vorbisdec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
   if (ComponentParameterStructure == NULL) {
@@ -683,13 +637,13 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
   switch(nParamIndex) {
 	
   case OMX_IndexParamAudioInit:
-    setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(ComponentParameterStructure, &omx_vorbisdec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
     break;		
 
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
     if (pAudioPortFormat->nPortIndex <= 1) {
       port = (omx_vorbisdec_component_PortType *)omx_vorbisdec_component_Private->ports[pAudioPortFormat->nPortIndex];
       memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -700,7 +654,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
 
   case OMX_IndexParamAudioPcm:
     pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-    setHeader(pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PCMMODETYPE);
     if (pAudioPcmMode->nPortIndex > 1) {
       return OMX_ErrorBadPortIndex;
     }
@@ -712,13 +666,13 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
     if(pAudioVorbis->nPortIndex != 0) {
       return OMX_ErrorBadPortIndex;
     }
-    setHeader(pAudioVorbis, sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_VORBISTYPE);
     memcpy(pAudioVorbis, &omx_vorbisdec_component_Private->pAudioVorbis, sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
     break;
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    setHeader(pComponentRole, sizeof(OMX_PARAM_COMPONENTROLETYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PARAM_COMPONENTROLETYPE);
     if (omx_vorbisdec_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
       strcpy( (char*) pComponentRole->cRole, AUDIO_DEC_VORBIS_ROLE);
     } else {

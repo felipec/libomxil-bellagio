@@ -314,11 +314,10 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
   OMX_INOUT   OMX_U32 *pNumComps,
   OMX_INOUT   OMX_U8  **compNames) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
-  int i,j;
+  int i;
   int only_number_requested = 0, full_number=0;
   OMX_U32 temp_num_comp = 0;
 
-  OMX_U8 **tempCompNames;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   if (compNames == NULL) {
     only_number_requested = 1;
@@ -337,12 +336,6 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
       return OMX_ErrorComponentNotFound;
     }
     if (only_number_requested == 0) {
-      /*
-      tempCompNames = malloc(temp_num_comp * sizeof(OMX_STRING));
-      for (j=0; j<temp_num_comp; j++) {
-        tempCompNames[j] = malloc(OMX_MAX_STRINGNAME_SIZE * sizeof(char));
-      }
-      */
       err = loadersList[i]->BOSA_GetComponentsOfRole(
               loadersList[i]->componentLoaderHandler,
               role,
@@ -352,14 +345,6 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
         DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
         return OMX_ErrorComponentNotFound;
       }
-
-      /*
-      for (j = 0; j<temp_num_comp; j++) {
-        if (full_number+j<*pNumComps) {
-          compNames[full_number+j] =  tempCompNames[j];
-        }
-      }
-      */
     }
     full_number += temp_num_comp;
   }

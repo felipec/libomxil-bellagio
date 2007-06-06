@@ -25,8 +25,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-22 14:43:04 +0200 (Tue, 22 May 2007) $
-	Revision $Rev: 875 $
+	$Date: 2007-06-01 15:50:42 +0200 (Fri, 01 Jun 2007) $
+	Revision $Rev: 906 $
 	Author $Author: giulio_urlini $
 
 */
@@ -71,7 +71,6 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[0]->name, "OMX.st.audio_decoder");
   stComponents[0]->name_specific_length = 2; 
   stComponents[0]->constructor = omx_audiodec_component_Constructor;	
-  stComponents[0]->destructor = omx_audiodec_component_Destructor;	
 
   stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
   stComponents[0]->role_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
@@ -108,7 +107,6 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[1]->name, "OMX.st.video_decoder");
   stComponents[1]->name_specific_length = 2; 
   stComponents[1]->constructor = omx_videodec_component_Constructor;	
-  stComponents[1]->destructor = omx_videodec_component_Destructor;	
 
   stComponents[1]->name_specific = (char **)calloc(stComponents[1]->name_specific_length,sizeof(char *));	
   stComponents[1]->role_specific = (char **)calloc(stComponents[1]->name_specific_length,sizeof(char *));	
@@ -145,7 +143,6 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[2]->name, "OMX.st.video_colorconv");
   stComponents[2]->name_specific_length = 1; 
   stComponents[2]->constructor = omx_ffmpeg_colorconv_component_Constructor;	
-  stComponents[2]->destructor = omx_ffmpeg_colorconv_component_Destructor;	
 
   stComponents[2]->name_specific = (char **)calloc(stComponents[2]->name_specific_length,sizeof(char *));	
   stComponents[2]->role_specific = (char **)calloc(stComponents[2]->name_specific_length,sizeof(char *));	

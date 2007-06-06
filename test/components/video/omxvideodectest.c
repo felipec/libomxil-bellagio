@@ -22,9 +22,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-	Revision $Rev: 872 $
-	Author $Author: giulio_urlini $
+	$Date: 2007-06-05 06:20:07 +0200 (Tue, 05 Jun 2007) $
+	Revision $Rev: 918 $
+	Author $Author: pankaj_sen $
 */
 
 #include <stdio.h>
@@ -63,7 +63,8 @@ unsigned int nextBuffer = 0;
 /** used with video decoder */
 OMX_BUFFERHEADERTYPE *pInBuffer1, *pInBuffer2, *pOutBuffer1, *pOutBuffer2;
 /** used with color converter if selected */
-OMX_BUFFERHEADERTYPE *pOutBufferColorConv1, *pOutBufferColorConv2;
+OMX_BUFFERHEADERTYPE *pInBufferColorConv1, *pInBufferColorConv2,*pOutBufferColorConv1, *pOutBufferColorConv2;
+OMX_BUFFERHEADERTYPE *pInBufferSink1, *pInBufferSink2;
 
 int buffer_in_size = BUFFER_IN_SIZE;
 OMX_U32 buffer_out_size;
@@ -94,7 +95,6 @@ OMX_U32 out_width = 0, new_out_width = 0;
 OMX_U32 out_height = 0, new_out_height = 0;
 
 FILE *fd;
-int file_pos_adjust = 0; //tells whether file position needs to be adjusted for proper input reading
 
 appPrivateType* appPriv;
 
@@ -112,16 +112,26 @@ int flagIsFormatRequested;
 int flagSetupTunnel;
 
 static OMX_BOOL bEOS = OMX_FALSE;
-#define CHECK_ERROR(err)  if(err != OMX_ErrorNone) { \
-                            DEBUG(DEB_LEV_ERR, "In %s eError=%x Line=%d\n",__func__,err,__LINE__); \
-                          } \
+
+static void setHeader(OMX_PTR header, OMX_U32 size) {
+  OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
+  *((OMX_U32*)header) = size;
+
+  ver->s.nVersionMajor = VERSIONMAJOR;
+  ver->s.nVersionMinor = VERSIONMINOR;
+  ver->s.nRevision = VERSIONREVISION;
+  ver->s.nStep = VERSIONSTEP;
+}
+
+
 /** this function sets the color converter and video sink port characteristics 
   * based on the video decoder output port settings 
   */
-void setPortParameters() {
+int setPortParameters() {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   paramPort.nPortIndex = 1;
+  setHeader(&paramPort, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
   err = OMX_GetParameter(appPriv->videodechandle, OMX_IndexParamPortDefinition, &paramPort);
   new_out_width = paramPort.format.video.nFrameWidth;
   new_out_height = paramPort.format.video.nFrameHeight;
@@ -135,11 +145,15 @@ void setPortParameters() {
       * it will be same as the video decoder output port width, height 
       */
     omx_colorconvPortDefinition.nPortIndex = 0;
+    setHeader(&omx_colorconvPortDefinition, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);	
     omx_colorconvPortDefinition.format.video.nFrameWidth = new_out_width;
     omx_colorconvPortDefinition.format.video.nFrameHeight = new_out_height;
     err = OMX_SetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
-    CHECK_ERROR(err);
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Setting Input Port Definition Error=%x\n",__func__,err); 
+      return err; 
+    } 
     /** setting the color converter output width height 
       * it will be same as input dimensions 
       */
@@ -148,13 +162,18 @@ void setPortParameters() {
     omx_colorconvPortDefinition.format.video.nFrameWidth = new_out_width;
     omx_colorconvPortDefinition.format.video.nFrameHeight = new_out_height;
     err = OMX_SetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
-    CHECK_ERROR(err);
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Setting Output Port Definition Error=%x\n",__func__,err); 
+      return err; 
+    } 
     /** setting the input color format of color converter component 
       * it will be same as output yuv color format of the decoder component 
       */
     paramPort.nPortIndex = 1;
+    setHeader(&paramPort, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     err = OMX_GetParameter(appPriv->videodechandle, OMX_IndexParamPortDefinition, &paramPort);
     omxVideoParam.nPortIndex = 0;
+    setHeader(&omxVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
     err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);		 
     omxVideoParam.eColorFormat = paramPort.format.video.eColorFormat;	
     err = OMX_SetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);
@@ -193,6 +212,8 @@ void setPortParameters() {
       }
     }
   }
+
+  return err;
 }
 
 /**	Try to determine resolution based on filename */
@@ -507,6 +528,10 @@ int main(int argc, char** argv) {
         output_file[strlen(output_file) - strlen(strstr(output_file, "."))] = '\0';
         strcat(output_file, ".rgb");
         DEBUG(DEB_LEV_ERR,"\n color conv option is selected - so the output file is %s \n", output_file);
+      }else if(!flagIsColorConvRequested && strstr(output_file, ".yuv") == NULL) {
+        output_file[strlen(output_file) - strlen(strstr(output_file, "."))] = '\0';
+        strcat(output_file, ".yuv");
+        DEBUG(DEB_LEV_ERR,"\n color conv option is not selected - so the output file is %s \n", output_file);
       }
     }
 
@@ -641,6 +666,7 @@ int main(int argc, char** argv) {
     }
   }
 
+  setHeader(&paramRole, sizeof(OMX_PARAM_COMPONENTROLETYPE));
   err = OMX_GetParameter(appPriv->videodechandle, OMX_IndexParamStandardComponentRole, &paramRole);
   if (err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "The role set for this component can not be retrieved err = %i\n", err);
@@ -708,11 +734,6 @@ int main(int argc, char** argv) {
   tsem_down(appPriv->decoderEventSem);
 
   if (!flagSetupTunnel) {
-    pOutBuffer1->nOutputPortIndex = 1;
-    pOutBuffer1->nInputPortIndex = 0;
-    pOutBuffer2->nOutputPortIndex = 1;
-    pOutBuffer2->nInputPortIndex = 0;
-
     err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer1);
     err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer2);
   }
@@ -824,17 +845,7 @@ int main(int argc, char** argv) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "in %s in tunneled case, after all components in executing state\n", __func__);
 
     /** activate 2nd input buffer now */
-    if(!file_pos_adjust) {
-      data_read = fread(pInBuffer2->pBuffer, sizeof(char), buffer_in_size, fd);
-    } else {
-      /** if this is the first input file read operation after suspending decode
-        * then read from the position of the last read buffer
-        * adjust the file pointer to get the last decoded buffer again */
-      fseek(fd, (ftell(fd) - buffer_in_size), SEEK_SET);
-      DEBUG(DEB_LEV_SIMPLE_SEQ, " in %s resume decode - file pos : %x \n", __func__, (int)(ftell(fd)));
-      data_read = fread(pInBuffer2->pBuffer, sizeof(char), buffer_in_size, fd);
-      file_pos_adjust = 0;
-    }
+   data_read = fread(pInBuffer2->pBuffer, sizeof(char), buffer_in_size, fd);
     pInBuffer2->nFilledLen = data_read;
     pInBuffer2->nOffset = 0;
     DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", (int)pInBuffer2->pBuffer);
@@ -1001,7 +1012,13 @@ OMX_ERRORTYPE fb_sinkEmptyBufferDone(
   static int inputBufferDropped = 0;
   if(pBuffer != NULL) {
     if(!bEOS) {
-      err = OMX_FillThisBuffer(appPriv->colorconv_handle, pBuffer);
+      if(pOutBufferColorConv1->pBuffer == pBuffer->pBuffer) {
+        pOutBufferColorConv1->nFilledLen = pBuffer->nFilledLen;
+        err = OMX_FillThisBuffer(appPriv->colorconv_handle, pOutBufferColorConv1);
+      } else {
+        pOutBufferColorConv2->nFilledLen = pBuffer->nFilledLen;
+        err = OMX_FillThisBuffer(appPriv->colorconv_handle, pOutBufferColorConv2);
+      }
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
       }
@@ -1084,7 +1101,13 @@ OMX_ERRORTYPE colorconvEmptyBufferDone(
 
   if(pBuffer != NULL) {
     if(!bEOS) {
-      err = OMX_FillThisBuffer(appPriv->videodechandle, pBuffer);
+      if(pOutBuffer1->pBuffer == pBuffer->pBuffer) {
+        pOutBuffer1->nFilledLen = pBuffer->nFilledLen;
+        err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer1);
+      } else {
+        pOutBuffer2->nFilledLen = pBuffer->nFilledLen;
+        err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer2);
+      }
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
       }
@@ -1117,7 +1140,13 @@ OMX_ERRORTYPE colorconvFillBufferDone(
         * else in non tunneled case, call the sink comp handle to process this buffer as its input buffer
         */
       if(flagIsSinkRequested && (!flagSetupTunnel)) {
-        err = OMX_EmptyThisBuffer(appPriv->fbdev_sink_handle, pBuffer);
+        if(pInBufferSink1->pBuffer == pBuffer->pBuffer) {
+          pInBufferSink1->nFilledLen = pBuffer->nFilledLen;
+          err = OMX_EmptyThisBuffer(appPriv->fbdev_sink_handle, pInBufferSink1);
+        } else {
+          pInBufferSink2->nFilledLen = pBuffer->nFilledLen;
+          err = OMX_EmptyThisBuffer(appPriv->fbdev_sink_handle, pInBufferSink2);
+        }
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
         }
@@ -1196,12 +1225,6 @@ OMX_ERRORTYPE videodecEventHandler(
         */
       if(flagSetupTunnel) {
         DEBUG(DEB_LEV_SIMPLE_SEQ,"Sending Port Disable Command\n");
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "in %s Data1 : %d \n", __func__, (int)Data1);
-        /** as the decoding will be suspended now in middle of a buffer
-          * so we keep track of this case 
-          */
-        file_pos_adjust = 1;
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "in %s suspend decode - file pos : %x \n", __func__, (int)(ftell(fd)));
         err = OMX_SendCommand(appPriv->videodechandle, OMX_CommandPortDisable, 1, NULL);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"video decoder port disable failed\n");
@@ -1222,12 +1245,12 @@ OMX_ERRORTYPE videodecEventHandler(
           err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 
           /** in non tunneled case, using buffers in color conv input port, allocated by video dec component output port */
-          err = OMX_UseBuffer(appPriv->colorconv_handle, &pOutBuffer1, 0, NULL, buffer_out_size, pOutBuffer1->pBuffer);
+          err = OMX_UseBuffer(appPriv->colorconv_handle, &pInBufferColorConv1, 0, NULL, buffer_out_size, pOutBuffer1->pBuffer);
           if(err != OMX_ErrorNone) {
             DEBUG(DEB_LEV_ERR, "Unable to use the video dec comp allocate buffer\n");
             exit(1);
           }
-          err = OMX_UseBuffer(appPriv->colorconv_handle, &pOutBuffer2, 0, NULL, buffer_out_size, pOutBuffer2->pBuffer);
+          err = OMX_UseBuffer(appPriv->colorconv_handle, &pInBufferColorConv2, 0, NULL, buffer_out_size, pOutBuffer2->pBuffer);
           if(err != OMX_ErrorNone) {
             DEBUG(DEB_LEV_ERR, "Unable to use the video dec comp allocate buffer\n");
             exit(1);
@@ -1235,6 +1258,7 @@ OMX_ERRORTYPE videodecEventHandler(
 
           /** allocating buffers in the color converter compoennt output port */
           omx_colorconvPortDefinition.nPortIndex = 1;
+          setHeader(&omx_colorconvPortDefinition, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
           err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
           outbuf_colorconv_size = omx_colorconvPortDefinition.nBufferSize;
           DEBUG(DEB_LEV_SIMPLE_SEQ, " outbuf_colorconv_size : %d \n", (int)outbuf_colorconv_size);
@@ -1256,12 +1280,12 @@ OMX_ERRORTYPE videodecEventHandler(
 
           if(flagIsSinkRequested == 1) {
             err = OMX_SendCommand(appPriv->fbdev_sink_handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-            err = OMX_UseBuffer(appPriv->fbdev_sink_handle, &pOutBufferColorConv1, 0, NULL, outbuf_colorconv_size, pOutBufferColorConv1->pBuffer);
+            err = OMX_UseBuffer(appPriv->fbdev_sink_handle, &pInBufferSink1, 0, NULL, outbuf_colorconv_size, pOutBufferColorConv1->pBuffer);
             if(err != OMX_ErrorNone) {
               DEBUG(DEB_LEV_ERR, "Unable to use the color conv comp allocate buffer\n");
               exit(1);
             }
-            err = OMX_UseBuffer(appPriv->fbdev_sink_handle, &pOutBufferColorConv2, 0, NULL, outbuf_colorconv_size, pOutBufferColorConv2->pBuffer);
+            err = OMX_UseBuffer(appPriv->fbdev_sink_handle, &pInBufferSink2, 0, NULL, outbuf_colorconv_size, pOutBufferColorConv2->pBuffer);
             if(err != OMX_ErrorNone) {
               DEBUG(DEB_LEV_ERR, "Unable to use the color conv comp allocate buffer\n");
               exit(1);
@@ -1283,10 +1307,6 @@ OMX_ERRORTYPE videodecEventHandler(
         }
 
         if(flagIsColorConvRequested == 1 ) { 
-          pOutBufferColorConv1->nOutputPortIndex = 1;
-          pOutBufferColorConv1->nInputPortIndex = 0;
-          pOutBufferColorConv2->nOutputPortIndex = 1;
-          pOutBufferColorConv2->nInputPortIndex = 0;
           err = OMX_FillThisBuffer(appPriv->colorconv_handle, pOutBufferColorConv1);
           err = OMX_FillThisBuffer(appPriv->colorconv_handle, pOutBufferColorConv2);
           DEBUG(DEB_LEV_SIMPLE_SEQ, "---> After fill this buffer function calls to the color conv output buffers\n");
@@ -1314,18 +1334,7 @@ OMX_ERRORTYPE videodecEmptyBufferDone(
   int data_read;
   DEBUG(DEB_LEV_FULL_SEQ, "Hi there, I am in the %s callback.\n", __func__);
 
-  if(!file_pos_adjust) {
-    data_read = fread(pBuffer->pBuffer, sizeof(char), buffer_in_size, fd);
-  } else {
-    /** if this is the first input file read operation after suspending decode
-      * then read from the position of the last read buffer
-      * adjust the file pointer to get the last decoded buffer again */
-    fseek(fd, (ftell(fd) - buffer_in_size), SEEK_SET);
-    DEBUG(DEB_LEV_SIMPLE_SEQ, " in %s resume decode - file pos : %x \n", __func__, (int)(ftell(fd)));
-    data_read = fread(pBuffer->pBuffer, sizeof(char), buffer_in_size , fd);
-
-    file_pos_adjust = 0;
-  }
+  data_read = fread(pBuffer->pBuffer, sizeof(char), buffer_in_size, fd);
   if (data_read <= 0) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In the %s no more input data available\n", __func__);
     pBuffer->nFlags = OMX_BUFFERFLAG_EOS;
@@ -1356,7 +1365,13 @@ OMX_ERRORTYPE videodecFillBufferDone(
       if(flagIsColorConvRequested && (!flagSetupTunnel)) {
         OMX_GetState(appPriv->colorconv_handle,&eState);
         if(eState == OMX_StateExecuting || eState == OMX_StatePause) {
-          err = OMX_EmptyThisBuffer(appPriv->colorconv_handle, pBuffer);
+          if(pInBufferColorConv1->pBuffer == pBuffer->pBuffer) {
+            pInBufferColorConv1->nFilledLen = pBuffer->nFilledLen;
+            err = OMX_EmptyThisBuffer(appPriv->colorconv_handle, pInBufferColorConv1);
+          } else {
+            pInBufferColorConv2->nFilledLen = pBuffer->nFilledLen;
+            err = OMX_EmptyThisBuffer(appPriv->colorconv_handle, pInBufferColorConv2);
+          }
           if(err != OMX_ErrorNone) {
             DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
           }

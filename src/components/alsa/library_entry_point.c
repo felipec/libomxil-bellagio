@@ -25,8 +25,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-04-03 12:45:48 +0200 (Tue, 03 Apr 2007) $
-	Revision $Rev: 773 $
+	$Date: 2007-06-01 15:50:42 +0200 (Fri, 01 Jun 2007) $
+	Revision $Rev: 906 $
 	Author $Author: giulio_urlini $
 
 */
@@ -65,7 +65,6 @@
 	strcpy(stComponents[0]->name, "OMX.st.alsa.alsasink");
 	stComponents[0]->name_specific_length = 0;
 	stComponents[0]->constructor = omx_alsasink_component_Constructor;	
-	stComponents[0]->destructor = omx_alsasink_component_Destructor;	
 	
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
 	return 1;

@@ -1,4 +1,4 @@
-INCLUDES= -I../../../include/ -I../../../src
+INCLUDES= -I../../../include/ -I../../../src 
 check_PROGRAMS = omxvolcontroltest
 
 omxvolcontroltest_LDADD = -lomxil -lpthread

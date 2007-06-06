@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 */
 
@@ -85,7 +85,4 @@ OMX_ERRORTYPE omx_volume_component_SetConfig(
   OMX_IN  OMX_INDEXTYPE nIndex,
   OMX_IN  OMX_PTR pComponentConfigStructure);
 
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_volume_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
-
-#endif //_OMX_VOLUME_COMPONENT_H_
+#endif

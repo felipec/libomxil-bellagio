@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-21 07:56:57 +0200 (Mon, 21 May 2007) $
-  Revision $Rev: 866 $
-  Author $Author: pankaj_sen $
+  $Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+  Revision $Rev: 924 $
+  Author $Author: giulio_urlini $
 */
 
 #include <stdlib.h>
@@ -63,7 +63,9 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
     *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_base_PortType));
   }
 
-  if (!(*openmaxStandPort)) return OMX_ErrorInsufficientResources;
+  if (!(*openmaxStandPort)) {
+    return OMX_ErrorInsufficientResources;
+  }
 
   (*openmaxStandPort)->hTunneledComponent = NULL;
   (*openmaxStandPort)->nTunnelFlags=0;
@@ -143,7 +145,7 @@ OMX_ERRORTYPE base_port_Destructor(omx_base_PortType *openmaxStandPort){
   }
 
   free(openmaxStandPort);
-	openmaxStandPort = NULL;
+  openmaxStandPort = NULL;
   return OMX_ErrorNone;
 }
 
@@ -192,11 +194,9 @@ OMX_ERRORTYPE base_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPo
       } else {
         ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->EmptyThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
       }
-    }	
-    else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    } else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
       queue(openmaxStandPort->pBufferQueue,pBuffer);
-    }
-    else {
+    } else {
       (*(openmaxStandPort->BufferProcessedCallback))(
         openmaxStandPort->standCompContainer,
         omx_base_component_Private->callbackData,
@@ -249,11 +249,10 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
   if (! PORT_IS_ENABLED(openmaxStandPort)) {
     return OMX_ErrorNone;
   }
-
   openmaxStandPort->bIsTransientToDisabled = OMX_TRUE;
 
   if(omx_base_component_Private->state!=OMX_StateLoaded && PORT_IS_POPULATED(openmaxStandPort)) {
-    if(!PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)){
+    if(!PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
       /*Signal Buffer Mgmt Thread if it's holding any buffer*/
       if(omx_base_component_Private->bMgmtSem->semval==0) {
       	tsem_up(omx_base_component_Private->bMgmtSem);
@@ -261,7 +260,7 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
       /*Wait till all buffers are freed*/
       tsem_down(openmaxStandPort->pAllocSem);
       tsem_reset(omx_base_component_Private->bMgmtSem);
-    }else {
+    } else {
       /*Since port is being disabled then remove buffers from the queue*/
       while(openmaxStandPort->pBufferQueue->nelem > 0) {
         dequeue(openmaxStandPort->pBufferQueue);
@@ -320,8 +319,7 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
       tsem_down(openmaxStandPort->pAllocSem);
       openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
     }
-  }
-  else { //Port Tunneled and supplier. Then allocate tunnel buffers
+  } else { //Port Tunneled and supplier. Then allocate tunnel buffers
     err= openmaxStandPort->Port_AllocateTunnelBuffer(openmaxStandPort, openmaxStandPort->sPortParam.nPortIndex, openmaxStandPort->sPortParam.nBufferSize);						
     CHECK_ERROR(err,"Allocating Tunnel Buffer ");
     openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
@@ -330,7 +328,6 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
         tsem_up(openmaxStandPort->pBufferSem);
         tsem_up(omx_base_component_Private->bMgmtSem);
       }
-      
     }
     DEBUG(DEB_LEV_PARAMS, "In %s Qelem=%d BSem=%d\n", __func__,openmaxStandPort->pBufferQueue->nelem,openmaxStandPort->pBufferSem->semval);
   }
@@ -511,7 +508,6 @@ OMX_ERRORTYPE base_port_FreeBuffer(
   if (omx_base_component_Private->transientState != OMX_TransStateIdleToLoaded) {
     if (!openmaxStandPort->bIsTransientToDisabled) {
       DEBUG(DEB_LEV_FULL_SEQ, "In %s: The port is not allowed to free the buffers\n", __func__);
-      //return OMX_ErrorIncorrectStateTransition;
       (*(omx_base_component_Private->callbacks->EventHandler))
         (omxComponent,
         omx_base_component_Private->callbackData,
@@ -616,7 +612,6 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
         openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
         openmaxStandPort->bIsFullOfBuffers = OMX_TRUE;
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s nPortIndex=%d\n",__func__, (int)nPortIndex);
-        //tsem_up(openmaxStandPort->pAllocSem);
       }
       queue(openmaxStandPort->pBufferQueue, openmaxStandPort->pInternalBufferStorage[i]);
     }
@@ -756,9 +751,7 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
     return OMX_ErrorIncorrectStateOperation;
   }
   return OMX_ErrorNone;
-	
 }
-
 
 /**
  * Returns Input/Output Buffer to the IL client or Tunneled Component
@@ -825,8 +818,7 @@ OMX_ERRORTYPE base_port_ReturnBufferFunction(omx_base_PortType* openmaxStandPort
 }
 
 
-OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPort,OMX_IN  OMX_HANDLETYPE hTunneledComp,OMX_IN  OMX_U32 nTunneledPort,OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup)
-{
+OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPort,OMX_IN  OMX_HANDLETYPE hTunneledComp,OMX_IN  OMX_U32 nTunneledPort,OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_PARAM_PORTDEFINITIONTYPE param;
   OMX_PARAM_BUFFERSUPPLIERTYPE pSupplier;
@@ -843,6 +835,7 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
   if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
     /* Get Port Definition of the Tunnelled Component*/
     param.nPortIndex=nTunneledPort;
+    setHeader(&param, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     err = OMX_GetParameter(hTunneledComp, OMX_IndexParamPortDefinition, &param);
     /// \todo insert here a detailed comparison with the OMX_AUDIO_PORTDEFINITIONTYPE
     if (err != OMX_ErrorNone) {
@@ -850,35 +843,29 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
       // compatibility not reached
       return OMX_ErrorPortsNotCompatible;
     }
-
     openmaxStandPort->nNumTunnelBuffer=param.nBufferCountMin;
-
     if(param.eDomain!=openmaxStandPort->sPortParam.eDomain) {
       return OMX_ErrorPortsNotCompatible;
     }
-
     if(param.eDomain==OMX_PortDomainAudio) {
       if(param.format.audio.eEncoding == OMX_AUDIO_CodingMax) {
         return OMX_ErrorPortsNotCompatible;
       }
-    }
-    else if(param.eDomain==OMX_PortDomainVideo) {
+    } else if(param.eDomain==OMX_PortDomainVideo) {
       if(param.format.video.eCompressionFormat == OMX_VIDEO_CodingMax) {
         return OMX_ErrorPortsNotCompatible;
       }
     }
 
-
-
     /* Get Buffer Supplier type of the Tunnelled Component*/
     pSupplier.nPortIndex=nTunneledPort;
+    setHeader(&pSupplier, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
     err = OMX_GetParameter(hTunneledComp, OMX_IndexParamCompBufferSupplier, &pSupplier);
     if (err != OMX_ErrorNone) {
       // compatibility not reached
       DEBUG(DEB_LEV_ERR,"In %s Tunneled Buffer Supplier error=0x%08x Line=%d\n",__func__,err,__LINE__);
       return OMX_ErrorPortsNotCompatible;
-    }
-    else {
+    } else {
       DEBUG(DEB_LEV_FULL_SEQ,"Tunneled Port eBufferSupplier=%x\n",pSupplier.eBufferSupplier);
     }
 
@@ -914,12 +901,13 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
       openmaxStandPort->nTunnelFlags=0;
       return OMX_ErrorPortsNotCompatible;
     }
-  } else  {
+  } else {
     // output port
     // all the consistency checks are under other component responsibility
 
     /* Get Port Definition of the Tunnelled Component*/
     param.nPortIndex=nTunneledPort;
+    setHeader(&param, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     err = OMX_GetParameter(hTunneledComp, OMX_IndexParamPortDefinition, &param);
     if (err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"In %s Tunneled Port Definition error=0x%08x Line=%d\n",__func__,err,__LINE__);
@@ -934,8 +922,7 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
       if(param.format.audio.eEncoding == OMX_AUDIO_CodingMax) {
         return OMX_ErrorPortsNotCompatible;
       }
-    }
-    else if(param.eDomain==OMX_PortDomainVideo) {
+    } else if(param.eDomain==OMX_PortDomainVideo) {
       if(param.format.video.eCompressionFormat == OMX_VIDEO_CodingMax) {
         return OMX_ErrorPortsNotCompatible;
       }

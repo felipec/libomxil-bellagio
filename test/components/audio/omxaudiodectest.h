@@ -24,8 +24,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-10 13:09:26 +0200 (Thu, 10 May 2007) $
-	Revision $Rev: 844 $
+	$Date: 2007-06-05 06:20:07 +0200 (Tue, 05 Jun 2007) $
+	Revision $Rev: 918 $
 	Author $Author: pankaj_sen $
 */
 
@@ -34,15 +34,9 @@
 
 #include <OMX_Core.h>
 #include <OMX_Types.h>
-
 #include <pthread.h>
 #include <sys/stat.h>
-
 #include "tsemaphore.h"
-
-//#include <ffmpeg/avcodec.h>
-//#include <ffmpeg/avformat.h>
-
 #include <user_debug_levels.h>
 
 typedef struct appPrivateType{
@@ -62,7 +56,7 @@ typedef struct appPrivateType{
 
 /** Specification version*/
 #define VERSIONMAJOR    1
-#define VERSIONMINOR    0
+#define VERSIONMINOR    1
 #define VERSIONREVISION 0
 #define VERSIONSTEP     0
 

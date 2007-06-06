@@ -22,9 +22,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-18 07:23:35 +0200 (Fri, 18 May 2007) $
-	Revision $Rev: 863 $
-	Author $Author: pankaj_sen $
+	$Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
+	Revision $Rev: 924 $
+	Author $Author: giulio_urlini $
 
 */
 
@@ -100,7 +100,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
         __func__,inBufExchanged,isInputBufferNeeded,outBufExchanged,isOutputBufferNeeded,pInputSem->semval,pOutputSem->semval);
 
-      if(isOutputBufferNeeded==OMX_FALSE) {
+      if(isOutputBufferNeeded==OMX_FALSE && PORT_IS_BEING_FLUSHED(pOutPort)) {
         pOutPort->ReturnBufferFunction(pOutPort,pOutputBuffer);
         outBufExchanged--;
         pOutputBuffer=NULL;
@@ -108,7 +108,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
         DEBUG(DEB_LEV_FULL_SEQ, "Ports are flushing,so returning output buffer\n");
       }
 
-      if(isInputBufferNeeded==OMX_FALSE) {
+      if(isInputBufferNeeded==OMX_FALSE && PORT_IS_BEING_FLUSHED(pInPort)) {
         pInPort->ReturnBufferFunction(pInPort,pInputBuffer);
         inBufExchanged--;
         pInputBuffer=NULL;
@@ -157,7 +157,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       isInputBufferNeeded=OMX_FALSE;
       pInputBuffer = dequeue(pInputQueue);
       if(pInputBuffer == NULL){
-        DEBUG(DEB_LEV_ERR, "What the hell!! had NULL input buffer!!\n");
+        DEBUG(DEB_LEV_ERR, "Had NULL input buffer!!\n");
         break;
       }
     }
@@ -168,7 +168,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       isOutputBufferNeeded=OMX_FALSE;
       pOutputBuffer = dequeue(pOutputQueue);
       if(pOutputBuffer == NULL){
-        DEBUG(DEB_LEV_ERR, "What the hell!! had NULL output buffer!! op is=%d,iq=%d\n",pOutputSem->semval,pOutputQueue->nelem);
+        DEBUG(DEB_LEV_ERR, "Had NULL output buffer!! op is=%d,iq=%d\n",pOutputSem->semval,pOutputQueue->nelem);
         break;
       }
     }
@@ -210,15 +210,14 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
 
       if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen != 0) {
         (*(omx_base_filter_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer, pOutputBuffer);
-      }
-      else {
+      } else {
         /*It no buffer management call back the explicitly consume input buffer*/
         pInputBuffer->nFilledLen = 0;
       }
       /*Input Buffer has been completely consumed. So, get new input buffer*/
-      if(pInputBuffer->nFilledLen==0)
+      if(pInputBuffer->nFilledLen==0) {
         isInputBufferNeeded = OMX_TRUE;
-
+      }
       if(omx_base_filter_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
         /*Waiting at paused state*/
         tsem_wait(omx_base_component_Private->bStateSem);
@@ -246,7 +245,6 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       inBufExchanged--;
       pInputBuffer=NULL;
     }
-
   }
   DEBUG(DEB_LEV_SIMPLE_SEQ,"Exiting Buffer Management Thread\n");
   return NULL;

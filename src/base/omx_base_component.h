@@ -52,8 +52,11 @@
 #define CHECK_ERROR(err,str) if(err!=OMX_ErrorNone) { \
                                 DEBUG(DEB_LEV_ERR, "In %s %s Error=%x\n",__func__,str,err); \
                                 return err; \
-                              } \
+                              } 
 
+#define CHECK_HEADER(err,param,type)  if ((err = checkHeader(param, sizeof(type))) != OMX_ErrorNone) { \
+                                        return err; \
+                                      }
 
 typedef struct OMX_VENDOR_EXTRADATATYPE  {
   OMX_U32 nPortIndex;
@@ -69,8 +72,7 @@ typedef enum OMX_INDEXVENDORTYPE {
 } OMX_INDEXVENDORTYPE;
 
 /** This enum defines the transition states of the Component*/
-typedef enum OMX_TRANS_STATETYPE
-{
+typedef enum OMX_TRANS_STATETYPE {
     OMX_TransStateInvalid,
     OMX_TransStateLoadedToIdle,      
     OMX_TransStateIdleToExecuting,        
@@ -93,7 +95,7 @@ typedef enum INTERNAL_MESSAGE_TYPE {
  * This structure contains a generic openmax request (from send command).
  * It is processed by the internal message handler thread
  */
-typedef struct internalRequestMessageType{
+typedef struct internalRequestMessageType {
   int messageType; /**< the flag that specifies if the message is a command, a warning or an error */
   int messageParam; /**< the second field of the message. Its use is the same as specified for the command in OpenMAX spec */
   OMX_PTR pCmdData; /**< This pointer could contain some proprietary data not covered by the standard */
@@ -158,11 +160,11 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
 
 /** @brief the base destructor for ST openmax components
  * 
- * This function is called by the omx core when the component
- * is disposed by the IL client with a call to FreeHandle().
+ * This function is called by the standard function ComponentDeInit()
+ * that is called by the IL core during the execution of the  FreeHandle()
  * 
  * @param openmaxStandComp the ST openmax component to be disposed
-	*/
+ */
 OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 /** Changes the state of a component taking proper actions depending on
@@ -391,4 +393,4 @@ OMX_ERRORTYPE omx_base_component_ComponentTunnelRequest(
             OMX_IN  OMX_U32 nTunneledPort,
             OMX_INOUT  OMX_TUNNELSETUPTYPE* pTunnelSetup);
  
-#endif // _OMX_BASE_COMPONENT_H_
+#endif

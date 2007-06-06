@@ -25,8 +25,8 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-05-22 14:43:04 +0200 (Tue, 22 May 2007) $
-	Revision $Rev: 875 $
+	$Date: 2007-06-04 13:28:17 +0200 (Mon, 04 Jun 2007) $
+	Revision $Rev: 914 $
 	Author $Author: giulio_urlini $
 
 */
@@ -49,7 +49,6 @@
  */
 int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   
-  int i;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
 
   if (stComponents == NULL) {
@@ -70,7 +69,6 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[0]->name, "OMX.st.audio_filereader");
   stComponents[0]->name_specific_length = 0; 
   stComponents[0]->constructor = omx_filereader_component_Constructor;	
-  stComponents[0]->destructor = omx_filereader_component_Destructor;	
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
   return 1;

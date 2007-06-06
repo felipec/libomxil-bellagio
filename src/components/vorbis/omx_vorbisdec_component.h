@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-18 13:49:36 +0200 (Fri, 18 May 2007) $
-  Revision $Rev: 864 $
-  Author $Author: pankaj_sen $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
+  Author $Author: giulio_urlini $
 
 */
 
@@ -94,11 +94,6 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(
 	OMX_BUFFERHEADERTYPE* inputbuffer,
 	OMX_BUFFERHEADERTYPE* outputbuffer);
 
-OMX_ERRORTYPE omx_vorbisdec_component_SetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_IN  OMX_PTR pComponentConfigStructure);
-
 OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
 	OMX_IN  OMX_HANDLETYPE hComponent,
 	OMX_IN  OMX_INDEXTYPE nParamIndex,
@@ -109,15 +104,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
 	OMX_IN  OMX_INDEXTYPE nParamIndex,
 	OMX_IN  OMX_PTR ComponentParameterStructure);
 
-OMX_ERRORTYPE omx_vorbisdec_component_GetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_INOUT OMX_PTR pComponentConfigStructure);
-
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_vorbisdec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
-
-void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
+void omx_vorbisdec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 
 
-#endif //_OMX_VORBISDEC_COMPONENT_H_
+#endif

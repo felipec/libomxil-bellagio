@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 
 */
@@ -31,28 +31,23 @@
 #include <omx_maddec_component.h>
 #include <id3tag.h>
 
+#define MIN(X,Y)    ((X) < (Y) ?  (X) : (Y))
 
+/** Maximum Number of Audio Mad Decoder Component Instance*/
 #define MAX_COMPONENT_MADDEC 4
-/** Maximum Number of Audio Component Instance*/
-OMX_U32 noMadDecInstance=0;
 
+/** a counter of existing instances of mad decoder */
+OMX_U32 noMadDecInstance = 0;
 
 /** This is used when the temporary buffer takes data of this length specified
   from input buffer before its processing */
 #define TEMP_BUF_COPY_SPACE 1024
 
 /** This is the temporary buffer size used for last portion of input buffer storage */
-#define TEMP_BUFFER_SIZE 2048
-
-/** private function prototype */
-static inline signed int scale(mad_fixed_t sample);
+#define TEMP_BUFFER_SIZE DEFAULT_IN_BUFFER_SIZE * 2
 
 /** global variable declaration */
-static int input_buffer_still_processed = 0;
-static int consumed_length;
-static int total_consumed_length_before;
-static int total_consumed_length_after;
-
+unsigned char *temp_input_buffer = NULL;
 
 /** this function initializates the mad framework, and opens an mad decoder of type specified by IL client */ 
 OMX_ERRORTYPE omx_maddec_component_madLibInit(omx_maddec_component_PrivateType* omx_maddec_component_Private) {
@@ -60,7 +55,7 @@ OMX_ERRORTYPE omx_maddec_component_madLibInit(omx_maddec_component_PrivateType* 
   mad_stream_init (omx_maddec_component_Private->stream);
   mad_frame_init (omx_maddec_component_Private->frame);
   mad_synth_init (omx_maddec_component_Private->synth);
-  tsem_up(omx_maddec_component_Private->madDecSyncSem);
+  tsem_up (omx_maddec_component_Private->madDecSyncSem);
   return OMX_ErrorNone;	
 }
 
@@ -90,19 +85,20 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
       return OMX_ErrorInsufficientResources;
     }
   }	else {
-    DEBUG(DEB_LEV_FUNCTION_NAME,"In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
+    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", 
+              __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 	
   omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
 
   /** we could create our own port structures here
-  * fixme maybe the base class could use a "port factory" function pointer?	
-  */
+    * fixme maybe the base class could use a "port factory" function pointer?	
+    */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
   /** here we can override whatever defaults the base_component constructor set
-  * e.g. we can override the function pointers in the private struct  
-  */
+    * e.g. we can override the function pointers in the private struct  
+    */
   omx_maddec_component_Private = (omx_maddec_component_PrivateType *)openmaxStandComp->pComponentPrivate;
   strcpy(omx_maddec_component_Private->name,cComponentName);
 
@@ -116,8 +112,8 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
     }
     for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
       /** this is the important thing separating this from the base class; size of the struct is for derived class port type
-      * this could be refactored as a smarter factory function instead?
-      */
+        * this could be refactored as a smarter factory function instead?
+        */
       omx_maddec_component_Private->ports[i] = calloc(1, sizeof(omx_maddec_component_PortType));
       if (!omx_maddec_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -130,8 +126,8 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
 
   /** Domain specific section for the ports. */	
   /** first we set the parameter common to both formats
-  * parameters related to input port which does not depend upon input audio format
-  */
+    * parameters related to input port which does not depend upon input audio format
+    */
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
@@ -164,7 +160,7 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   }
 
   /** setting of internal port parameters related to audio format */
-  SetInternalParameters(openmaxStandComp);
+  omx_maddec_component_SetInternalParameters(openmaxStandComp);
 
   outPort = (omx_maddec_component_PortType *) omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   setHeader(&outPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -179,24 +175,21 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   omx_maddec_component_Private->pAudioPcmMode.eNumData = OMX_NumericalDataSigned;
   omx_maddec_component_Private->pAudioPcmMode.eEndian = OMX_EndianLittle;
   omx_maddec_component_Private->pAudioPcmMode.bInterleaved = OMX_TRUE;
-  omx_maddec_component_Private->pAudioPcmMode.nBitPerSample = 32;
+  omx_maddec_component_Private->pAudioPcmMode.nBitPerSample = 16;
   omx_maddec_component_Private->pAudioPcmMode.nSamplingRate = 44100;
   omx_maddec_component_Private->pAudioPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
   omx_maddec_component_Private->pAudioPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
   omx_maddec_component_Private->pAudioPcmMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
 
   /** general configuration irrespective of any audio formats
-  *  setting values of other fields of omx_maddec_component_Private structure	
-  */ 
+    *  setting values of other fields of omx_maddec_component_Private structure	
+    */ 
   omx_maddec_component_Private->maddecReady = OMX_FALSE;
   omx_maddec_component_Private->BufferMgmtCallback = omx_maddec_component_BufferMgmtCallback;
   omx_maddec_component_Private->messageHandler = omx_mad_decoder_MessageHandler;
   omx_maddec_component_Private->destructor = omx_maddec_component_Destructor;
-  //omx_maddec_component_Private->DomainCheck = &omx_maddec_component_DomainCheck;
   openmaxStandComp->SetParameter = omx_maddec_component_SetParameter;
   openmaxStandComp->GetParameter = omx_maddec_component_GetParameter;
-  //openmaxStandComp->ComponentRoleEnum = omx_maddec_component_ComponentRoleEnum;
-
 
   /** initialising mad structures */
   omx_maddec_component_Private->stream = malloc (sizeof(struct mad_stream));
@@ -206,14 +199,14 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   /** increamenting component counter and checking against max allowed components */
   noMadDecInstance++;
 
-  if(noMadDecInstance>MAX_COMPONENT_MADDEC)	{
+  if(noMadDecInstance > MAX_COMPONENT_MADDEC)	{
     return OMX_ErrorInsufficientResources;
   }
   return err;	
 }
 
 /** this function sets some inetrnal parameters to the input port depending upon the input audio format */
-void SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
+void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   omx_maddec_component_PrivateType* omx_maddec_component_Private;
   omx_maddec_component_PortType *pPort;;
@@ -290,8 +283,12 @@ OMX_ERRORTYPE omx_maddec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)	{
 
   /** initializing omx_maddec_component_Private->temporary_buffer with 2k memory space*/
   omx_maddec_component_Private->temporary_buffer = (OMX_BUFFERHEADERTYPE*) malloc(sizeof(OMX_BUFFERHEADERTYPE));
-  omx_maddec_component_Private->temporary_buffer->pBuffer = (OMX_U8*) malloc(TEMP_BUFFER_SIZE);
-  memset(omx_maddec_component_Private->temporary_buffer->pBuffer, 0, TEMP_BUFFER_SIZE);
+  omx_maddec_component_Private->temporary_buffer->pBuffer = (OMX_U8*) malloc(DEFAULT_IN_BUFFER_SIZE*2);
+  memset(omx_maddec_component_Private->temporary_buffer->pBuffer, 0, DEFAULT_IN_BUFFER_SIZE*2);
+
+  temp_input_buffer = omx_maddec_component_Private->temporary_buffer->pBuffer;
+  omx_maddec_component_Private->temporary_buffer->nFilledLen=0;
+  omx_maddec_component_Private->temporary_buffer->nOffset=0;
 
   omx_maddec_component_Private->isFirstBuffer = 1;
   omx_maddec_component_Private->isNewBuffer = 1;
@@ -316,68 +313,36 @@ OMX_ERRORTYPE omx_maddec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_maddec_component_Private->temporary_buffer->pBuffer = NULL;
   free(omx_maddec_component_Private->temporary_buffer);
   omx_maddec_component_Private->temporary_buffer = NULL;
+  
   return err;
-	
 }
 
-/** Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_maddec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef)	{
-
-  if(pDef.eDomain != OMX_PortDomainAudio)	{
-    return OMX_ErrorPortsNotCompatible;
-  }	else if(pDef.format.audio.eEncoding == OMX_AUDIO_CodingMax)	{
-    return OMX_ErrorPortsNotCompatible;
-  }
-  return OMX_ErrorNone;
-}
-
-/** This function generates the mad output from decoded data 
-  * @param outputbuffer is the output buffer on which the output pcm content will be written
+/** The following utility routine performs simple rounding, clipping, and
+  * scaling of MAD's high-resolution samples down to 16 bits. It does not
+  * perform any dithering or noise shaping, which would be recommended to
+  * obtain any exceptional audio quality. 
   */
-void generate_output(omx_maddec_component_PrivateType* omx_maddec_component_Private,OMX_BUFFERHEADERTYPE* outputbuffer)	{
+static inline int scale_int (mad_fixed_t sample) {
 
-  mad_fixed_t const *left_ch, *right_ch;
-  OMX_U8* outputCurrBuffer;
-  int count;
-  signed int scale_result;
+  #if MAD_F_FRACBITS < 28
+    /* round */
+    sample += (1L << (28 - MAD_F_FRACBITS - 1));
+  #endif
 
-  mad_synth_frame(omx_maddec_component_Private->synth, omx_maddec_component_Private->frame);
-  left_ch = omx_maddec_component_Private->synth->pcm.samples[0];
-  right_ch = omx_maddec_component_Private->synth->pcm.samples[1];
+  /* clip */
+  if (sample >= MAD_F_ONE)
+    sample = MAD_F_ONE - 1;
+  else if (sample < -MAD_F_ONE)
+    sample = -MAD_F_ONE;
 
-  outputCurrBuffer = (OMX_U8*)outputbuffer->pBuffer;	
-  if(omx_maddec_component_Private->synth->pcm.channels == 1) {  
-    count = omx_maddec_component_Private->synth->pcm.length;  		
-    outputbuffer->nFilledLen += count*2;
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "no of pcm channel : 1  output length increament : %d ",count*2);
-    while (count--) {            
-      scale_result = scale (*left_ch++);
-      *outputCurrBuffer = (scale_result >> 0) & 0xff;
-      outputCurrBuffer++; 
-      *outputCurrBuffer = (scale_result >> 8) & 0xff;
-      outputCurrBuffer++; 
-    }		
-  } else {   
-    count = omx_maddec_component_Private->synth->pcm.length; 
-    outputbuffer->nFilledLen += count*4;
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "no of pcm channel : 2  output length increament : %d ",count*4);
-    while (count--) {
-      scale_result = scale (*left_ch++);
-      *outputCurrBuffer = (scale_result >> 0) & 0xff;
-      outputCurrBuffer++; 
-      *outputCurrBuffer = (scale_result >> 8) & 0xff;
-      outputCurrBuffer++; 
+  #if MAD_F_FRACBITS < 28
+    /* quantize */
+    sample >>= (28 - MAD_F_FRACBITS);
+  #endif
 
-      scale_result = scale (*right_ch++);
-      *outputCurrBuffer = (scale_result >> 0) & 0xff;
-      outputCurrBuffer++; 
-      *outputCurrBuffer = (scale_result >> 8) & 0xff;
-      outputCurrBuffer++; 
-    } 		
-  }
-
+  /* convert from 29 bits to 32 bits */
+  return (int) (sample << 3);
 }
-
 
 /** This function is the buffer management callback function for mp3 decoding
   * is used to process the input buffer and provide one output buffer 
@@ -385,227 +350,207 @@ void generate_output(omx_maddec_component_PrivateType* omx_maddec_component_Priv
   * @param outputbuffer is the output buffer on which the output pcm content will be written
   */
 void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer) {
-
   omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;	
-  signed long tagsize;
-  int decode_result;
-  OMX_U32 nchannels,srate;
-
-  static int bProcTempBuffer = 0;
-
+  OMX_U32 nchannels;
+  int count;
+  int consumed = 0;
+  int nsamples;
+  unsigned char const *before_sync, *after_sync;
+  mad_fixed_t const *left_ch, *right_ch;
+  unsigned short *outdata;
+  int tocopy;
+ 
   outputbuffer->nFilledLen = 0;
   outputbuffer->nOffset=0;
 
-  /** case where 1) new input buffer has come -- not the first buffer or 2) if the temporary buffer is to be processed
-  * this temporary buffer consists of residual portion of prev buffer 
-  */
-  if((omx_maddec_component_Private->isNewBuffer && !omx_maddec_component_Private->isFirstBuffer) || bProcTempBuffer == 1 )	{
+  if(omx_maddec_component_Private->isNewBuffer==1 || omx_maddec_component_Private->need_mad_stream == 1) {
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s New Buffer len=%d\n", __func__,(int)inputbuffer->nFilledLen);
 
-    if(bProcTempBuffer == 0 && omx_maddec_component_Private->isNewBuffer) {
+    /** first copy TEMP_BUF_COPY_SPACE bytes of new input buffer to add with temporary buffer content  */
+    tocopy = MIN (MAD_BUFFER_MDLEN, MIN (inputbuffer->nFilledLen,
+              MAD_BUFFER_MDLEN * 3 - omx_maddec_component_Private->temporary_buffer->nFilledLen));
 
-      /** first copy TEMP_BUF_COPY_SPACE bytes of new input buffer to add with temporary buffer content  */
-      memcpy(omx_maddec_component_Private->temporary_buffer->pBuffer+omx_maddec_component_Private->temporary_buffer->nFilledLen, inputbuffer->pBuffer, TEMP_BUF_COPY_SPACE);
-      omx_maddec_component_Private->temporary_buffer->nFilledLen += TEMP_BUF_COPY_SPACE;
-      inputbuffer->nFilledLen -= TEMP_BUF_COPY_SPACE;
-      inputbuffer->nOffset += TEMP_BUF_COPY_SPACE;
+    if (tocopy == 0) {
+      DEBUG(DEB_LEV_ERR,"mad claims to need more data than %u bytes, we don't have that much", MAD_BUFFER_MDLEN * 3);
+      inputbuffer->nFilledLen=0;
+      omx_maddec_component_Private->isNewBuffer = 1;
+      return;
+    }
 
-      /** now this temp buffer contains residual portion of prev buffer plus the TEMP_BUF_COPY_SPACE bytes of new input buffer
-      * it is to be processed - so set the corersponding integer variable bProcTempBuffer to 1 
-      */
-      bProcTempBuffer = 1;
+    if(omx_maddec_component_Private->need_mad_stream == 1) {
+      DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s memmove temp buf len=%d\n", __func__,(int)omx_maddec_component_Private->temporary_buffer->nFilledLen);
+      memmove (temp_input_buffer, omx_maddec_component_Private->temporary_buffer->pBuffer, omx_maddec_component_Private->temporary_buffer->nFilledLen);
+      omx_maddec_component_Private->temporary_buffer->pBuffer = temp_input_buffer;
+      omx_maddec_component_Private->need_mad_stream = 0;
+      memcpy(omx_maddec_component_Private->temporary_buffer->pBuffer+omx_maddec_component_Private->temporary_buffer->nFilledLen, inputbuffer->pBuffer + inputbuffer->nOffset, tocopy);
+      omx_maddec_component_Private->temporary_buffer->nFilledLen += tocopy;
+      inputbuffer->nFilledLen -= tocopy;
+      inputbuffer->nOffset += tocopy;
 
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "Input buffer filled len : %d temp buf len = %d", (int)inputbuffer->nFilledLen, (int)omx_maddec_component_Private->temporary_buffer->nFilledLen);			
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "Input buffer filled len : %d temp buf len = %d tocopy=%d\n", (int)inputbuffer->nFilledLen, (int)omx_maddec_component_Private->temporary_buffer->nFilledLen,tocopy);
       omx_maddec_component_Private->isNewBuffer = 0;
 
       mad_stream_buffer(omx_maddec_component_Private->stream, omx_maddec_component_Private->temporary_buffer->pBuffer, omx_maddec_component_Private->temporary_buffer->nFilledLen);
-
-      total_consumed_length_before = 0;
-      total_consumed_length_after  = 0;
-      consumed_length = 0;
     }
-
-    decode_result = mad_frame_decode(omx_maddec_component_Private->frame, omx_maddec_component_Private->stream);
-						
-    if(decode_result == -1) {
-      if (!MAD_RECOVERABLE(omx_maddec_component_Private->stream->error))	{
-        if(omx_maddec_component_Private->stream->error == MAD_ERROR_BUFLEN)	{
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "Stream error bufflen residual buffer case ");
-        }	else if(omx_maddec_component_Private->stream->error == MAD_ERROR_BUFPTR)	{
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "Stream error buffer pointer residual buffer case ");
-        }	else if(omx_maddec_component_Private->stream->error == MAD_ERROR_NOMEM)	{
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "Stream error no memory residual buffer case ");
-        }	else	{
-          DEBUG(DEB_LEV_ERR, "Unknown non recoverable error residual buffer case ");
-        }
-      } else if(omx_maddec_component_Private->stream->error == MAD_ERROR_LOSTSYNC)	{
-        tagsize = id3_tag_query(omx_maddec_component_Private->stream->this_frame, omx_maddec_component_Private->stream->bufend - omx_maddec_component_Private->stream->this_frame);
-        mad_stream_skip(omx_maddec_component_Private->stream, tagsize);
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "Decoding error LOSTSYNC - residual buffer case -  at frame %u - skipping %u bytes", (int)omx_maddec_component_Private->stream->this_frame, (int)tagsize);
-      } else {
-        generate_output(omx_maddec_component_Private,outputbuffer);
-      }
-    } else {
-      /** placing the decoded data onto output buffer */
-      generate_output(omx_maddec_component_Private,outputbuffer);
-    }
-
-
-    total_consumed_length_after = (omx_maddec_component_Private->stream->next_frame - omx_maddec_component_Private->stream->buffer);		
-    consumed_length = total_consumed_length_after - total_consumed_length_before;
-    total_consumed_length_before = total_consumed_length_after;				
-    omx_maddec_component_Private->temporary_buffer->nFilledLen -= consumed_length;
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"Temp buffer filled len : %d consumed length=%d", (int)omx_maddec_component_Private->temporary_buffer->nFilledLen, consumed_length);
-
-
-    if(omx_maddec_component_Private->temporary_buffer->nFilledLen <= consumed_length + 100)	{
-      /** Temporary buffer is fully processed */
-      bProcTempBuffer = 0;
-    }
-
-    if(omx_maddec_component_Private->temporary_buffer->nFilledLen != 0 && bProcTempBuffer == 0)	{
-      /** A bit portion is left in temporary buffer
-      * it is the content of new input buffer
-      * better to adjust the offset of new input buffer
-      */
-      inputbuffer->nOffset -= omx_maddec_component_Private->temporary_buffer->nFilledLen;
-      inputbuffer->nFilledLen += omx_maddec_component_Private->temporary_buffer->nFilledLen;
-      DEBUG(DEB_LEV_SIMPLE_SEQ,"Input buffer offset : %d ",(int)inputbuffer->nOffset);
-    }		
-
-    nchannels = MAD_NCHANNELS (&omx_maddec_component_Private->frame->header);
-
-#if MAD_VERSION_MINOR <= 12
-    srate = omx_maddec_component_Private->frame->header;
-#else
-    srate = omx_maddec_component_Private->frame->header.samplerate;
-#endif
-    if((omx_maddec_component_Private->pAudioPcmMode.nSamplingRate != omx_maddec_component_Private->frame->header.samplerate) ||
-      ( omx_maddec_component_Private->pAudioPcmMode.nChannels!=nchannels)) {
-      DEBUG(DEB_LEV_FULL_SEQ, "---->Sending Port Settings Change Event\n");
-      /* has mp3 dependency--requires modification */
-      //switch for different audio formats---parameter settings accordingly
-      switch(omx_maddec_component_Private->audio_coding_type)	{
-      case OMX_AUDIO_CodingMP3 :
-        /*Update Parameter which has changed from avCodecContext*/
-        /*pAudioMp3 is for input port Mp3 data*/
-        omx_maddec_component_Private->pAudioMp3.nChannels = nchannels;
-        omx_maddec_component_Private->pAudioMp3.nBitRate = omx_maddec_component_Private->frame->header.bitrate;
-        omx_maddec_component_Private->pAudioMp3.nSampleRate = omx_maddec_component_Private->frame->header.samplerate;
-        /*pAudioPcmMode is for output port PCM data*/
-        omx_maddec_component_Private->pAudioPcmMode.nChannels = nchannels;
-        omx_maddec_component_Private->pAudioPcmMode.nSamplingRate = 32;
-        omx_maddec_component_Private->pAudioPcmMode.nSamplingRate = omx_maddec_component_Private->frame->header.samplerate;
-        break;
-      default :
-        DEBUG(DEB_LEV_ERR, "Audio format other than mp3 & wma not supported\nCodec not found\n");
-        break;                       
-      }//end of switch
-      /*Send Port Settings changed call back*/
-      (*(omx_maddec_component_Private->callbacks->EventHandler))
-      (openmaxStandComp,
-      omx_maddec_component_Private->callbackData,
-      OMX_EventPortSettingsChanged, /* The command was completed */
-      0, 
-      1, /* This is the output port index */
-      NULL);
-    }
-  }	else {
-    /**  not new input buffer (except first buffer) */
-    if(omx_maddec_component_Private->isFirstBuffer)	{
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "This is the first input buffer");
-      omx_maddec_component_Private->isFirstBuffer = 0;
-      omx_maddec_component_Private->isNewBuffer = 0;
-    }
-    /** initialization  */
-    if(!input_buffer_still_processed) {
-      mad_stream_buffer(omx_maddec_component_Private->stream, (inputbuffer->pBuffer+inputbuffer->nOffset), inputbuffer->nFilledLen);		
-      total_consumed_length_before = 0;
-      total_consumed_length_after  = 0;
-      consumed_length = 0;	
-      DEBUG(DEB_LEV_SIMPLE_SEQ,"Inputbuffer filledlen : %i inputbuffer pointer : %x", (int)inputbuffer->nFilledLen, (int)(inputbuffer->pBuffer+inputbuffer->nOffset));
-    }
-
-    input_buffer_still_processed = 1;
-
-    decode_result = mad_frame_decode(omx_maddec_component_Private->frame, omx_maddec_component_Private->stream);
-    if(decode_result == -1) {
-      if (!MAD_RECOVERABLE(omx_maddec_component_Private->stream->error))	{
-        input_buffer_still_processed = 0;
-
-        if(omx_maddec_component_Private->stream->error == MAD_ERROR_BUFLEN)	{
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "stream error bufflen normal input buffer ");
-        }	else if(omx_maddec_component_Private->stream->error == MAD_ERROR_BUFPTR)	{
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "stream error buffer pointer normal input buffer ");
-        }	else if(omx_maddec_component_Private->stream->error == MAD_ERROR_NOMEM)	{
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "stream error no memory normal input buffer ");
-        }	else	{
-          DEBUG(DEB_LEV_ERR, "unknown non recoverable error normal input buffer ");
-        }
-      }	else if(omx_maddec_component_Private->stream->error == MAD_ERROR_LOSTSYNC)	{
-        tagsize = id3_tag_query(omx_maddec_component_Private->stream->this_frame, omx_maddec_component_Private->stream->bufend - omx_maddec_component_Private->stream->this_frame);
-        mad_stream_skip(omx_maddec_component_Private->stream, tagsize);
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "decoding error LOSTSYNC - normal buffer case - at frame %u - skipping %u bytes", (int)omx_maddec_component_Private->stream->this_frame, (int)tagsize);
-      }	else	{
-        generate_output(omx_maddec_component_Private, outputbuffer);
-      }
-    }	else 	{
-      generate_output(omx_maddec_component_Private, outputbuffer);
-    }
-
-    total_consumed_length_after = (omx_maddec_component_Private->stream->next_frame - omx_maddec_component_Private->stream->buffer);
-    consumed_length = total_consumed_length_after - total_consumed_length_before;
-    total_consumed_length_before = total_consumed_length_after;
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "consumed length : %d ", consumed_length);	
-    inputbuffer->nFilledLen -= consumed_length ;
-    inputbuffer->nOffset += consumed_length ;
-
-    if(inputbuffer->nFilledLen <= (consumed_length + 100) ){ 
-      input_buffer_still_processed = 0;
-    }
-    /** here almost whole input buffer is processed....only remaining few bytes are left. */
-    if(!input_buffer_still_processed) {
+    if(inputbuffer->nFilledLen == 0) {
       omx_maddec_component_Private->isNewBuffer = 1;
-      /** copy the remaining portion of input buffer to the omx_maddec_component_Private->temporary_buffer allocated  */
-      // TODO fix this check. It is only a patch for some SEG FAULT
-      if (((int)inputbuffer->nFilledLen) > 0) {
-        memcpy(omx_maddec_component_Private->temporary_buffer->pBuffer, inputbuffer->pBuffer+inputbuffer->nOffset, inputbuffer->nFilledLen);
-        omx_maddec_component_Private->temporary_buffer->nFilledLen = inputbuffer->nFilledLen;
-        }
-      DEBUG(DEB_LEV_SIMPLE_SEQ,"temp buffer filled len : %d ", (int)omx_maddec_component_Private->temporary_buffer->nFilledLen);
-      omx_maddec_component_Private->temporary_buffer->nOffset = 0;
-      inputbuffer->nFilledLen = 0;
-      inputbuffer->nOffset = 0;
+      inputbuffer->nOffset=0;
     }
   }
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "--> --> One output buffer %x len=%d is full returning", (int)outputbuffer->pBuffer, (int)outputbuffer->nFilledLen);
-}
 
-/** this function sets the configuration structure */
-OMX_ERRORTYPE omx_maddec_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure) {
-
-  switch (nIndex) {
-  default: // delegate to superclass
-    return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
+  /* added separate header decoding to catch errors earlier, also fixes
+   * some weird decoding errors... */
+  DEBUG(DEB_LEV_SIMPLE_SEQ,"decoding the header now\n");
+  
+  if (mad_header_decode (&(omx_maddec_component_Private->frame->header), omx_maddec_component_Private->stream) == -1) {
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"mad_header_decode had an error: %s\n",
+        mad_stream_errorstr (omx_maddec_component_Private->stream));
   }
-  return OMX_ErrorNone;
-}
 
-/** this function gets the configuartion structure */
-OMX_ERRORTYPE omx_maddec_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure)	{
+  DEBUG(DEB_LEV_SIMPLE_SEQ,"decoding one frame now\n");
 
-  switch (nIndex) {
-  default: // delegate to superclass
-    return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
+  /** this flag setting disables the CRC check */
+  omx_maddec_component_Private->frame->header.flags &= ~MAD_FLAG_PROTECTION;
+
+  if (mad_frame_decode (omx_maddec_component_Private->frame, omx_maddec_component_Private->stream) == -1) {
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"got error %d\n", omx_maddec_component_Private->stream->error);
+
+    /* not enough data, need to wait for next buffer? */
+    if (omx_maddec_component_Private->stream->error == MAD_ERROR_BUFLEN) {
+      if (omx_maddec_component_Private->stream->next_frame == omx_maddec_component_Private->temporary_buffer->pBuffer) {
+        DEBUG(DEB_LEV_SIMPLE_SEQ,"not enough data in tempbuffer  breaking to get more\n");
+        omx_maddec_component_Private->need_mad_stream=1;
+        return;
+      } else {
+        DEBUG(DEB_LEV_SIMPLE_SEQ,"sync error, flushing unneeded data\n");
+        /* figure out how many bytes mad consumed */
+        /** if consumed is already set, it's from the resync higher up, so
+          * we need to use that value instead.  Otherwise, recalculate from
+          * mad's consumption */
+        if (consumed == 0) {
+          consumed = omx_maddec_component_Private->stream->next_frame - omx_maddec_component_Private->temporary_buffer->pBuffer;
+        }
+        DEBUG(DEB_LEV_SIMPLE_SEQ,"consumed %d bytes\n", consumed);
+        /* move out pointer to where mad want the next data */
+        omx_maddec_component_Private->temporary_buffer->pBuffer += consumed;
+        omx_maddec_component_Private->temporary_buffer->nFilledLen -= consumed;
+        return;
+      }
+    }
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"mad_frame_decode had an error: %s\n",
+        mad_stream_errorstr (omx_maddec_component_Private->stream));
+    if (!MAD_RECOVERABLE (omx_maddec_component_Private->stream->error)) {
+     DEBUG(DEB_LEV_ERR,"non recoverable error");
+    } else if (omx_maddec_component_Private->stream->error == MAD_ERROR_LOSTSYNC) {
+      /* lost sync, force a resync */
+      signed long tagsize;
+      tagsize = id3_tag_query(omx_maddec_component_Private->stream->this_frame, omx_maddec_component_Private->stream->bufend - omx_maddec_component_Private->stream->this_frame);
+      mad_stream_skip(omx_maddec_component_Private->stream, tagsize);
+      DEBUG(DEB_LEV_SIMPLE_SEQ,"recoverable lost sync error\n");
+    }
+
+    mad_frame_mute (omx_maddec_component_Private->frame);
+    mad_synth_mute (omx_maddec_component_Private->synth);
+    before_sync = omx_maddec_component_Private->stream->ptr.byte;
+    if (mad_stream_sync (omx_maddec_component_Private->stream) != 0)
+      DEBUG(DEB_LEV_ERR,"mad_stream_sync failed\n");
+    after_sync = omx_maddec_component_Private->stream->ptr.byte;
+    /* a succesful resync should make us drop bytes as consumed, so
+       calculate from the byte pointers before and after resync */
+    consumed = after_sync - before_sync;
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"resynchronization consumes %d bytes\n", consumed);
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"synced to data: 0x%0x 0x%0x\n", *omx_maddec_component_Private->stream->ptr.byte,
+        *(omx_maddec_component_Private->stream->ptr.byte + 1));
+
+    mad_stream_sync (omx_maddec_component_Private->stream);
+    /* recoverable errors pass */
+    /* figure out how many bytes mad consumed */
+    /** if consumed is already set, it's from the resync higher up, so
+      * we need to use that value instead.  Otherwise, recalculate from
+      * mad's consumption */
+    if (consumed == 0) {
+      consumed = omx_maddec_component_Private->stream->next_frame - omx_maddec_component_Private->temporary_buffer->pBuffer;
+    }
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"consumed %d bytes\n", consumed);
+    /* move out pointer to where mad want the next data */
+    omx_maddec_component_Private->temporary_buffer->pBuffer += consumed;
+    omx_maddec_component_Private->temporary_buffer->nFilledLen -= consumed;
+    return;
+  } 
+
+  /* if we're not resyncing/in error, check if caps need to be set again */
+  nsamples = MAD_NSBSAMPLES (&omx_maddec_component_Private->frame->header) *
+      (omx_maddec_component_Private->stream->options & MAD_OPTION_HALFSAMPLERATE ? 16 : 32);
+  nchannels = MAD_NCHANNELS (&omx_maddec_component_Private->frame->header);
+
+  if((omx_maddec_component_Private->pAudioPcmMode.nSamplingRate != omx_maddec_component_Private->frame->header.samplerate) ||
+    ( omx_maddec_component_Private->pAudioPcmMode.nChannels!=nchannels)) {
+    DEBUG(DEB_LEV_FULL_SEQ, "---->Sending Port Settings Change Event\n");
+
+    switch(omx_maddec_component_Private->audio_coding_type)	{
+    case OMX_AUDIO_CodingMP3 :
+      /*Update Parameter which has changed from avCodecContext*/
+      /*pAudioMp3 is for input port Mp3 data*/
+      omx_maddec_component_Private->pAudioMp3.nChannels = nchannels;
+      omx_maddec_component_Private->pAudioMp3.nBitRate = omx_maddec_component_Private->frame->header.bitrate;
+      omx_maddec_component_Private->pAudioMp3.nSampleRate = omx_maddec_component_Private->frame->header.samplerate;
+      /*pAudioPcmMode is for output port PCM data*/
+      omx_maddec_component_Private->pAudioPcmMode.nChannels = nchannels;
+      omx_maddec_component_Private->pAudioPcmMode.nSamplingRate = 32;
+      omx_maddec_component_Private->pAudioPcmMode.nSamplingRate = omx_maddec_component_Private->frame->header.samplerate;
+      break;
+    default :
+      DEBUG(DEB_LEV_ERR, "Audio format other than mp3 not supported\nCodec not found\n");
+      break;                       
+    }
+
+    /*Send Port Settings changed call back*/
+    (*(omx_maddec_component_Private->callbacks->EventHandler))
+    (openmaxStandComp,
+    omx_maddec_component_Private->callbackData,
+    OMX_EventPortSettingsChanged, /* The command was completed */
+    0, 
+    1, /* This is the output port index */
+    NULL);
   }
-  return OMX_ErrorNone;
-}
 
+
+  mad_synth_frame (omx_maddec_component_Private->synth, omx_maddec_component_Private->frame);
+  left_ch = omx_maddec_component_Private->synth->pcm.samples[0];
+  right_ch = omx_maddec_component_Private->synth->pcm.samples[1];
+
+  outdata = (unsigned short *)outputbuffer->pBuffer;
+  outputbuffer->nFilledLen=nsamples * nchannels * 2;
+
+  // output sample(s) in 16-bit signed native-endian PCM //
+  if (nchannels == 1) {
+    count = nsamples;
+
+    while (count--) {
+      *outdata++ = (scale_int (*left_ch++) >>16) & 0xffff;
+    }
+  } else {
+    count = nsamples;
+    while (count--) {
+      *outdata++ = (scale_int (*left_ch++) >>16) & 0xffff;
+      *outdata++ = (scale_int (*right_ch++)>>16) & 0xffff;
+    }
+  }
+
+  DEBUG(DEB_LEV_SIMPLE_SEQ,"Returning output buffer size=%d \n", (int)outputbuffer->nFilledLen);
+
+  /* figure out how many bytes mad consumed */
+  /** if consumed is already set, it's from the resync higher up, so
+    * we need to use that value instead.  Otherwise, recalculate from
+    * mad's consumption */
+  if (consumed == 0)
+    consumed = omx_maddec_component_Private->stream->next_frame - omx_maddec_component_Private->temporary_buffer->pBuffer;
+
+  DEBUG(DEB_LEV_SIMPLE_SEQ,"consumed %d bytes\n", consumed);
+  /* move out pointer to where mad want the next data */
+  omx_maddec_component_Private->temporary_buffer->pBuffer += consumed;
+  omx_maddec_component_Private->temporary_buffer->nFilledLen -= consumed;
+}
 
 /** this function sets the parameter values regarding audio format & index */
 OMX_ERRORTYPE omx_maddec_component_SetParameter(
@@ -632,8 +577,7 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
     /*Check Structure Header*/
-    err = checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
-    CHECK_ERROR(err, "Check Header");
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(&omx_maddec_component_Private->sPortTypesParam, ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
     break;	
 
@@ -667,7 +611,7 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
     }	else {
       return OMX_ErrorBadParameter;
     }
-    SetInternalParameters(openmaxStandComp);
+    omx_maddec_component_SetInternalParameters(openmaxStandComp);
     break;
 
   case OMX_IndexParamAudioMp3:
@@ -700,6 +644,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
   omx_maddec_component_PortType *port;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
 
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
@@ -710,13 +655,13 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
-    setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
     memcpy(ComponentParameterStructure, &omx_maddec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
     break;		
 
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    setHeader(pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
     if (pAudioPortFormat->nPortIndex <= 1) {
       port = (omx_maddec_component_PortType *)omx_maddec_component_Private->ports[pAudioPortFormat->nPortIndex];
       memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -727,7 +672,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
 
   case OMX_IndexParamAudioPcm:
     pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-    setHeader(pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PCMMODETYPE);
     if (pAudioPcmMode->nPortIndex > 1) {
       return OMX_ErrorBadPortIndex;
     }
@@ -739,13 +684,13 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
     if (pAudioMp3->nPortIndex != 0) {
       return OMX_ErrorBadPortIndex;
     }
-    setHeader(pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_MP3TYPE);
     memcpy(pAudioMp3, &omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
     break;
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    setHeader(pComponentRole, sizeof(OMX_PARAM_COMPONENTROLETYPE));
+    CHECK_HEADER(err,ComponentParameterStructure,OMX_PARAM_COMPONENTROLETYPE);
     if (omx_maddec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
       strcpy( (char*) pComponentRole->cRole, AUDIO_DEC_MP3_ROLE);
     }	else {
@@ -768,6 +713,13 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
 
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateIdle) && (omx_maddec_component_Private->state == OMX_StateLoaded)) {
+      err = omx_maddec_component_Init(openmaxStandComp);
+      CHECK_ERROR(err, "MAD Decoder Init Failed");
+    } else if ((message->messageParam == OMX_StateExecuting) && (omx_maddec_component_Private->state == OMX_StateIdle)) {
+      DEBUG(DEB_LEV_FULL_SEQ, "State Changing from Idle to Exec\n");
+      omx_maddec_component_Private->temporary_buffer->nFilledLen=0;
+      omx_maddec_component_Private->temporary_buffer->nOffset=0;
+      omx_maddec_component_Private->need_mad_stream = 1;
       if (!omx_maddec_component_Private->maddecReady) {
         err = omx_maddec_component_madLibInit(omx_maddec_component_Private);
         if (err != OMX_ErrorNone) {
@@ -775,9 +727,7 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
         }
         omx_maddec_component_Private->maddecReady = OMX_TRUE;
       }
-      err = omx_maddec_component_Init(openmaxStandComp);
-      CHECK_ERROR(err, "MAD Decoder Init Failed");
-    }	
+    }
   }
   /** Execute the base message handling */
   err = omx_base_component_MessageHandler(openmaxStandComp, message);
@@ -786,36 +736,15 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
     if ((message->messageParam == OMX_StateLoaded) && (omx_maddec_component_Private->state == OMX_StateIdle)) {
       err = omx_maddec_component_Deinit(openmaxStandComp);
       CHECK_ERROR(err, "MAD Decoder Deinit Failed");
+    }else if ((message->messageParam == OMX_StateIdle) && (omx_maddec_component_Private->state == OMX_StateExecuting)) {
+      omx_maddec_component_madLibDeInit(omx_maddec_component_Private);
+      omx_maddec_component_Private->maddecReady = OMX_FALSE;
     }
   }
 
-  return err;
-	
+  return err;	
 }
 
-/** The following utility routine performs simple rounding, clipping, and
-  * scaling of MAD's high-resolution samples down to 16 bits. It does not
-  * perform any dithering or noise shaping, which would be recommended to
-  * obtain any exceptional audio quality. It is therefore not recommended to
-  * use this routine if high-quality output is desired.
-  */
-
-static inline
-signed int scale(mad_fixed_t sample)
-{
-  /* round */
-  sample += (1L << (MAD_F_FRACBITS - 16));
-
-  /* clip */
-  if (sample >= MAD_F_ONE) {
-    sample = MAD_F_ONE - 1;
-  } else if (sample < -MAD_F_ONE) {
-    sample = -MAD_F_ONE;
-  }
-
-  /* quantize */
-  return sample >> (MAD_F_FRACBITS + 1 - 16);
-}
 
 
   

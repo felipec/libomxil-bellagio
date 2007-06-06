@@ -21,8 +21,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 14:25:04 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 872 $
+  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
+  Revision $Rev: 921 $
   Author $Author: giulio_urlini $
 */
 
@@ -41,6 +41,7 @@
 /* Specific include files */
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
+#include <ffmpeg/swscale.h>
 
 
 #define VIDEO_DEC_BASE_NAME "OMX.st.video_decoder"
@@ -98,17 +99,12 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_videodec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_videodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp);
-OMX_ERRORTYPE omx_video_decoder_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
+OMX_ERRORTYPE omx_videodec_component_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
 
 void omx_videodec_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
   OMX_BUFFERHEADERTYPE* inputbuffer,
   OMX_BUFFERHEADERTYPE* outputbuffer);
-
-OMX_ERRORTYPE omx_videodec_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure);
 
 OMX_ERRORTYPE omx_videodec_component_GetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
@@ -120,20 +116,12 @@ OMX_ERRORTYPE omx_videodec_component_SetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
 
-OMX_ERRORTYPE omx_videodec_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure);
-
 OMX_ERRORTYPE omx_videodec_component_ComponentRoleEnum(
   OMX_IN OMX_HANDLETYPE hComponent,
   OMX_OUT OMX_U8 *cRole,
   OMX_IN OMX_U32 nIndex);
 
-/**Check Domain of the Tunneled Component*/
-OMX_ERRORTYPE omx_videodec_component_DomainCheck(OMX_PARAM_PORTDEFINITIONTYPE pDef);
-
 void SetInternalVideoParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 
 
-#endif //_OMX_VIDEODEC_COMPONENT_H_
+#endif

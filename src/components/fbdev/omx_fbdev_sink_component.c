@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-06-04 11:59:17 +0200 (Mon, 04 Jun 2007) $
-  Revision $Rev: 913 $
-  Author $Author: giulio_urlini $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #include <errno.h>

@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-06-05 13:33:56 +0200 (Tue, 05 Jun 2007) $
-  Revision $Rev: 921 $
-  Author $Author: giulio_urlini $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #ifndef _OMX_VIDEODEC_COMPONENT_H_

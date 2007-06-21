@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-06-06 11:34:57 +0200 (Wed, 06 Jun 2007) $
-  Revision $Rev: 924 $
-  Author $Author: giulio_urlini $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #define _GNU_SOURCE

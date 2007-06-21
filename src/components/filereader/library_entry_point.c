@@ -25,9 +25,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-06-04 13:28:17 +0200 (Mon, 04 Jun 2007) $
-	Revision $Rev: 914 $
-	Author $Author: giulio_urlini $
+	$Date$
+	Revision $Rev$
+	Author $Author$
 
 */
 

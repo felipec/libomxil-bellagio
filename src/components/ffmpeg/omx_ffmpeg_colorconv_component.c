@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-06-06 06:39:29 +0200 (Wed, 06 Jun 2007) $
-  Revision $Rev: 923 $
-  Author $Author: pankaj_sen $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #include <omxcore.h>

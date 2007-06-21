@@ -267,7 +267,9 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
       }
 
       err = openmaxStandPort->Port_FreeTunnelBuffer(openmaxStandPort,openmaxStandPort->sPortParam.nPortIndex);
-      CHECK_ERROR(err,"Freeing Tunnel Buffer ");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Freeing Tunnel Buffer Error=%x\n",__func__,err); 
+      }
       DEBUG(DEB_LEV_PARAMS, "In %s Qelem=%d\n", __func__,openmaxStandPort->pBufferQueue->nelem);
     }
   }
@@ -283,7 +285,7 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out %s Port Index=%d isEnabled=%d\n", __func__,
 		(int)openmaxStandPort->sPortParam.nPortIndex,
 		(int)openmaxStandPort->sPortParam.bEnabled);
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** @brief Enables the port.
@@ -321,7 +323,10 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
     }
   } else { //Port Tunneled and supplier. Then allocate tunnel buffers
     err= openmaxStandPort->Port_AllocateTunnelBuffer(openmaxStandPort, openmaxStandPort->sPortParam.nPortIndex, openmaxStandPort->sPortParam.nBufferSize);						
-    CHECK_ERROR(err,"Allocating Tunnel Buffer ");
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
+      return err;
+    }
     openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
     if (omx_base_component_Private->state==OMX_StateExecuting) {
       for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual;i++) {

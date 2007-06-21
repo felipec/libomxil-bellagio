@@ -274,7 +274,10 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
 	      if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
           /* Freeing here the buffers allocated for the tunneling:*/
           err = pPort->Port_FreeTunnelBuffer(pPort,i);
-          CHECK_ERROR(err,"Freeing Tunnel Buffer");
+          if(err!=OMX_ErrorNone) { 
+            DEBUG(DEB_LEV_ERR, "In %s Freeing Tunnel Buffer Error=%x\n",__func__,err); 
+            return err; 
+          } 
         } else {
           DEBUG(DEB_LEV_FULL_SEQ, "In %s nPortIndex=%d pAllocSem Semval=%x\n", __func__,(int)i,(int)pPort->pAllocSem->semval);
 
@@ -341,7 +344,10 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
         if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
           /** Allocate here the buffers needed for the tunneling: 							*/
           err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize);						
-          CHECK_ERROR(err,"Allocating Tunnel Buffer");
+          if(err!=OMX_ErrorNone) { 
+            DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
+            return err; 
+          } 
         } else {
           if(pPort->sPortParam.bEnabled == OMX_TRUE) {
             DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. port enabled %i,  port populated %i\n", 
@@ -494,7 +500,7 @@ OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size) {
   }
   ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
   if(*((OMX_U32*)header) != size) {
-    DEBUG(DEB_LEV_ERR, "In %s the header has a wrong size %i\n",__func__, (int)size);
+    DEBUG(DEB_LEV_ERR, "In %s the header has a wrong size %i should be %i\n",__func__,(int)*((OMX_U32*)header),(int)size);
     return OMX_ErrorBadParameter;
   }
   if(ver->s.nVersionMajor != SPECVERSIONMAJOR ||
@@ -669,13 +675,17 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
   case OMX_IndexParamImageInit:
   case OMX_IndexParamOtherInit:
     pPortDomains = (OMX_PORT_PARAM_TYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     pPortDomains->nPorts = 0;
     pPortDomains->nStartPortNumber = 0;
     break;		
   case OMX_IndexParamPortDefinition:
     pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PARAM_PORTDEFINITIONTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_PORTDEFINITIONTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     if (pPortDef->nPortIndex >= (omx_base_component_Private->sPortTypesParam.nStartPortNumber + omx_base_component_Private->sPortTypesParam.nPorts)) {
       return OMX_ErrorBadPortIndex;
     }
@@ -683,13 +693,17 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
     break;
   case OMX_IndexParamPriorityMgmt:
     pPrioMgmt = (OMX_PRIORITYMGMTTYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PRIORITYMGMTTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PRIORITYMGMTTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     pPrioMgmt->nGroupPriority = omx_base_component_Private->nGroupPriority;
     pPrioMgmt->nGroupID = omx_base_component_Private->nGroupID;
     break;
   case OMX_IndexParamCompBufferSupplier:
     pBufferSupplier = (OMX_PARAM_BUFFERSUPPLIERTYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PARAM_BUFFERSUPPLIERTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     if (pBufferSupplier->nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
@@ -753,17 +767,30 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     return OMX_ErrorIncorrectStateOperation;
   }
   switch(nParamIndex) {
+  case OMX_IndexParamAudioInit:
+  case OMX_IndexParamVideoInit:
+  case OMX_IndexParamImageInit:
+  case OMX_IndexParamOtherInit:
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+      break;
+    }
+    break;	
   case OMX_IndexParamPortDefinition: 
     pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
     err = omx_base_component_ParameterSanityCheck(hComponent, pPortDef->nPortIndex, pPortDef, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-    CHECK_ERROR(err,"Parameter Check");
-    //omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
-    pPort = (omx_base_PortType *) omx_base_component_Private->ports[pPortDef->nPortIndex];
-    memcpy(&pPort->sPortParam,pPortDef,sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    } 
+    omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
+    //pPort = (omx_base_PortType *) omx_base_component_Private->ports[pPortDef->nPortIndex];
+    //memcpy(&pPort->sPortParam,pPortDef,sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     break;
   case OMX_IndexParamPriorityMgmt:
     pPrioMgmt = (OMX_PRIORITYMGMTTYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PRIORITYMGMTTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PRIORITYMGMTTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     omx_base_component_Private->nGroupPriority = pPrioMgmt->nGroupPriority;
     omx_base_component_Private->nGroupID = pPrioMgmt->nGroupID;
     break;
@@ -785,7 +812,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
         return OMX_ErrorIncorrectStateOperation;
       }
     } else if (err != OMX_ErrorNone) {
-      return err;
+      break;
     }
 
     if (pBufferSupplier->eBufferSupplier == OMX_BufferSupplyUnspecified) {
@@ -833,7 +860,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     return OMX_ErrorUnsupportedIndex;
     break;
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** @brief base GetConfig function

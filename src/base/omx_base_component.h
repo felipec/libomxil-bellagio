@@ -48,16 +48,6 @@
                 pthread_mutex_unlock(&component_Private->exit_mutex) ,\
                 (exit_condition == OMX_TRUE) ? OMX_TRUE:OMX_FALSE \
 
-
-#define CHECK_ERROR(err,str) if(err!=OMX_ErrorNone) { \
-                                DEBUG(DEB_LEV_ERR, "In %s %s Error=%x\n",__func__,str,err); \
-                                return err; \
-                              } 
-
-#define CHECK_HEADER(err,param,type)  if ((err = checkHeader(param, sizeof(type))) != OMX_ErrorNone) { \
-                                        return err; \
-                                      }
-
 typedef struct OMX_VENDOR_EXTRADATATYPE  {
   OMX_U32 nPortIndex;
   OMX_U32 nDataSize;   // Size of the supporting data to follow

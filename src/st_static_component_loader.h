@@ -1,5 +1,5 @@
 /**
-  @file src/st_omx_component_loader.h
+  @file src/st_static_component_loader.h
 
   ST specific component loader for local components.
 
@@ -25,8 +25,8 @@
   Author $Author$
 */
 
-#ifndef __ST_OMX_COMPONENT_LOADER_H__
-#define __ST_OMX_COMPONENT_LOADER_H__
+#ifndef __ST_STATIC_COMPONENT_LOADER_H__
+#define __ST_STATIC_COMPONENT_LOADER_H__
 
 #include "omxcore.h"
 struct BOSA_COMPONENTLOADER st_static_loader;

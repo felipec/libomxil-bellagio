@@ -252,6 +252,19 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   outPort = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
 
   /** Domain specific section for the ports. */	
+
+  setHeader(&inPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+  inPort->sVideoParam.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
+  inPort->sVideoParam.nIndex = 0;
+  inPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
+  inPort->sVideoParam.eColorFormat = OMX_COLOR_FormatYUV420Planar;
+
+  setHeader(&outPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+  outPort->sVideoParam.nPortIndex = OMX_BASE_FILTER_OUTPUTPORT_INDEX;
+  outPort->sVideoParam.nIndex = 0;
+  outPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
+  outPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
+
   //input port parameter settings
   inPort->sPortParam.eDomain = OMX_PortDomainVideo;
   inPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
@@ -259,8 +272,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   inPort->sPortParam.format.video.pNativeRender = NULL;
   inPort->sPortParam.format.video.nFrameWidth = 640;
   inPort->sPortParam.format.video.nFrameHeight = 480;
-  inPort->sPortParam.format.video.nStride = 0;
-  inPort->sPortParam.format.video.nSliceHeight = 0;
+  inPort->sPortParam.format.video.nStride = calcStride(inPort->sPortParam.format.video.nFrameWidth, inPort->sVideoParam.eColorFormat);
+  inPort->sPortParam.format.video.nSliceHeight = inPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+
   inPort->sPortParam.format.video.nBitrate = 0;
   inPort->sPortParam.format.video.xFramerate = 25; 
   inPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
@@ -277,8 +291,8 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   outPort->sPortParam.format.video.pNativeRender = NULL;
   outPort->sPortParam.format.video.nFrameWidth = 640;
   outPort->sPortParam.format.video.nFrameHeight = 480;
-  outPort->sPortParam.format.video.nStride = 0;
-  outPort->sPortParam.format.video.nSliceHeight = 0;
+  outPort->sPortParam.format.video.nStride = calcStride(outPort->sPortParam.format.video.nFrameWidth, outPort->sVideoParam.eColorFormat);
+  outPort->sPortParam.format.video.nSliceHeight = outPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
   outPort->sPortParam.format.video.nBitrate = 0;
   outPort->sPortParam.format.video.xFramerate = 25; 
   outPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
@@ -287,20 +301,6 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   outPort->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
   outPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
   outPort->sPortParam.format.video.pNativeWindow = NULL;
-
-
-  setHeader(&inPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-  inPort->sVideoParam.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
-  inPort->sVideoParam.nIndex = 0;
-  inPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
-  inPort->sVideoParam.eColorFormat = OMX_COLOR_FormatYUV420Planar;
-
-  setHeader(&outPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-  outPort->sVideoParam.nPortIndex = OMX_BASE_FILTER_OUTPUTPORT_INDEX;
-  outPort->sVideoParam.nIndex = 0;
-  outPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
-  outPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
-
 
   setHeader(&inPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
   inPort->omxConfigCrop.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
@@ -348,11 +348,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
 
   omx_ffmpeg_colorconv_component_Private->in_alloc_size = 0;
   omx_ffmpeg_colorconv_component_Private->conv_alloc_size = 0;
-  omx_ffmpeg_colorconv_component_Private->out_alloc_size = 0;
 
   omx_ffmpeg_colorconv_component_Private->in_buffer = NULL;
   omx_ffmpeg_colorconv_component_Private->conv_buffer = NULL;
-  omx_ffmpeg_colorconv_component_Private->out_buffer = NULL;
 
   omx_ffmpeg_colorconv_component_Private->messageHandler = omx_video_colorconv_MessageHandler;
   omx_ffmpeg_colorconv_component_Private->destructor = omx_ffmpeg_colorconv_component_Destructor;
@@ -414,9 +412,6 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Init(OMX_COMPONENTTYPE *openmaxStan
   out_width = outPort->sPortParam.format.video.nFrameWidth;
   out_height = outPort->sPortParam.format.video.nFrameHeight;
 
-  if (omx_ffmpeg_colorconv_component_Private->in_buffer) {
-    free(omx_ffmpeg_colorconv_component_Private->in_buffer);
-  }
   omx_ffmpeg_colorconv_component_Private->in_alloc_size = avpicture_get_size(inPort->ffmpeg_pxlfmt, 
   inPort->sPortParam.format.video.nFrameWidth, inPort->sPortParam.format.video.nFrameHeight);
 
@@ -427,9 +422,6 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Init(OMX_COMPONENTTYPE *openmaxStan
     return OMX_ErrorInsufficientResources;
   }
 
-  if (omx_ffmpeg_colorconv_component_Private->conv_buffer) {
-    free(omx_ffmpeg_colorconv_component_Private->conv_buffer);
-  }
   omx_ffmpeg_colorconv_component_Private->conv_alloc_size = avpicture_get_size(outPort->ffmpeg_pxlfmt,
               inPort->sPortParam.format.video.nFrameWidth, inPort->sPortParam.format.video.nFrameHeight);
 
@@ -463,13 +455,8 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Deinit(OMX_COMPONENTTYPE *openmaxSt
     free(omx_ffmpeg_colorconv_component_Private->conv_buffer);	
     omx_ffmpeg_colorconv_component_Private->conv_buffer = NULL;
   }
-  if (omx_ffmpeg_colorconv_component_Private->out_buffer) {
-    free(omx_ffmpeg_colorconv_component_Private->out_buffer);	
-    omx_ffmpeg_colorconv_component_Private->out_buffer = NULL;
-  }
   omx_ffmpeg_colorconv_component_Private->in_alloc_size = 0;
   omx_ffmpeg_colorconv_component_Private->conv_alloc_size = 0;
-  omx_ffmpeg_colorconv_component_Private->out_alloc_size = 0;
   if (omx_ffmpeg_colorconv_component_Private->in_frame) {
     av_free(omx_ffmpeg_colorconv_component_Private->in_frame);
     omx_ffmpeg_colorconv_component_Private->in_frame = NULL;
@@ -707,20 +694,21 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
     /**	Pointers to use with memcpy */
     OMX_U8* dest_Y_ptr = Y_output_ptr + dest_luma_offset;		
     OMX_U8* dest_U_ptr = U_output_ptr + dest_chroma_offset;
-    OMX_U8*	dest_V_ptr = V_output_ptr + dest_chroma_offset;
+    OMX_U8* dest_V_ptr = V_output_ptr + dest_chroma_offset;
 
     //	Y
     for (i = 0; i < luma_crop_height; ++i, src_Y_ptr += src_luma_stride, dest_Y_ptr += dest_luma_stride) {
       memcpy(dest_Y_ptr, src_Y_ptr, luma_crop_width);	//	Copy Y rows into in_buffer
     }
-    //	U
-    for (i = 0; i < chroma_crop_height; ++i, src_U_ptr += src_chroma_stride, dest_U_ptr += dest_chroma_stride) {
+    //	U & V
+    for (i = 0; i < chroma_crop_height; ++i, src_U_ptr += src_chroma_stride, dest_U_ptr += dest_chroma_stride, src_V_ptr += src_chroma_stride, dest_V_ptr += dest_chroma_stride) {
       memcpy(dest_U_ptr, src_U_ptr, chroma_crop_width);	//	Copy U rows into in_buffer
-    }
-    //	V
-    for (i = 0; i < chroma_crop_height; ++i, src_V_ptr += src_chroma_stride, dest_V_ptr += dest_chroma_stride) {
       memcpy(dest_V_ptr, src_V_ptr, chroma_crop_width);	//	Copy V rows into in_buffer
     }
+    //	V
+    //for (i = 0; i < chroma_crop_height; ++i, src_V_ptr += src_chroma_stride, dest_V_ptr += dest_chroma_stride) {
+    //  memcpy(dest_V_ptr, src_V_ptr, chroma_crop_width);	//	Copy V rows into in_buffer
+    //}
   } else {	
     OMX_U32 cpy_byte_width = calcStride((OMX_U32) abs(cpy_width), colorformat);	//	Bytes width to copy
 
@@ -832,7 +820,7 @@ void omx_ffmpeg_colorconv_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openma
             omx_ffmpeg_colorconv_component_Private->conv_frame->data, 
             omx_ffmpeg_colorconv_component_Private->conv_frame->linesize );
 
-  omx_img_copy(output_src_ptr, output_src_stride, output_src_width, output_src_height, 
+  omx_img_copy( output_src_ptr, output_src_stride, output_src_width, output_src_height, 
                 output_src_offset_x, output_src_offset_y,output_dest_ptr, output_dest_stride, output_dest_width, 
                 output_dest_height, output_dest_offset_x, output_dest_offset_y,
                 output_cpy_width, output_cpy_height, output_colorformat);
@@ -871,7 +859,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
     case OMX_IndexConfigCommonOutputCrop:
       omxConfigCrop = (OMX_CONFIG_RECTTYPE*)pComponentConfigStructure;
       portIndex = omxConfigCrop->nPortIndex;
-      CHECK_HEADER(err,pComponentConfigStructure,OMX_CONFIG_RECTTYPE);
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_RECTTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if ( (nIndex == OMX_IndexConfigCommonOutputCrop && portIndex == OMX_BASE_FILTER_OUTPUTPORT_INDEX)  ||
           (nIndex == OMX_IndexConfigCommonInputCrop && portIndex == OMX_BASE_FILTER_INPUTPORT_INDEX) ) {
         port = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[portIndex];
@@ -888,7 +878,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
     case OMX_IndexConfigCommonRotate:
       omxConfigRotate = (OMX_CONFIG_ROTATIONTYPE*)pComponentConfigStructure;
       portIndex = omxConfigRotate->nPortIndex;
-      CHECK_HEADER(err,pComponentConfigStructure,OMX_CONFIG_ROTATIONTYPE);
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_ROTATIONTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (portIndex <= 1) {
         port = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[portIndex];
         if (omxConfigRotate->nRotation != 0) {
@@ -903,7 +895,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
     case OMX_IndexConfigCommonMirror:
       omxConfigMirror = (OMX_CONFIG_MIRRORTYPE*)pComponentConfigStructure;
       portIndex = omxConfigMirror->nPortIndex;
-      CHECK_HEADER(err,pComponentConfigStructure,OMX_CONFIG_MIRRORTYPE);
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_MIRRORTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (portIndex <= 1) {
         if (omxConfigMirror->eMirror == OMX_MirrorBoth || omxConfigMirror->eMirror == OMX_MirrorHorizontal)	{
           //	Horizontal mirroring not yet supported
@@ -918,7 +912,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
     case OMX_IndexConfigCommonScale:
       omxConfigScale = (OMX_CONFIG_SCALEFACTORTYPE*)pComponentConfigStructure;
       portIndex = omxConfigScale->nPortIndex;
-      CHECK_HEADER(err,pComponentConfigStructure,OMX_CONFIG_SCALEFACTORTYPE);
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_SCALEFACTORTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (portIndex <= 1) {
         if (omxConfigScale->xWidth != 0x10000 || omxConfigScale->xHeight != 0x10000) {
           //	Scaling not yet supported
@@ -934,7 +930,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
     case OMX_IndexConfigCommonOutputPosition:
       omxConfigOutputPosition = (OMX_CONFIG_POINTTYPE*)pComponentConfigStructure;
       portIndex = omxConfigOutputPosition->nPortIndex;
-      CHECK_HEADER(err,pComponentConfigStructure,OMX_CONFIG_POINTTYPE);
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_POINTTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (portIndex == OMX_BASE_FILTER_OUTPUTPORT_INDEX) {
         port = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[portIndex];
         port->omxConfigOutputPosition.nX = omxConfigOutputPosition->nX;
@@ -949,7 +947,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
     default: // delegate to superclass
       return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 
@@ -965,6 +963,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
   OMX_CONFIG_MIRRORTYPE *omxConfigMirror;
   OMX_CONFIG_SCALEFACTORTYPE *omxConfigScale;
   OMX_CONFIG_POINTTYPE *omxConfigOutputPosition;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
 
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
@@ -977,7 +976,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
   switch (nIndex) {
     case OMX_IndexConfigCommonInputCrop:
       omxConfigCrop = (OMX_CONFIG_RECTTYPE*)pComponentConfigStructure;
-      setHeader(omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_RECTTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (omxConfigCrop->nPortIndex == OMX_BASE_FILTER_INPUTPORT_INDEX) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[omxConfigCrop->nPortIndex];
         memcpy(omxConfigCrop, &port->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
@@ -989,7 +990,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
       break;		
     case OMX_IndexConfigCommonOutputCrop:
       omxConfigCrop = (OMX_CONFIG_RECTTYPE*)pComponentConfigStructure;
-      setHeader(omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_RECTTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (omxConfigCrop->nPortIndex == OMX_BASE_FILTER_OUTPUTPORT_INDEX) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[omxConfigCrop->nPortIndex];
         memcpy(omxConfigCrop, &port->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
@@ -1001,7 +1004,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
       break;		
     case OMX_IndexConfigCommonRotate:
       omxConfigRotate = (OMX_CONFIG_ROTATIONTYPE*)pComponentConfigStructure;
-      setHeader(omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_ROTATIONTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (omxConfigRotate->nPortIndex <= 1) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[omxConfigRotate->nPortIndex];
         memcpy(omxConfigRotate, &port->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));
@@ -1011,7 +1016,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
       break;		
     case OMX_IndexConfigCommonMirror:
       omxConfigMirror = (OMX_CONFIG_MIRRORTYPE*)pComponentConfigStructure;
-      setHeader(omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_MIRRORTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (omxConfigMirror->nPortIndex <= 1) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[omxConfigMirror->nPortIndex];
         memcpy(omxConfigMirror, &port->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));
@@ -1021,7 +1028,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
       break;			
     case OMX_IndexConfigCommonScale:
       omxConfigScale = (OMX_CONFIG_SCALEFACTORTYPE*)pComponentConfigStructure;
-      setHeader(omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_SCALEFACTORTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (omxConfigScale->nPortIndex <= 1) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[omxConfigScale->nPortIndex];
         memcpy(omxConfigScale, &port->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));
@@ -1031,7 +1040,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
       break;		
     case OMX_IndexConfigCommonOutputPosition:
       omxConfigOutputPosition = (OMX_CONFIG_POINTTYPE*)pComponentConfigStructure;
-      setHeader(omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));
+      if ((err = checkHeader(pComponentConfigStructure, sizeof(OMX_CONFIG_POINTTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (omxConfigOutputPosition->nPortIndex == OMX_BASE_FILTER_OUTPUTPORT_INDEX) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[omxConfigOutputPosition->nPortIndex];
         memcpy(omxConfigOutputPosition, &port->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));
@@ -1045,7 +1056,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
     default: // delegate to superclass
       return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 
@@ -1068,22 +1079,19 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
   }	
   DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
   switch(nParamIndex) {
-    case OMX_IndexParamVideoInit:
-      /*Check Structure Header*/
-      checkHeader(ComponentParameterStructure , sizeof(OMX_PORT_PARAM_TYPE));
-      CHECK_ERROR(err, "Check Header");
-      memcpy(&omx_ffmpeg_colorconv_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
-      break;
     case OMX_IndexParamPortDefinition:
       pPortDef = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
       portIndex = pPortDef->nPortIndex;
       err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pPortDef, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-      CHECK_ERROR(err,"Parameter Check");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+        break;
+      } 
       port = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[portIndex];
       port->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
 
       //	Copy stuff from OMX_VIDEO_PORTDEFINITIONTYPE structure
-      port->sPortParam.format.video.cMIMEType = pPortDef->format.video.cMIMEType;
+      //port->sPortParam.format.video.cMIMEType = pPortDef->format.video.cMIMEType;
       port->sPortParam.format.video.nFrameWidth = pPortDef->format.video.nFrameWidth;
       port->sPortParam.format.video.nFrameHeight = pPortDef->format.video.nFrameHeight;
       port->sPortParam.format.video.nBitrate = pPortDef->format.video.nBitrate;
@@ -1095,17 +1103,16 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
       port->sPortParam.nBufferSize = (OMX_U32) abs(port->sPortParam.format.video.nStride) * port->sPortParam.format.video.nSliceHeight;
       port->omxConfigCrop.nWidth = port->sPortParam.format.video.nFrameWidth;
       port->omxConfigCrop.nHeight = port->sPortParam.format.video.nFrameHeight;
-      //	Don't care so much about the other domains
-      memcpy(&port->sPortParam.format.audio, &pPortDef->format.audio, sizeof(OMX_AUDIO_PORTDEFINITIONTYPE));
-      memcpy(&port->sPortParam.format.image, &pPortDef->format.image, sizeof(OMX_IMAGE_PORTDEFINITIONTYPE));
-      memcpy(&port->sPortParam.format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
       break;
     case OMX_IndexParamVideoPortFormat:
       //	FIXME: How do we handle the nIndex member?
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
       portIndex = pVideoPortFormat->nPortIndex;
       err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-      CHECK_ERROR(err,"Parameter Check");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+        break;
+      } 
       port = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[portIndex];
       if (pVideoPortFormat->eCompressionFormat != OMX_VIDEO_CodingUnused)	{
         //	No compression allowed
@@ -1128,7 +1135,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
     default: /*Call the base component function*/
       return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
@@ -1137,8 +1144,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
-  OMX_PARAM_PORTDEFINITIONTYPE *pPortDef;
-
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
   omx_ffmpeg_colorconv_component_PortType *port;
@@ -1150,12 +1156,16 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
     case OMX_IndexParamVideoInit:
-      setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       memcpy(ComponentParameterStructure, &omx_ffmpeg_colorconv_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
       break;		
     case OMX_IndexParamVideoPortFormat:
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-      setHeader(pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (pVideoPortFormat->nPortIndex <= 1) {
         port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[pVideoPortFormat->nPortIndex];
         memcpy(pVideoPortFormat, &port->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
@@ -1163,26 +1173,16 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
         return OMX_ErrorBadPortIndex;
       }
       break;		
-    case OMX_IndexParamPortDefinition:
-      pPortDef = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
-      setHeader(pPortDef, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-      if (pPortDef->nPortIndex <= 1) {
-        port = (omx_ffmpeg_colorconv_component_PortType *)omx_ffmpeg_colorconv_component_Private->ports[pPortDef->nPortIndex];
-        memcpy(pPortDef, &port->sPortParam, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-      } else {
-        return OMX_ErrorBadPortIndex;
-      }
-      break;		
     default: /*Call the base component function*/
       return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 
 OMX_ERRORTYPE omx_video_colorconv_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp,internalRequestMessageType *message) {
   omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = (omx_ffmpeg_colorconv_component_PrivateType*)openmaxStandComp->pComponentPrivate;
-  OMX_ERRORTYPE err;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_STATETYPE eState;
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -1191,7 +1191,10 @@ OMX_ERRORTYPE omx_video_colorconv_MessageHandler(OMX_COMPONENTTYPE* openmaxStand
   if (message->messageType == OMX_CommandStateSet) {
     if ((message->messageParam == OMX_StateExecuting ) && (omx_ffmpeg_colorconv_component_Private->state == OMX_StateIdle)) {
       err = omx_ffmpeg_colorconv_component_Init(openmaxStandComp);
-      CHECK_ERROR(err,"Video Color Converter Init Failed");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Video Color Converter Init Error=%x\n",__func__,err); 
+        return err;
+      } 
     }
   }
   // Execute the base message handling
@@ -1200,7 +1203,10 @@ OMX_ERRORTYPE omx_video_colorconv_MessageHandler(OMX_COMPONENTTYPE* openmaxStand
   if (message->messageType == OMX_CommandStateSet) {
     if ((message->messageParam == OMX_StateIdle ) && (omx_ffmpeg_colorconv_component_Private->state == OMX_StateIdle) && eState == OMX_StateExecuting) {
       err = omx_ffmpeg_colorconv_component_Deinit(openmaxStandComp);
-      CHECK_ERROR(err,"Video Color Converter Deinit Failed");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Video Color Converter Deinit Error=%x\n",__func__,err); 
+        return err;
+      } 
     }
   }
   return err;

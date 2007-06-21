@@ -78,8 +78,6 @@ DERIVEDCLASS(omx_ffmpeg_colorconv_component_PrivateType, omx_base_filter_Private
   unsigned char *in_buffer; \
   /** @param conv_buffer Buffer to hold converted data */ \
   unsigned char *conv_buffer; \
-  /** @param out_buffer Buffer to hold output data */ \
-  unsigned char *out_buffer; \
   /** @param in_frame The ffmpeg AVFrame structure for the input buffer */ \
   AVFrame *in_frame; \
   /** @param conv_frame the ffmpeg AVFrame structure for the conversion output */ \
@@ -87,9 +85,7 @@ DERIVEDCLASS(omx_ffmpeg_colorconv_component_PrivateType, omx_base_filter_Private
   /** @param in_alloc_size Allocated size of the input buffer */ \
   unsigned int in_alloc_size; \
   /** @param conv_alloc_size Allocated size of the conversion buffer */ \
-  unsigned int conv_alloc_size; \
-  /** @param out_width Allocated size of the output buffer */ \
-  unsigned int out_alloc_size;
+  unsigned int conv_alloc_size; 
 ENDCLASS(omx_ffmpeg_colorconv_component_PrivateType)
 
 /* Component private entry points declaration */

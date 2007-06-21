@@ -84,7 +84,7 @@ DERIVEDCLASS(omx_fbdev_sink_component_PrivateType, omx_base_sink_PrivateType)
   /** @param fscr_info The fb_fix_screeninfo structure for the framebuffer */ \
   struct fb_fix_screeninfo fscr_info; \
   /** @param scr_data Pointer to the mmapped memory for the framebuffer */ \
-  char *scr_ptr;
+  unsigned char *scr_ptr;
 ENDCLASS(omx_fbdev_sink_component_PrivateType)
 
 /* Component private entry points declaration */

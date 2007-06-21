@@ -380,7 +380,10 @@ int main(int argc, char** argv) {
       argn_dec++;
     }
     if (flagSetupTunnel) {
-      flagOutputReceived = 0;
+      if(flagOutputReceived) {
+        DEBUG(DEFAULT_MESSAGES, "-o Option Ignored. No FILE output will be produced.\n");
+        flagOutputReceived = 0;
+      }
       flagPlaybackOn = 1;
     }
     if (!flagInputReceived) {
@@ -410,9 +413,17 @@ int main(int argc, char** argv) {
   if (*(input_file+index -1) == '3') {
     selectedType = MP3_TYPE_SEL;
     DEBUG(DEFAULT_MESSAGES, "MP3\n");
+    if(flagSingleOGGSelected) {
+      DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(OGG Single) Selected\n");
+      display_help();
+    }
   } else if(*(input_file+index -1) == 'g') {
     selectedType = VORBIS_TYPE_SEL;
     DEBUG(DEFAULT_MESSAGES, "VORBIS\n");
+    if(flagIsMadRequested) {
+      DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(MAD) Selected\n");
+      display_help();
+    }
   } else {
     DEBUG(DEB_LEV_ERR, "The input audio format is not supported - exiting\n");
     exit(1);

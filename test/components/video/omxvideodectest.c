@@ -523,15 +523,20 @@ int main(int argc, char** argv) {
         DEBUG(DEB_LEV_ERR,"\n the decoded output file name will be %s ", output_file);
       }
     } else if(flagDecodedOutputReceived) {
-      //case 2 - user has given wrong format
-      if(flagIsColorConvRequested && strstr(output_file, ".rgb") == NULL) {
-        output_file[strlen(output_file) - strlen(strstr(output_file, "."))] = '\0';
-        strcat(output_file, ".rgb");
-        DEBUG(DEB_LEV_ERR,"\n color conv option is selected - so the output file is %s \n", output_file);
-      }else if(!flagIsColorConvRequested && strstr(output_file, ".yuv") == NULL) {
-        output_file[strlen(output_file) - strlen(strstr(output_file, "."))] = '\0';
-        strcat(output_file, ".yuv");
-        DEBUG(DEB_LEV_ERR,"\n color conv option is not selected - so the output file is %s \n", output_file);
+      if(flagIsSinkRequested || flagSetupTunnel) {
+        flagDecodedOutputReceived = 0;
+        DEBUG(DEB_LEV_ERR, "Sink Requested or Components are tunneled. No FILE Output will be produced\n");
+      } else {
+        //case 2 - user has given wrong format
+        if(flagIsColorConvRequested && strstr(output_file, ".rgb") == NULL) {
+          output_file[strlen(output_file) - strlen(strstr(output_file, "."))] = '\0';
+          strcat(output_file, ".rgb");
+          DEBUG(DEB_LEV_ERR,"\n color conv option is selected - so the output file is %s \n", output_file);
+        }else if(!flagIsColorConvRequested && strstr(output_file, ".yuv") == NULL) {
+          output_file[strlen(output_file) - strlen(strstr(output_file, "."))] = '\0';
+          strcat(output_file, ".yuv");
+          DEBUG(DEB_LEV_ERR,"\n color conv option is not selected - so the output file is %s \n", output_file);
+        }
       }
     }
 

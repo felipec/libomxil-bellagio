@@ -239,15 +239,14 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
   switch(nParamIndex) {
-    case OMX_IndexParamAudioInit:
-      CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
-      memcpy(&omx_volume_component_Private->sPortTypesParam, ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
-      break;	
     case OMX_IndexParamAudioPortFormat:
       pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
       portIndex = pAudioPortFormat->nPortIndex;
       err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-      CHECK_ERROR(err, "Parameter Check");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+        break;
+      }
       if (portIndex <= 1) {
         port= (omx_volume_component_PortType *)omx_volume_component_Private->ports[portIndex];
         memcpy(&port->sAudioParam, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -279,12 +278,16 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
     case OMX_IndexParamAudioInit:
-      CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       memcpy(ComponentParameterStructure, &omx_volume_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
       break;		
     case OMX_IndexParamAudioPortFormat:
       pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-      CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+        break;
+      }
       if (pAudioPortFormat->nPortIndex <= 1) {
         port= (omx_volume_component_PortType *)omx_volume_component_Private->ports[pAudioPortFormat->nPortIndex];
         memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -294,7 +297,10 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
     break;		
     case OMX_IndexParamAudioPcm:
       pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-      CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PCMMODETYPE);
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
+        break;
+      }
+
       if (pAudioPcmMode->nPortIndex > 1) {
         return OMX_ErrorBadPortIndex;
       }

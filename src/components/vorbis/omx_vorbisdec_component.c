@@ -553,19 +553,15 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
   switch (nParamIndex) {
-
-  case OMX_IndexParamAudioInit:
-    /** Check Structure Header */
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
-    memcpy(&omx_vorbisdec_component_Private->sPortTypesParam, ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
-    break;	
-			
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
     portIndex = pAudioPortFormat->nPortIndex;
     /** Check Structure Header and verify component state */
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    CHECK_ERROR(err, "Parameter Check");
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    }
     if (portIndex <= 1) {
       port = (omx_vorbisdec_component_PortType *) omx_vorbisdec_component_Private->ports[portIndex];
       memcpy(&port->sAudioParam,pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -579,7 +575,10 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
     portIndex = pAudioPcmMode->nPortIndex;
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-    CHECK_ERROR(err, "Parameter Check");
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    }
     memcpy(&omx_vorbisdec_component_Private->pAudioPcmMode, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));					
     break;
 
@@ -587,7 +586,10 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
     pAudioVorbis = (OMX_AUDIO_PARAM_VORBISTYPE*)ComponentParameterStructure;
     portIndex = pAudioVorbis->nPortIndex;
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioVorbis, sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
-    CHECK_ERROR(err, "Parameter Check");
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    }
     if(pAudioVorbis->nPortIndex == 0)	{
       memcpy(&omx_vorbisdec_component_Private->pAudioVorbis, pAudioVorbis, sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
     } else	{
@@ -608,7 +610,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
   default: /*Call the base component function*/
     return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** getting parameter values
@@ -637,13 +639,17 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
   switch(nParamIndex) {
 	
   case OMX_IndexParamAudioInit:
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     memcpy(ComponentParameterStructure, &omx_vorbisdec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
     break;		
 
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     if (pAudioPortFormat->nPortIndex <= 1) {
       port = (omx_vorbisdec_component_PortType *)omx_vorbisdec_component_Private->ports[pAudioPortFormat->nPortIndex];
       memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
@@ -654,7 +660,9 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
 
   case OMX_IndexParamAudioPcm:
     pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PCMMODETYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     if (pAudioPcmMode->nPortIndex > 1) {
       return OMX_ErrorBadPortIndex;
     }
@@ -666,13 +674,17 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
     if(pAudioVorbis->nPortIndex != 0) {
       return OMX_ErrorBadPortIndex;
     }
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_VORBISTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_VORBISTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     memcpy(pAudioVorbis, &omx_vorbisdec_component_Private->pAudioVorbis, sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
     break;
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PARAM_COMPONENTROLETYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     if (omx_vorbisdec_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
       strcpy( (char*) pComponentRole->cRole, AUDIO_DEC_VORBIS_ROLE);
     } else {
@@ -683,7 +695,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
   default: /*Call the base component function*/
     return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** handles the message generated by the IL client 
@@ -698,10 +710,16 @@ OMX_ERRORTYPE omx_vorbis_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandC
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateIdle) && (omx_vorbisdec_component_Private->state == OMX_StateLoaded)) {
       err = omx_vorbisdec_component_Init(openmaxStandComp);
-      CHECK_ERROR(err, "vorbis Decoder Init Failed");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s vorbis Decoder Init Failed=%x\n",__func__,err); 
+        return err;
+      }
     } else if ((message->messageParam == OMX_StateLoaded) && (omx_vorbisdec_component_Private->state == OMX_StateIdle)) {
       err = omx_vorbisdec_component_Deinit(openmaxStandComp);
-      CHECK_ERROR(err, "vorbis Decoder Deinit Failed");
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Vorbis Decoder Deinit Failed=%x\n",__func__,err); 
+        return err;
+      }
     }
   }
   // Execute the base message handling

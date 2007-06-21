@@ -131,7 +131,6 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   openmaxStandComp->GetParameter  = omx_alsasink_component_GetParameter;
 
   /* Write in the default paramenters */
-  omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioInit, &omx_alsasink_component_Private->sPortTypesParam);
   pPort->AudioPCMConfigured	= 0;
 
   if (!pPort->AudioPCMConfigured) {
@@ -256,17 +255,15 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   err = snd_pcm_hw_params_any (pPort->playback_handle, pPort->hw_params);
 
   switch(nParamIndex) {
-  case OMX_IndexParamAudioInit:
-    /*Check Structure Header*/
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
-    memcpy(&omx_alsasink_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
-    break;	
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
     portIndex = pAudioPortFormat->nPortIndex;
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    CHECK_ERROR(err,"Parameter Check");
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    } 
     if (portIndex < 1) {
       memcpy(&pPort->sAudioParam,pAudioPortFormat,sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
@@ -422,12 +419,15 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
     pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, pAudioMp3->nPortIndex, pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
-    CHECK_ERROR(err,"Parameter Check");
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    }
     break;
   default: /*Call the base component function*/
     return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_alsasink_component_GetParameter(
@@ -447,12 +447,16 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_PORT_PARAM_TYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     memcpy(ComponentParameterStructure, &omx_alsasink_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
     break;		
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PORTFORMATTYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     if (pAudioPortFormat->nPortIndex < 1) {
       memcpy(pAudioPortFormat, &pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
@@ -464,11 +468,13 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
       pPort->omxAudioParamPcmMode.nPortIndex) {
       return OMX_ErrorBadParameter;
     }
-    CHECK_HEADER(err,ComponentParameterStructure,OMX_AUDIO_PARAM_PCMMODETYPE);
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
+      break;
+    }
     memcpy(ComponentParameterStructure, &pPort->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
     break;
   default: /*Call the base component function*/
   return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }

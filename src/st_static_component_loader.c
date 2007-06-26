@@ -126,7 +126,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
     } else {
       handleLibList[numLib]=handle;
       numLib++;
-      if ((*(void **)(&fptr) = dlsym(handle, "omx_component_library_Setup")) == NULL) {
+      if ((fptr = dlsym(handle, "omx_component_library_Setup")) == NULL) {
         DEBUG(DEB_LEV_ERR, "the library %s is not compatible with ST static component loader - %s\n", libname, dlerror());
       } else {
         num_of_comp = (int)(*fptr)(NULL);

@@ -1260,7 +1260,13 @@ OMX_ERRORTYPE omx_base_component_AllocateBuffer(
             OMX_IN OMX_PTR pAppPrivate,
             OMX_IN OMX_U32 nSizeBytes) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
-  omx_base_PortType *pPort = omx_base_component_Private->ports[nPortIndex];
+  omx_base_PortType *pPort;
+
+  if (nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
+    return OMX_ErrorBadPortIndex;
+	}
+	pPort = omx_base_component_Private->ports[nPortIndex];
 
   return pPort->Port_AllocateBuffer(pPort,
                                     ppBuffer,
@@ -1277,7 +1283,13 @@ OMX_ERRORTYPE omx_base_component_UseBuffer(
             OMX_IN OMX_U32 nSizeBytes,
             OMX_IN OMX_U8* pBuffer) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
-  omx_base_PortType *pPort = omx_base_component_Private->ports[nPortIndex];
+  omx_base_PortType *pPort;
+
+  if (nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
+    return OMX_ErrorBadPortIndex;
+	}
+	pPort = omx_base_component_Private->ports[nPortIndex];
 
   return  pPort->Port_UseBuffer(pPort,
                                 ppBufferHdr,
@@ -1292,7 +1304,13 @@ OMX_ERRORTYPE omx_base_component_FreeBuffer(
             OMX_IN  OMX_U32 nPortIndex,
             OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
-  omx_base_PortType *pPort = omx_base_component_Private->ports[nPortIndex];
+  omx_base_PortType *pPort;
+
+  if (nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
+    return OMX_ErrorBadPortIndex;
+	}
+	pPort = omx_base_component_Private->ports[nPortIndex];
 
   return pPort->Port_FreeBuffer(pPort,
                                 nPortIndex,

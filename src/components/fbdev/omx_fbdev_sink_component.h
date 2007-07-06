@@ -52,7 +52,7 @@
 #define FBDEV_FILENAME  "/dev/fb0" 
 
 /** Maximum number of sink component instances */
-#define MAX_NUM_OF_fbdev_sink_component_INSTANCES 1
+#define MAX_NUM_OF_fbdev_sink_component_INSTANCES 2
 
 /** FBDEV sink port component port structure.
   */

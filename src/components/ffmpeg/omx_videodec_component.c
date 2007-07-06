@@ -158,7 +158,7 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   /** settings of output port parameter definition */
   setHeader(&outPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
   outPort->sVideoParam.nPortIndex = 1;
-  outPort->sVideoParam.nIndex = 0;
+  outPort->sVideoParam.nIndex = 1;
   outPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
   outPort->sVideoParam.eColorFormat = OUTPUT_DECODED_COLOR_FMT;
   outPort->sVideoParam.xFramerate = 25;
@@ -319,7 +319,7 @@ void SetInternalVideoParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
 
     setHeader(&inPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
     inPort->sVideoParam.nPortIndex = 0;
-    inPort->sVideoParam.nIndex = 0;
+    inPort->sVideoParam.nIndex = 1;
     inPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingMPEG4;
   } else if (omx_videodec_component_Private->video_coding_type == OMX_VIDEO_CodingAVC) {
     omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.video.cMIMEType = "video/avc(h264)";
@@ -358,7 +358,7 @@ void SetInternalVideoParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
     inPort = (omx_videodec_component_PortType *) omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
     setHeader(&inPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
     inPort->sVideoParam.nPortIndex = 0;
-    inPort->sVideoParam.nIndex = 0;
+    inPort->sVideoParam.nIndex = 1;
     inPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingAVC;
   }
 }

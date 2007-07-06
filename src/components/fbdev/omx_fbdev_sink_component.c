@@ -132,7 +132,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   port->sVideoParam.nPortIndex = 0;
   port->sVideoParam.nIndex = 0;
   port->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
-  port->sVideoParam.eColorFormat = OMX_COLOR_FormatUnused;
+  port->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
   /** Set configs */
   setHeader(&port->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
@@ -165,6 +165,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 
   nofbdev_sinkInstance++;
   if(nofbdev_sinkInstance > MAX_NUM_OF_fbdev_sink_component_INSTANCES) {
+    DEBUG(DEB_LEV_ERR, "Reached Max Instances %d\n",(int)nofbdev_sinkInstance);
     return OMX_ErrorInsufficientResources;
   }
 
@@ -961,8 +962,8 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         src_cpy_ptr =  org_src_cpy_ptr + src_stride;
       }
     } else {
-      DEBUG(DEB_LEV_ERR, "\n the frame buffer pixel format %d NOT supported\n",fbpxlfmt);
-      DEBUG(DEB_LEV_ERR, "\n or the input rgb format is not supported\n");
+      DEBUG(DEB_LEV_ERR, "the frame buffer pixel format %d and colorformat %d NOT supported\n",fbpxlfmt,colorformat);
+      DEBUG(DEB_LEV_ERR, "or the input rgb format is not supported\n");
     }
   }
 }

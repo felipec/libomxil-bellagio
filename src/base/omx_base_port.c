@@ -249,9 +249,9 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
   if (! PORT_IS_ENABLED(openmaxStandPort)) {
     return OMX_ErrorNone;
   }
-  openmaxStandPort->bIsTransientToDisabled = OMX_TRUE;
+  //openmaxStandPort->bIsTransientToDisabled = OMX_TRUE;
 
-  if(omx_base_component_Private->state!=OMX_StateLoaded && PORT_IS_POPULATED(openmaxStandPort)) {
+  if(omx_base_component_Private->state!=OMX_StateLoaded) {
     if(!PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
       /*Signal Buffer Mgmt Thread if it's holding any buffer*/
       if(omx_base_component_Private->bMgmtSem->semval==0) {
@@ -307,7 +307,7 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
   omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandPort->standCompContainer->pComponentPrivate;
 
   openmaxStandPort->sPortParam.bEnabled = OMX_TRUE;
-  openmaxStandPort->bIsTransientToEnabled = OMX_TRUE;
+  //openmaxStandPort->bIsTransientToEnabled = OMX_TRUE;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s port T flag=%x popu=%d state=%x\n", __func__,
   	(int)openmaxStandPort->nTunnelFlags,

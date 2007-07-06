@@ -287,7 +287,6 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
           }
         }
         pPort->sPortParam.bPopulated = OMX_FALSE;
-        //pPort->bIsTransientToDisabled = OMX_FALSE;
       }
       omx_base_component_Private->state = OMX_StateLoaded;
       /*Signal Buffer Management thread to exit*/
@@ -440,6 +439,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
           }
         }
       }
+      omx_base_component_Private->transientState = OMX_TransStateInvalid;
       return OMX_ErrorNone;
       break;
     case OMX_StatePause:
@@ -774,6 +774,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
+    return OMX_ErrorUndefined;
     break;	
   case OMX_IndexParamPortDefinition: 
     pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
@@ -987,12 +988,26 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandPortDisable;
+    if(message->messageParam==-1) {
+      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
+        omx_base_component_Private->ports[i]->bIsTransientToDisabled = OMX_TRUE;
+      }
+    } else {
+      omx_base_component_Private->ports[message->messageParam]->bIsTransientToDisabled = OMX_TRUE;
+    }
     break;
   case OMX_CommandPortEnable:
     if ((nParam != -1) && nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandPortEnable;
+    if(message->messageParam==-1) {
+      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
+        omx_base_component_Private->ports[i]->bIsTransientToEnabled = OMX_TRUE;
+      }
+    } else {
+      omx_base_component_Private->ports[message->messageParam]->bIsTransientToEnabled = OMX_TRUE;
+    }
     break;
   case OMX_CommandMarkBuffer:
     if ((nParam != -1) && nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
@@ -1105,6 +1120,9 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
     /*Flush port/s*/
     if(message->messageParam==-1) {
       for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
+        omx_base_component_Private->ports[i]->bIsPortFlushed = OMX_TRUE;
+      }
+      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
         pPort=omx_base_component_Private->ports[i];
         err = pPort->FlushProcessingBuffers(pPort);
       }
@@ -1209,7 +1227,7 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
     } else {
       pPort=omx_base_component_Private->ports[message->messageParam];
       err = pPort->Port_EnablePort(pPort);
-      }
+    }
     if (err != OMX_ErrorNone) {
       (*(omx_base_component_Private->callbacks->EventHandler))
       (openmaxStandComp,

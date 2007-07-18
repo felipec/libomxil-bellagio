@@ -406,18 +406,24 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       omx_audiodec_component_Private->pAudioMp3.nChannels = omx_audiodec_component_Private->avCodecContext->channels;
       omx_audiodec_component_Private->pAudioMp3.nBitRate = omx_audiodec_component_Private->avCodecContext->bit_rate;
       omx_audiodec_component_Private->pAudioMp3.nSampleRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
-      /*pAudioPcmMode is for output port PCM data*/
-      omx_audiodec_component_Private->pAudioPcmMode.nChannels = omx_audiodec_component_Private->avCodecContext->channels;
-      if(omx_audiodec_component_Private->avCodecContext->sample_fmt==SAMPLE_FMT_S16)
-        omx_audiodec_component_Private->pAudioPcmMode.nBitPerSample = 16;
-      else if(omx_audiodec_component_Private->avCodecContext->sample_fmt==SAMPLE_FMT_S32)
-        omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = 32;
-      omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
+            break;
+    case OMX_AUDIO_CodingVORBIS:
+      omx_audiodec_component_Private->pAudioVorbis.nChannels = omx_audiodec_component_Private->avCodecContext->channels;                                                                                                                          
+      omx_audiodec_component_Private->pAudioVorbis.nSampleRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
       break;
     default :
-      DEBUG(DEB_LEV_ERR, "Audio format other than mp3 & vorbis not supported\nCodec not found\n");
+      DEBUG(DEB_LEV_ERR, "Audio format other than mp3 & vorbis not supported\nCodec type %x not found\n",omx_audiodec_component_Private->audio_coding_type);
       break;                       
     }//end of switch
+
+    /*pAudioPcmMode is for output port PCM data*/
+    omx_audiodec_component_Private->pAudioPcmMode.nChannels = omx_audiodec_component_Private->avCodecContext->channels;
+    if(omx_audiodec_component_Private->avCodecContext->sample_fmt==SAMPLE_FMT_S16)
+      omx_audiodec_component_Private->pAudioPcmMode.nBitPerSample = 16;
+    else if(omx_audiodec_component_Private->avCodecContext->sample_fmt==SAMPLE_FMT_S32)
+      omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = 32;
+    omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
+
 		/*Send Port Settings changed call back*/
     (*(omx_audiodec_component_Private->callbacks->EventHandler))
       (openmaxStandComp,

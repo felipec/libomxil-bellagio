@@ -90,6 +90,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   pPort->sAudioParam.eEncoding = 0;
 
   /* OMX_AUDIO_PARAM_PCMMODETYPE */
+  setHeader(&pPort->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
   pPort->omxAudioParamPcmMode.nPortIndex = 0;
   pPort->omxAudioParamPcmMode.nChannels = 2;
   pPort->omxAudioParamPcmMode.eNumData = OMX_NumericalDataSigned;
@@ -135,7 +136,10 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   if (!pPort->AudioPCMConfigured) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface in the Init function\n");
-    omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioPcm, &pPort->omxAudioParamPcmMode);
+    err = omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioPcm, &pPort->omxAudioParamPcmMode);
+    if(err != OMX_ErrorNone){
+      DEBUG(DEB_LEV_ERR, "In %s Error %08x\n",__func__,err);
+    }
   }
 
   return err;
@@ -274,6 +278,15 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
     {
       unsigned int rate;
       OMX_AUDIO_PARAM_PCMMODETYPE* omxAudioParamPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
+
+      portIndex = omxAudioParamPcmMode->nPortIndex;
+      /*Check Structure Header and verify component state*/
+      err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+      if(err!=OMX_ErrorNone) { 
+        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+        break;
+      } 
+
       pPort->AudioPCMConfigured	= 1;
       if(omxAudioParamPcmMode->nPortIndex != pPort->omxAudioParamPcmMode.nPortIndex){
         DEBUG(DEB_LEV_ERR, "Error setting input pPort index\n");

@@ -35,7 +35,7 @@
 #define HEIGHT_OFFSET 10
 
 /** we assume, frame rate = 25 fps ; so one frame processing time = 40000 us */
-#define FRAME_PROCESS_TIME 40000 // in micro second
+OMX_U32 nFrameProcessTime = 40000; // in micro second
 
 /** Counter of sink component instance*/
 OMX_U32 nofbdev_sinkInstance=0;
@@ -117,6 +117,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 
   /** Domain specific section for the allocated port. */	
   port->sPortParam.eDomain = OMX_PortDomainVideo;
+  setHeader(&port->sPortParam.format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
   port->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
   strcpy(port->sPortParam.format.video.cMIMEType, "raw");
   port->sPortParam.format.video.pNativeRender = NULL;
@@ -125,15 +126,19 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   port->sPortParam.format.video.nStride = 0;
   port->sPortParam.format.video.nSliceHeight = 0;
   port->sPortParam.format.video.nBitrate = 0;
-  port->sPortParam.format.video.xFramerate = 0;
+  port->sPortParam.format.video.xFramerate = 25;
   port->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
+  port->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
+  port->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
+
 
   setHeader(&port->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
   port->sVideoParam.nPortIndex = 0;
   port->sVideoParam.nIndex = 0;
   port->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
   port->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
-
+  port->sVideoParam.xFramerate = 25;
+  
   /** Set configs */
   setHeader(&port->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
   port->omxConfigCrop.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
@@ -1014,7 +1019,7 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   if(old_time == 0) {
     old_time = new_time;
   } else {
-    timediff = FRAME_PROCESS_TIME - ((new_time - old_time) * 1000);
+    timediff = nFrameProcessTime - ((new_time - old_time) * 1000);
     if(timediff>0) {
       usleep(timediff);
     }
@@ -1292,6 +1297,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
         //	No compression allowed
         return OMX_ErrorUnsupportedSetting;
       }
+
+      if(pVideoPortFormat->xFramerate > 0) {
+        nFrameProcessTime = 1000000 / pVideoPortFormat->xFramerate;
+      }
+      port->sVideoParam.xFramerate = pVideoPortFormat->xFramerate;
       port->sVideoParam.eCompressionFormat = pVideoPortFormat->eCompressionFormat;
       port->sVideoParam.eColorFormat = pVideoPortFormat->eColorFormat;
       //	Figure out stride, slice height, min buffer size

@@ -79,15 +79,17 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   pPort->sPortParam.format.audio.pNativeRender = 0;
   pPort->sPortParam.format.audio.cMIMEType = "raw";
   pPort->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
+  pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
   /*Input pPort buffer size is equal to the size of the output buffer of the previous component*/
   pPort->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
 
   omx_alsasink_component_Private->BufferMgmtCallback = omx_alsasink_component_BufferMgmtCallback;
+  omx_alsasink_component_Private->destructor = omx_alsasink_component_Destructor;
 
   setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
   pPort->sAudioParam.nPortIndex = 0;
   pPort->sAudioParam.nIndex = 0;
-  pPort->sAudioParam.eEncoding = 0;
+  pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingPCM;
 
   /* OMX_AUDIO_PARAM_PCMMODETYPE */
   setHeader(&pPort->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
@@ -100,8 +102,6 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   pPort->omxAudioParamPcmMode.nSamplingRate = 44100;
   pPort->omxAudioParamPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
   pPort->omxAudioParamPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
-
-  omx_alsasink_component_Private->destructor = omx_alsasink_component_Destructor;
 
   noAlsasinkInstance++;
   if(noAlsasinkInstance > MAX_COMPONENT_ALSASINK) {
@@ -389,44 +389,45 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
           break;
         }
 
-          if(snd_pcm_format != SND_PCM_FORMAT_UNKNOWN){
-            if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
-              DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
-              return OMX_ErrorHardware;
-            }
-          } else{
-            DEBUG(DEB_LEV_SIMPLE_SEQ, "ALSA OMX_IndexParamAudioPcm configured\n");
-            memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-          }
-        }
-        else if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeALaw){
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
-          if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_A_LAW)) < 0) {
+        if(snd_pcm_format != SND_PCM_FORMAT_UNKNOWN){
+          if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
             DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
             return OMX_ErrorHardware;
           }
           memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-        }
-        else if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeMULaw){
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
-          if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_MU_LAW)) < 0) {
-            DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n", snd_strerror (err));
-            return OMX_ErrorHardware;
-          }
+        } else{
+          DEBUG(DEB_LEV_SIMPLE_SEQ, "ALSA OMX_IndexParamAudioPcm configured\n");
           memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
         }
-        /** Configure and prepare the ALSA handle */
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface\n");
-        if ((err = snd_pcm_hw_params (pPort->playback_handle, pPort->hw_params)) < 0) {
-          DEBUG(DEB_LEV_ERR, "cannot set parameters (%s)\n",	snd_strerror (err));
-          return OMX_ErrorHardware;
-        }
-
-        if ((err = snd_pcm_prepare (pPort->playback_handle)) < 0) {
-          DEBUG(DEB_LEV_ERR, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
-          return OMX_ErrorHardware;
-        }
       }
+      else if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeALaw){
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
+        if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_A_LAW)) < 0) {
+          DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
+          return OMX_ErrorHardware;
+        }
+        memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+      }
+      else if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeMULaw){
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
+        if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_MU_LAW)) < 0) {
+          DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n", snd_strerror (err));
+          return OMX_ErrorHardware;
+        }
+        memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+      }
+      /** Configure and prepare the ALSA handle */
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface\n");
+      if ((err = snd_pcm_hw_params (pPort->playback_handle, pPort->hw_params)) < 0) {
+        DEBUG(DEB_LEV_ERR, "cannot set parameters (%s)\n",	snd_strerror (err));
+        return OMX_ErrorHardware;
+      }
+
+      if ((err = snd_pcm_prepare (pPort->playback_handle)) < 0) {
+        DEBUG(DEB_LEV_ERR, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
+        return OMX_ErrorHardware;
+      }
+    }
     break;
   case OMX_IndexParamAudioMp3:
     pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;

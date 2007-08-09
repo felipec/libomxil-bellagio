@@ -37,6 +37,11 @@
 
 #define TUNNEL_USE_BUFFER_RETRY 20
 #define TUNNEL_USE_BUFFER_RETRY_USLEEP_TIME 50000
+
+/** The default value for the number of needed buffers for each port. */
+#define DEFAULT_NUMBER_BUFFERS_PER_PORT 2
+/** The default value for the minimum number of needed buffers for each port. */
+#define DEFAULT_MIN_NUMBER_BUFFERS_PER_PORT 2
 /** 
   * @brief the base contructor for the generic openmax ST port
   * 
@@ -96,8 +101,8 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
   (*openmaxStandPort)->nNumAssignedBuffers=0;
   setHeader(&(*openmaxStandPort)->sPortParam, sizeof (OMX_PARAM_PORTDEFINITIONTYPE));
   (*openmaxStandPort)->sPortParam.nPortIndex = nPortIndex;
-  (*openmaxStandPort)->sPortParam.nBufferCountActual=2;
-  (*openmaxStandPort)->sPortParam.nBufferCountMin=2;   
+  (*openmaxStandPort)->sPortParam.nBufferCountActual = DEFAULT_NUMBER_BUFFERS_PER_PORT;
+  (*openmaxStandPort)->sPortParam.nBufferCountMin = DEFAULT_MIN_NUMBER_BUFFERS_PER_PORT;
   (*openmaxStandPort)->sPortParam.bEnabled = OMX_TRUE;
   (*openmaxStandPort)->sPortParam.bPopulated = OMX_FALSE; 
   (*openmaxStandPort)->sPortParam.eDir  =  (isInput == OMX_TRUE)?OMX_DirInput:OMX_DirOutput;

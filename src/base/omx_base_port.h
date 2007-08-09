@@ -41,6 +41,7 @@
 #define PORT_IS_ENABLED(pPort)                                   (pPort->sPortParam.bEnabled == OMX_TRUE)
 #define PORT_IS_POPULATED(pPort)                                 (pPort->sPortParam.bPopulated == OMX_TRUE)
 #define PORT_IS_TUNNELED(pPort)                                  (pPort->nTunnelFlags & TUNNEL_ESTABLISHED)
+#define PORT_IS_DEEP_TUNNELED(pPort)                             (pPort->nTunnelFlags & PROPRIETARY_COMMUNICATION_ESTABLISHED)
 #define PORT_IS_BUFFER_SUPPLIER(pPort)                           (pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER)
 #define PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort)                (pPort->nTunnelFlags== (TUNNEL_ESTABLISHED | TUNNEL_IS_SUPPLIER))
 
@@ -88,6 +89,10 @@ typedef enum TUNNEL_STATUS_FLAG {
   TUNNEL_IS_SUPPLIER = 0x0002 /**< the TUNNEL_IS_SUPPLIER specifies if a tunneled port is the supplier.
 														  * It is assigned to a private field of the port if it is tunneled and also it is the buffer supplier for the tunnel.
 														  */
+  PROPRIETARY_COMMUNICATION_ESTABLISHED = 0x0004 /** The tunnel established is created between two components of the same
+																									* vendor. These components can take advantage from a vendor specific 
+																									* communication
+																									*/
 } TUNNEL_STATUS_FLAG;
 
 

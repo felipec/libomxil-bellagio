@@ -86,7 +86,7 @@ typedef enum TUNNEL_STATUS_FLAG {
   TUNNEL_ESTABLISHED = 0x0001, /**< the TUNNEL_ESTABLISHED specifies if a port is tunneled.
 														  * It is assigned to a private field of the port if it is tunneled
 														  */
-  TUNNEL_IS_SUPPLIER = 0x0002 /**< the TUNNEL_IS_SUPPLIER specifies if a tunneled port is the supplier.
+  TUNNEL_IS_SUPPLIER = 0x0002, /**< the TUNNEL_IS_SUPPLIER specifies if a tunneled port is the supplier.
 														  * It is assigned to a private field of the port if it is tunneled and also it is the buffer supplier for the tunnel.
 														  */
   PROPRIETARY_COMMUNICATION_ESTABLISHED = 0x0004 /** The tunnel established is created between two components of the same

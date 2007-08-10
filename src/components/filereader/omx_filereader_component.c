@@ -289,6 +289,7 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   av_free(omx_filereader_component_Private->avCodecContext);
 
   omx_filereader_component_Private->avformatReady = OMX_FALSE;
+  tsem_reset(omx_filereader_component_Private->avformatSyncSem);
 
   /** Deinitialization with respect to buff mgmt callback function */
   omx_filereader_component_Private->isFirstBuffer = 0;

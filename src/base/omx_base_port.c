@@ -383,11 +383,6 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
     }
   }
 
-  if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
-    DEBUG(DEB_LEV_ERR, "In %s: Requested Buffer Size is Less than Minimum Buffer Size\n", __func__);
-    return OMX_ErrorIncorrectStateTransition;
-  }
-	
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
       openmaxStandPort->pInternalBufferStorage[i] = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
@@ -461,11 +456,6 @@ OMX_ERRORTYPE base_port_UseBuffer(
     }
   }
 
-  if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
-    DEBUG(DEB_LEV_ERR, "In %s: Given Buffer Size is Less than Minimum Buffer Size\n", __func__);
-    return OMX_ErrorIncorrectStateTransition;
-  }
-	
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
       openmaxStandPort->pInternalBufferStorage[i] = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));

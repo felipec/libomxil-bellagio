@@ -382,6 +382,11 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
       return OMX_ErrorIncorrectStateTransition;
     }
   }
+
+  if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
+    DEBUG(DEB_LEV_ERR, "In %s: Requested Buffer Size is Less than Minimum Buffer Size\n", __func__);
+    return OMX_ErrorIncorrectStateTransition;
+  }
 	
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
@@ -454,6 +459,11 @@ OMX_ERRORTYPE base_port_UseBuffer(
       DEBUG(DEB_LEV_ERR, "In %s: The port of Comp %s is not allowed to receive buffers\n", __func__,omx_base_component_Private->name);
       return OMX_ErrorIncorrectStateTransition;
     }
+  }
+
+  if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
+    DEBUG(DEB_LEV_ERR, "In %s: Given Buffer Size is Less than Minimum Buffer Size\n", __func__);
+    return OMX_ErrorIncorrectStateTransition;
   }
 	
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){

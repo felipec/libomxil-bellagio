@@ -89,8 +89,6 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
               __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 	
-  omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
-
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -100,8 +98,7 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
     * e.g. we can override the function pointers in the private struct  
     */
   omx_maddec_component_Private = (omx_maddec_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-  strcpy(omx_maddec_component_Private->name,cComponentName);
-
+  
   DEBUG(DEB_LEV_SIMPLE_SEQ, "constructor of mad decoder component is called\n");
 
   /** Allocate Ports and Call base port constructor. */	
@@ -121,8 +118,8 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
     }
   }
 
-  base_port_Constructor(openmaxStandComp,&omx_maddec_component_Private->ports[0], 0, OMX_TRUE);
-  base_port_Constructor(openmaxStandComp,&omx_maddec_component_Private->ports[1], 1, OMX_FALSE);
+  omx_maddec_component_Private->PortConstructor(openmaxStandComp,&omx_maddec_component_Private->ports[0], 0, OMX_TRUE);
+  omx_maddec_component_Private->PortConstructor(openmaxStandComp,&omx_maddec_component_Private->ports[1], 1, OMX_FALSE);
 
   /** Domain specific section for the ports. */	
   /** first we set the parameter common to both formats
@@ -238,23 +235,12 @@ void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandC
 /** The destructor */
 OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 
-  int i;
   omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
 
   if(omx_maddec_component_Private->madDecSyncSem) {
     tsem_deinit(omx_maddec_component_Private->madDecSyncSem);
     free(omx_maddec_component_Private->madDecSyncSem);
     omx_maddec_component_Private->madDecSyncSem = NULL;
-  }
-
-  if (omx_maddec_component_Private->sPortTypesParam.nPorts && omx_maddec_component_Private->ports) {
-    for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_maddec_component_Private->ports[i])	{
-        base_port_Destructor(omx_maddec_component_Private->ports[i]);
-      }
-    }
-    free(omx_maddec_component_Private->ports);
-    omx_maddec_component_Private->ports = NULL;
   }
 
   /** freeing mad decoder structures */

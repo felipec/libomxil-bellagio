@@ -128,7 +128,8 @@ CLASS(omx_base_component_PrivateType)
   void* (*BufferMgmtFunction)(void* param); /** @param BufferMgmtFunction This function processes input output buffers */ \
   OMX_ERRORTYPE (*messageHandler)(OMX_COMPONENTTYPE*,internalRequestMessageType*);/** This function receives messages from the message queue. It is needed for each Linux ST OpenMAX component */ \
   OMX_ERRORTYPE (*DoStateSet)(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32); /**< @param DoStateSet internal function called when a generic state transition is requested*/ \
-  OMX_ERRORTYPE (*destructor)(OMX_COMPONENTTYPE *openmaxStandComp); /** Component Destructor*/
+  OMX_ERRORTYPE (*destructor)(OMX_COMPONENTTYPE *openmaxStandComp); /** Component Destructor*/ \
+  OMX_ERRORTYPE (*PortConstructor)(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput); /**< The contructor of the port. It fills all the other function pointers */ 
 ENDCLASS(omx_base_component_PrivateType)
 
 /** 

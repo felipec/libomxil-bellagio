@@ -55,8 +55,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 
   err = omx_base_source_Constructor(openmaxStandComp, cComponentName);
   omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
-  strcpy(omx_filereader_component_Private->name,cComponentName);
-
+  
   if (omx_filereader_component_Private->sPortTypesParam.nPorts && !omx_filereader_component_Private->ports) {
     omx_filereader_component_Private->ports = calloc(omx_filereader_component_Private->sPortTypesParam.nPorts, sizeof (omx_base_PortType *));
 
@@ -77,7 +76,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     DEBUG(DEB_LEV_ERR, "In %s Not allocated ports\n", __func__);
   }
   /** allocating file reader component output port */	 
-  base_port_Constructor(openmaxStandComp, &omx_filereader_component_Private->ports[0], 0, OMX_FALSE);
+  omx_filereader_component_Private->PortConstructor(openmaxStandComp, &omx_filereader_component_Private->ports[0], 0, OMX_FALSE);
 
   pPort = (omx_filereader_component_PortType *) omx_filereader_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
   
@@ -132,23 +131,13 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
  */
 OMX_ERRORTYPE omx_filereader_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 	omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
-  OMX_U32 i;
-
+  
   if(omx_filereader_component_Private->avformatSyncSem) {
     tsem_deinit(omx_filereader_component_Private->avformatSyncSem);
     free(omx_filereader_component_Private->avformatSyncSem);
     omx_filereader_component_Private->avformatSyncSem=NULL;
   }
 
-  //frees the locally dynamic allocated memory
-  if (omx_filereader_component_Private->sPortTypesParam.nPorts && omx_filereader_component_Private->ports) {
-    for (i=0; i < omx_filereader_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_filereader_component_Private->ports[i])
-        base_port_Destructor(omx_filereader_component_Private->ports[i]);
-    }
-    free(omx_filereader_component_Private->ports);
-    omx_filereader_component_Private->ports=NULL;
-  }
   if(omx_filereader_component_Private->sInputFileName) {
     free(omx_filereader_component_Private->sInputFileName);
   }

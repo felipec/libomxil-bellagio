@@ -73,7 +73,7 @@ long GetTime() {
 OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   OMX_S32 i;
-  omx_fbdev_sink_component_PortType *port;
+  omx_fbdev_sink_component_PortType *pPort;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private;
 
   if (!openmaxStandComp->pComponentPrivate) {
@@ -86,7 +86,6 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
-  omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -112,54 +111,53 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
       }
     }
   }
-  base_port_Constructor(openmaxStandComp, &omx_fbdev_sink_component_Private->ports[0], 0, OMX_TRUE);
-  port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  omx_fbdev_sink_component_Private->PortConstructor(openmaxStandComp, &omx_fbdev_sink_component_Private->ports[0], 0, OMX_TRUE);
+  pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
   /** Domain specific section for the allocated port. */	
-  port->sPortParam.eDomain = OMX_PortDomainVideo;
-  setHeader(&port->sPortParam.format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
-  port->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
-  strcpy(port->sPortParam.format.video.cMIMEType, "raw");
-  port->sPortParam.format.video.pNativeRender = NULL;
-  port->sPortParam.format.video.nFrameWidth = 0;
-  port->sPortParam.format.video.nFrameHeight = 0;
-  port->sPortParam.format.video.nStride = 0;
-  port->sPortParam.format.video.nSliceHeight = 0;
-  port->sPortParam.format.video.nBitrate = 0;
-  port->sPortParam.format.video.xFramerate = 25;
-  port->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
-  port->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
-  port->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
+  pPort->sPortParam.eDomain = OMX_PortDomainVideo;
+  setHeader(&pPort->sPortParam.format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
+  pPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
+  strcpy(pPort->sPortParam.format.video.cMIMEType, "raw");
+  pPort->sPortParam.format.video.pNativeRender = NULL;
+  pPort->sPortParam.format.video.nFrameWidth = 0;
+  pPort->sPortParam.format.video.nFrameHeight = 0;
+  pPort->sPortParam.format.video.nStride = 0;
+  pPort->sPortParam.format.video.nSliceHeight = 0;
+  pPort->sPortParam.format.video.nBitrate = 0;
+  pPort->sPortParam.format.video.xFramerate = 25;
+  pPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
+  pPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
+  pPort->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
-
-  setHeader(&port->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-  port->sVideoParam.nPortIndex = 0;
-  port->sVideoParam.nIndex = 0;
-  port->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
-  port->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
-  port->sVideoParam.xFramerate = 25;
+  setHeader(&pPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+  pPort->sVideoParam.nPortIndex = 0;
+  pPort->sVideoParam.nIndex = 0;
+  pPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
+  pPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
+  pPort->sVideoParam.xFramerate = 25;
   
   /** Set configs */
-  setHeader(&port->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
-  port->omxConfigCrop.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  port->omxConfigCrop.nLeft = port->omxConfigCrop.nTop = 0;
-  port->omxConfigCrop.nWidth = port->omxConfigCrop.nHeight = 0;
+  setHeader(&pPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
+  pPort->omxConfigCrop.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
+  pPort->omxConfigCrop.nLeft = pPort->omxConfigCrop.nTop = 0;
+  pPort->omxConfigCrop.nWidth = pPort->omxConfigCrop.nHeight = 0;
 
-  setHeader(&port->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));	
-  port->omxConfigRotate.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  port->omxConfigRotate.nRotation = 0;	//Default: No rotation (0 degrees)
+  setHeader(&pPort->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));	
+  pPort->omxConfigRotate.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
+  pPort->omxConfigRotate.nRotation = 0;	//Default: No rotation (0 degrees)
 
-  setHeader(&port->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));	
-  port->omxConfigMirror.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  port->omxConfigMirror.eMirror = OMX_MirrorNone;	//Default: No mirroring
+  setHeader(&pPort->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));	
+  pPort->omxConfigMirror.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
+  pPort->omxConfigMirror.eMirror = OMX_MirrorNone;	//Default: No mirroring
 
-  setHeader(&port->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));	
-  port->omxConfigScale.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  port->omxConfigScale.xWidth = port->omxConfigScale.xHeight = 0x10000;	//Default: No scaling (scale factor = 1)
+  setHeader(&pPort->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));	
+  pPort->omxConfigScale.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
+  pPort->omxConfigScale.xWidth = pPort->omxConfigScale.xHeight = 0x10000;	//Default: No scaling (scale factor = 1)
 
-  setHeader(&port->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));	
-  port->omxConfigOutputPosition.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  port->omxConfigOutputPosition.nX = port->omxConfigOutputPosition.nY = 0; //Default: No shift in output position (0,0)
+  setHeader(&pPort->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));	
+  pPort->omxConfigOutputPosition.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
+  pPort->omxConfigOutputPosition.nX = pPort->omxConfigOutputPosition.nY = 0; //Default: No shift in output position (0,0)
 
   /** set the function pointers */
   omx_fbdev_sink_component_Private->destructor = omx_fbdev_sink_component_Destructor;
@@ -177,24 +175,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   return err;
 }
 
-
 /** The Destructor 
  */
 OMX_ERRORTYPE omx_fbdev_sink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;  
-  int i;
-
-  /** frees the port structures*/
-  if (omx_fbdev_sink_component_Private->sPortTypesParam.nPorts && omx_fbdev_sink_component_Private->ports) {
-    for (i = 0; i < omx_fbdev_sink_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_fbdev_sink_component_Private->ports[i]) {
-        base_port_Destructor(omx_fbdev_sink_component_Private->ports[i]);
-      }
-    }
-    free(omx_fbdev_sink_component_Private->ports);
-    omx_fbdev_sink_component_Private->ports = NULL;
-  }
-
+  
   omx_base_sink_Destructor(openmaxStandComp);
   nofbdev_sinkInstance--;
 
@@ -221,7 +206,7 @@ OMX_S32 calcStride2(omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_compone
   */
 OMX_ERRORTYPE omx_fbdev_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType* port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  omx_fbdev_sink_component_PortType* pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
   omx_fbdev_sink_component_Private->fd = open(FBDEV_FILENAME, O_RDWR);
   if (omx_fbdev_sink_component_Private->fd < 0) {
@@ -266,7 +251,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
 
 
   fbwidth = omx_fbdev_sink_component_Private->vscr_info.xres;
-  fbheight = port->sPortParam.format.video.nFrameHeight;
+  fbheight = pPort->sPortParam.format.video.nFrameHeight;
   fbbpp = omx_fbdev_sink_component_Private->vscr_info.bits_per_pixel;
   //fbstride = calcStride(fbwidth, fbpxlfmt);
   //fbstride = omx_fbdev_sink_component_Private->fscr_info.line_length*
@@ -980,39 +965,39 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
   */
 void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer) {
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  omx_fbdev_sink_component_PortType *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   static long old_time = 0, new_time = 0;
   long timediff=0;
 
-  OMX_COLOR_FORMATTYPE input_colorformat = port->sVideoParam.eColorFormat;
-  OMX_S32 input_cpy_width = (OMX_S32) port->omxConfigCrop.nWidth;			//	Width (in columns) of the crop rectangle
-  OMX_U32 input_cpy_height = port->omxConfigCrop.nHeight;					//	Height (in rows) of the crop rectangle
+  OMX_COLOR_FORMATTYPE input_colorformat = pPort->sVideoParam.eColorFormat;
+  OMX_S32 input_cpy_width = (OMX_S32) pPort->omxConfigCrop.nWidth;			//	Width (in columns) of the crop rectangle
+  OMX_U32 input_cpy_height = pPort->omxConfigCrop.nHeight;					//	Height (in rows) of the crop rectangle
 
   OMX_U8* input_src_ptr = (OMX_U8*) (pInputBuffer->pBuffer);
-  OMX_S32 input_src_stride = port->sPortParam.format.video.nStride;			//	Negative means bottom-to-top (think Windows bmp)
-  OMX_U32 input_src_width = port->sPortParam.format.video.nFrameWidth;
-  OMX_U32 input_src_height = port->sPortParam.format.video.nSliceHeight;
+  OMX_S32 input_src_stride = pPort->sPortParam.format.video.nStride;			//	Negative means bottom-to-top (think Windows bmp)
+  OMX_U32 input_src_width = pPort->sPortParam.format.video.nFrameWidth;
+  OMX_U32 input_src_height = pPort->sPortParam.format.video.nSliceHeight;
 
   /**	FIXME: Configuration values should be clamped to prevent memory trampling and potential segfaults.
     *	It might be best to store clamped AND unclamped values on a per-port basis so that OMX_GetConfig 
     *	can still return the unclamped ones.
     */
-  OMX_S32 input_src_offset_x = port->omxConfigCrop.nLeft;		//	Offset (in columns) to left side of crop rectangle
-  OMX_S32 input_src_offset_y = port->omxConfigCrop.nTop;		//	Offset (in rows) from top of the image to crop rectangle
+  OMX_S32 input_src_offset_x = pPort->omxConfigCrop.nLeft;		//	Offset (in columns) to left side of crop rectangle
+  OMX_S32 input_src_offset_y = pPort->omxConfigCrop.nTop;		//	Offset (in rows) from top of the image to crop rectangle
 
   OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr + (fbstride * HEIGHT_OFFSET); 
   //OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr; 
   OMX_S32 input_dest_stride = (input_src_stride < 0) ? -1 * fbstride : fbstride;
 
-  if (port->omxConfigMirror.eMirror == OMX_MirrorVertical || port->omxConfigMirror.eMirror == OMX_MirrorBoth) {
+  if (pPort->omxConfigMirror.eMirror == OMX_MirrorVertical || pPort->omxConfigMirror.eMirror == OMX_MirrorBoth) {
     input_dest_stride *= -1;
   }
 
   OMX_U32 input_dest_width = fbwidth;
   OMX_U32 input_dest_height = fbheight;
 
-  OMX_U32 input_dest_offset_x = port->omxConfigOutputPosition.nX;
-  OMX_U32 input_dest_offset_y = port->omxConfigOutputPosition.nY;
+  OMX_U32 input_dest_offset_x = pPort->omxConfigOutputPosition.nX;
+  OMX_U32 input_dest_offset_y = pPort->omxConfigOutputPosition.nY;
 
   /** getting current time */
   new_time = GetTime();
@@ -1053,7 +1038,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
   /* Check which structure we are being fed and make control its header */
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *port;
+  omx_fbdev_sink_component_PortType *pPort;
   if (pComponentConfigStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -1068,11 +1053,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
         break;
       }
       if (portIndex == OMX_BASE_SINK_INPUTPORT_INDEX) {
-        port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
-        port->omxConfigCrop.nLeft = omxConfigCrop->nLeft;
-        port->omxConfigCrop.nTop = omxConfigCrop->nTop;
-        port->omxConfigCrop.nWidth = omxConfigCrop->nWidth;
-        port->omxConfigCrop.nHeight = omxConfigCrop->nHeight;
+        pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+        pPort->omxConfigCrop.nLeft = omxConfigCrop->nLeft;
+        pPort->omxConfigCrop.nTop = omxConfigCrop->nTop;
+        pPort->omxConfigCrop.nWidth = omxConfigCrop->nWidth;
+        pPort->omxConfigCrop.nHeight = omxConfigCrop->nHeight;
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1084,12 +1069,12 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
         break;
       }
       if (portIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+        pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
         if (omxConfigRotate->nRotation != 0) {
           //	Rotation not supported (yet)
           return OMX_ErrorUnsupportedSetting;
         }
-        port->omxConfigRotate.nRotation = omxConfigRotate->nRotation;
+        pPort->omxConfigRotate.nRotation = omxConfigRotate->nRotation;
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1105,8 +1090,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
           //	Horizontal mirroring not yet supported
           return OMX_ErrorUnsupportedSetting;
         }
-        port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
-        port->omxConfigMirror.eMirror = omxConfigMirror->eMirror;
+        pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+        pPort->omxConfigMirror.eMirror = omxConfigMirror->eMirror;
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1122,9 +1107,9 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
           //	Scaling not yet supported
           return OMX_ErrorUnsupportedSetting;
         }
-        port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
-        port->omxConfigScale.xWidth = omxConfigScale->xWidth;
-        port->omxConfigScale.xHeight = omxConfigScale->xHeight;
+        pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+        pPort->omxConfigScale.xWidth = omxConfigScale->xWidth;
+        pPort->omxConfigScale.xHeight = omxConfigScale->xHeight;
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1136,9 +1121,9 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
         break;
       }
       if (portIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
-        port->omxConfigOutputPosition.nX = omxConfigOutputPosition->nX;
-        port->omxConfigOutputPosition.nY = omxConfigOutputPosition->nY;
+        pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+        pPort->omxConfigOutputPosition.nX = omxConfigOutputPosition->nX;
+        pPort->omxConfigOutputPosition.nY = omxConfigOutputPosition->nY;
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1164,7 +1149,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
 
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *port;
+  omx_fbdev_sink_component_PortType *pPort;
   if (pComponentConfigStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -1175,8 +1160,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       omxConfigCrop = (OMX_CONFIG_RECTTYPE*)pComponentConfigStructure;
       setHeader(omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
       if (omxConfigCrop->nPortIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigCrop->nPortIndex];
-        memcpy(omxConfigCrop, &port->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
+        pPort = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigCrop->nPortIndex];
+        memcpy(omxConfigCrop, &pPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1185,8 +1170,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       omxConfigRotate = (OMX_CONFIG_ROTATIONTYPE*)pComponentConfigStructure;
       setHeader(omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));
       if (omxConfigRotate->nPortIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigRotate->nPortIndex];
-        memcpy(omxConfigRotate, &port->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));
+        pPort = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigRotate->nPortIndex];
+        memcpy(omxConfigRotate, &pPort->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1195,8 +1180,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       omxConfigMirror = (OMX_CONFIG_MIRRORTYPE*)pComponentConfigStructure;
       setHeader(omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));
       if (omxConfigMirror->nPortIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigMirror->nPortIndex];
-        memcpy(omxConfigMirror, &port->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));
+        pPort = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigMirror->nPortIndex];
+        memcpy(omxConfigMirror, &pPort->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1205,8 +1190,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       omxConfigScale = (OMX_CONFIG_SCALEFACTORTYPE*)pComponentConfigStructure;
       setHeader(omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));
       if (omxConfigScale->nPortIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigScale->nPortIndex];
-        memcpy(omxConfigScale, &port->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));
+        pPort = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigScale->nPortIndex];
+        memcpy(omxConfigScale, &pPort->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1215,8 +1200,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       omxConfigOutputPosition = (OMX_CONFIG_POINTTYPE*)pComponentConfigStructure;
       setHeader(omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));
       if (omxConfigOutputPosition->nPortIndex == 0) {
-        port = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigOutputPosition->nPortIndex];
-        memcpy(omxConfigOutputPosition, &port->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));
+        pPort = (omx_fbdev_sink_component_PortType *)omx_fbdev_sink_component_Private->ports[omxConfigOutputPosition->nPortIndex];
+        memcpy(omxConfigOutputPosition, &pPort->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
       }
@@ -1242,7 +1227,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
   /* Check which structure we are being fed and make control its header */
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *port;
+  omx_fbdev_sink_component_PortType *pPort;
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -1257,27 +1242,27 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
         DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
         break;
       }
-      port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+      pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
       if(portIndex != 0) {
         return OMX_ErrorBadPortIndex;
       }
-      port->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
+      pPort->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
 
       //	Copy stuff from OMX_VIDEO_PORTDEFINITIONTYPE structure
-      port->sPortParam.format.video.cMIMEType = pPortDef->format.video.cMIMEType;
-      port->sPortParam.format.video.nFrameWidth = pPortDef->format.video.nFrameWidth;
-      port->sPortParam.format.video.nFrameHeight = pPortDef->format.video.nFrameHeight;
-      port->sPortParam.format.video.nBitrate = pPortDef->format.video.nBitrate;
-      port->sPortParam.format.video.xFramerate = pPortDef->format.video.xFramerate;
-      port->sPortParam.format.video.bFlagErrorConcealment = pPortDef->format.video.bFlagErrorConcealment;	
+      pPort->sPortParam.format.video.cMIMEType = pPortDef->format.video.cMIMEType;
+      pPort->sPortParam.format.video.nFrameWidth = pPortDef->format.video.nFrameWidth;
+      pPort->sPortParam.format.video.nFrameHeight = pPortDef->format.video.nFrameHeight;
+      pPort->sPortParam.format.video.nBitrate = pPortDef->format.video.nBitrate;
+      pPort->sPortParam.format.video.xFramerate = pPortDef->format.video.xFramerate;
+      pPort->sPortParam.format.video.bFlagErrorConcealment = pPortDef->format.video.bFlagErrorConcealment;	
 
       //	Figure out stride, slice height, min buffer size
-      port->sPortParam.format.video.nStride = calcStride(port->sPortParam.format.video.nFrameWidth, port->sVideoParam.eColorFormat);
-      port->sPortParam.format.video.nSliceHeight = port->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
-      port->sPortParam.nBufferSize = (OMX_U32) abs(port->sPortParam.format.video.nStride) * port->sPortParam.format.video.nSliceHeight;
+      pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
+      pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+      pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
 
-      port->omxConfigCrop.nWidth = port->sPortParam.format.video.nFrameWidth;
-      port->omxConfigCrop.nHeight = port->sPortParam.format.video.nFrameHeight;
+      pPort->omxConfigCrop.nWidth = pPort->sPortParam.format.video.nFrameWidth;
+      pPort->omxConfigCrop.nHeight = pPort->sPortParam.format.video.nFrameHeight;
       break;
 
     case OMX_IndexParamVideoPortFormat:
@@ -1289,7 +1274,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
         DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
         break;
       }
-      port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
+      pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
       if(portIndex != 0) {
         return OMX_ErrorBadPortIndex;
       }
@@ -1301,13 +1286,13 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       if(pVideoPortFormat->xFramerate > 0) {
         nFrameProcessTime = 1000000 / pVideoPortFormat->xFramerate;
       }
-      port->sVideoParam.xFramerate = pVideoPortFormat->xFramerate;
-      port->sVideoParam.eCompressionFormat = pVideoPortFormat->eCompressionFormat;
-      port->sVideoParam.eColorFormat = pVideoPortFormat->eColorFormat;
+      pPort->sVideoParam.xFramerate = pVideoPortFormat->xFramerate;
+      pPort->sVideoParam.eCompressionFormat = pVideoPortFormat->eCompressionFormat;
+      pPort->sVideoParam.eColorFormat = pVideoPortFormat->eColorFormat;
       //	Figure out stride, slice height, min buffer size
-      port->sPortParam.format.video.nStride = calcStride(port->sPortParam.format.video.nFrameWidth, port->sVideoParam.eColorFormat);
-      port->sPortParam.format.video.nSliceHeight = port->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
-      port->sPortParam.nBufferSize = (OMX_U32) abs(port->sPortParam.format.video.nStride) * port->sPortParam.format.video.nSliceHeight;
+      pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
+      pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+      pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
       break;
     default: /*Call the base component function*/
       return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -1325,7 +1310,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *port = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];	
+  omx_fbdev_sink_component_PortType *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];	
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -1344,7 +1329,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
         break;
       }
       if (pVideoPortFormat->nPortIndex < 1) {
-        memcpy(pVideoPortFormat, &port->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
+        memcpy(pVideoPortFormat, &pPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
       }

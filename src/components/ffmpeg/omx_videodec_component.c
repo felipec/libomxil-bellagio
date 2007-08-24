@@ -91,8 +91,8 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     }
   }
 
-  base_port_Constructor(openmaxStandComp, &omx_videodec_component_Private->ports[0], 0, OMX_TRUE);
-  base_port_Constructor(openmaxStandComp, &omx_videodec_component_Private->ports[1], 1, OMX_FALSE);
+  omx_videodec_component_Private->PortConstructor(openmaxStandComp, &omx_videodec_component_Private->ports[0], 0, OMX_TRUE);
+  omx_videodec_component_Private->PortConstructor(openmaxStandComp, &omx_videodec_component_Private->ports[1], 1, OMX_FALSE);
 
   /** Domain specific section for the ports. 	
     * first we set the parameter common to both formats
@@ -198,20 +198,6 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 /** The destructor of the video decoder component
   */
 OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-
-  int i;
-  omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
-
-  /** frees the locally dynamic allocated memory */
-  if (omx_videodec_component_Private->sPortTypesParam.nPorts && omx_videodec_component_Private->ports) {
-    for (i = 0; i < omx_videodec_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_videodec_component_Private->ports[i]) {
-        base_port_Destructor(omx_videodec_component_Private->ports[i]);
-      }
-    }
-    free(omx_videodec_component_Private->ports);
-    omx_videodec_component_Private->ports = NULL;
-  }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of video decoder component is called\n");
 

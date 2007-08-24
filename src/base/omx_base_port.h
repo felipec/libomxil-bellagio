@@ -123,7 +123,6 @@ CLASS(omx_base_PortType)
   OMX_BOOL bIsTransientToDisabled;/**< It indicates that the port is going from enabled to disabled */ \
   OMX_BOOL bIsFullOfBuffers; /**< It indicates if the port has all the buffers needed */ \
   OMX_BOOL bIsEmptyOfBuffers;/**< It indicates if the port has no buffers*/ \
-  OMX_ERRORTYPE (*PortConstructor)(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput); /**< The contructor of the port. It fills all the other function pointers */ \
   OMX_ERRORTYPE (*PortDestructor)(omx_base_PortType *openmaxStandPort); /**< The destructor of the port*/ \
   OMX_ERRORTYPE (*Port_DisablePort)(omx_base_PortType *openmaxStandPort); /**< Disables the port */ \
   OMX_ERRORTYPE (*Port_EnablePort)(omx_base_PortType *openmaxStandPort); /**< Enables the port */ \

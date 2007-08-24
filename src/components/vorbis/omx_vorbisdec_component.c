@@ -78,8 +78,6 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
   }	else {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
-  omx_vorbisdec_component_Private = openmaxStandComp->pComponentPrivate;
-
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -89,8 +87,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
     * e.g. we can override the function pointers in the private struct  
     */
   omx_vorbisdec_component_Private = (omx_vorbisdec_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-  strcpy(omx_vorbisdec_component_Private->name,cComponentName);
-
+  
   DEBUG(DEB_LEV_SIMPLE_SEQ, "constructor of vorbisdecoder component is called\n");
 
   /** Allocate Ports and Call base port constructor. */	
@@ -110,8 +107,8 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
     }
   }
 
-  base_port_Constructor(openmaxStandComp, &omx_vorbisdec_component_Private->ports[0], 0, OMX_TRUE);
-  base_port_Constructor(openmaxStandComp, &omx_vorbisdec_component_Private->ports[1], 1, OMX_FALSE);
+  omx_vorbisdec_component_Private->PortConstructor(openmaxStandComp, &omx_vorbisdec_component_Private->ports[0], 0, OMX_TRUE);
+  omx_vorbisdec_component_Private->PortConstructor(openmaxStandComp, &omx_vorbisdec_component_Private->ports[1], 1, OMX_FALSE);
 
   /** Domain specific section for the ports. */	
   /** first we set the parameter common to both formats
@@ -195,23 +192,12 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
 /** The destructor
  */
 OMX_ERRORTYPE omx_vorbisdec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-  int i;
   omx_vorbisdec_component_PrivateType* omx_vorbisdec_component_Private = openmaxStandComp->pComponentPrivate;
 
   if(omx_vorbisdec_component_Private->avCodecSyncSem) {
     tsem_deinit(omx_vorbisdec_component_Private->avCodecSyncSem);
     free(omx_vorbisdec_component_Private->avCodecSyncSem);
     omx_vorbisdec_component_Private->avCodecSyncSem = NULL;
-  }
-
-  /** frees the locally dynamic allocated memory */
-  if (omx_vorbisdec_component_Private->sPortTypesParam.nPorts && omx_vorbisdec_component_Private->ports) {
-    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_vorbisdec_component_Private->ports[i])
-        base_port_Destructor(omx_vorbisdec_component_Private->ports[i]);
-    }
-    free(omx_vorbisdec_component_Private->ports);
-    omx_vorbisdec_component_Private->ports = NULL;
   }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of vorbisdecoder component is called\n");

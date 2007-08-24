@@ -115,7 +115,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   openmaxStandComp->FreeBuffer = omx_base_component_FreeBuffer;
   openmaxStandComp->EmptyThisBuffer = omx_base_component_EmptyThisBuffer;
   openmaxStandComp->FillThisBuffer = omx_base_component_FillThisBuffer;
-
+  
   openmaxStandComp->nVersion.s.nVersionMajor = SPECVERSIONMAJOR;
   openmaxStandComp->nVersion.s.nVersionMinor = SPECVERSIONMINOR;
   openmaxStandComp->nVersion.s.nRevision = SPECREVISION;
@@ -125,7 +125,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   if (!omx_base_component_Private->name) {
     return OMX_ErrorInsufficientResources;
   }
-  strcpy(omx_base_component_Private->name,"OMX.st.base");
+  strcpy(omx_base_component_Private->name,cComponentName);
   omx_base_component_Private->state = OMX_StateLoaded;
   omx_base_component_Private->transientState = OMX_TransStateInvalid;
   omx_base_component_Private->callbacks = NULL;
@@ -137,6 +137,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   omx_base_component_Private->DoStateSet = &omx_base_component_DoStateSet;
   omx_base_component_Private->messageHandler = omx_base_component_MessageHandler;
   omx_base_component_Private->destructor = omx_base_component_Destructor;
+  omx_base_component_Private->PortConstructor = base_port_Constructor;
 
   pthread_mutex_init(&omx_base_component_Private->flush_mutex, NULL);
   pthread_cond_init(&omx_base_component_Private->flush_all_condition, NULL);

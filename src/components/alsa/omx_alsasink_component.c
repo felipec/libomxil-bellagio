@@ -52,8 +52,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   err = omx_base_sink_Constructor(openmaxStandComp,cComponentName);
 
   omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  strcpy(omx_alsasink_component_Private->name,cComponentName);
-
+  
   if (omx_alsasink_component_Private->sPortTypesParam.nPorts && !omx_alsasink_component_Private->ports) {
     omx_alsasink_component_Private->ports = calloc(omx_alsasink_component_Private->sPortTypesParam.nPorts,sizeof (omx_base_PortType *));
     if (!omx_alsasink_component_Private->ports) return OMX_ErrorInsufficientResources;
@@ -67,9 +66,8 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   }
   else 
   DEBUG(DEB_LEV_ERR, "In %s Not allocated ports\n", __func__);
-
 	 
-  base_port_Constructor(openmaxStandComp,&omx_alsasink_component_Private->ports[0],0, OMX_TRUE);
+  omx_alsasink_component_Private->PortConstructor(openmaxStandComp,&omx_alsasink_component_Private->ports[0],0, OMX_TRUE);
 
   pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
@@ -149,7 +147,6 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
  */
 OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  OMX_U32 i;
   omx_alsasink_component_PortType* pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
   if(pPort->hw_params) {
@@ -157,17 +154,6 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
   }
   if(pPort->playback_handle) {
     snd_pcm_close(pPort->playback_handle);
-  }
-
-  //frees the locally dynamic allocated memory
-  if (omx_alsasink_component_Private->sPortTypesParam.nPorts && omx_alsasink_component_Private->ports) {
-    for (i=0; i < omx_alsasink_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_alsasink_component_Private->ports[i]) {
-        base_port_Destructor(omx_alsasink_component_Private->ports[i]);
-      }
-    }
-    free(omx_alsasink_component_Private->ports);
-    omx_alsasink_component_Private->ports=NULL;
   }
 
   noAlsasinkInstance--;

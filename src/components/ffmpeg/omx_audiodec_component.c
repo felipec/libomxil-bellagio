@@ -56,8 +56,6 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   else 
     DEBUG(DEB_LEV_FUNCTION_NAME,"In %s, Error Component %x Already Allocated\n",__func__, (int)openmaxStandComp->pComponentPrivate);
 
-  omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
-
   // we could create our own port structures here
   // fixme maybe the base class could use a "port factory" function pointer?	
   err = omx_base_filter_Constructor(openmaxStandComp,cComponentName);
@@ -65,8 +63,7 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   /* here we can override whatever defaults the base_component constructor set
   * e.g. we can override the function pointers in the private struct  */
   omx_audiodec_component_Private = (omx_audiodec_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-  strcpy(omx_audiodec_component_Private->name,cComponentName);
-
+  
   //debug statement
   DEBUG(DEB_LEV_SIMPLE_SEQ,"constructor of audiodecoder component is called\n");
 
@@ -83,8 +80,8 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     }
   }
 
-  base_port_Constructor(openmaxStandComp,&omx_audiodec_component_Private->ports[0],0, OMX_TRUE);
-  base_port_Constructor(openmaxStandComp,&omx_audiodec_component_Private->ports[1],1, OMX_FALSE);
+  omx_audiodec_component_Private->PortConstructor(openmaxStandComp,&omx_audiodec_component_Private->ports[0],0, OMX_TRUE);
+  omx_audiodec_component_Private->PortConstructor(openmaxStandComp,&omx_audiodec_component_Private->ports[1],1, OMX_FALSE);
 
   /** Domain specific section for the ports. */	
   // first we set the parameter common to both formats
@@ -168,7 +165,6 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
  */
 OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) 
 {
-  int i;
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
 
   /*Free Codec Context*/
@@ -178,16 +174,6 @@ OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
     tsem_deinit(omx_audiodec_component_Private->avCodecSyncSem);
     free(omx_audiodec_component_Private->avCodecSyncSem);
     omx_audiodec_component_Private->avCodecSyncSem=NULL;
-  }
-
-  //frees the locally dynamic allocated memory
-  if (omx_audiodec_component_Private->sPortTypesParam.nPorts && omx_audiodec_component_Private->ports) {
-    for (i=0; i < omx_audiodec_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_audiodec_component_Private->ports[i])
-        base_port_Destructor(omx_audiodec_component_Private->ports[i]);
-    }
-    free(omx_audiodec_component_Private->ports);
-    omx_audiodec_component_Private->ports=NULL;
   }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of audiodecoder component is called\n");

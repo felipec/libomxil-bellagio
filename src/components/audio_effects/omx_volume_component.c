@@ -55,8 +55,6 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   } else {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
-  omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
-
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -66,8 +64,7 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
     * e.g. we can override the function pointers in the private struct  
     */
   omx_volume_component_Private = (omx_volume_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-  strcpy(omx_volume_component_Private->name, cComponentName);
-
+  
   /** Allocate Ports and Call base port constructor. */	
   if (omx_volume_component_Private->sPortTypesParam.nPorts && !omx_volume_component_Private->ports) {
     omx_volume_component_Private->ports = calloc(omx_volume_component_Private->sPortTypesParam.nPorts, sizeof (omx_base_PortType *));
@@ -84,10 +81,10 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
         return OMX_ErrorInsufficientResources;
       }
     }
-  }
+  } 
 
-  base_port_Constructor(openmaxStandComp, &omx_volume_component_Private->ports[0], 0, OMX_TRUE);
-  base_port_Constructor(openmaxStandComp, &omx_volume_component_Private->ports[1], 1, OMX_FALSE);
+  omx_volume_component_Private->PortConstructor(openmaxStandComp, &omx_volume_component_Private->ports[0], 0, OMX_TRUE);
+  omx_volume_component_Private->PortConstructor(openmaxStandComp, &omx_volume_component_Private->ports[1], 1, OMX_FALSE);
 
   /** Domain specific section for the ports. */	
   omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
@@ -133,19 +130,7 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
 /** The destructor
   */
 OMX_ERRORTYPE omx_volume_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-  int i;
   omx_volume_component_PrivateType* omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
-
-  /** frees the port structures */
-  if (omx_volume_component_Private->sPortTypesParam.nPorts && omx_volume_component_Private->ports) {
-    for (i=0; i < omx_volume_component_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_volume_component_Private->ports[i]) {
-        base_port_Destructor(omx_volume_component_Private->ports[i]);
-      }
-    }
-    free(omx_volume_component_Private->ports);
-    omx_volume_component_Private->ports=NULL;
-  }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of audiodecoder component is called\n");
   omx_base_filter_Destructor(openmaxStandComp);

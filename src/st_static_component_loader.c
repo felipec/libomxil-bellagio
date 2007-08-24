@@ -415,7 +415,7 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
  * standard OMX_GetComponentsOfRole function for the ST static
  * component loader 
  */
-OMX_API OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole ( 
+OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole ( 
   BOSA_ComponentLoaderHandle loaderHandle,
   OMX_STRING role,
   OMX_U32 *pNumComps,

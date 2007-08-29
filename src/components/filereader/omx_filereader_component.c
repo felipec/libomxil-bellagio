@@ -118,7 +118,6 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     if(omx_filereader_component_Private->avformatSyncSem == NULL) return OMX_ErrorInsufficientResources;
     tsem_init(omx_filereader_component_Private->avformatSyncSem, 0);
   }
-  //omx_filereader_component_Private->sInputFileName=NULL;
   omx_filereader_component_Private->sInputFileName = (char *)malloc(DEFAULT_FILENAME_LENGTH);
   strcpy(omx_filereader_component_Private->sInputFileName, "reference_stream.mp3");
   /*Default Coding type*/
@@ -154,7 +153,6 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
   int error;
   OMX_VENDOR_EXTRADATATYPE *pExtraData;
-  ByteIOContext byteiocontext;
 	
 	DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 	
@@ -178,26 +176,16 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   av_register_input_format(omx_filereader_component_Private->avinputformat);
 
 	/** opening the input file whose name is already set via setParameter */
-  error = url_fopen(&byteiocontext, (char*)omx_filereader_component_Private->sInputFileName, URL_RDONLY);
-  if(error < 0) {
-    DEBUG(DEB_LEV_ERR,"Couldn't Open Input File error=%d File Name=%s--\n",
-      error,(char*)omx_filereader_component_Private->sInputFileName);
-  }
+  error = av_open_input_file(&omx_filereader_component_Private->avformatcontext, 
+                            (char*)omx_filereader_component_Private->sInputFileName,
+                            omx_filereader_component_Private->avinputformat,
+                            0,
+                            omx_filereader_component_Private->avformatparameters);
 
-  error = av_open_input_stream(&omx_filereader_component_Private->avformatcontext,
-                      &byteiocontext,
-                      (char*)omx_filereader_component_Private->sInputFileName,
-                      omx_filereader_component_Private->avinputformat,
-                      omx_filereader_component_Private->avformatparameters);
   if(error != 0) {
     DEBUG(DEB_LEV_ERR,"Couldn't Open Input Stream error=%d File Name=%s--\n",
       error,(char*)omx_filereader_component_Private->sInputFileName);
-  }
-	
-  error = av_find_stream_info(omx_filereader_component_Private->avformatcontext);
-  if(error < 0) {
-    DEBUG(DEB_LEV_ERR, "\n error at find stream info \n");
-
+  
     (*(omx_filereader_component_Private->callbacks->EventHandler))
       (openmaxStandComp,
       omx_filereader_component_Private->callbackData,
@@ -223,8 +211,8 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_filereader_component_Private->isNewBuffer = 1;
 
   /** send callback regarding codec context extradata which will be required to 
-  * open the codec in the audio decoder component 
-  */   	 
+    * open the codec in the audio decoder component 
+    */   	 
   /* filling up the OMX_VENDOR_EXTRADATATYPE structure */
   pExtraData = (OMX_VENDOR_EXTRADATATYPE *)malloc(sizeof(OMX_VENDOR_EXTRADATATYPE));
   pExtraData->nPortIndex = 0; //output port index
@@ -263,10 +251,6 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
-
-  /** closing input file stream */
-  url_fclose(&omx_filereader_component_Private->avformatcontext->pb);
-
   /** deinitializing all private data structures */
   free(omx_filereader_component_Private->avCodecContext->extradata);
   if(omx_filereader_component_Private->avformatcontext->priv_data) {
@@ -274,8 +258,9 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   }
 
   av_free(omx_filereader_component_Private->avformatparameters);
-  av_free(omx_filereader_component_Private->avformatcontext);
   av_free(omx_filereader_component_Private->avCodecContext);
+  /** closing input file */
+  av_close_input_file(omx_filereader_component_Private->avformatcontext);
 
   omx_filereader_component_Private->avformatReady = OMX_FALSE;
   tsem_reset(omx_filereader_component_Private->avformatSyncSem);

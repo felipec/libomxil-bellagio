@@ -157,25 +157,7 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
 	DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 	
   /** initialization of file reader component private data structures */
-  av_register_all();
-  omx_filereader_component_Private->avCodecContext = avcodec_alloc_context();
-  omx_filereader_component_Private->avformatparameters = av_mallocz(sizeof(AVFormatParameters));
-
-  if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type Mp3\n",__func__);
-    omx_filereader_component_Private->avformatparameters->audio_codec_id = CODEC_ID_MP2;
-    omx_filereader_component_Private->avinputformat= av_find_input_format("mp3");
-  } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type OGG\n",__func__);
-    omx_filereader_component_Private->avformatparameters->audio_codec_id = CODEC_ID_VORBIS;
-    omx_filereader_component_Private->avinputformat= av_find_input_format("ogg");
-  } else {
-    DEBUG(DEB_LEV_ERR,"In %s Ouch!! No Audio Coding Type Selected\n",__func__);
-  }
-  
-  av_register_input_format(omx_filereader_component_Private->avinputformat);
-
-	/** opening the input file whose name is already set via setParameter */
+  /** opening the input file whose name is already set via setParameter */
   error = av_open_input_file(&omx_filereader_component_Private->avformatcontext, 
                             (char*)omx_filereader_component_Private->sInputFileName,
                             omx_filereader_component_Private->avinputformat,
@@ -197,15 +179,16 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     return OMX_ErrorBadParameter;
   }
 
-  /** copying the extradata that is required for successful codec open */
-  omx_filereader_component_Private->avCodecContext->extradata_size = 
-    omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
-  omx_filereader_component_Private->avCodecContext->extradata = 
-    (unsigned char *)malloc(omx_filereader_component_Private->avCodecContext->extradata_size*sizeof(char));
-  memcpy(omx_filereader_component_Private->avCodecContext->extradata, 
-  	  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata,
-  	  omx_filereader_component_Private->avCodecContext->extradata_size);
-  	  
+  if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type Mp3\n",__func__);
+  } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type OGG\n",__func__);
+  } else {
+    DEBUG(DEB_LEV_ERR,"In %s Ouch!! No Audio Coding Type Selected\n",__func__);
+  }
+  
+  DEBUG(DEB_LEV_ERR,"In %s Extra data size=%d\n",__func__,omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size);
+
   /** initialization for buff mgmt callback function */
   omx_filereader_component_Private->isFirstBuffer = 1;
   omx_filereader_component_Private->isNewBuffer = 1;
@@ -216,8 +199,8 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   /* filling up the OMX_VENDOR_EXTRADATATYPE structure */
   pExtraData = (OMX_VENDOR_EXTRADATATYPE *)malloc(sizeof(OMX_VENDOR_EXTRADATATYPE));
   pExtraData->nPortIndex = 0; //output port index
-  pExtraData->nDataSize = omx_filereader_component_Private->avCodecContext->extradata_size;
-  pExtraData->pData =  omx_filereader_component_Private->avCodecContext->extradata;
+  pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
+  pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
 
   (*(omx_filereader_component_Private->callbacks->EventHandler))
     (openmaxStandComp,
@@ -243,7 +226,6 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   return OMX_ErrorNone;
 }
 
-
 /** The DeInitialization function 
  */
 OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
@@ -251,17 +233,9 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
-  /** deinitializing all private data structures */
-  free(omx_filereader_component_Private->avCodecContext->extradata);
-  if(omx_filereader_component_Private->avformatcontext->priv_data) {
-    free(omx_filereader_component_Private->avformatcontext->priv_data);
-  }
-
-  av_free(omx_filereader_component_Private->avformatparameters);
-  av_free(omx_filereader_component_Private->avCodecContext);
   /** closing input file */
   av_close_input_file(omx_filereader_component_Private->avformatcontext);
-
+  
   omx_filereader_component_Private->avformatReady = OMX_FALSE;
   tsem_reset(omx_filereader_component_Private->avformatSyncSem);
 
@@ -309,8 +283,10 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
     memcpy(pOutputBuffer->pBuffer, omx_filereader_component_Private->pkt.data, omx_filereader_component_Private->pkt.size);
     pOutputBuffer->nFilledLen = omx_filereader_component_Private->pkt.size;
     /** request for new output buffer */
-    omx_filereader_component_Private->isNewBuffer = 1;		
+    omx_filereader_component_Private->isNewBuffer = 1;
   }
+
+  av_free_packet(&omx_filereader_component_Private->pkt);
   
   /** return the current output buffer */
   DEBUG(DEB_LEV_FULL_SEQ, "One output buffer %x len=%d is full returning\n", (int)pOutputBuffer->pBuffer, (int)pOutputBuffer->nFilledLen);
@@ -436,8 +412,8 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
     break;
   case OMX_IndexVendorExtraData:
     sExtraData.nPortIndex = 0;
-    sExtraData.nDataSize  = omx_filereader_component_Private->avCodecContext->extradata_size;
-    sExtraData.pData      = omx_filereader_component_Private->avCodecContext->extradata;
+    sExtraData.nDataSize  = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
+    sExtraData.pData      = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
     memcpy(ComponentParameterStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
     break;
   default: /*Call the base component function*/

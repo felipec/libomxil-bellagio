@@ -59,8 +59,6 @@ ENDCLASS(omx_filereader_component_PortType)
  */
 DERIVEDCLASS(omx_filereader_component_PrivateType, omx_base_source_PrivateType)
 #define omx_filereader_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
-  /** @param avCodecContext is the ffmpeg decoder context */ \
-  AVCodecContext *avCodecContext; \
   /** @param avformatcontext is the ffmpeg audio format context */ \
   AVFormatContext *avformatcontext; \
   /** @param avformatparameters is the ffmpeg audio format related parameters */ \

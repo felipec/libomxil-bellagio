@@ -785,8 +785,6 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
       break;
     } 
     omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
-    //pPort = (omx_base_PortType *) omx_base_component_Private->ports[pPortDef->nPortIndex];
-    //memcpy(&pPort->sPortParam,pPortDef,sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     break;
   case OMX_IndexParamPriorityMgmt:
     pPrioMgmt = (OMX_PRIORITYMGMTTYPE*)ComponentParameterStructure;

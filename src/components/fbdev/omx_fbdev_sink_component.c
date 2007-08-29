@@ -178,8 +178,13 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 /** The Destructor 
  */
 OMX_ERRORTYPE omx_fbdev_sink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-  omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;  
+  omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_fbdev_sink_component_PortType *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   
+  if(pPort->sPortParam.format.video.cMIMEType) {
+    free(pPort->sPortParam.format.video.cMIMEType);
+  }
+
   omx_base_sink_Destructor(openmaxStandComp);
   nofbdev_sinkInstance--;
 

@@ -117,7 +117,7 @@ OMX_ERRORTYPE OMX_Deinit() {
  * the requested component. If there are more components with the same name 
  * the first component is returned. The existence of multiple components with
  * the same name is not contemplated in OpenMAX specification. The assumption is
- * that ithis behavior is NOT allowed
+ * that this behavior is NOT allowed
  * 
  * @return OMX_ErrorNone if a component has been found
  *         OMX_ErrorComponentNotFound if the requested component has not been found 

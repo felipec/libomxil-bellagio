@@ -640,6 +640,7 @@ OMX_ERRORTYPE omx_audiodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
 {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = (omx_audiodec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
   OMX_ERRORTYPE err;
+  OMX_STATETYPE eCurrentState = omx_audiodec_component_Private->state;
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 
@@ -671,7 +672,7 @@ OMX_ERRORTYPE omx_audiodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
   err =  omx_base_component_MessageHandler(openmaxStandComp,message);
 
   if (message->messageType == OMX_CommandStateSet){
-   if ((message->messageParam == OMX_StateIdle  ) && (omx_audiodec_component_Private->state == OMX_StateExecuting)) {
+   if ((message->messageParam == OMX_StateIdle  ) && (eCurrentState == OMX_StateExecuting)) {
       if (omx_audiodec_component_Private->avcodecReady) {
         DEBUG(DEB_LEV_ERR, "In %s Calling Lib Deinit\n", __func__);
         omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_Private);

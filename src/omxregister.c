@@ -114,44 +114,44 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 				} else {
 					if ((*(void **)(&fptr) = dlsym(handle, "omx_component_library_Setup")) == NULL) {
 						DEBUG(DEB_LEV_ERR, "the library %s is not compatible with ST static component loader - %s\n", lib_absolute_path, dlerror());
-					} else {
-						num_of_comp = (int)(*fptr)(NULL);
-						stComponents = malloc(num_of_comp * sizeof(stLoaderComponentType*));
-						for (i = 0; i<num_of_comp; i++) {
-							stComponents[i] = malloc(sizeof(stLoaderComponentType));
-						}
-						(*fptr)(stComponents);
+						continue;
+					}
+					num_of_comp = (int)(*fptr)(NULL);
+					stComponents = malloc(num_of_comp * sizeof(stLoaderComponentType*));
+					for (i = 0; i<num_of_comp; i++) {
+						stComponents[i] = malloc(sizeof(stLoaderComponentType));
+					}
+					(*fptr)(stComponents);
 
-						memset(buffer, 0, sizeof(buffer));
-						// insert first of all the name of the library
-						strcat(buffer, lib_absolute_path);
-            					strcat(buffer, "\n");
-						for (i = 0; i<num_of_comp; i++) {
-							DEBUG(DEB_LEV_PARAMS, "Found component %s version=%d.%d.%d.%d in shared object %s\n",
-									stComponents[i]-> name,
-									stComponents[i]->componentVersion.s.nVersionMajor,
-									stComponents[i]->componentVersion.s.nVersionMinor,
-									stComponents[i]->componentVersion.s.nRevision,
-									stComponents[i]->componentVersion.s.nStep, 
-									lib_absolute_path);
-							// insert any name of component
+					memset(buffer, 0, sizeof(buffer));
+					// insert first of all the name of the library
+					strcat(buffer, lib_absolute_path);
+					strcat(buffer, "\n");
+					for (i = 0; i<num_of_comp; i++) {
+						DEBUG(DEB_LEV_PARAMS, "Found component %s version=%d.%d.%d.%d in shared object %s\n",
+								stComponents[i]-> name,
+								stComponents[i]->componentVersion.s.nVersionMajor,
+								stComponents[i]->componentVersion.s.nVersionMinor,
+								stComponents[i]->componentVersion.s.nRevision,
+								stComponents[i]->componentVersion.s.nStep, 
+								lib_absolute_path);
+						// insert any name of component
+						strcat(buffer, ARROW);
+						if (verbose) {printf("Component %s registered\n", stComponents[i]->name);}
+						strcat(buffer, stComponents[i]->name);
+						if (stComponents[i]->name_specific_length>0) {
+							*nroles += stComponents[i]->name_specific_length;
 							strcat(buffer, ARROW);
-							if (verbose) {printf("Component %s registered\n", stComponents[i]->name);}
-							strcat(buffer, stComponents[i]->name);
-							if (stComponents[i]->name_specific_length>0) {
-								*nroles += stComponents[i]->name_specific_length;
-								strcat(buffer, ARROW);
-								for(j=0;j<stComponents[i]->name_specific_length;j++){
-									if (verbose) {printf("Specific role %s registered\n", stComponents[i]->name_specific[j]);}
-									strcat(buffer, stComponents[i]->name_specific[j]);
-									strcat(buffer, ":");
-								}
+							for(j=0;j<stComponents[i]->name_specific_length;j++){
+								if (verbose) {printf("Specific role %s registered\n", stComponents[i]->name_specific[j]);}
+								strcat(buffer, stComponents[i]->name_specific[j]);
+								strcat(buffer, ":");
 							}
-							strcat(buffer, "\n");
-							fwrite(buffer, 1, strlen(buffer), omxregistryfp);
-              						strcpy(buffer,"\0");
-							(*ncomponents)++;
 						}
+						strcat(buffer, "\n");
+						fwrite(buffer, 1, strlen(buffer), omxregistryfp);
+             						strcpy(buffer,"\0");
+						(*ncomponents)++;
 					}
 				}
 			}

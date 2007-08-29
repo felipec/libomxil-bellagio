@@ -293,6 +293,8 @@ OMX_ERRORTYPE omx_maddec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
     omx_maddec_component_Private->maddecReady = OMX_FALSE;
   }
 
+  /*Restore temporary input buffer pointer*/
+  omx_maddec_component_Private->temporary_buffer->pBuffer = temp_input_buffer;
   DEBUG(DEB_LEV_ERR, "Freeing Temporary Buffer\n");
   /* freeing temporary memory allocation */
   free(omx_maddec_component_Private->temporary_buffer->pBuffer);
@@ -708,6 +710,7 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
 
   omx_maddec_component_PrivateType* omx_maddec_component_Private = (omx_maddec_component_PrivateType*)openmaxStandComp->pComponentPrivate;	
   OMX_ERRORTYPE err;
+  OMX_STATETYPE eCurrentState = omx_maddec_component_Private->state;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 
   if (message->messageType == OMX_CommandStateSet){
@@ -735,13 +738,13 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
   err = omx_base_component_MessageHandler(openmaxStandComp, message);
 
   if (message->messageType == OMX_CommandStateSet){
-    if ((message->messageParam == OMX_StateLoaded) && (omx_maddec_component_Private->state == OMX_StateIdle)) {
+    if ((message->messageParam == OMX_StateLoaded) && (eCurrentState == OMX_StateIdle)) {
       err = omx_maddec_component_Deinit(openmaxStandComp);
       if(err!=OMX_ErrorNone) { 
         DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Deinit Failed Error=%x\n",__func__,err); 
         return err;
       }
-    }else if ((message->messageParam == OMX_StateIdle) && (omx_maddec_component_Private->state == OMX_StateExecuting)) {
+    }else if ((message->messageParam == OMX_StateIdle) && (eCurrentState == OMX_StateExecuting)) {
       omx_maddec_component_madLibDeInit(omx_maddec_component_Private);
       omx_maddec_component_Private->maddecReady = OMX_FALSE;
     }

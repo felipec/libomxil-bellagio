@@ -263,7 +263,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
     i++;
   }
   if (componentPosition == -1) {
-    DEBUG(DEB_LEV_ERR, "Component not fount with current ST static component loader.\n");
+    DEBUG(DEB_LEV_ERR, "Component not found with current ST static component loader.\n");
     return OMX_ErrorComponentNotFound;
   }
 

@@ -343,7 +343,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
         pPort = omx_base_component_Private->ports[i];
         if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
           /** Allocate here the buffers needed for the tunneling: 							*/
-          err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize*4);						
+          err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize);						
           if(err!=OMX_ErrorNone) { 
             DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
             return err; 

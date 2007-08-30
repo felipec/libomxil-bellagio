@@ -286,6 +286,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
       return OMX_ErrorInsufficientResources;
     }
     DEBUG(DEB_LEV_ERR, "Error during component construction\n");
+    openmaxStandComp->ComponentDeInit(openmaxStandComp);
     free(openmaxStandComp);
     openmaxStandComp = NULL;
     return OMX_ErrorComponentNotFound;	

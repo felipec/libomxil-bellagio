@@ -123,7 +123,7 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   outPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
   outPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
   outPort->sPortParam.format.video.eColorFormat = OUTPUT_DECODED_COLOR_FMT;
-  outPort->sPortParam.nBufferSize = MIN_VIDEO_OUTPUT_BUF_SIZE;
+  outPort->sPortParam.nBufferSize = MAX_VIDEO_OUTPUT_BUF_SIZE;
   outPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
   strcpy(outPort->sPortParam.format.video.cMIMEType, "raw/video");
   outPort->sPortParam.format.video.nFrameWidth = 0; 

@@ -163,6 +163,23 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 	return 0;
 }
 
+void usage() {
+	printf("Usage: omxregister [-v] [-h] [componentspath]\n");
+	printf("\n");
+	printf("This programs scans for a given directory searching for any OpenMAX component\n");
+	printf(" compatible with the ST static component loader. The list of components is\n");
+	printf(" stored in a registry file located in the $HOME directory and named .omxregistry\n");
+	printf("\n");
+	printf("The following options are supported:\n");
+	printf("\n");
+	printf("        -v   display a verbose output, listing all the components registered\n");
+	printf("        -h   display this message\n");
+	printf("         componentspath: a searching path for components can be specified.\n");
+	printf("         If this parameter is omitted, the components are searched in the\n");
+	printf("         default /ust/local/lib/omxcomponents directory\n");
+	printf("\n");
+}
+
 /** @brief execution of registration function
  * 
  * This register by default searches for openmax libraries in OMXILCOMPONENTSPATH
@@ -186,10 +203,10 @@ int main(int argc, char** argv) {
 					componentspath = OMXILCOMPONENTSPATH;
 				}
 			} else if (*(argv[1]+1) == 'h') {
-				DEBUG(DEB_LEV_ERR, "Usage: %s [-v] [-h] [componentspath]\n", argv[0]);
+				usage();
 				exit(0);
 			} else {
-				DEBUG(DEB_LEV_ERR, "Usage: %s [-v] [-h] [componentspath]\n", argv[0]);
+				usage();
 				exit(-EINVAL);
 			}
 		} else {
@@ -197,7 +214,7 @@ int main(int argc, char** argv) {
 		}
 
 	} else {
-		DEBUG(DEB_LEV_ERR, "Usage: %s [-v] [-h] [componentspath]\n", argv[0]);
+		usage();
 		exit(-EINVAL);
 	}
 

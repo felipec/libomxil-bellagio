@@ -44,7 +44,11 @@ AM_CONDITIONAL(WITH_MADLIBRARY, test x$with_madlibrary = xtrue)
 #Check whether ffmpeg components have been requested
 AC_ARG_ENABLE(ffmpegcomponents,
   AC_HELP_STRING([--disable-ffmpegcomponents], [whether to disable ffmpeg components compilation]),
-  [with_ffmpegcomponents=false],
+  [case "${enableval}" in
+    yes) with_ffmpegcomponents=true ;;
+    no)  with_ffmpegcomponents=false ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --enable-ffmpegcomponents]) ;;
+  esac],
   [with_ffmpegcomponents=true]) dnl default
 AM_CONDITIONAL(WITH_FFMPEGCOMPONENTS, test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary = xtrue)
 AM_CONDITIONAL(WITH_FFMPEGCOMPONENTS_2, test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary_2 = xtrue)
@@ -52,7 +56,11 @@ AM_CONDITIONAL(WITH_FFMPEGCOMPONENTS_2, test x$with_ffmpegcomponents = xtrue && 
 #Check whether mad components have been requested
 AC_ARG_ENABLE(madcomponents,
   AC_HELP_STRING([--disable-madcomponents], [whether to disable mad components compilation]),
-  [with_madcomponents=false],
+  [case "${enableval}" in
+    yes) with_madcomponents=true ;;
+    no)  with_madcomponents=false ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --enable-madcomponents]) ;;
+  esac],
   [with_madcomponents=true]) dnl default
 AM_CONDITIONAL(WITH_MADCOMPONENTS, test x$with_madcomponents = xtrue && test x$with_madlibrary = xtrue)
 
@@ -60,7 +68,11 @@ AM_CONDITIONAL(WITH_MADCOMPONENTS, test x$with_madcomponents = xtrue && test x$w
 #Check whether vorbis components have been requested
 AC_ARG_ENABLE(vorbiscomponents,
   AC_HELP_STRING([--disable-vorbiscomponents], [whether to disable vorbis components compilation]),
-  [with_vorbiscomponents=false],
+  [case "${enableval}" in
+    yes) with_vorbiscomponents=true ;;
+    no)  with_vorbiscomponents=false ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --enable-vorbiscomponents]) ;;
+  esac],
   [with_vorbiscomponents=true]) dnl default
 AM_CONDITIONAL(WITH_VORBISCOMPONENTS, test x$with_vorbiscomponents = xtrue && test x$with_vorbislibrary = xtrue)
 
@@ -68,7 +80,11 @@ AM_CONDITIONAL(WITH_VORBISCOMPONENTS, test x$with_vorbiscomponents = xtrue && te
 #Check whether volume component has been requested
 AC_ARG_ENABLE(audioeffects,
   AC_HELP_STRING([--disable-audioeffects], [whether to disable the audio effects components compilation]),
-  [with_audioeffects=false],
+  [case "${enableval}" in
+    yes) with_audioeffects=true ;;
+    no)  with_audioeffects=false ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --enable-audioeffects]) ;;
+  esac],
   [with_audioeffects=true]) dnl default
  AM_CONDITIONAL(WITH_AUDIOEFFECTS, test x$with_audioeffects = xtrue)
 

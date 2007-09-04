@@ -6,7 +6,7 @@ omxregister_SOURCES = omxregister.c
 omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\"
 omxregister_LDADD = -lomxil
 includedir = $(prefix)/include
-noinst_HEADERS = queue.h tsemaphore.h omxcore.h omx_comp_debug_levels.h user_debug_levels.h component_loader.h st_static_component_loader.h
+noinst_HEADERS = queue.h tsemaphore.h omxcore.h omx_comp_debug_levels.h component_loader.h st_static_component_loader.h
 libomxil_la_SOURCES = st_static_component_loader.c omxcore.c tsemaphore.c queue.c 
 INCLUDES = -I../include
 

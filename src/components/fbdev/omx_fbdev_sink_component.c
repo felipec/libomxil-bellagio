@@ -117,8 +117,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   /** Domain specific section for the allocated port. */	
   pPort->sPortParam.eDomain = OMX_PortDomainVideo;
   setHeader(&pPort->sPortParam.format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
-  pPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
-  strcpy(pPort->sPortParam.format.video.cMIMEType, "raw");
+  pPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
+  strcpy(pPort->sPortParam.format.video.cMIMEType, "raw/video");
   pPort->sPortParam.format.video.pNativeRender = NULL;
   pPort->sPortParam.format.video.nFrameWidth = 0;
   pPort->sPortParam.format.video.nFrameHeight = 0;
@@ -1254,7 +1254,9 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       pPort->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
 
       //	Copy stuff from OMX_VIDEO_PORTDEFINITIONTYPE structure
-      pPort->sPortParam.format.video.cMIMEType = pPortDef->format.video.cMIMEType;
+      if(pPortDef->format.video.cMIMEType != NULL) {
+        strcpy(pPort->sPortParam.format.video.cMIMEType , pPortDef->format.video.cMIMEType);
+      }
       pPort->sPortParam.format.video.nFrameWidth = pPortDef->format.video.nFrameWidth;
       pPort->sPortParam.format.video.nFrameHeight = pPortDef->format.video.nFrameHeight;
       pPort->sPortParam.format.video.nBitrate = pPortDef->format.video.nBitrate;

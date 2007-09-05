@@ -75,7 +75,8 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   /** Domain specific section for the ports. */	
   pPort->sPortParam.eDomain = OMX_PortDomainAudio;
   pPort->sPortParam.format.audio.pNativeRender = 0;
-  pPort->sPortParam.format.audio.cMIMEType = "raw";
+  pPort->sPortParam.format.audio.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
+  strcpy(pPort->sPortParam.format.audio.cMIMEType, "raw/audio");
   pPort->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
   /*Input pPort buffer size is equal to the size of the output buffer of the previous component*/
@@ -148,6 +149,11 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
   omx_alsasink_component_PortType* pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  
+  if(pPort->sPortParam.format.audio.cMIMEType != NULL) {
+    free(pPort->sPortParam.format.audio.cMIMEType);
+    pPort->sPortParam.format.audio.cMIMEType = NULL;
+  }
 
   if(pPort->hw_params) {
     snd_pcm_hw_params_free (pPort->hw_params);

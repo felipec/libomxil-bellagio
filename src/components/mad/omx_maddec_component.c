@@ -129,10 +129,12 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_IN_BUFFER_SIZE;
+  omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
 
   /** parameters related to output port */
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-  omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
+  omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
+  strcpy(omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "raw/audio");
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.pNativeRender = 0;
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
@@ -211,7 +213,7 @@ void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandC
   omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
 
   /** setting port & private fields according to mp3 audio format values */
-  omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "audio/mpeg";
+  strcpy(omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/mpeg");
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
 
   setHeader(&omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));    
@@ -236,6 +238,19 @@ void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandC
 OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_maddec_component_PortType *pPort;
+  OMX_U32 i;
+
+  /* frees port/s */
+  if (omx_maddec_component_Private->sPortTypesParam.nPorts && omx_maddec_component_Private->ports) {
+    for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
+      pPort = (omx_maddec_component_PortType *)omx_maddec_component_Private->ports[i];
+      if(pPort->sPortParam.format.audio.cMIMEType != NULL) {
+        free(pPort->sPortParam.format.audio.cMIMEType);
+        pPort->sPortParam.format.audio.cMIMEType = NULL;
+      }
+    }
+  }
 
   if(omx_maddec_component_Private->madDecSyncSem) {
     tsem_deinit(omx_maddec_component_Private->madDecSyncSem);

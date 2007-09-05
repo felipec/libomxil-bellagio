@@ -104,8 +104,7 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   inPort->sPortParam.format.video.pNativeRender = 0;
   inPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
   inPort->sPortParam.nBufferSize = DEFAULT_IN_BUFFER_SIZE;
-  inPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
-  strcpy(inPort->sPortParam.format.video.cMIMEType, "raw/video");
+  inPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
   inPort->sPortParam.format.video.nFrameWidth = 0; 
   inPort->sPortParam.format.video.nFrameHeight = 0; 
   inPort->sPortParam.format.video.nStride = 0;
@@ -118,13 +117,12 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   //common parameters related to output port
   outPort = (omx_videodec_component_PortType *) omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   outPort->sPortParam.eDomain = OMX_PortDomainVideo;
-  outPort->sPortParam.format.video.cMIMEType = "raw";
   outPort->sPortParam.format.video.pNativeRender = 0;
   outPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
   outPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
   outPort->sPortParam.format.video.eColorFormat = OUTPUT_DECODED_COLOR_FMT;
   outPort->sPortParam.nBufferSize = MAX_VIDEO_OUTPUT_BUF_SIZE;
-  outPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
+  outPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
   strcpy(outPort->sPortParam.format.video.cMIMEType, "raw/video");
   outPort->sPortParam.format.video.nFrameWidth = 0; 
   outPort->sPortParam.format.video.nFrameHeight = 0; 
@@ -213,8 +211,6 @@ OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
       }
     }
   }
-
-  //tsem_deinit(omx_videodec_component_Private->avCodecSyncSem);
 
   if(omx_videodec_component_Private->avCodecSyncSem) {
     free(omx_videodec_component_Private->avCodecSyncSem);

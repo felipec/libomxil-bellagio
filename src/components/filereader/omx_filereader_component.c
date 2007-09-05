@@ -87,7 +87,8 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   */  
   pPort->sPortParam.eDomain = OMX_PortDomainAudio;
   pPort->sPortParam.format.audio.pNativeRender = 0;
-  pPort->sPortParam.format.audio.cMIMEType = "raw";
+  pPort->sPortParam.format.audio.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
+  strcpy(pPort->sPortParam.format.audio.cMIMEType, "raw/audio");
   pPort->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   /*Input pPort buffer size is equal to the size of the output buffer of the previous component*/
   pPort->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
@@ -119,7 +120,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     tsem_init(omx_filereader_component_Private->avformatSyncSem, 0);
   }
   omx_filereader_component_Private->sInputFileName = (char *)malloc(DEFAULT_FILENAME_LENGTH);
-  strcpy(omx_filereader_component_Private->sInputFileName, "reference_stream.mp3");
+  memset(omx_filereader_component_Private->sInputFileName,0,DEFAULT_FILENAME_LENGTH);
   /*Default Coding type*/
   omx_filereader_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
 
@@ -130,7 +131,13 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
  */
 OMX_ERRORTYPE omx_filereader_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 	omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
-  
+  omx_filereader_component_PortType *pPort = (omx_filereader_component_PortType *)omx_filereader_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
+
+  if(pPort->sPortParam.format.audio.cMIMEType != NULL) {
+    free(pPort->sPortParam.format.audio.cMIMEType);
+    pPort->sPortParam.format.audio.cMIMEType = NULL;
+  }
+
   if(omx_filereader_component_Private->avformatSyncSem) {
     tsem_deinit(omx_filereader_component_Private->avformatSyncSem);
     free(omx_filereader_component_Private->avformatSyncSem);
@@ -358,10 +365,10 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
     }
     /** now set the port parameters according to selected audio coding type */
     if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
-      pPort->sPortParam.format.audio.cMIMEType = "audio/mpeg";
+      strcpy(pPort->sPortParam.format.audio.cMIMEType, "audio/mpeg");
       pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
     } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
-      pPort->sPortParam.format.audio.cMIMEType = "audio/mpeg";
+      strcpy(pPort->sPortParam.format.audio.cMIMEType, "audio/vorbis");
       pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingVORBIS;
     }
     break;

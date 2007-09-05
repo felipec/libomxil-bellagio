@@ -103,6 +103,5 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
 
-OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
 #endif
 

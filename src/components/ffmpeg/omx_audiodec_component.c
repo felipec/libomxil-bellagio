@@ -141,6 +141,8 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   omx_audiodec_component_Private->avCodec = NULL;
   omx_audiodec_component_Private->avCodecContext= NULL;
   omx_audiodec_component_Private->avcodecReady = OMX_FALSE;
+  omx_audiodec_component_Private->extradata = NULL;
+  omx_audiodec_component_Private->extradata_size = 0;
 
   omx_audiodec_component_Private->BufferMgmtCallback = omx_audiodec_component_BufferMgmtCallback;
 
@@ -180,6 +182,10 @@ OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
         pPort->sPortParam.format.audio.cMIMEType = NULL;
       }
     }
+  }
+
+  if(omx_audiodec_component_Private->extradata) {
+    free(omx_audiodec_component_Private->extradata);
   }
 
   /*Free Codec Context*/
@@ -227,6 +233,9 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
     return OMX_ErrorInsufficientResources;
   }
 
+  omx_audiodec_component_Private->avCodecContext->extradata = omx_audiodec_component_Private->extradata;
+  omx_audiodec_component_Private->avCodecContext->extradata_size = (int)omx_audiodec_component_Private->extradata_size;
+
   /*open the avcodec if mp3 format selected */
   if (avcodec_open(omx_audiodec_component_Private->avCodecContext, omx_audiodec_component_Private->avCodec) < 0) {
   	DEBUG(DEB_LEV_ERR, "Could not open codec\n");
@@ -250,16 +259,7 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
 void omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_PrivateType* omx_audiodec_component_Private) {
 	
   avcodec_close(omx_audiodec_component_Private->avCodecContext);
-
-  if (omx_audiodec_component_Private->avCodecContext->priv_data) {
-    avcodec_close (omx_audiodec_component_Private->avCodecContext);
-  }
-
-  if (omx_audiodec_component_Private->avCodecContext->extradata) {
-    av_free (omx_audiodec_component_Private->avCodecContext->extradata);
-    omx_audiodec_component_Private->avCodecContext->extradata = NULL;
-  }
-     
+   
 }
 
 void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
@@ -491,10 +491,13 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
     portIndex = pExtradata->nPortIndex;
     if (portIndex <= 1) {
       /** copy the extradata in the codec context private structure */
-      omx_audiodec_component_Private->avCodecContext->extradata_size = pExtradata->nDataSize;
-      if(omx_audiodec_component_Private->avCodecContext->extradata_size > 0) {
-        omx_audiodec_component_Private->avCodecContext->extradata = (unsigned char *)malloc((int)pExtradata->nDataSize*sizeof(char));
-        memcpy(omx_audiodec_component_Private->avCodecContext->extradata,(unsigned char*)(pExtradata->pData),pExtradata->nDataSize);
+      omx_audiodec_component_Private->extradata_size = (OMX_U32)pExtradata->nDataSize;
+      if(omx_audiodec_component_Private->extradata_size > 0) {
+        if(omx_audiodec_component_Private->extradata) {
+          free(omx_audiodec_component_Private->extradata);
+        }
+        omx_audiodec_component_Private->extradata = (unsigned char *)malloc((int)pExtradata->nDataSize*sizeof(char));
+        memcpy(omx_audiodec_component_Private->extradata,(unsigned char*)(pExtradata->pData),pExtradata->nDataSize);
       } else {
       		DEBUG(DEB_LEV_ERR,"extradata size is 0 !!!\n");
       }	

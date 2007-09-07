@@ -48,6 +48,7 @@
  * @return number of components contained in the library 
  */
  int omx_component_library_Setup(stLoaderComponentType **stComponents) {
+  OMX_U32 i;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
 	if (stComponents == NULL) {
 	  DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
@@ -63,9 +64,28 @@
 		return OMX_ErrorInsufficientResources;
 	}
 	strcpy(stComponents[0]->name, "OMX.st.alsa.alsasink");
-	stComponents[0]->name_specific_length = 0;
+	stComponents[0]->name_specific_length = 1;
 	stComponents[0]->constructor = omx_alsasink_component_Constructor;	
-	
+
+  stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
+  stComponents[0]->role_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
+
+  for(i=0;i<stComponents[0]->name_specific_length;i++) {
+    stComponents[0]->name_specific[i] = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[0]->name_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+  for(i=0;i<stComponents[0]->name_specific_length;i++) {
+    stComponents[0]->role_specific[i] = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[0]->role_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+
+  strcpy(stComponents[0]->name_specific[0], "OMX.st.alsa.alsasink");
+  strcpy(stComponents[0]->role_specific[0], "alsa.alsasink");
+  
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
 	return 1;
 }

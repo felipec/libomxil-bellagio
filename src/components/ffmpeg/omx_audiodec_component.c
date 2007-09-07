@@ -499,7 +499,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
         omx_audiodec_component_Private->extradata = (unsigned char *)malloc((int)pExtradata->nDataSize*sizeof(char));
         memcpy(omx_audiodec_component_Private->extradata,(unsigned char*)(pExtradata->pData),pExtradata->nDataSize);
       } else {
-      		DEBUG(DEB_LEV_ERR,"extradata size is 0 !!!\n");
+      		DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");
       }	
     } else {
       	return OMX_ErrorBadPortIndex;
@@ -692,7 +692,6 @@ OMX_ERRORTYPE omx_audiodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
   if (message->messageType == OMX_CommandStateSet){
    if ((message->messageParam == OMX_StateIdle  ) && (eCurrentState == OMX_StateExecuting)) {
       if (omx_audiodec_component_Private->avcodecReady) {
-        DEBUG(DEB_LEV_ERR, "In %s Calling Lib Deinit\n", __func__);
         omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_Private);
         omx_audiodec_component_Private->avcodecReady = OMX_FALSE;
       }

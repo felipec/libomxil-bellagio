@@ -194,7 +194,7 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     DEBUG(DEB_LEV_ERR,"In %s Ouch!! No Audio Coding Type Selected\n",__func__);
   }
   
-  DEBUG(DEB_LEV_ERR,"In %s Extra data size=%d\n",__func__,omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size);
+  DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Extra data size=%d\n",__func__,omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size);
 
   /** initialization for buff mgmt callback function */
   omx_filereader_component_Private->isFirstBuffer = 1;
@@ -439,7 +439,7 @@ OMX_ERRORTYPE omx_filereader_component_MessageHandler(OMX_COMPONENTTYPE* openmax
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
 
-  // Execute the base message handling
+  /* Execute the base message handling */
   err = omx_base_component_MessageHandler(openmaxStandComp,message);
 
   if (message->messageType == OMX_CommandStateSet){ 

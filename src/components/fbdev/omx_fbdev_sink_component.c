@@ -276,10 +276,10 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     return OMX_ErrorHardware;
   }
 
-  DEBUG(DEB_LEV_ERR, "mmap framebuffer memory =%x product=%d stride=%d\n",(int)omx_fbdev_sink_component_Private->scr_ptr,(int)product,(int)fbstride);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "mmap framebuffer memory =%x product=%d stride=%d\n",(int)omx_fbdev_sink_component_Private->scr_ptr,(int)product,(int)fbstride);
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Successfully opened %s for display.\n", "/dev/fb0");
-  DEBUG(DEB_LEV_ERR, "Display Size: %u x %u\n", (int)fbwidth, (int)fbheight);
-  DEBUG(DEB_LEV_ERR, "Bitdepth: %u\n", (int)fbbpp);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Display Size: %u x %u\n", (int)fbwidth, (int)fbheight);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Bitdepth: %u\n", (int)fbbpp);
 
   return OMX_ErrorNone;
 }
@@ -761,7 +761,6 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
     OMX_U8* src_cpy_ptr = src_ptr + src_byte_offset_y + src_byte_offset_x;
     OMX_U8* dest_cpy_ptr = dest_ptr + dest_byte_offset_y + dest_byte_offset_x;
 
-    //DEBUG(DEB_LEV_ERR, "dest_stride=%d dst cpy ptr=%x\n",dest_stride,dest_cpy_ptr);
     /** fbpxlfmt is the output (frame buffer supported) image color format 
       * here fbpxlfmt is OMX_COLOR_Format32bitARGB8888 always because 
       * the frame buffer has configuration of rgba 8/0 8/0 8/0 8/0 with pixel depth 8
@@ -801,7 +800,6 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         // copy rows
         org_src_cpy_ptr = src_cpy_ptr; 
         org_dst_cpy_ptr = dest_cpy_ptr;
-        //DEBUG(DEB_LEV_ERR, "org_dst_cpy_ptr=%x dst cpy ptr=%x,cpy_byte_width=%d\n",org_dst_cpy_ptr,dest_cpy_ptr,cpy_byte_width);
         for(j = 0; j < cpy_byte_width; j += cp_byte) {
           //extract source rgba components
           r = (OMX_U8) *(src_cpy_ptr + 0);

@@ -459,7 +459,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 
     if((outPort->sPortParam.format.video.nFrameWidth != omx_videodec_component_Private->avCodecContext->width) ||
         (outPort->sPortParam.format.video.nFrameHeight != omx_videodec_component_Private->avCodecContext->height)) {
-      DEBUG(DEB_LEV_ERR, "---->Sending Port Settings Change Event in video decoder\n");
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "---->Sending Port Settings Change Event in video decoder\n");
 
       switch(omx_videodec_component_Private->video_coding_type) {
         case OMX_VIDEO_CodingMPEG4 :

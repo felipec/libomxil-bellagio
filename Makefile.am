@@ -12,6 +12,5 @@ pkgconfigexec_DATA      = libomxil.pc
  
 $(pkgconfigexec_DATA): config.status
 
-clean-local:
-	sudo make uninstall
+uninstall-local:
 	rm -f ~/.omxregistry

@@ -9,10 +9,9 @@ libomxil_la_SOURCES = st_static_component_loader.c \
 		      omx_comp_debug_levels.h \
 		      tsemaphore.c tsemaphore.h \
 		      queue.c queue.h \
-		      user_debug_levels.h
+		      component_loader.h \
+		      st_static_component_loader.h
 AM_CPPFLAGS = -I@top_srcdir@/include
-
-include_HEADERS = component_loader.h st_static_component_loader.h
 
 #Build order is important
 #First base, then core, finally components

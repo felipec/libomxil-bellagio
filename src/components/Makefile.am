@@ -1,31 +1,31 @@
-SUBDIRS = 
-
 if WITH_FFMPEGCOMPONENTS
-SUBDIRS+=ffmpeg
-SUBDIRS+=filereader
+    MAYBE_FFMPEG = ffmpeg
+    MAYBE_FILEREADER = filereader
 endif
 
 if WITH_FFMPEGCOMPONENTS_2
-SUBDIRS+=ffmpeg
-SUBDIRS+=filereader
+    MAYBE_FFMPEG = ffmpeg
+    MAYBE_FILEREADER = filereader
 endif
 
 if WITH_AUDIOEFFECTS
-SUBDIRS+=audio_effects
+    MAYBE_AUDIO_EFFECTS = audio_effects
 endif
 
 if WITH_MADCOMPONENTS
-SUBDIRS+=mad
+    MAYBE_MAD = mad
 endif 
 
 if WITH_ALSASINK
-SUBDIRS+=alsa
+    MAYBE_ALSA = alsa
 endif 
 
 if WITH_VORBISCOMPONENTS
-SUBDIRS+=vorbis
+    MAYBE_VORBIS = vorbis
 endif
 
 if WITH_FBDEV_VIDEOSINK
-SUBDIRS+=fbdev
+    MAYBE_FBDEV = fbdev
 endif
+
+SUBDIRS = $(MAYBE_FFMPEG) $(MAYBE_FILEREADER) $(MAYBE_AUDIO_EFFECTS) $(MAYBE_MAD) $(MAYBE_ALSA) $(MAYBE_VORBIS) $(MAYBE_FBDEV)

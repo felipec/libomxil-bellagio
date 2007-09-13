@@ -1,3 +1,1 @@
-SUBDIRS = audio
-SUBDIRS+= video
-SUBDIRS+= audio_effects
+SUBDIRS = audio video audio_effects

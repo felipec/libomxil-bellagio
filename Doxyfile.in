@@ -3,8 +3,8 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME = "OpenMAX Bellagio"
-PROJECT_NUMBER = 0.3.2
+PROJECT_NAME = @PACKAGE_NAME@
+PROJECT_NUMBER = @PACKAGE_VERSION@
 OUTPUT_DIRECTORY = 
 CREATE_SUBDIRS = YES
 OUTPUT_LANGUAGE = English

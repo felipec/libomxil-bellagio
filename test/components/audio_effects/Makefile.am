@@ -1,6 +1,6 @@
-INCLUDES= -I../common
+AM_CPPFLAGS= -I@top_srcdir@/test/components/common
 check_PROGRAMS = omxvolcontroltest
 
-omxvolcontroltest_SOURCES= omxvolcontroltest.c ../common/tsemaphore.c 
-omxvolcontroltest_LDADD = -lomxil -lpthread
-EXTRA_DIST=omxvolcontroltest.h
+omxvolcontroltest_LDADD = -lomxil $(LIBS)
+omxvolcontroltest_SOURCES= omxvolcontroltest.c omxvolcontroltest.h @top_srcdir@/test/components/common/tsemaphore.c
+

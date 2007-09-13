@@ -1,16 +1,19 @@
-AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src include test
-EXTRA_DIST = libomxil.spec Doxyfile
-libomxildocdir = ${prefix}/doc/omxil
+ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = src include test m4
+
+EXTRA_DIST = libomxil.spec Doxyfile cross-env
+
+libomxildocdir = $(pkgdatadir)/doc/omxil
 libomxildoc_DATA = \
-        README\
-        ChangeLog\
+        README \
+        ChangeLog \
         TODO
 
-pkgconfigexecdir        = $(libdir)/pkgconfig
-pkgconfigexec_DATA      = libomxil.pc
+pkgconfigdir        = $(libdir)/pkgconfig
+pkgconfig_DATA      = libomxil.pc
  
-$(pkgconfigexec_DATA): config.status
+$(pkgconfig_DATA): config.status
 
 uninstall-local:
 	rm -f ~/.omxregistry

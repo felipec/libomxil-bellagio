@@ -1,6 +1,5 @@
 omxalsadir = $(libdir)/omxilcomponents
 omxalsa_LTLIBRARIES = libomxalsa.la
-libomxalsa_la_SOURCES = omx_alsasink_component.c library_entry_point.c
-INCLUDES = -I../../../include/ -I../../ -I./ -I../../base/
-libomxalsa_la_LIBADD = -lasound $(top_builddir)/src/libomxil.la
-noinst_HEADERS = omx_alsasink_component.h
+libomxalsa_la_SOURCES = omx_alsasink_component.c library_entry_point.c omx_alsasink_component.h
+AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src -I@top_srcdir@/src/base
+libomxalsa_la_LIBADD = ../../../src/libomxil.la $(LIBS)

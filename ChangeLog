@@ -15,7 +15,7 @@ Full list of components:
 Audio:
   - ogg decoder based on libvorbis (stand alone components, and multiple roles component)
   - mp3 decoder based on mad decoder
-  - mp3 decoder based on ffmpeg (multiple roles component)
+  - mp3,aac,ogg decoder based on ffmpeg (multiple roles component)
   - volume component
   - alsa audio sink
   - ffmpeg audio file reader (to be used with mp3 ffmpeg decoder)
@@ -28,7 +28,7 @@ Major additions to the 0.2
 - New port classes
 The components are:
 - multiple formats audio decoder component 
-  that supports mp3 and ogg audio formats
+  that supports mp3, aac and ogg audio formats
 - alsa sink component
 - all the other components are NOT compatible with the new architecture.
   They have been removed and will be ported to the new architecture in a 

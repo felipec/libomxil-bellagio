@@ -69,7 +69,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     return OMX_ErrorInsufficientResources;
   }
   strcpy(stComponents[0]->name, "OMX.st.audio_decoder");
-  stComponents[0]->name_specific_length = 2; 
+  stComponents[0]->name_specific_length = 3; 
   stComponents[0]->constructor = omx_audiodec_component_Constructor;	
 
   stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
@@ -90,8 +90,10 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 
   strcpy(stComponents[0]->name_specific[0], "OMX.st.audio_decoder.mp3");
   strcpy(stComponents[0]->name_specific[1], "OMX.st.audio_decoder.ogg");
+  strcpy(stComponents[0]->name_specific[2], "OMX.st.audio_decoder.aac");
   strcpy(stComponents[0]->role_specific[0], "audio_decoder.mp3");
   strcpy(stComponents[0]->role_specific[1], "audio_decoder.ogg");
+  strcpy(stComponents[0]->role_specific[2], "audio_decoder.aac");
 
 
   /** component 2 - video decoder */

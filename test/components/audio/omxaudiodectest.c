@@ -49,8 +49,9 @@
 #include "tsemaphore.h"
 
 
-#define MP3_TYPE_SEL 1
+#define MP3_TYPE_SEL    1
 #define VORBIS_TYPE_SEL 2
+#define AAC_TYPE_SEL    3 
 #define COMPONENT_NAME_BASE "OMX.st.audio_decoder"
 #define BASE_ROLE "audio_decoder.ogg"
 #define COMPONENT_NAME_BASE_LEN 20
@@ -424,6 +425,13 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(MAD) Selected\n");
       display_help();
     }
+  } else if(*(input_file+index -1) == 'c') {   
+    selectedType = AAC_TYPE_SEL;
+    DEBUG(DEFAULT_MESSAGES, "AAC\n");
+    if(flagIsMadRequested || flagSingleOGGSelected) {
+      DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(MAD/VORBIS) Selected\n");
+      display_help();
+    }
   } else {
     DEBUG(DEB_LEV_ERR, "The input audio format is not supported - exiting\n");
     exit(1);
@@ -442,10 +450,10 @@ int main(int argc, char** argv) {
 
   if(!flagUsingFFMpeg) {
     fd = open(input_file, O_RDONLY);
-	  if(fd == -1) {
-		  DEBUG(DEB_LEV_ERR,"Error in opening input file %s\n", input_file);
-		  exit(1);
-	  }
+      if(fd == -1) {
+        DEBUG(DEB_LEV_ERR,"Error in opening input file %s\n", input_file);
+        exit(1);
+      }
   }
 
   /** initializing appPriv structure */
@@ -492,6 +500,8 @@ int main(int argc, char** argv) {
     if (flagSingleOGGSelected) {
       strcpy(full_component_name+COMPONENT_NAME_BASE_LEN+4, ".single");
     }
+  } else if (selectedType == AAC_TYPE_SEL) {   
+    strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".aac");
   }
 
   if(flagUsingFFMpeg) {

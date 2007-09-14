@@ -11,6 +11,7 @@ AUDIO
 - OMX audio decoder based on ffmpeg/vorbis libraries that supports the following audio formats:
   - MP3
   - OGG
+  - AAC (only RAW AAC format supported)
 - OMX audio decoder based on mad library that supports the MP3 audio format
 - OMX audio decoder based on vorbis that supports the OGG audio format
 - OMX audio volume control
@@ -29,6 +30,7 @@ test/components/video/omxvideodectest
 
 Check the distribution build:
 
+autoreconf -i
 ./configure
 make
 make install

@@ -108,6 +108,9 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   else if(!strcmp(cComponentName, AUDIO_DEC_VORBIS_NAME))   // VORBIS format decoder
     omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingVORBIS;
 		
+  else if(!strcmp(cComponentName, AUDIO_DEC_AAC_NAME))   // AAC format decoder   
+    omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingAAC;
+		
   else if (!strcmp(cComponentName, AUDIO_DEC_BASE_NAME))// general audio decoder
     omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingUnused;
 
@@ -221,6 +224,9 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
   case OMX_AUDIO_CodingVORBIS :
     target_codecID = CODEC_ID_VORBIS;
     break;
+  case OMX_AUDIO_CodingAAC :  
+    target_codecID = CODEC_ID_AAC;
+    break;
   default :
     DEBUG(DEB_LEV_ERR, "Audio format other than not supported\nCodec not found\n");
     return OMX_ErrorComponentNotFound;
@@ -236,7 +242,7 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
   omx_audiodec_component_Private->avCodecContext->extradata = omx_audiodec_component_Private->extradata;
   omx_audiodec_component_Private->avCodecContext->extradata_size = (int)omx_audiodec_component_Private->extradata_size;
 
-  /*open the avcodec if mp3 format selected */
+  /*open the avcodec if mp3,aac,vorbis format selected */
   if (avcodec_open(omx_audiodec_component_Private->avCodecContext, omx_audiodec_component_Private->avCodec) < 0) {
   	DEBUG(DEB_LEV_ERR, "Could not open codec\n");
     return OMX_ErrorInsufficientResources;
@@ -321,6 +327,28 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingVORBIS;
 
   }
+  else if(omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingAAC) 
+  {
+    strcpy(omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/aac");
+    omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingAAC;
+                                                                                                                             
+    setHeader(&omx_audiodec_component_Private->pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE)); /* MONA -	comented */
+    omx_audiodec_component_Private->pAudioAac.nPortIndex = 0;
+    omx_audiodec_component_Private->pAudioAac.nChannels = 2;                                                                                                                          
+    omx_audiodec_component_Private->pAudioAac.nBitRate = 28000;
+    omx_audiodec_component_Private->pAudioAac.nSampleRate = 44100;
+    omx_audiodec_component_Private->pAudioAac.nAudioBandWidth = 0; //encoder decides the needed bandwidth
+    omx_audiodec_component_Private->pAudioAac.eChannelMode = OMX_AUDIO_ChannelModeStereo;
+    omx_audiodec_component_Private->pAudioAac.nFrameLength = 0; //encoder decides the framelength
+		
+    pPort = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+
+    setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+    pPort->sAudioParam.nPortIndex = 0;
+    pPort->sAudioParam.nIndex = OMX_IndexParamAudioAac;
+    pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingAAC;
+
+  }
   else
   	return;
 
@@ -401,8 +429,8 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 		/* has mp3 dependency--requires modification */
 	  //switch for different audio formats---parameter settings accordingly
     switch(omx_audiodec_component_Private->audio_coding_type)	{
-    case OMX_AUDIO_CodingMP3 :
 			/*Update Parameter which has changed from avCodecContext*/
+    case OMX_AUDIO_CodingMP3 :
       /*pAudioMp3 is for input port Mp3 data*/
       omx_audiodec_component_Private->pAudioMp3.nChannels = omx_audiodec_component_Private->avCodecContext->channels;
       omx_audiodec_component_Private->pAudioMp3.nBitRate = omx_audiodec_component_Private->avCodecContext->bit_rate;
@@ -412,6 +440,30 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       omx_audiodec_component_Private->pAudioVorbis.nChannels = omx_audiodec_component_Private->avCodecContext->channels;                                                                                                                          
       omx_audiodec_component_Private->pAudioVorbis.nSampleRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
       break;
+    case OMX_AUDIO_CodingAAC :  
+      /*pAudioAAC is for input port AAC data*/
+      omx_audiodec_component_Private->pAudioAac.nChannels = omx_audiodec_component_Private->avCodecContext->channels;
+      omx_audiodec_component_Private->pAudioAac.nBitRate = omx_audiodec_component_Private->avCodecContext->bit_rate;
+      omx_audiodec_component_Private->pAudioAac.nSampleRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
+      omx_audiodec_component_Private->pAudioAac.eAACStreamFormat = OMX_AUDIO_AACStreamFormatRAW;
+      switch(omx_audiodec_component_Private->avCodecContext->profile){   
+	case  FF_PROFILE_AAC_MAIN:
+	  omx_audiodec_component_Private->pAudioAac.eAACProfile = OMX_AUDIO_AACObjectMain;
+	  break;
+	case  FF_PROFILE_AAC_LOW:
+	  omx_audiodec_component_Private->pAudioAac.eAACProfile = OMX_AUDIO_AACObjectLC;
+	  break;
+	case  FF_PROFILE_AAC_SSR:
+	  omx_audiodec_component_Private->pAudioAac.eAACProfile = OMX_AUDIO_AACObjectSSR;
+	  break;
+	case  FF_PROFILE_AAC_LTP:
+	  omx_audiodec_component_Private->pAudioAac.eAACProfile = OMX_AUDIO_AACObjectLTP;
+	  break;
+	case  FF_PROFILE_UNKNOWN:
+	  omx_audiodec_component_Private->pAudioAac.eAACProfile = OMX_AUDIO_AACObjectNull;
+	  break;
+      }
+            break;
     default :
       DEBUG(DEB_LEV_ERR, "Audio format other than mp3 & vorbis not supported\nCodec type %x not found\n",omx_audiodec_component_Private->audio_coding_type);
       break;                       
@@ -456,6 +508,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
   OMX_AUDIO_PARAM_PCMMODETYPE* pAudioPcmMode;
   OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
   OMX_AUDIO_PARAM_VORBISTYPE *pAudioVorbis; //support for Vorbis format
+  OMX_AUDIO_PARAM_AACPROFILETYPE *pAudioAac; //support for AAC format
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_VENDOR_EXTRADATATYPE* pExtradata;
   OMX_U32 portIndex;
@@ -517,7 +570,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
     memcpy(&omx_audiodec_component_Private->pAudioPcmMode,pAudioPcmMode,sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));					
     break;
 
-	case OMX_IndexParamAudioVorbis:
+  case OMX_IndexParamAudioVorbis:
     pAudioVorbis = (OMX_AUDIO_PARAM_VORBISTYPE*)ComponentParameterStructure;
     portIndex = pAudioVorbis->nPortIndex;
     err = omx_base_component_ParameterSanityCheck(hComponent,portIndex,pAudioVorbis,sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
@@ -542,6 +595,21 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
     omx_audiodec_component_SetInternalParameters(openmaxStandComp);
     break;
 		
+  case OMX_IndexParamAudioAac:  
+    pAudioAac = (OMX_AUDIO_PARAM_AACPROFILETYPE*) ComponentParameterStructure;
+    portIndex = pAudioAac->nPortIndex;
+    err = omx_base_component_ParameterSanityCheck(hComponent,portIndex,pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE));
+    if(err!=OMX_ErrorNone) { 
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      break;
+    } 
+    if (pAudioAac->nPortIndex == 0) {
+      memcpy(&omx_audiodec_component_Private->pAudioAac,pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE));
+    } else {
+      return OMX_ErrorBadPortIndex;
+    }
+    break;
+
   case OMX_IndexParamAudioMp3:
     pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*) ComponentParameterStructure;
     portIndex = pAudioMp3->nPortIndex;
@@ -569,7 +637,8 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
 {
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;	
   OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
-	OMX_AUDIO_PARAM_VORBISTYPE *pAudioVorbis; //support for Vorbis format	
+  OMX_AUDIO_PARAM_VORBISTYPE *pAudioVorbis; //support for Vorbis format	
+  OMX_AUDIO_PARAM_AACPROFILETYPE *pAudioAac; //support for AAC format	 
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
   omx_audiodec_component_PortType *port;
@@ -622,7 +691,18 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
     memcpy(pAudioMp3,&omx_audiodec_component_Private->pAudioMp3,sizeof(OMX_AUDIO_PARAM_MP3TYPE));
     break;
 		
-	case OMX_IndexParamAudioVorbis:
+  case OMX_IndexParamAudioAac:  
+    pAudioAac = (OMX_AUDIO_PARAM_AACPROFILETYPE*)ComponentParameterStructure;
+    if (pAudioAac->nPortIndex != 0) {
+      return OMX_ErrorBadPortIndex;
+    }
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE))) != OMX_ErrorNone) { 
+      break;
+    }
+    memcpy(pAudioAac,&omx_audiodec_component_Private->pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE));
+    break;
+		
+  case OMX_IndexParamAudioVorbis:
     pAudioVorbis = (OMX_AUDIO_PARAM_VORBISTYPE*)ComponentParameterStructure;
     if (pAudioVorbis->nPortIndex != 0) {
        return OMX_ErrorBadPortIndex;
@@ -644,6 +724,8 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
       strcpy((char*)pComponentRole->cRole, AUDIO_DEC_MP3_ROLE);
     }	else if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
       strcpy((char*)pComponentRole->cRole, AUDIO_DEC_VORBIS_ROLE);
+    }	else if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingAAC) {  
+      strcpy((char*)pComponentRole->cRole, AUDIO_DEC_AAC_ROLE);
     } else {
       strcpy((char*)pComponentRole->cRole,"\0");;
     }
@@ -709,6 +791,8 @@ OMX_ERRORTYPE omx_audiodec_component_ComponentRoleEnum(
     strcpy((char*)cRole, AUDIO_DEC_MP3_ROLE);
   } else if (nIndex == 1) {
     strcpy((char*)cRole, AUDIO_DEC_VORBIS_ROLE);
+  } else if (nIndex == 2) {           
+    strcpy((char*)cRole, AUDIO_DEC_AAC_ROLE);
   }else {
     return OMX_ErrorUnsupportedIndex;
   }

@@ -143,7 +143,7 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 							*nroles += stComponents[i]->name_specific_length;
 							strcat(buffer, ARROW);
 							for(j=0;j<stComponents[i]->name_specific_length;j++){
-								if (verbose) {printf("Specific role %s registered\n", stComponents[i]->name_specific[j]);}
+								if (verbose) {printf("  Specific role %s registered\n", stComponents[i]->name_specific[j]);}
 								strcat(buffer, stComponents[i]->name_specific[j]);
 								strcat(buffer, ":");
 							}
@@ -223,9 +223,9 @@ int main(int argc, char** argv) {
 		DEBUG(DEB_LEV_ERR, "Error registering OpenMAX components with ST static component loader %s\n", strerror(err));
 	else {
 		if (verbose) {
-			printf("%i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
+			printf("\n %i OpenMAX IL ST static components with %i roles succesfully scanned\n\n", ncomponents, nroles);
 		} else {
-			DEBUG(DEB_LEV_SIMPLE_SEQ, "%i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
+			DEBUG(DEB_LEV_SIMPLE_SEQ, "\n %i OpenMAX IL ST static components with %i roles succesfully scanned\n\n", ncomponents, nroles);
 		}
 	}
 	return 0;

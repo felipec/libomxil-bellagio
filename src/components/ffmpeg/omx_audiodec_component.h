@@ -43,8 +43,10 @@
 #define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_NAME "OMX.st.audio_decoder.ogg"
+#define AUDIO_DEC_AAC_NAME "OMX.st.audio_decoder.aac" 
 #define AUDIO_DEC_MP3_ROLE "audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_ROLE "audio_decoder.ogg"
+#define AUDIO_DEC_AAC_ROLE "audio_decoder.aac"   
 
 /** Audio Decoder component port structure.
  */
@@ -66,8 +68,10 @@ DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
   tsem_t* avCodecSyncSem; \
   /** @param pAudioMp3 Referece to OMX_AUDIO_PARAM_MP3TYPE structure*/	\
   OMX_AUDIO_PARAM_MP3TYPE pAudioMp3;	\
-	/** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
+  /** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
+  /** @param pAudioAAC Reference to  OMX_AUDIO_PARAM_AACPROFILETYPE structure */ \
+   OMX_AUDIO_PARAM_AACPROFILETYPE  pAudioAac;  \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/	\
   OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;	\
   /** @param avcodecReady boolean flag that is true when the audio coded has been initialized */ \

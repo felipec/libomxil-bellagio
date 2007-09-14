@@ -190,6 +190,8 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type Mp3\n",__func__);
   } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type OGG\n",__func__);
+  } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingAAC) {   
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type AAC\n",__func__);
   } else {
     DEBUG(DEB_LEV_ERR,"In %s Ouch!! No Audio Coding Type Selected\n",__func__);
   }
@@ -360,6 +362,8 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
       omx_filereader_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
     } else if(omx_filereader_component_Private->sInputFileName[i - 1] == 'g') {
       omx_filereader_component_Private->audio_coding_type = OMX_AUDIO_CodingVORBIS;
+    } else if(omx_filereader_component_Private->sInputFileName[i - 1] == 'c') { 
+      omx_filereader_component_Private->audio_coding_type = OMX_AUDIO_CodingAAC;
     } else {
       return OMX_ErrorBadParameter;	
     }
@@ -370,6 +374,9 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
     } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
       strcpy(pPort->sPortParam.format.audio.cMIMEType, "audio/vorbis");
       pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingVORBIS;
+    } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingAAC) {   
+      strcpy(pPort->sPortParam.format.audio.cMIMEType, "audio/aac");
+      pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingAAC;
     }
     break;
   default: /*Call the base component function*/

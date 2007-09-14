@@ -14,7 +14,7 @@ with multimedia codecs implemented in hardware or software.
  
 The libomxil shared library implements the OpenMAX IL Core functionalities.
 Three dynamically loadable components are also included: OMX alsa sink 
-component, OMX mp3 decoder component and OMX volume control component.
+component, OMX mp3,aac,ogg decoder component and OMX volume control component.
 (requires ffmpeg library, not part of this package).
 
 %prep

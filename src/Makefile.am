@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libomxil.la
 bin_PROGRAMS = omxregister
 omxregister_SOURCES = omxregister.c
 omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\"
-omxregister_LDADD = 
+ 
 libomxil_la_SOURCES = st_static_component_loader.c \
                       omxcore.c omxcore.h \
 		      omx_comp_debug_levels.h \

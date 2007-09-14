@@ -108,12 +108,20 @@ AC_SEARCH_LIBS([avcodec_decode_audio], [avcodec], [with_ffmpeglibrary=true],
 AC_SEARCH_LIBS([avcodec_decode_audio2], [avcodec], [with_ffmpeglibrary_2=true],
                [with_ffmpeglibrary_2=false])
 
+#Check for ffmpeg avformat library existence
+AC_SEARCH_LIBS([av_open_input_file], [avformat], [with_ffmpeglibrary=true],
+               [with_ffmpeglibrary=false])
+
 #Check for vorbis library existence
 AC_SEARCH_LIBS([ogg_sync_init], [vorbis], [with_vorbislibrary=true],
                [with_vorbislibrary=false])
 
 #Check for mad components dependencies
 AC_SEARCH_LIBS([mad_header_decode], [mad], [with_madlibrary=true],
+               [with_madlibrary=false])
+
+#Check for mad components dependencies
+AC_SEARCH_LIBS([id3_tag_query], [id3tag], [with_madlibrary=true],
                [with_madlibrary=false])
 
 ################################################################################

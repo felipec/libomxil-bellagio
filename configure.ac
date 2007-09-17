@@ -184,6 +184,7 @@ AC_CHECK_HEADER([id3tag.h], [], [with_madlibrary=false])
 AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xtrue && test x$with_framebuffer = xtrue])
 AM_CONDITIONAL([WITH_ALSASINK], [test x$with_alsasink = xtrue && test x$with_alsalibrary = xtrue])
 AM_CONDITIONAL([WITH_FFMPEGLIBRARY], [test x$with_ffmpeglibrary = xtrue])
+
 AM_CONDITIONAL([WITH_FFMPEGLIBRARY_2], test x$with_ffmpeglibrary_2 = xtrue)
 AM_CONDITIONAL([WITH_VORBISLIBRARY], [test x$with_vorbislibrary = xtrue])
 AM_CONDITIONAL([WITH_MADLIBRARY], [test x$with_madlibrary = xtrue])

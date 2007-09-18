@@ -97,32 +97,19 @@ ACX_PTHREAD([
 AC_SEARCH_LIBS([dlopen], [dl], [], [AC_MSG_ERROR([libdl is required])])
 
 # Check if Alsa sound library is present
-AC_SEARCH_LIBS([snd_pcm_plugin_init], [asound], [with_alsalibrary=true],
-               [with_alsalibrary=false])
+AC_CHECK_LIB(asound, snd_pcm_plugin_init, [with_alsalibrary=true], [with_alsalibrary=false])
 
 #Check for ffmpeg (old version) library existence
-AC_SEARCH_LIBS([avcodec_decode_audio], [avcodec], [with_ffmpeglibrary=true],
-               [with_ffmpeglibrary=false])
+AC_CHECK_LIB(avcodec, avcodec_decode_audio, [with_ffmpeglibrary=true], [with_ffmpeglibrary=false])
 
 #Check for ffmpeg (new version) library existence
-AC_SEARCH_LIBS([avcodec_decode_audio2], [avcodec], [with_ffmpeglibrary_2=true],
-               [with_ffmpeglibrary_2=false])
-
-#Check for ffmpeg avformat library existence
-AC_SEARCH_LIBS([av_open_input_file], [avformat], [with_ffmpeglibrary=true],
-               [with_ffmpeglibrary=false])
+AC_CHECK_LIB(avcodec, avcodec_decode_audio2, [with_ffmpeglibrary_2=true], [with_ffmpeglibrary_2=false])
 
 #Check for vorbis library existence
-AC_SEARCH_LIBS([ogg_sync_init], [vorbis], [with_vorbislibrary=true],
-               [with_vorbislibrary=false])
+AC_CHECK_LIB(vorbis, ogg_sync_init, [with_vorbislibrary=true], [with_vorbislibrary=false])
 
 #Check for mad components dependencies
-AC_SEARCH_LIBS([mad_header_decode], [mad], [with_madlibrary=true],
-               [with_madlibrary=false])
-
-#Check for mad components dependencies
-AC_SEARCH_LIBS([id3_tag_query], [id3tag], [with_madlibrary=true],
-               [with_madlibrary=false])
+AC_CHECK_LIB(mad, mad_header_decode, [with_madlibrary=true], [with_madlibrary=false])
 
 ################################################################################
 # Check for header files                                                       #

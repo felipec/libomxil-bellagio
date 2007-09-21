@@ -78,7 +78,6 @@ OMX_ERRORTYPE OMX_Init() {
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n", __func__);
   if(initialized == 0) {
-    initialized = 1;
     st_static_InitComponentLoader();
     loadersList[0] = &st_static_loader;
 
@@ -89,6 +88,7 @@ OMX_ERRORTYPE OMX_Init() {
         return OMX_ErrorInsufficientResources;
       }
     }
+    initialized = 1;
   }
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
   return OMX_ErrorNone;

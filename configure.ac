@@ -165,7 +165,7 @@ AC_CHECK_HEADER([id3tag.h], [], [with_madlibrary=false])
 # unused
 
 ################################################################################
-# Conditionals and file outpur                                                 #
+# Conditionals and file output                                                 #
 ################################################################################
 
 AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xtrue && test x$with_framebuffer = xtrue])

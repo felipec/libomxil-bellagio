@@ -17,3 +17,5 @@ $(pkgconfig_DATA): config.status
 
 uninstall-local:
 	rm -f ~/.omxregistry
+	rm -rf $(libdir)/omxilcomponents/
+

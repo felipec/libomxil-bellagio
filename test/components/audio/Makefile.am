@@ -1,6 +1,5 @@
-AM_CPPFLAGS= -I@top_srcdir@/test/components/common
-check_PROGRAMS =   omxaudiodectest 
+check_PROGRAMS = omxaudiodectest 
 
-omxaudiodectest_LDADD = -lomxil -lpthread $(top_builddir)/test/components/common/libtestcommon.la
+omxaudiodectest_LDADD = @top_builddir@/src/libomxil.la $(top_builddir)/test/components/common/libtestcommon.la -lpthread
+omxaudiodectest_CPPFLAGS= -I@top_srcdir@/test/components/common
 omxaudiodectest_SOURCES= omxaudiodectest.c omxaudiodectest.h
-

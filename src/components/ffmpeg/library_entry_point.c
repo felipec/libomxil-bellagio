@@ -142,7 +142,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   if (stComponents[2]->name == NULL) {
     return OMX_ErrorInsufficientResources;
   }
-  strcpy(stComponents[2]->name, "OMX.st.video_colorconv");
+  strcpy(stComponents[2]->name, "OMX.st.video_colorconv.ffmpeg");
   stComponents[2]->name_specific_length = 1; 
   stComponents[2]->constructor = omx_ffmpeg_colorconv_component_Constructor;	
 
@@ -162,7 +162,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     }
   }
 
-  strcpy(stComponents[2]->name_specific[0], "OMX.st.video_colorconv");
+  strcpy(stComponents[2]->name_specific[0], "OMX.st.video_colorconv.ffmpeg");
   strcpy(stComponents[2]->role_specific[0], "video_colorconv.ffmpeg"); 
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);

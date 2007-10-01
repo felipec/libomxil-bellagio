@@ -43,8 +43,8 @@
 #include <ffmpeg/avutil.h>
 #include <ffmpeg/swscale.h>
 
-#define COLOR_CONV_BASE_NAME "OMX.st.video_colorconv"
-#define COLOR_CONV_FFMPEG_NAME "OMX.st.video_colorconv"
+#define COLOR_CONV_BASE_NAME "OMX.st.video_colorconv.ffmpeg"
+#define COLOR_CONV_FFMPEG_NAME "OMX.st.video_colorconv.ffmpeg"
 #define COLOR_CONV_FFMPEG_ROLE "video_colorconv.ffmpeg"
 
 #define MIN(a,b)	(((a) < (b)) ? (a) : (b))

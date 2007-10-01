@@ -3,14 +3,14 @@ lib_LTLIBRARIES = libomxil.la
 bin_PROGRAMS = omxregister
 omxregister_SOURCES = omxregister.c
 omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\"
- 
+
 libomxil_la_SOURCES = st_static_component_loader.c \
                       omxcore.c omxcore.h \
-		      omx_comp_debug_levels.h \
-		      tsemaphore.c tsemaphore.h \
-		      queue.c queue.h \
-		      component_loader.h \
-		      st_static_component_loader.h
+                      omx_comp_debug_levels.h \
+                      tsemaphore.c tsemaphore.h \
+                      queue.c queue.h \
+                      component_loader.h \
+                      st_static_component_loader.h
 AM_CPPFLAGS = -I@top_srcdir@/include
 
 #Build order is important

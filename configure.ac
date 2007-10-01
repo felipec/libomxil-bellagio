@@ -1,4 +1,4 @@
-AC_INIT([OpenMAX Bellagio], [0.3.2], [], [libomxil-B])
+AC_INIT([OpenMAX Bellagio], [0.3.3], [], [libomxil-B])
 AM_INIT_AUTOMAKE
 
 # Prerequisite autoconf version
@@ -188,7 +188,7 @@ AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xtrue])
 AC_OUTPUT([
     Doxyfile
     Makefile
-    libomxil.pc
+    libomxil-B.pc
     include/Makefile
     src/Makefile
     src/base/Makefile
@@ -203,6 +203,7 @@ AC_OUTPUT([
     m4/Makefile
     test/Makefile
     test/components/Makefile
+    test/components/common/Makefile
     test/components/audio/Makefile
     test/components/video/Makefile
     test/components/audio_effects/Makefile

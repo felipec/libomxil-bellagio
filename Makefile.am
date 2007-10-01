@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src include test m4
 
-EXTRA_DIST = libomxil.spec Doxyfile cross-env
+EXTRA_DIST = libomxil-B.spec Doxyfile 
 
 libomxildocdir = $(pkgdatadir)/doc/omxil
 libomxildoc_DATA = \
@@ -11,7 +11,7 @@ libomxildoc_DATA = \
         TODO
 
 pkgconfigdir        = $(libdir)/pkgconfig
-pkgconfig_DATA      = libomxil.pc
+pkgconfig_DATA      = libomxil-B.pc
  
 $(pkgconfig_DATA): config.status
 

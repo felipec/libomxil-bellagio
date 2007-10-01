@@ -342,7 +342,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
         pPort = omx_base_component_Private->ports[i];
         if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
-          /** Allocate here the buffers needed for the tunneling: 							*/
+          /** Allocate here the buffers needed for the tunneling */
           err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize);
           if(err!=OMX_ErrorNone) { 
             DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
@@ -1339,6 +1339,7 @@ OMX_ERRORTYPE omx_base_component_EmptyThisBuffer(
             OMX_IN  OMX_BUFFERHEADERTYPE* pBuffer) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
   if (pBuffer->nInputPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
@@ -1358,6 +1359,7 @@ OMX_ERRORTYPE omx_base_component_FillThisBuffer(
 
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	if (pBuffer->nOutputPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;

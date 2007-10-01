@@ -1,3 +1,6 @@
+Attention! the verison of ffmpegused has been changes, since the AAC is supported 
+only by the most recent veriosn of ffmpeg, 0.4.9-0.37.20070503
+
 Changes of the current editing respect to the 0.3.2 in the final components
 1) base_port_constuctor call replaced with the new constructor function pointer
 2) removed from final component destuctors the disposal of the ports

@@ -1,5 +1,5 @@
 Bellagio OpenMAX Integration Layer 1.1 project
-Release 0.3.2
+Release 0.3.3
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API ver. 1.1,
 specified by the Khronos group (see http://www.khronos.org/openmax).
@@ -173,5 +173,5 @@ FC4 2.6.11-1.1369_fc4 (with ffmpeg-0.4.9-0.3.20051207, libmad 0.15.1b, libvorbis
 FC6 2.6.20-1.2933.fc6 (with ffmpeg 0.4.9-0.37.20070503, libmad 0.15.1b, libvorbis 1.1.2-1)
 UBUNTU 2.6.17-11-generic
 
-Last modified: Sep 17, 2007.
+Last modified: Oct 01, 2007.
 

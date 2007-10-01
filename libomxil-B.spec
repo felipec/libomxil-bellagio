@@ -1,9 +1,9 @@
 Name: libomxil-B
-Version: 0.3.2
+Version: 0.3.3
 Release: 0
 License: GNU LGPL
 Group: System Environment/Libraries
-Source: libomxil-B-0.3.2.tar.gz
+Source: libomxil-B-0.3.3.tar.gz
 Summary: OpenMAX Integration Layer 1.1 library and components.
 Vendor: STMicroelectronics
 
@@ -85,6 +85,8 @@ make install
 /usr/local/lib/omxilcomponents/libomxvorbis.so.0.0.0
 
 %changelog
+* Tue Oct 01 2007 Giulio Urlini
+- Minor update and name change of this file
 * Tue Jun 04 2007 Giulio Urlini
 - Bellagio 0.3.2 release
 * Tue May 22 2007 Giulio Urlini

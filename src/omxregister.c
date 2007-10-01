@@ -7,7 +7,7 @@
 	
 	It must be run before using components.
 	The components are searched in the default directory:
-	/usr/local/lib/omxcomponents/
+	OMXILCOMPONENTSPATH
 	If the components are installed in a different location, specify:
 	
 	omxregister installation_path
@@ -35,11 +35,9 @@
 
 */
 
-#include <stdio.h>
 #include <dlfcn.h>
 #include <dirent.h>
 #include <stdlib.h>
-#include <strings.h>
 #include <string.h>
 #include <errno.h>
 
@@ -48,9 +46,11 @@
 /** String element to be put in the .omxregistry file to indicate  an
  * OpenMAX component and its roles
  */
-#define ARROW " ==> "
+static const char arrow[] =  " ==> ";
 
-#define ELEMENT_STRING_LENGTH 512
+/** registry filename
+ */
+static const char registry_filename[] = "/.omxregistry";
 
 /** @brief Creates a list of components on a registry file
  * 
@@ -60,51 +60,54 @@
  *    (it must contain the function omx_component_library_Setup for the initialization)
  *  - write the openmax names and related libraries to the registry file
  */
-int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int verbose) {
-	DIR *dirp = NULL;
+static int buildComponentsList(char *componentspath, int *ncomponents, int *nroles, int verbose) {
+  DIR *dirp;
 	struct dirent *dp;
-	
-  	void* handle;
-	int i = 0,num_of_comp;
+	void *handle;
+	int i, num_of_comp;
 	int j;
-	FILE* omxregistryfp;
-	char omxregistryfile[200];
-  	char *buffer; // TODO :Verify what should be buffer type
-  	int (*fptr)(void *);
+	FILE *omxregistryfp;
+	char *omxregistryfile;
+	char *buffer;
+	int (*fptr)(void *);
 	stLoaderComponentType **stComponents;
 	*ncomponents = 0;
 	*nroles=0;
 
-	memset(omxregistryfile, 0, sizeof(omxregistryfile));
-	strcat(omxregistryfile, getenv("HOME"));
-	strcat(omxregistryfile, "/.omxregistry");
+	if((buffer=getenv("HOME"))) {
+		omxregistryfile = malloc(strlen(buffer) + sizeof(registry_filename) + 1);
+		strcpy(omxregistryfile, buffer);
+		buffer = NULL;
+	} else {
+		omxregistryfile  = malloc(sizeof(registry_filename) + 1);
+		*omxregistryfile = 0;
+	}
+	strcat(omxregistryfile, registry_filename);
 
-  	buffer = (char*)malloc(sizeof(char)*ELEMENT_STRING_LENGTH);
 	/* Populate the registry file */
 	dirp = opendir(componentspath);
 	if(dirp == NULL){
+    int err = errno;
 		DEBUG(DEB_LEV_ERR, "Cannot open directory %s\n", componentspath);
-		return ENOENT;
+		return err;
 	}
 
 	omxregistryfp = fopen(omxregistryfile, "w");
 	if (omxregistryfp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
-		return ENOENT;
+    int err = errno;
+		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file %s\n", omxregistryfile);
+    closedir(dirp);
+		return err;
 	}
 	
 	while((dp = readdir(dirp)) != NULL) {
-		int len;
-		char ext[4];
-
-		len = strlen(dp->d_name);
+    int len = strlen(dp->d_name);
 
 		if(len >= 3){
-			strncpy(ext, &(dp->d_name[len-3]), 3);
-			ext[4]='\0';
-    
-			if(strncmp(ext, ".so", 3) == 0){
-				char lib_absolute_path[200];
+
+      
+      if(strncmp(dp->d_name+len-3, ".so", 3) == 0){
+        char lib_absolute_path[strlen(componentspath) + len + 1];
 
 				strcpy(lib_absolute_path, componentspath);
 				strcat(lib_absolute_path, dp->d_name);
@@ -112,72 +115,94 @@ int buildComponentsList(char* componentspath, int* ncomponents,int *nroles,int v
 				if((handle = dlopen(lib_absolute_path, RTLD_NOW)) == NULL) {
 					DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", lib_absolute_path, dlerror());
 				} else {
-					if ((*(void **)(&fptr) = dlsym(handle, "omx_component_library_Setup")) == NULL) {
+					if ((fptr = dlsym(handle, "omx_component_library_Setup")) == NULL) {
 						DEBUG(DEB_LEV_ERR, "the library %s is not compatible with ST static component loader - %s\n", lib_absolute_path, dlerror());
 						continue;
 					}
-					num_of_comp = (int)(*fptr)(NULL);
+					num_of_comp = fptr(NULL);
 					stComponents = malloc(num_of_comp * sizeof(stLoaderComponentType*));
 					for (i = 0; i<num_of_comp; i++) {
 						stComponents[i] = malloc(sizeof(stLoaderComponentType));
 					}
-					(*fptr)(stComponents);
+					fptr(stComponents);
 
-					memset(buffer, 0, sizeof(buffer));
-					// insert first of all the name of the library
-					strcat(buffer, lib_absolute_path);
-					strcat(buffer, "\n");
 					for (i = 0; i<num_of_comp; i++) {
 						DEBUG(DEB_LEV_PARAMS, "Found component %s version=%d.%d.%d.%d in shared object %s\n",
-								stComponents[i]-> name,
+								stComponents[i]->name,
 								stComponents[i]->componentVersion.s.nVersionMajor,
 								stComponents[i]->componentVersion.s.nVersionMinor,
 								stComponents[i]->componentVersion.s.nRevision,
 								stComponents[i]->componentVersion.s.nStep, 
 								lib_absolute_path);
-						// insert any name of component
-						strcat(buffer, ARROW);
-						if (verbose) {printf("Component %s registered\n", stComponents[i]->name);}
+						if (verbose)
+              printf("Component %s registered\n", stComponents[i]->name);
+
+						// allocate max memory
+            len = sizeof(lib_absolute_path)     /* lib path */
+                 +1                             /* '\n' */
+                 +sizeof(arrow)                 /* arrow */
+                 +strlen(stComponents[i]->name) /* component name */
+                 +sizeof(arrow)                 /* arrow */
+                 +1                             /* '\n' */
+                 +1                             /* '\0' */;
+            buffer = realloc(buffer, len);
+
+            // insert first of all the name of the library
+            strcpy(buffer, lib_absolute_path);
+            strcat(buffer, "\n");
+						strcat(buffer, arrow);
 						strcat(buffer, stComponents[i]->name);
+
 						if (stComponents[i]->name_specific_length>0) {
 							*nroles += stComponents[i]->name_specific_length;
-							strcat(buffer, ARROW);
+							strcat(buffer, arrow);
 							for(j=0;j<stComponents[i]->name_specific_length;j++){
-								if (verbose) {printf("  Specific role %s registered\n", stComponents[i]->name_specific[j]);}
+								if (verbose)
+                  printf("  Specific role %s registered\n", stComponents[i]->name_specific[j]);
+                len += strlen(stComponents[i]->name_specific[j]) /* specific role */
+                      +1                                         /* ':' */;
+                buffer = realloc(buffer, len);
 								strcat(buffer, stComponents[i]->name_specific[j]);
 								strcat(buffer, ":");
 							}
 						}
 						strcat(buffer, "\n");
 						fwrite(buffer, 1, strlen(buffer), omxregistryfp);
-             						strcpy(buffer,"\0");
 						(*ncomponents)++;
 					}
+					for (i = 0; i < num_of_comp; i++) {
+						free(stComponents[i]);
+					}
+					free(stComponents);
 				}
 			}
 		}
 	}
-  	free(buffer);
-	buffer = NULL;
+	free(omxregistryfile);
+	free(buffer);
 	fclose(omxregistryfp);
+	closedir(dirp);
 	return 0;
 }
 
 void usage() {
-	printf("Usage: omxregister [-v] [-h] [componentspath]\n");
-	printf("\n");
-	printf("This programs scans for a given directory searching for any OpenMAX component\n");
-	printf(" compatible with the ST static component loader. The list of components is\n");
-	printf(" stored in a registry file located in the $HOME directory and named .omxregistry\n");
-	printf("\n");
-	printf("The following options are supported:\n");
-	printf("\n");
-	printf("        -v   display a verbose output, listing all the components registered\n");
-	printf("        -h   display this message\n");
-	printf("         componentspath: a searching path for components can be specified.\n");
-	printf("         If this parameter is omitted, the components are searched in the\n");
-	printf("         default /ust/local/lib/omxcomponents directory\n");
-	printf("\n");
+	printf(
+      "Usage: omxregister [-v] [-h] [componentspath]\n"
+      "\n"
+      "This programs scans for a given directory searching for any OpenMAX component\n"
+      " compatible with the ST static component loader. The list of components is\n"
+      " stored in a registry file located in the $HOME directory and named .omxregistry\n"
+      "\n"
+      "The following options are supported:\n"
+      "\n"
+      "        -v   display a verbose output, listing all the components registered\n"
+      "        -h   display this message\n"
+      "         componentspath: a searching path for components can be specified.\n"
+      "         If this parameter is omitted, the components are searched in the\n"
+      "         default %s directory\n"
+      "\n"
+      , OMXILCOMPONENTSPATH
+      );
 }
 
 /** @brief execution of registration function
@@ -185,43 +210,29 @@ void usage() {
  * This register by default searches for openmax libraries in OMXILCOMPONENTSPATH
  * If specified it can search in a different directory
  */
-int main(int argc, char** argv) {
-	char* componentspath;
+int main(int argc, char *argv[]) {
+	char *componentspath = OMXILCOMPONENTSPATH;
 	int ncomponents,nroles;
 	int err;
   	int verbose=0;
 	
-	if(argc == 1){
-		componentspath = OMXILCOMPONENTSPATH;
-	}else if(argc >= 2) {
-		if(*(argv[1]) == '-') {
-			if (*(argv[1]+1) == 'v') {
+	for(err = 1; err < argc; err++) {
+		if(*(argv[err]) == '-') {
+			if (*(argv[err]+1) == 'v') {
 				verbose = 1;
-				if (argc > 2) {
-					componentspath = argv[2];
-				} else {
-					componentspath = OMXILCOMPONENTSPATH;
-				}
-			} else if (*(argv[1]+1) == 'h') {
-				usage();
-				exit(0);
 			} else {
 				usage();
-				exit(-EINVAL);
+				exit(*(argv[err]+1) == 'h' ? 0 : -EINVAL);
 			}
 		} else {
-			componentspath = argv[1];
-		}
+			componentspath = argv[err];
+    }
+  }
 
-	} else {
-		usage();
-		exit(-EINVAL);
-	}
-
-	err = buildComponentsList(componentspath, &ncomponents,&nroles,verbose);
-	if(err)
+	err = buildComponentsList(componentspath, &ncomponents, &nroles, verbose);
+	if(err) {
 		DEBUG(DEB_LEV_ERR, "Error registering OpenMAX components with ST static component loader %s\n", strerror(err));
-	else {
+	} else {
 		if (verbose) {
 			printf("\n %i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
 		} else {

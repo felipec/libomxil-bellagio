@@ -1,9 +1,13 @@
-SUBDIRS = 
-lib_LTLIBRARIES = libomxil.la
+# Build order is important
+# First base, then core, finally components
+SUBDIRS = base . components
+
 bin_PROGRAMS = omxregister
 omxregister_SOURCES = omxregister.c
-omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\"
+omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\" \
+		     -I$(top_srcdir)/include
 
+lib_LTLIBRARIES = libomxil.la
 libomxil_la_SOURCES = st_static_component_loader.c \
                       omxcore.c omxcore.h \
                       omx_comp_debug_levels.h \
@@ -11,12 +15,6 @@ libomxil_la_SOURCES = st_static_component_loader.c \
                       queue.c queue.h \
                       component_loader.h \
                       st_static_component_loader.h
-AM_CPPFLAGS = -I@top_srcdir@/include
 
-#Build order is important
-#First base, then core, finally components
-SUBDIRS += base . components
-
-# addition of base and n-port classes for component development
-libomxil_la_LIBADD = base/libomxbase.la
-
+libomxil_la_CFLAGS = -I$(top_srcdir)/include
+libomxil_la_LIBADD = base/libomxbase.a

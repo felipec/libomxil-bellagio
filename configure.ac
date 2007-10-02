@@ -10,6 +10,29 @@ AC_CONFIG_SRCDIR([include/OMX_Core.h])
 # Set to 'm4' the directory where the extra autoconf macros are stored
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_CONFIG_FILES([
+    Doxyfile
+    Makefile
+    libomxil-B.pc
+    include/Makefile
+    src/Makefile
+    src/base/Makefile
+    src/components/Makefile
+    src/components/alsa/Makefile
+    src/components/ffmpeg/Makefile
+    src/components/mad/Makefile
+    src/components/vorbis/Makefile
+    src/components/filereader/Makefile
+    src/components/fbdev/Makefile
+    src/components/audio_effects/Makefile
+    m4/Makefile
+    test/Makefile
+    test/components/Makefile
+    test/components/common/Makefile
+    test/components/audio/Makefile
+    test/components/video/Makefile
+    test/components/audio_effects/Makefile
+])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #
 ################################################################################
@@ -74,6 +97,7 @@ AC_ARG_ENABLE(
 
 # Check for a working C compiler
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 # Check for libtool
 AM_PROG_LIBTOOL
@@ -108,9 +132,6 @@ AC_CHECK_LIB(avcodec, avcodec_decode_audio2, [with_ffmpeglibrary_2=true], [with_
 #Check for vorbis library existence
 AC_CHECK_LIB(vorbis, ogg_sync_init, [with_vorbislibrary=true], [with_vorbislibrary=false])
 
-#Check for mad components dependencies
-AC_CHECK_LIB(mad, mad_header_decode, [with_madlibrary=true], [with_madlibrary=false])
-
 ################################################################################
 # Check for header files                                                       #
 ################################################################################
@@ -130,9 +151,8 @@ AC_CHECK_HEADER([ffmpeg/swscale.h], [], [with_ffmpeglibrary=false])
 #Check for vorbis library existence
 AC_CHECK_HEADER([vorbis/codec.h], [], [with_vorbislibrary=false])
 
-#Check for mad components dependencies
-AC_CHECK_HEADER([mad.h], [], [with_madlibrary=false])
-AC_CHECK_HEADER([id3tag.h], [], [with_madlibrary=false])
+# Check for mad component dependencies
+PKG_CHECK_MODULES([MAD], [mad id3tag])
 
 ################################################################################
 # Check for types                                                              #
@@ -174,37 +194,14 @@ AM_CONDITIONAL([WITH_FFMPEGLIBRARY], [test x$with_ffmpeglibrary = xtrue])
 
 AM_CONDITIONAL([WITH_FFMPEGLIBRARY_2], test x$with_ffmpeglibrary_2 = xtrue)
 AM_CONDITIONAL([WITH_VORBISLIBRARY], [test x$with_vorbislibrary = xtrue])
-AM_CONDITIONAL([WITH_MADLIBRARY], [test x$with_madlibrary = xtrue])
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS],
                [test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary = xtrue])
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS_2],
                [test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary_2 = xtrue])
 AM_CONDITIONAL([WITH_MADCOMPONENTS],
-               [test x$with_madcomponents = xtrue && test x$with_madlibrary = xtrue])
+               [test x$with_madcomponents = xtrue])
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
                [test x$with_vorbiscomponents = xtrue && test x$with_vorbislibrary = xtrue])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xtrue])
 
-AC_OUTPUT([
-    Doxyfile
-    Makefile
-    libomxil-B.pc
-    include/Makefile
-    src/Makefile
-    src/base/Makefile
-    src/components/Makefile
-    src/components/alsa/Makefile
-    src/components/ffmpeg/Makefile
-    src/components/mad/Makefile
-    src/components/vorbis/Makefile
-    src/components/filereader/Makefile
-    src/components/fbdev/Makefile
-    src/components/audio_effects/Makefile
-    m4/Makefile
-    test/Makefile
-    test/components/Makefile
-    test/components/common/Makefile
-    test/components/audio/Makefile
-    test/components/video/Makefile
-    test/components/audio_effects/Makefile
-])
+AC_OUTPUT

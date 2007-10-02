@@ -95,29 +95,19 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
     DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
     return ENOENT;
   }
-  num_of_comp = 0;
   libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2 * sizeof(char));
-  while((read = getline(&line, &len, omxregistryfp)) != -1) {
-    if ((*line == ' ') && (*(line+1) == '=')) {
-      num_of_comp++;
-      // not a library line. skip
-      continue;
-    }
-  }
 
-  templateList = calloc(num_of_comp + 1,sizeof (stLoaderComponentType*));
-  for (i = 0; i <= num_of_comp; i++) {
-    templateList[i] = NULL;
-  }
+  templateList = calloc(1,sizeof (stLoaderComponentType*));
+
   fseek(omxregistryfp, 0, 0);
   listindex = 0;
   while((read = getline(&line, &len, omxregistryfp)) != -1) {
-  if ((*line == ' ') && (*(line+1) == '=')) {
-  // not a library line. skip
-  continue;
-  }
-  index = 0;
-  while (*(line+index)!= '\n') index++;
+    if ((*line == ' ') && (*(line+1) == '=')) {
+      // not a library line. skip
+      continue;
+    }
+    index = 0;
+    while (*(line+index)!= '\n') index++;
     *(line+index) = 0;
     strcpy(libname, line);
     DEBUG(DEB_LEV_FULL_SEQ, "libname: %s\n",libname);
@@ -130,6 +120,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
         DEBUG(DEB_LEV_ERR, "the library %s is not compatible with ST static component loader - %s\n", libname, dlerror());
       } else {
         num_of_comp = (int)(*fptr)(NULL);
+        templateList = realloc(templateList, (listindex + num_of_comp + 1) * sizeof (stLoaderComponentType*));
         stComponentsTemp = calloc(num_of_comp,sizeof(stLoaderComponentType*));
         for (i = 0; i<num_of_comp; i++) {
           stComponentsTemp[i] = calloc(1,sizeof(stLoaderComponentType));

@@ -1,3 +1,3 @@
-noinst_LIBRARIES = libtestcommon.a
+noinst_LTLIBRARIES = libtestcommon.la
 
-libtestcommon_a_SOURCES = tsemaphore.c tsemaphore.h user_debug_levels.h
+libtestcommon_la_SOURCES = tsemaphore.c tsemaphore.h user_debug_levels.h

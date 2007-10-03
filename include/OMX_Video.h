@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
  */
 
 /** 
- *  @file OMX_Video.h - OpenMax IL version 1.1
+ *  @file OMX_Video.h - OpenMax IL version 1.1.1
  *  The structures is needed by Video components to exchange parameters 
  *  and configuration data with OMX components.
  */
@@ -45,8 +45,7 @@ extern "C" {
  * header to compile without errors.  The includes below are required
  * for this header file to compile successfully 
  */
-#include <OMX_Types.h>
-#include <OMX_Core.h>
+
 #include <OMX_IVCommon.h>
 
 
@@ -686,7 +685,8 @@ typedef struct OMX_VIDEO_PARAM_WMVTYPE {
 typedef enum OMX_VIDEO_RVFORMATTYPE {
     OMX_VIDEO_RVFormatUnused = 0, /**< Format unused or unknown */
     OMX_VIDEO_RVFormat8,          /**< Real Video format 8 */
-    OMX_VIDEO_RVFormat9,          /**< Real video format 9 */
+    OMX_VIDEO_RVFormat9,          /**< Real Video format 9 */
+    OMX_VIDEO_RVFormatG2,         /**< Real Video Format G2 */
     OMX_VIDEO_RVFormatMax = 0x7FFFFFFF
 } OMX_VIDEO_RVFORMATTYPE;
 
@@ -699,7 +699,15 @@ typedef enum OMX_VIDEO_RVFORMATTYPE {
  *  nVersion           : OMX specification version information 
  *  nPortIndex         : Port that this structure applies to
  *  eFormat            : Version of RV stream / data
+ *  nBitsPerPixel      : Bits per pixel coded in the frame
+ *  nPaddedWidth       : Padded width in pixel of a video frame
+ *  nPaddedHeight      : Padded Height in pixels of a video frame
+ *  nFrameRate         : Rate of video in frames per second
+ *  nBitstreamFlags    : Flags which internal information about the bitstream
+ *  nBitstreamVersion  : Bitstream version
+ *  nMaxEncodeFrameSize: Max encoded frame size
  *  bEnablePostFilter  : Turn on/off post filter
+ *  bEnableTemporalInterpolation : Turn on/off temporal interpolation
  *  bEnableLatencyMode : When enabled, the decoder does not display a decoded 
  *                       frame until it has detected that no enhancement layer 
  *  					 frames or dependent B frames will be coming. This 
@@ -711,8 +719,16 @@ typedef struct OMX_VIDEO_PARAM_RVTYPE {
     OMX_VERSIONTYPE nVersion;
     OMX_U32 nPortIndex;
     OMX_VIDEO_RVFORMATTYPE eFormat;
+    OMX_U16 nBitsPerPixel;
+    OMX_U16 nPaddedWidth;
+    OMX_U16 nPaddedHeight;
+    OMX_U32 nFrameRate;
+    OMX_U32 nBitstreamFlags;
+    OMX_U32 nBitstreamVersion;
+    OMX_U32 nMaxEncodeFrameSize;
     OMX_BOOL bEnablePostFilter;
-    OMX_BOOL bEnableLatencyMode;									
+    OMX_BOOL bEnableTemporalInterpolation;
+    OMX_BOOL bEnableLatencyMode;
 } OMX_VIDEO_PARAM_RVTYPE;
 
 
@@ -898,7 +914,7 @@ typedef struct OMX_CONFIG_FRAMERATETYPE {
     OMX_U32 nSize;
     OMX_VERSIONTYPE nVersion;
     OMX_U32 nPortIndex;
-    OMX_U32 xEncodeFramerate; // Q16 format
+    OMX_U32 xEncodeFramerate; /* Q16 format */
 } OMX_CONFIG_FRAMERATETYPE;
 
 typedef struct OMX_CONFIG_INTRAREFRESHVOPTYPE {
@@ -912,8 +928,8 @@ typedef struct OMX_CONFIG_MACROBLOCKERRORMAPTYPE {
     OMX_U32 nSize;
     OMX_VERSIONTYPE nVersion;
     OMX_U32 nPortIndex;
-    OMX_U32 nErrMapSize;           // Size of the Error Map in bytes
-    OMX_U8  ErrMap[1];             // Error map hint   
+    OMX_U32 nErrMapSize;           /* Size of the Error Map in bytes */
+    OMX_U8  ErrMap[1];             /* Error map hint */
 } OMX_CONFIG_MACROBLOCKERRORMAPTYPE;
 
 typedef struct OMX_CONFIG_MBERRORREPORTINGTYPE {

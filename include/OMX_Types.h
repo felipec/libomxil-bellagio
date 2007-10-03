@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Types.h - OpenMax IL version 1.1
+/** OMX_Types.h - OpenMax IL version 1.1.1
  *  The OMX_Types header file contains the primitive type definitions used by 
  *  the core, the application and the component.  This file may need to be
  *  modified to be used on systems that do not have "char" set to 8 bits, 
@@ -72,26 +72,32 @@ extern "C" {
 #   endif
 #endif
 
-
+#ifndef OMX_APIENTRY
 #define OMX_APIENTRY 
-
+#endif 
 
 /** OMX_IN is used to identify inputs to an OMX function.  This designation 
     will also be used in the case of a pointer that points to a parameter 
     that is used as an output. */
+#ifndef OMX_IN
 #define OMX_IN
+#endif
 
 /** OMX_OUT is used to identify outputs from an OMX function.  This 
     designation will also be used in the case of a pointer that points 
     to a parameter that is used as an input. */
+#ifndef OMX_OUT
 #define OMX_OUT
+#endif
 
 
 /** OMX_INOUT is used to identify parameters that may be either inputs or
     outputs from an OMX function at the same time.  This designation will 
     also be used in the case of a pointer that  points to a parameter that 
     is used both as an input and an output. */
+#ifndef OMX_INOUT
 #define OMX_INOUT
+#endif
 
 /** OMX_ALL is used to as a wildcard to select all entities of the same type
  *  when specifying the index, or referring to a object by an index.  (i.e.

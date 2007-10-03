@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  */
 
 /** 
- * @file OMX_Image.h - OpenMax IL version 1.1
+ * @file OMX_Image.h - OpenMax IL version 1.1.1
  * The structures needed by Image components to exchange parameters and 
  * configuration data with the components.
  */
@@ -38,8 +38,7 @@ extern "C" {
  * header to compile without errors.  The includes below are required  
  * for this header file to compile successfully 
  */
-#include <OMX_Types.h>
-#include <OMX_Core.h>
+
 #include <OMX_IVCommon.h>
 
 /** @defgroup imaging OpenMAX IL Imaging Domain

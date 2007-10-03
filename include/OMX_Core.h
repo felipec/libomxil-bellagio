@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Core.h - OpenMax IL version 1.1
+/** OMX_Core.h - OpenMax IL version 1.1.1
  *  The OMX_Core header file contains the definitions used by both the
  *  application and the component to access common items.
  */
@@ -38,7 +38,7 @@ extern "C" {
  *  header to compile without errors.  The includes below are required
  *  for this header file to compile successfully 
  */
-#include <OMX_Types.h>
+
 #include <OMX_Index.h>
 
 
@@ -425,9 +425,9 @@ typedef struct OMX_OTHER_EXTRADATATYPE  {
     OMX_U32 nSize;
     OMX_VERSIONTYPE nVersion;               
     OMX_U32 nPortIndex;
-    OMX_U32 nFlags;       // Extra Data flags
-    OMX_U32 nDataSize;   // Size of the supporting data to follow
-    OMX_U8  data[1];     // Supporting data hint  
+    OMX_U32 nFlags;       /* Extra Data flags */
+    OMX_U32 nDataSize;   /* Size of the supporting data to follow */
+    OMX_U8  data[1];     /* Supporting data hint  */
 } OMX_OTHER_EXTRADATATYPE;
 
 /** @ingroup comp */
@@ -601,7 +601,7 @@ typedef struct OMX_TUNNELSETUPTYPE
    macros for functions into the component for OMX release 1.0.  
    Developers should not access any structures or data from within
    the component header directly */
-#include <OMX_Component.h>
+/* TO BE REMOVED - #include <OMX_Component.h> */
 
 /** GetComponentVersion will return information about the component.  
     This is a blocking call.  This macro will go directly from the
@@ -1127,7 +1127,7 @@ typedef struct OMX_TUNNELSETUPTYPE
            nPortIndex,                                      \
            pAppPrivate,                                     \
            eglImage)                                        \
-    ((OMX_COMPONENTTYPE*)hComponent)->UseBuffer(            \
+    ((OMX_COMPONENTTYPE*)hComponent)->UseEGLImage(          \
            hComponent,                                      \
            ppBufferHdr,                                     \
            nPortIndex,                                      \

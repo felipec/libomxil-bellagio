@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_ContentPipe.h - OpenMax IL version 1.1
+/** OMX_ContentPipe.h - OpenMax IL version 1.1.1
  *  The OMX_ContentPipe header file contains the definitions used to define
  *  the public interface for content piples.  This header file is intended to
  *  be used by the component.
@@ -29,6 +29,53 @@
 
 #ifndef OMX_CONTENTPIPE_H
 #define OMX_CONTENTPIPE_H
+
+#ifndef KD_EACCES
+/* OpenKODE error codes. CPResult values may be zero (indicating success
+   or one of the following values) */
+#define KD_EACCES (13)
+#define KD_EADDRINUSE (98)
+#define KD_EAGAIN (11)
+#define KD_EBADF (9)
+#define KD_EBUSY (16)
+#define KD_ECANCELED (125)
+#define KD_ECONNABORTED (103)
+#define KD_ECONNREFUSED (111)
+#define KD_ECONNRESET (104)
+#define KD_EDEADLK (35)
+#define KD_EDESTADDRREQ (89)
+#define KD_EDOM (33)
+#define KD_ERANGE (34)
+#define KD_EEXIST (17)
+#define KD_EFAULT (14)
+#define KD_EFBIG (27)
+#define KD_EHOSTUNREACH (113)
+#define KD_EINPROGRESS (115)
+#define KD_EINTR (4)
+#define KD_EINVAL (22)
+#define KD_EIO (5)
+#define KD_EISCONN (106)
+#define KD_EISDIR (21)
+#define KD_EMFILE (24)
+#define KD_ENAMETOOLONG (36)
+#define KD_ENETDOWN (100)
+#define KD_ENETRESET (102)
+#define KD_ENETUNREACH (101)
+#define KD_ENOBUFS (105)
+#define KD_ENOENT (2)
+#define KD_ENOMEM (12)
+#define KD_ENOSPC (28)
+#define KD_ENOSYS (28)
+#define KD_ENOTCONN (107)
+#define KD_ENOTDIR (20)
+#define KD_ENOTEMPTY (39)
+#define KD_ENOTSOCK (88)
+#define KD_ENOTSUP (95)
+#define KD_EPERM (1)
+#define KD_EPROTO (71)
+#define KD_ETIMEDOUT (110)
+#define KD_EILSEQ (84)
+#endif
 
 /** Map types from OMX standard types only here so interface is as generic as possible. */
 typedef OMX_U32    CPresult;

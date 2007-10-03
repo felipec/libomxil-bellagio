@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Component.h - OpenMax IL version 1.1
+/** OMX_Component.h - OpenMax IL version 1.1.1
  *  The OMX_Component header file contains the definitions used to define
  *  the public interface of a component.  This header file is intended to
  *  be used by both the application and the component.
@@ -40,8 +40,7 @@ extern "C" {
  *  header to compile without errors.  The includes below are required
  *  for this header file to compile successfully 
  */
-#include <OMX_Types.h>
-#include <OMX_Core.h>
+
 #include <OMX_Audio.h>
 #include <OMX_Video.h>
 #include <OMX_Image.h>
@@ -80,6 +79,8 @@ typedef struct OMX_PARAM_PORTDEFINITIONTYPE {
         OMX_IMAGE_PORTDEFINITIONTYPE image;
         OMX_OTHER_PORTDEFINITIONTYPE other;
     } format;
+    OMX_BOOL bBuffersContiguous;
+    OMX_U32 nBufferAlignment;
 } OMX_PARAM_PORTDEFINITIONTYPE;
 
 /** @ingroup comp */
@@ -124,15 +125,14 @@ typedef struct OMX_CONFIG_BOOLEANTYPE {
     OMX_BOOL bEnabled;    
 } OMX_CONFIG_BOOLEANTYPE;
 
-#define MAX_URI_LENGTH 256
-
 /* Parameter specifying the content uri to use. */
 /** @ingroup cp */
 typedef struct OMX_PARAM_CONTENTURITYPE
 {
-    OMX_U32 nSize;                      /**< size of the structure in bytes */
+    OMX_U32 nSize;                      /**< size of the structure in bytes, including
+                                             actual URI name */
     OMX_VERSIONTYPE nVersion;           /**< OMX specification version information */
-    OMX_U8 contentURI[MAX_URI_LENGTH];    /**< The URI name */
+    OMX_U8 contentURI[1];               /**< The URI name */
 } OMX_PARAM_CONTENTURITYPE;
 
 /* Parameter specifying the pipe to use. */
@@ -205,6 +205,14 @@ typedef enum OMX_METADATASCOPETYPE
 } OMX_METADATASCOPETYPE;
 
 /** @ingroup metadata */
+typedef enum OMX_METADATASEARCHMODETYPE
+{
+    OMX_MetadataSearchValueSizeByIndex,
+    OMX_MetadataSearchItemByIndex,
+    OMX_MetadataSearchNextItemByKey,
+    OMX_MetadataSearchTypeMax = 0x7fffffff
+} OMX_METADATASEARCHMODETYPE;
+/** @ingroup metadata */
 typedef struct OMX_CONFIG_METADATAITEMCOUNTTYPE
 {
     OMX_U32 nSize;
@@ -222,6 +230,7 @@ typedef struct OMX_CONFIG_METADATAITEMTYPE
     OMX_METADATASCOPETYPE eScopeMode;
     OMX_U32 nScopeSpecifier;
     OMX_U32 nMetadataItemIndex;  
+    OMX_METADATASEARCHMODETYPE eSearchMode;
     OMX_METADATACHARSETTYPE eKeyCharset;
     OMX_U8 nKeySizeUsed;
     OMX_U8 nKey[128];
@@ -237,6 +246,7 @@ typedef struct OMX_CONFIG_CONTAINERNODECOUNTTYPE
 {
     OMX_U32 nSize;
     OMX_VERSIONTYPE nVersion;
+    OMX_BOOL bAllKeys;
     OMX_U32 nParentNodeID;
     OMX_U32 nNumNodes;
 } OMX_CONFIG_CONTAINERNODECOUNTTYPE;
@@ -246,6 +256,7 @@ typedef struct OMX_CONFIG_CONTAINERNODEIDTYPE
 {
     OMX_U32 nSize;
     OMX_VERSIONTYPE nVersion;
+    OMX_BOOL bAllKeys;
     OMX_U32 nParentNodeID;
     OMX_U32 nNodeIndex; 
     OMX_U32 nNodeID; 
@@ -263,6 +274,8 @@ typedef struct OMX_PARAM_METADATAFILTERTYPE
     OMX_METADATACHARSETTYPE eKeyCharset;
     OMX_U32 nKeySizeUsed; 
     OMX_U8   nKey [128]; 
+    OMX_U32 nLanguageCountrySizeUsed;
+    OMX_U8 nLanguageCountry[128];
     OMX_BOOL bEnabled;	/* if true then key is part of filter (e.g. 
                          * retained for query later). If false then
                          * key is not part of filter */

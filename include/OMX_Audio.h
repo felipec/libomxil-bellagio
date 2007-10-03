@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** @file OMX_Audio.h - OpenMax IL version 1.1
+/** @file OMX_Audio.h - OpenMax IL version 1.1.1
  *  The structures needed by Audio components to exchange
  *  parameters and configuration data with the componenmilts.
  */
@@ -38,7 +38,7 @@ extern "C" {
  *  header to compile without errors.  The includes below are required
  *  for this header file to compile successfully 
  */
-#include <OMX_Types.h>
+
 #include <OMX_Core.h>
 
 /** @defgroup midi MIDI
@@ -318,18 +318,46 @@ typedef enum OMX_AUDIO_WMAFORMATTYPE {
 } OMX_AUDIO_WMAFORMATTYPE;
 
 
+/** WMA Profile */
+typedef enum OMX_AUDIO_WMAPROFILETYPE {
+  OMX_AUDIO_WMAProfileUnused = 0,  /**< profile unused or unknown */
+  OMX_AUDIO_WMAProfileL1,          /**< Windows Media audio version 9 profile L1 */
+  OMX_AUDIO_WMAProfileL2,          /**< Windows Media audio version 9 profile L2 */
+  OMX_AUDIO_WMAProfileL3,          /**< Windows Media audio version 9 profile L3 */
+  OMX_AUDIO_WMAProfileMax = 0x7FFFFFFF
+} OMX_AUDIO_WMAPROFILETYPE;
+
+
 /** WMA params */
 typedef struct OMX_AUDIO_PARAM_WMATYPE {
     OMX_U32 nSize;            /**< size of the structure in bytes */
     OMX_VERSIONTYPE nVersion; /**< OMX specification version information */
     OMX_U32 nPortIndex;       /**< port that this structure applies to */
-    OMX_U32 nChannels;        /**< Number of channels */
+    OMX_U16 nChannels;        /**< Number of channels */
     OMX_U32 nBitRate;         /**< Bit rate of the input data.  Use 0 for variable
                                    rate or unknown bit rates */
     OMX_AUDIO_WMAFORMATTYPE eFormat; /**< Version of WMA stream / data */
-    OMX_U32 nSamplingRate;
+	OMX_AUDIO_WMAPROFILETYPE eProfile;  /**< Profile of WMA stream / data */
+    OMX_U32 nSamplingRate;    /**< Sampling rate of the source data */
+    OMX_U16 nBlockAlign;      /**< is the block alignment, or block size, in bytes of the audio codec */
+    OMX_U16 nEncodeOptions;   /**< WMA Type-specific data */
+    OMX_U32 nSuperBlockAlign; /**< WMA Type-specific data */
 } OMX_AUDIO_PARAM_WMATYPE;
 
+/** 
+ * RealAudio format
+ */
+typedef enum OMX_AUDIO_RAFORMATTYPE {
+    OMX_AUDIO_RAFormatUnused = 0, /**< Format unused or unknown */
+    OMX_AUDIO_RA8,                /**< RealAudio 8 codec */
+    OMX_AUDIO_RA9,                /**< RealAudio 9 codec */
+    OMX_AUDIO_RA10_AAC,           /**< MPEG-4 AAC codec for bitrates of more than 128kbps */
+    OMX_AUDIO_RA10_CODEC,         /**< RealAudio codec for bitrates less than 128 kbps */
+    OMX_AUDIO_RA10_LOSSLESS,      /**< RealAudio Lossless */
+    OMX_AUDIO_RA10_MULTICHANNEL,  /**< RealAudio Multichannel */
+    OMX_AUDIO_RA10_VOICE,         /**< RealAudio Voice for bitrates below 15 kbps */
+    OMX_VIDEO_RAFormatMax = 0x7FFFFFFF
+} OMX_AUDIO_RAFORMATTYPE;
 
 /** RA (Real Audio) params */ 
 typedef struct OMX_AUDIO_PARAM_RATYPE { 
@@ -337,13 +365,13 @@ typedef struct OMX_AUDIO_PARAM_RATYPE {
     OMX_VERSIONTYPE nVersion;   /**< OMX specification version information */ 
     OMX_U32 nPortIndex;         /**< Port that this structure applies to */ 
     OMX_U32 nChannels;          /**< Number of channels */ 
-    OMX_U32 nSamplingRate;      /**< Values allowed for samplerate are 
-                                     8000, 11025, 22050 and 44100 Hz  */ 
-    OMX_U32 nBitsPerFrame;      /**< Values allowed for bitsPerFrame are from 46 to 12288 */ 
-    OMX_U32 nSamplePerFrame;    /**< Values allowed for samplesPerFrame are 256, 512 and 1024*/ 
-    OMX_U32 nCouplingQuantBits; /**< Values allowed for couplingQuantBits are from 2 to 6*/ 
-    OMX_U32 nCouplingStartRegion;   /**< Values allowed for couplingStartRegion are from 1 to 51 */ 
-    OMX_U32 nNumRegions;        /**< Values allowed for numRegions are from 12 to 51 */ 
+    OMX_U32 nSamplingRate;      /**< is the sampling rate of the source data */ 
+    OMX_U32 nBitsPerFrame;      /**< is the value for bits per frame  */ 
+    OMX_U32 nSamplePerFrame;    /**< is the value for samples per frame */ 
+    OMX_U32 nCouplingQuantBits; /**< is the number of coupling quantization bits in the stream */ 
+    OMX_U32 nCouplingStartRegion;   /**< is the coupling start region in the stream  */ 
+    OMX_U32 nNumRegions;        /**< is the number of regions value */ 
+    OMX_AUDIO_RAFORMATTYPE eFormat; /**< is the RealAudio audio format */
 } OMX_AUDIO_PARAM_RATYPE; 
 
 
@@ -523,8 +551,6 @@ typedef struct OMX_AUDIO_PARAM_AMRTYPE {
     OMX_U32 nChannels;                      /**< Number of channels */
     OMX_U32 nBitRate;                       /**< Bit rate read only field */
     OMX_AUDIO_AMRBANDMODETYPE eAMRBandMode; /**< AMR Band Mode enumeration */ 
-    OMX_U32 nBitPerSample;                  /**< Bit per sample.  If nBitPerSample = 0, 
-                                                 use the value from eAMRBandMode */
     OMX_AUDIO_AMRDTXMODETYPE  eAMRDTXMode;  /**< AMR DTX Mode enumeration */
     OMX_AUDIO_AMRFRAMEFORMATTYPE eAMRFrameFormat; /**< AMR frame format enumeration */
 } OMX_AUDIO_PARAM_AMRTYPE;

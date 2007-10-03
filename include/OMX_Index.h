@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 The Khronos Group Inc. 
+ * Copyright (c) 2007 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** @file OMX_Index.h - OpenMax IL version 1.1
+/** @file OMX_Index.h - OpenMax IL version 1.1.1
  *  The OMX_Index header file contains the definitions for both applications
  *  and components .
  */
@@ -75,12 +75,11 @@ typedef enum OMX_INDEXTYPE {
     OMX_IndexParamContentURI,  /**< reference: OMX_PARAM_CONTENTURITYPE */
     OMX_IndexParamCustomContentPipe, /**< reference: OMX_PARAM_CONTENTPIPETYPE */ 
     OMX_IndexParamDisableResourceConcealment, /**< reference: OMX_RESOURCECONCEALMENTTYPE */
-    OMX_IndexConfigMetaDataItemCount,        /**< reference: OMX_CONFIG_METADATAITEMCOUNTTYPE */
-    OMX_IndexConfigMetaDataSize,             /**< reference: OMX_CONFIG_METADATAITEMTYPE */
-    OMX_IndexConfigMetaDataAtIndex,          /**< reference: OMX_CONFIG_METADATAITEMTYPE */
-    OMX_IndexConfigMetaDataAtKey,            /**< reference: OMX_CONFIG_METADATAITEMTYPE */
-    OMX_IndexConfigMetaDataNodeCount,        /**< reference: OMX_CONFIG_CONTAINERNODECOUNTTYPE */
-    OMX_IndexConfigMetaDataNode,             /**< reference: OMX_CONFIG_CONTAINERNODEIDTYPE */
+    OMX_IndexConfigMetadataItemCount,        /**< reference: OMX_CONFIG_METADATAITEMCOUNTTYPE */
+    OMX_IndexConfigContainerNodeCount,       /**< reference: OMX_CONFIG_CONTAINERNODECOUNTTYPE */
+    OMX_IndexConfigMetadataItem,             /**< reference: OMX_CONFIG_METADATAITEMTYPE */
+    OMX_IndexConfigCounterNodeID,            /**< reference: OMX_CONFIG_CONTAINERNODEIDTYPE */
+    OMX_IndexParamMetadataFilterType,        /** < reference: OMX_PARAM_METADATAFILTERTYPE */
     OMX_IndexParamMetadataKeyFilter,         /**< reference: OMX_PARAM_METADATAFILTERTYPE */
     OMX_IndexConfigPriorityMgmt,             /**< reference: OMX_PRIORITYMGMTTYPE */
     OMX_IndexParamStandardComponentRole,     /**< reference: OMX_PARAM_COMPONENTROLETYPE */
@@ -239,9 +238,9 @@ typedef enum OMX_INDEXTYPE {
 
 
     /* Vendor specific area */
-    OMX_IndexIndexVendorStartUnused = 0xFF000000,
-    /* Vendor specific structures should be in the range of 0xFF000000 
-       to 0xFFFFFFFF.  This range is not broken out by vendor, so
+    OMX_IndexVendorStartUnused = 0x7F000000,
+    /* Vendor specific structures should be in the range of 0x7F000000 
+       to 0x7FFFFFFE.  This range is not broken out by vendor, so
        private indexes are not guaranteed unique and therefore should
        only be sent to the appropriate component. */
 

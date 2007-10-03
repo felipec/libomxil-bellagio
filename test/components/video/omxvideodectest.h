@@ -27,11 +27,18 @@
 	Author $Author$
 */
 
-#include <OMX_Core.h>
-#include <OMX_Types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
 #include <pthread.h>
-#include <sys/stat.h>
-#include "tsemaphore.h"
+
+#include <OMX_Core.h>
+#include <OMX_Component.h>
+#include <OMX_Types.h>
+#include <OMX_Video.h>
+
+#include <tsemaphore.h>
 #include <user_debug_levels.h>
 
 /* Application's private data */

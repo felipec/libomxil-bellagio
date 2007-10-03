@@ -26,12 +26,24 @@
 	Author $Author$
 */
 
-#include <OMX_Core.h>
-#include <OMX_Types.h>
+#ifndef __OMXVOLCONTROLTEST_H__
+#define __OMXVOLCONTROLTEST_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <sys/stat.h>
-#include "tsemaphore.h"
+
+#include <OMX_Core.h>
+#include <OMX_Component.h>
+#include <OMX_Types.h>
+#include <OMX_Audio.h>
+
+#include <tsemaphore.h>
+#include <user_debug_levels.h>
 
 /** Specification version*/
 #define VERSIONMAJOR    1
@@ -73,3 +85,5 @@ OMX_ERRORTYPE volcFillBufferDone(
 
 /** Helper functions */
 static int getFileSize(int fd);
+
+#endif

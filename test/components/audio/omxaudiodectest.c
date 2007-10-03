@@ -30,24 +30,7 @@
 */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-
-#include <OMX_Core.h>
-#include <OMX_Types.h>
-#include <OMX_Audio.h>
-#include <OMX_Video.h>
-
 #include "omxaudiodectest.h"
-#include "tsemaphore.h"
-
 
 #define MP3_TYPE_SEL    1
 #define VORBIS_TYPE_SEL 2

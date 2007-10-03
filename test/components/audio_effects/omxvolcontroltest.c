@@ -26,24 +26,7 @@
 	Author $Author$
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-
-#include <OMX_Core.h>
-#include <OMX_Types.h>
-#include <OMX_Audio.h>
-#include <user_debug_levels.h>
-
 #include "omxvolcontroltest.h"
-#include "tsemaphore.h"
-
 
 /* Application private date: should go in the component field (segs...) */
 appPrivateType* appPriv;

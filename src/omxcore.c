@@ -49,7 +49,7 @@
 /** The static field initialized is equal to 0 if the core is not initialized. 
  * It is equal to 1 whern the OMX_Init has been called
  */
-int initialized=0;
+static OMX_BOOL initialized;
 
 /** The macro NUM_LOADERS contains the number of loaders available in the system.
  */
@@ -62,7 +62,7 @@ int initialized=0;
  * different types of components, or handle in different ways the same components. It can be used also
  * to create a multi-OS support
  */
-BOSA_COMPONENTLOADER *loadersList[NUM_LOADERS];
+static BOSA_COMPONENTLOADER *loadersList[NUM_LOADERS];
 
 /** @brief The OMX_Init standard function
  * 
@@ -73,11 +73,11 @@ BOSA_COMPONENTLOADER *loadersList[NUM_LOADERS];
  * @return OMX_ErrorNone
  */
 OMX_ERRORTYPE OMX_Init() {
-  int i = 0;
-  OMX_ERRORTYPE err;
-
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n", __func__);
-  if(initialized == 0) {
+  if(!initialized) {
+    int i;
+    OMX_ERRORTYPE err;
+
     st_static_InitComponentLoader();
     loadersList[0] = &st_static_loader;
 
@@ -85,10 +85,10 @@ OMX_ERRORTYPE OMX_Init() {
       err = loadersList[i]->BOSA_CreateComponentLoader(&loadersList[i]->componentLoaderHandler);
       if (err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "A Component loader constructor fails. Exiting\n");
-        return OMX_ErrorInsufficientResources;
+        return err;
       }
     }
-    initialized = 1;
+    initialized = OMX_TRUE;
   }
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
   return OMX_ErrorNone;
@@ -99,14 +99,14 @@ OMX_ERRORTYPE OMX_Init() {
  * In this function the Deinit function for each component loader is performed
  */
 OMX_ERRORTYPE OMX_Deinit() {
-  int i = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  if(initialized == 1) {
+  if(initialized) {
+    int i;
     for (i = 0; i<NUM_LOADERS; i++) {
       loadersList[i]->BOSA_DestroyComponentLoader(loadersList[i]->componentLoaderHandler);
     }
+    initialized = OMX_FALSE;
   }
-  initialized = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
   return OMX_ErrorNone;
 }
@@ -159,8 +159,7 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
 OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent) {
   OMX_ERRORTYPE err;
   err = ((OMX_COMPONENTTYPE*)hComponent)->ComponentDeInit(hComponent);
-  free((OMX_COMPONENTTYPE*)hComponent);
-  hComponent = NULL;
+  free(hComponent);
   return err;
 }
 
@@ -175,8 +174,7 @@ OMX_ERRORTYPE OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
   OMX_IN OMX_U32 nNameLength,
   OMX_IN OMX_U32 nIndex) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
-  int i, index, offset = 0;
-  int end_index = 0;
+  int i, offset = 0;
 	
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   for (i = 0; i<NUM_LOADERS; i++) {
@@ -190,7 +188,7 @@ OMX_ERRORTYPE OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
       * the first step is to find the curent number of component for the
       * current loader, and use it as offset for the next loader
       */
-      end_index = 0; index = 0;
+      int end_index = 0, index = 0;
       while (!end_index) {
         err = loadersList[i]->BOSA_ComponentNameEnum(
         loadersList[i]->componentLoaderHandler,
@@ -226,56 +224,48 @@ OMX_ERRORTYPE OMX_SetupTunnel(
 
   OMX_ERRORTYPE err;
   OMX_COMPONENTTYPE* component;
-  OMX_TUNNELSETUPTYPE* tunnelSetup;
+  OMX_TUNNELSETUPTYPE tunnelSetup;
 	
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  tunnelSetup = malloc(sizeof(OMX_TUNNELSETUPTYPE));
-  component = (OMX_COMPONENTTYPE*)hOutput;
-  tunnelSetup->nTunnelFlags = 0;
-  tunnelSetup->eSupplier = 0;
 
   if (hOutput == NULL && hInput == NULL) {
     return OMX_ErrorBadParameter;
   }
+
+  component = (OMX_COMPONENTTYPE*)hOutput;
+  tunnelSetup.nTunnelFlags = 0;
+  tunnelSetup.eSupplier = 0;
   if (hOutput){
-    err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, hInput, nPortInput, tunnelSetup);
+    err = component->ComponentTunnelRequest(hOutput, nPortOutput, hInput, nPortInput, &tunnelSetup);
     if (err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Tunneling failed: output port rejects it - err = %i\n", err);
-      free(tunnelSetup);
-      tunnelSetup = NULL;
       return err;
     }
   }
   DEBUG(DEB_LEV_PARAMS, "First stage of tunneling acheived:\n");
-  DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
-  DEBUG(DEB_LEV_PARAMS, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
+  DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %u\n",  tunnelSetup.eSupplier);
+  DEBUG(DEB_LEV_PARAMS, "       - flags             = %lu\n", tunnelSetup.nTunnelFlags);
 
   component = (OMX_COMPONENTTYPE*)hInput;
   if (hInput) {
-    err = (component->ComponentTunnelRequest)(hInput, nPortInput, hOutput, nPortOutput, tunnelSetup);
+    err = component->ComponentTunnelRequest(hInput, nPortInput, hOutput, nPortOutput, &tunnelSetup);
     if (err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Tunneling failed: input port rejects it - err = %08x\n", err);
       // the second stage fails. the tunnel on poutput port has to be removed
       component = (OMX_COMPONENTTYPE*)hOutput;
-      err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, NULL, 0, tunnelSetup);
+      err = component->ComponentTunnelRequest(hOutput, nPortOutput, NULL, 0, &tunnelSetup);
       if (err != OMX_ErrorNone) {
         // This error should never happen. It is critical, and not recoverable
-        free(tunnelSetup);
-        tunnelSetup = NULL;
         DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s with OMX_ErrorUndefined\n", __func__);
         return OMX_ErrorUndefined;
       }
-      free(tunnelSetup);
-      tunnelSetup = NULL;
       DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s with OMX_ErrorPortsNotCompatible\n", __func__);
       return OMX_ErrorPortsNotCompatible;
     }
   }
   DEBUG(DEB_LEV_PARAMS, "Second stage of tunneling acheived:\n");
-  DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
-  DEBUG(DEB_LEV_PARAMS, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
-  free(tunnelSetup);
-  tunnelSetup = NULL;
+  DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %u\n",  tunnelSetup.eSupplier);
+  DEBUG(DEB_LEV_PARAMS, "       - flags             = %lu\n", tunnelSetup.nTunnelFlags);
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
   return OMX_ErrorNone;
 }
@@ -286,7 +276,7 @@ OMX_ERRORTYPE OMX_GetRolesOfComponent (
   OMX_IN      OMX_STRING CompName, 
   OMX_INOUT   OMX_U32 *pNumRoles,
   OMX_OUT     OMX_U8 **roles) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;
+  OMX_ERRORTYPE err;
   int i;
 	
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -313,10 +303,10 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
   OMX_IN      OMX_STRING role,
   OMX_INOUT   OMX_U32 *pNumComps,
   OMX_INOUT   OMX_U8  **compNames) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;
+  OMX_ERRORTYPE err;
   int i;
-  int only_number_requested = 0, full_number=0;
-  OMX_U32 temp_num_comp = 0;
+  int only_number_requested, full_number=0;
+  OMX_U32 temp_num_comp;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   if (compNames == NULL) {

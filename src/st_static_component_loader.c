@@ -98,6 +98,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
   libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2 * sizeof(char));
 
   templateList = calloc(1,sizeof (stLoaderComponentType*));
+  templateList[0] = NULL;
 
   fseek(omxregistryfp, 0, 0);
   listindex = 0;
@@ -121,6 +122,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
       } else {
         num_of_comp = (int)(*fptr)(NULL);
         templateList = realloc(templateList, (listindex + num_of_comp + 1) * sizeof (stLoaderComponentType*));
+        templateList[listindex + num_of_comp] = NULL;
         stComponentsTemp = calloc(num_of_comp,sizeof(stLoaderComponentType*));
         for (i = 0; i<num_of_comp; i++) {
           stComponentsTemp[i] = calloc(1,sizeof(stLoaderComponentType));
@@ -261,10 +263,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
   //component name matches with general component name field
   DEBUG(DEB_LEV_PARAMS, "Found base requested template %s\n", cComponentName);
   /* Build ST component from template and fill fields */
-  if (templateList[componentPosition]->name_requested == NULL) {
-    templateList[componentPosition]->name_requested = calloc(1,sizeof(char) * OMX_MAX_STRINGNAME_SIZE);
-  }
-  memcpy(templateList[componentPosition]->name_requested, cComponentName, OMX_MAX_STRINGNAME_SIZE * sizeof(char));
+  templateList[componentPosition]->name_requested = strndup (cComponentName, OMX_MAX_STRINGNAME_SIZE);
 
   openmaxStandComp = (OMX_COMPONENTTYPE*)calloc(1,sizeof(OMX_COMPONENTTYPE));
   if (!openmaxStandComp) {

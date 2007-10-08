@@ -490,7 +490,10 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   if(len < 0) {
     DEBUG(DEB_LEV_ERR,"error in packet decoding in audio dcoder \n");
   } else {
-    pOutputBuffer->nFilledLen += output_length;
+    /*If output is max length it might be an error, so Don't send output buffer*/
+    if((output_length != OUTPUT_LEN_STANDARD_FFMPEG) || (output_length <= pOutputBuffer->nAllocLen)) {
+      pOutputBuffer->nFilledLen += output_length;
+    }
     pInputBuffer->nFilledLen = 0;
     omx_audiodec_component_Private->isNewBuffer = 1;	
   }

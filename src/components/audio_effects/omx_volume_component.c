@@ -130,8 +130,6 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
 /** The destructor
   */
 OMX_ERRORTYPE omx_volume_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-  omx_volume_component_PrivateType* omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
-
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of audiodecoder component is called\n");
   omx_base_filter_Destructor(openmaxStandComp);
   noVolumeCompInstance--;

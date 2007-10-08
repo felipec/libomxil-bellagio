@@ -724,7 +724,7 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
 
   portIndex = (openmaxStandPort->sPortParam.eDir == OMX_DirInput)?pBuffer->nInputPortIndex:pBuffer->nOutputPortIndex;
-  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s portIndex %i\n", __func__, portIndex);
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s portIndex %lu\n", __func__, portIndex);
 
   if (portIndex != openmaxStandPort->sPortParam.nPortIndex) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port for this operation portIndex=%d port->portIndex=%d\n", __func__, (int)portIndex, (int)openmaxStandPort->sPortParam.nPortIndex);

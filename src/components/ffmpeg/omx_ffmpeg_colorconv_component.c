@@ -369,10 +369,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
 /** The destructor
  */
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-  omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
-
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of video color converter component is called\n");
-
   omx_base_filter_Destructor(openmaxStandComp);
   noVideoColorConvInstance--;
 

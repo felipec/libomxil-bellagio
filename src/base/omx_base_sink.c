@@ -134,12 +134,14 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for input buffer semval=%d \n",pInputSem->semval);
     if(pInputSem->semval>0 && isInputBufferNeeded==OMX_TRUE ) {
       tsem_down(pInputSem);
-      inBufExchanged++;
-      isInputBufferNeeded=OMX_FALSE;
-      pInputBuffer = dequeue(pInputQueue);
-      if(pInputBuffer == NULL){
-        DEBUG(DEB_LEV_ERR, "Had NULL input buffer!!\n");
-        break;
+      if(pInputQueue->nelem>0){
+        inBufExchanged++;
+        isInputBufferNeeded=OMX_FALSE;
+        pInputBuffer = dequeue(pInputQueue);
+        if(pInputBuffer == NULL){
+          DEBUG(DEB_LEV_ERR, "Had NULL input buffer!!\n");
+          break;
+        }
       }
     }
     

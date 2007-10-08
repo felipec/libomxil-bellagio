@@ -133,12 +133,14 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for output buffer semval=%d \n",pOutputSem->semval);
     if(pOutputSem->semval > 0 && isOutputBufferNeeded == OMX_TRUE ) {
       tsem_down(pOutputSem);
-      outBufExchanged++;
-      isOutputBufferNeeded = OMX_FALSE;
-      pOutputBuffer = dequeue(pOutputQueue);
-      if(pOutputBuffer == NULL){
-        DEBUG(DEB_LEV_ERR, "Had NULL output buffer!!\n");
-        break;
+      if(pOutputQueue->nelem>0){
+        outBufExchanged++;
+        isOutputBufferNeeded = OMX_FALSE;
+        pOutputBuffer = dequeue(pOutputQueue);
+        if(pOutputBuffer == NULL){
+          DEBUG(DEB_LEV_ERR, "In %s Had NULL output buffer!!\n",__func__);
+          break;
+        }
       }
     }
     

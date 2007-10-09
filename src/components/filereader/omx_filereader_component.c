@@ -201,6 +201,7 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   /** initialization for buff mgmt callback function */
   omx_filereader_component_Private->isFirstBuffer = 1;
   omx_filereader_component_Private->isNewBuffer = 1;
+  omx_filereader_component_Private->bIsEOSSent = OMX_FALSE;
 
   /** send callback regarding codec context extradata which will be required to 
     * open the codec in the audio decoder component 
@@ -285,7 +286,10 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   if(error < 0) {
     DEBUG(DEB_LEV_FULL_SEQ,"In %s EOS - no more packet,state=%x\n",__func__,
       omx_filereader_component_Private->state);
-    pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
+    if(omx_filereader_component_Private->bIsEOSSent == OMX_FALSE) {
+      pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
+      omx_filereader_component_Private->bIsEOSSent = OMX_TRUE;
+    }
   } else {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"\n packet size : %d \n",omx_filereader_component_Private->pkt.size);
     /** copying the packetized data in the output buffer that will be decoded in the decoder component  */
@@ -356,6 +360,7 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
       omx_filereader_component_Private->sInputFileName = (char *)malloc(nFileNameLength);
     }
     strcpy(omx_filereader_component_Private->sInputFileName, (char *)ComponentParameterStructure);
+    omx_filereader_component_Private->bIsEOSSent = OMX_FALSE;
     /** determine the audio coding type */ 
     for(i = 0; omx_filereader_component_Private->sInputFileName[i] != '\0'; i++);
     if(omx_filereader_component_Private->sInputFileName[i - 1] == '3') {

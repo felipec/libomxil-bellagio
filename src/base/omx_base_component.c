@@ -112,6 +112,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   /*Will make Specific port Allocate buffer call*/
   openmaxStandComp->AllocateBuffer = omx_base_component_AllocateBuffer;
   openmaxStandComp->UseBuffer = omx_base_component_UseBuffer;
+  openmaxStandComp->UseEGLImage = omx_base_component_UseEGLImage;
   openmaxStandComp->FreeBuffer = omx_base_component_FreeBuffer;
   openmaxStandComp->EmptyThisBuffer = omx_base_component_EmptyThisBuffer;
   openmaxStandComp->FillThisBuffer = omx_base_component_FillThisBuffer;
@@ -1314,6 +1315,15 @@ OMX_ERRORTYPE omx_base_component_UseBuffer(
                                 pAppPrivate,
                                 nSizeBytes,
                                 pBuffer);
+}
+
+OMX_ERRORTYPE omx_base_component_UseEGLImage (
+        OMX_HANDLETYPE hComponent,
+        OMX_BUFFERHEADERTYPE** ppBufferHdr,
+        OMX_U32 nPortIndex,
+        OMX_PTR pAppPrivate,
+        void* eglImage) {
+	return OMX_ErrorNotImplemented;
 }
 
 OMX_ERRORTYPE omx_base_component_FreeBuffer(   

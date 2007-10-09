@@ -366,6 +366,13 @@ OMX_ERRORTYPE omx_base_component_UseBuffer(
             OMX_IN OMX_U32 nSizeBytes,
             OMX_IN OMX_U8* pBuffer);
 
+OMX_ERRORTYPE omx_base_component_UseEGLImage (
+        OMX_IN OMX_HANDLETYPE hComponent,
+        OMX_INOUT OMX_BUFFERHEADERTYPE** ppBufferHdr,
+        OMX_IN OMX_U32 nPortIndex,
+        OMX_IN OMX_PTR pAppPrivate,
+        OMX_IN void* eglImage);
+
 OMX_ERRORTYPE omx_base_component_FreeBuffer(   
             OMX_IN  OMX_HANDLETYPE hComponent,
             OMX_IN  OMX_U32 nPortIndex,

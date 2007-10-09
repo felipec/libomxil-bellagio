@@ -357,7 +357,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   openmaxStandComp->GetParameter = omx_ffmpeg_colorconv_component_GetParameter;
   openmaxStandComp->SetConfig = omx_ffmpeg_colorconv_component_SetConfig;
   openmaxStandComp->GetConfig = omx_ffmpeg_colorconv_component_GetConfig;
-
+  openmaxStandComp->UseEGLImage = omx_video_colorconv_UseEGLImage;
   noVideoColorConvInstance++;
 
   if(noVideoColorConvInstance > MAX_COMPONENT_VIDEOCOLORCONV) {
@@ -816,9 +816,9 @@ void omx_ffmpeg_colorconv_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openma
 
 
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure) {
+  OMX_HANDLETYPE hComponent,
+  OMX_INDEXTYPE nIndex,
+  OMX_PTR pComponentConfigStructure) {
 
   OMX_U32 portIndex;
   // Possible configs to set
@@ -936,9 +936,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetConfig(
 
 
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_INOUT OMX_PTR pComponentConfigStructure) {
+  OMX_HANDLETYPE hComponent,
+  OMX_INDEXTYPE nIndex,
+  OMX_PTR pComponentConfigStructure) {
 
   // Possible configs to ask for
   OMX_CONFIG_RECTTYPE *omxConfigCrop;
@@ -1044,9 +1044,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetConfig(
 
 
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nParamIndex,
-  OMX_IN  OMX_PTR ComponentParameterStructure) {
+  OMX_HANDLETYPE hComponent,
+  OMX_INDEXTYPE nParamIndex,
+  OMX_PTR ComponentParameterStructure) {
 
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_PARAM_PORTDEFINITIONTYPE *pPortDef;
@@ -1122,9 +1122,9 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
 }
 
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nParamIndex,
-  OMX_INOUT OMX_PTR ComponentParameterStructure) {
+  OMX_HANDLETYPE hComponent,
+  OMX_INDEXTYPE nParamIndex,
+  OMX_PTR ComponentParameterStructure) {
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
   OMX_ERRORTYPE err = OMX_ErrorNone;
@@ -1193,4 +1193,28 @@ OMX_ERRORTYPE omx_video_colorconv_MessageHandler(OMX_COMPONENTTYPE* openmaxStand
     }
   }
   return err;
+}
+
+OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
+        OMX_HANDLETYPE hComponent,
+        OMX_BUFFERHEADERTYPE** ppBufferHdr,
+        OMX_U32 nPortIndex,
+        OMX_PTR pAppPrivate,
+        void* eglImage) {
+	
+	omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = (omx_ffmpeg_colorconv_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
+	omx_base_PortType *pPort;
+
+	if (nPortIndex >= omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts) {
+		DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
+		return OMX_ErrorBadPortIndex;
+	}
+	pPort = omx_ffmpeg_colorconv_component_Private->ports[nPortIndex];
+
+	return  pPort->Port_UseBuffer(pPort,
+	                                ppBufferHdr,
+	                                nPortIndex,
+	                                pAppPrivate,
+	                                pPort->sPortParam.nBufferSize,
+	                                eglImage);
 }

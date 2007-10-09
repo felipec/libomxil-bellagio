@@ -134,4 +134,11 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
 					        OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat );
 
 
+OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
+        OMX_HANDLETYPE hComponent,
+        OMX_BUFFERHEADERTYPE** ppBufferHdr,
+        OMX_U32 nPortIndex,
+        OMX_PTR pAppPrivate,
+        void* eglImage);
+
 #endif

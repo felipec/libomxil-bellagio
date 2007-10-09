@@ -190,18 +190,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
     }
 
     if(isInputBufferNeeded==OMX_FALSE && isOutputBufferNeeded==OMX_FALSE) {
-       if(pInputBuffer->nFlags==OMX_BUFFERFLAG_EOS) {
-        DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pInputBuffer->nFilledLen);
-        pOutputBuffer->nFlags=pInputBuffer->nFlags;
-        pInputBuffer->nFlags=0;
-        (*(omx_base_filter_Private->callbacks->EventHandler))
-          (openmaxStandComp,
-          omx_base_filter_Private->callbackData,
-          OMX_EventBufferFlag, /* The command was completed */
-          1, /* The commands was a OMX_CommandStateSet */
-          pOutputBuffer->nFlags, /* The state has been changed in message->messageParam2 */
-          NULL);
-      }
+       
       if(omx_base_filter_Private->pMark!=NULL){
         pOutputBuffer->hMarkTargetComponent=omx_base_filter_Private->pMark->hMarkTargetComponent;
         pOutputBuffer->pMarkData=omx_base_filter_Private->pMark->pMarkData;
@@ -233,6 +222,19 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       /*Input Buffer has been completely consumed. So, get new input buffer*/
       if(pInputBuffer->nFilledLen==0) {
         isInputBufferNeeded = OMX_TRUE;
+      }
+
+      if(pInputBuffer->nFlags==OMX_BUFFERFLAG_EOS && pInputBuffer->nFilledLen==0) {
+        DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pInputBuffer->nFilledLen);
+        pOutputBuffer->nFlags=pInputBuffer->nFlags;
+        pInputBuffer->nFlags=0;
+        (*(omx_base_filter_Private->callbacks->EventHandler))
+          (openmaxStandComp,
+          omx_base_filter_Private->callbackData,
+          OMX_EventBufferFlag, /* The command was completed */
+          1, /* The commands was a OMX_CommandStateSet */
+          pOutputBuffer->nFlags, /* The state has been changed in message->messageParam2 */
+          NULL);
       }
       if(omx_base_filter_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
         /*Waiting at paused state*/

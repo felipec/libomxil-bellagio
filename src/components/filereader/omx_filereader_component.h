@@ -51,7 +51,9 @@
 DERIVEDCLASS(omx_filereader_component_PortType, omx_base_PortType)
 #define omx_filereader_component_PortType_FIELDS omx_base_PortType_FIELDS \
   /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 	
+  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 	\
+  /** @param sTimeStamp Store Time Stamp to be set*/ \
+  OMX_TIME_CONFIG_TIMESTAMPTYPE sTimeStamp;
 ENDCLASS(omx_filereader_component_PortType)
 
 /** Filereader component private structure.
@@ -104,6 +106,11 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
+
+OMX_ERRORTYPE omx_filereader_component_SetConfig(
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nIndex,
+  OMX_IN  OMX_PTR pComponentConfigStructure);
 
 #endif
 

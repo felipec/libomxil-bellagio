@@ -100,6 +100,10 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   pPort->sAudioParam.nIndex = 0;
   //pPort->sAudioParam.eEncoding = 0;
 
+  setHeader(&pPort->sTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
+  pPort->sTimeStamp.nPortIndex=0;
+  pPort->sTimeStamp.nTimestamp=0x0;
+
   omx_filereader_component_Private->destructor = omx_filereader_component_Destructor;
   omx_filereader_component_Private->messageHandler = omx_filereader_component_MessageHandler;
 
@@ -110,6 +114,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 
   openmaxStandComp->SetParameter  = omx_filereader_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_filereader_component_GetParameter;
+  openmaxStandComp->SetConfig     = omx_filereader_component_SetConfig;
 
   /* Write in the default paramenters */
 
@@ -256,6 +261,7 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   return OMX_ErrorNone;
 }
 
+
 /** 
  * This function processes the input file and returns packet by packet as an output data
  * this packet is used in audio decoder component for decoding
@@ -263,6 +269,7 @@ OMX_ERRORTYPE omx_filereader_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
 void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pOutputBuffer) {
 
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_filereader_component_PortType *pPort = (omx_filereader_component_PortType *)omx_filereader_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
   int error;
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
@@ -282,6 +289,12 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   pOutputBuffer->nFilledLen = 0;
   pOutputBuffer->nOffset = 0;
 
+  if(pPort->sTimeStamp.nTimestamp != 0x0) {
+    av_seek_frame(omx_filereader_component_Private->avformatcontext, 0, pPort->sTimeStamp.nTimestamp, AVSEEK_FLAG_ANY);
+    DEBUG(DEB_LEV_ERR, "Seek Timestamp %llx \n",pPort->sTimeStamp.nTimestamp);
+    pPort->sTimeStamp.nTimestamp = 0x0;
+  }
+
   error = av_read_frame(omx_filereader_component_Private->avformatcontext, &omx_filereader_component_Private->pkt);
   if(error < 0) {
     DEBUG(DEB_LEV_FULL_SEQ,"In %s EOS - no more packet,state=%x\n",__func__,
@@ -295,6 +308,11 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
     /** copying the packetized data in the output buffer that will be decoded in the decoder component  */
     memcpy(pOutputBuffer->pBuffer, omx_filereader_component_Private->pkt.data, omx_filereader_component_Private->pkt.size);
     pOutputBuffer->nFilledLen = omx_filereader_component_Private->pkt.size;
+    pOutputBuffer->nTimeStamp = omx_filereader_component_Private->pkt.dts;
+
+    if(pOutputBuffer->nTimeStamp == 0x80000000) { //Skip -ve timestamp
+      pOutputBuffer->nTimeStamp=0x0;
+    }
     /** request for new output buffer */
     omx_filereader_component_Private->isNewBuffer = 1;
   }
@@ -471,5 +489,45 @@ OMX_ERRORTYPE omx_filereader_component_MessageHandler(OMX_COMPONENTTYPE* openmax
   }
 
   return err;
+}
+
+
+/** setting configurations */
+OMX_ERRORTYPE omx_filereader_component_SetConfig(
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nIndex,
+  OMX_IN  OMX_PTR pComponentConfigStructure) {
+
+  OMX_TIME_CONFIG_TIMESTAMPTYPE* sTimeStamp;
+  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
+  omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
+  omx_filereader_component_PortType *pPort;
+
+  switch (nIndex) {
+    case OMX_IndexConfigTimePosition : 
+      sTimeStamp = (OMX_TIME_CONFIG_TIMESTAMPTYPE*)pComponentConfigStructure;
+      /*Check Structure Header and verify component state*/
+      if (sTimeStamp->nPortIndex >= (omx_filereader_component_Private->sPortTypesParam.nStartPortNumber + omx_filereader_component_Private->sPortTypesParam.nPorts)) {
+        DEBUG(DEB_LEV_ERR, "Bad Port index %i when the component has %i ports\n", (int)sTimeStamp->nPortIndex, (int)omx_filereader_component_Private->sPortTypesParam.nPorts);
+        return OMX_ErrorBadPortIndex;
+      }
+
+      err= checkHeader(sTimeStamp , sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
+      if(err != OMX_ErrorNone) {
+        return err;
+      }
+
+      if (sTimeStamp->nPortIndex < 1) {
+        pPort= (omx_filereader_component_PortType *)omx_filereader_component_Private->ports[sTimeStamp->nPortIndex];
+        memcpy(&pPort->sTimeStamp,sTimeStamp,sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
+      } else {
+        return OMX_ErrorBadPortIndex;
+      }
+      return OMX_ErrorNone;
+    default: // delegate to superclass
+      return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
+  }
+  return OMX_ErrorNone;
 }
 

@@ -592,6 +592,8 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
       omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
     } else if (!strcmp((char*)pComponentRole->cRole, AUDIO_DEC_VORBIS_ROLE)) {
       omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingVORBIS;
+    } else if (!strcmp((char*)pComponentRole->cRole, AUDIO_DEC_AAC_ROLE)) {
+      omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingAAC;
     } else {
       return OMX_ErrorBadParameter;
     }
@@ -716,7 +718,6 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
     memcpy(pAudioVorbis,&omx_audiodec_component_Private->pAudioVorbis,sizeof(OMX_AUDIO_PARAM_VORBISTYPE));
     break;
 	
-		
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 

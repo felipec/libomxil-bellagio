@@ -781,6 +781,7 @@ OMX_ERRORTYPE base_port_ReturnBufferFunction(omx_base_PortType* openmaxStandPort
   tsem_t* pSem = openmaxStandPort->pBufferSem;
   OMX_ERRORTYPE eError = OMX_ErrorNone;
 
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   if (PORT_IS_TUNNELED(openmaxStandPort) && 
     ! PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
     if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {

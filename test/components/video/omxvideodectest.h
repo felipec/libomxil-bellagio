@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
+#include <ctype.h>
 
 #include <OMX_Core.h>
 #include <OMX_Component.h>

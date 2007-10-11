@@ -634,7 +634,7 @@ int main(int argc, char** argv) {
 
   /** getting color converter component handle, if specified */
   if(flagIsColorConvRequested == 1) {
-    err = OMX_GetHandle(&appPriv->colorconv_handle, "OMX.st.video_colorconv", NULL, &colorconv_callbacks);
+    err = OMX_GetHandle(&appPriv->colorconv_handle, "OMX.st.video_colorconv.ffmpeg", NULL, &colorconv_callbacks);
     if(err != OMX_ErrorNone){
       DEBUG(DEB_LEV_ERR, "No color converter component found. Exiting...\n");
       exit(1);

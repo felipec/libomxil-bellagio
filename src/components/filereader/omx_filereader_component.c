@@ -191,6 +191,8 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     return OMX_ErrorBadParameter;
   }
 
+  av_find_stream_info(omx_filereader_component_Private->avformatcontext);
+
   if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Audio Coding Type Mp3\n",__func__);
   } else if(omx_filereader_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {

@@ -265,6 +265,7 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
 void omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_PrivateType* omx_audiodec_component_Private) {
 	
   avcodec_close(omx_audiodec_component_Private->avCodecContext);
+  omx_audiodec_component_Private->extradata_size = 0;
    
 }
 

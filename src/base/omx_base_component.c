@@ -271,9 +271,13 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
      break;
     case OMX_StateIdle:
       for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-	      pPort = omx_base_component_Private->ports[i];
-
-	      if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
+        pPort = omx_base_component_Private->ports[i];
+        if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
+          while(pPort->pBufferQueue->nelem > 0) {
+            DEBUG(DEB_LEV_PARAMS, "In %s Buffer %d remained in the port %d queue of comp%s\n",
+                 __func__,(int)pPort->pBufferQueue->nelem,(int)i,omx_base_component_Private->name);
+            dequeue(pPort->pBufferQueue);
+          }
           /* Freeing here the buffers allocated for the tunneling:*/
           err = pPort->Port_FreeTunnelBuffer(pPort,i);
           if(err!=OMX_ErrorNone) { 
@@ -381,12 +385,6 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
         DEBUG(DEB_LEV_FULL_SEQ, "Flushing Port %i\n",(int)i);
         pPort = omx_base_component_Private->ports[i];
         pPort->FlushProcessingBuffers(pPort);
-        /*Since port is being disabled then remove buffers from the queue*/
-        while(pPort->pBufferQueue->nelem > 0) {
-          DEBUG(DEB_LEV_PARAMS, "In %s Buffer %d remained in the port %d queue of comp%s\n",
-               __func__,(int)pPort->pBufferQueue->nelem,(int)i,omx_base_component_Private->name);
-          dequeue(pPort->pBufferQueue);
-        }
       }
       omx_base_component_Private->state = OMX_StateIdle;
       break;
@@ -797,7 +795,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     break;
   case OMX_IndexParamCompBufferSupplier:
     pBufferSupplier = (OMX_PARAM_BUFFERSUPPLIERTYPE*)ComponentParameterStructure;
-    DEBUG(DEB_LEV_ERR, "In %s Buf Sup Port index=%d, nport=%d\n", __func__,
+    DEBUG(DEB_LEV_PARAMS, "In %s Buf Sup Port index=%d, nport=%d\n", __func__,
       (int)pBufferSupplier->nPortIndex,(int)omx_base_component_Private->sPortTypesParam.nPorts);
     if(pBufferSupplier == NULL) {
       return OMX_ErrorBadParameter;

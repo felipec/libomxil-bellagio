@@ -91,7 +91,7 @@ DERIVEDCLASS(omx_maddec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
   OMX_S32 isNewBuffer;	\
   /** @param audio_coding_type Field that indicate the supported audio format of audio decoder */ \
-  OMX_U8 audio_coding_type;  \
+  OMX_U32 audio_coding_type;  \
   /** @param temporary_buffer temporary buffer used for audio decoding */ \
   OMX_BUFFERHEADERTYPE *temporary_buffer; \
   /** @param need_mad_stream boolean indicate whether new mad stream required */ \

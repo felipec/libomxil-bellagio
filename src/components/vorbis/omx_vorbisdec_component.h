@@ -79,7 +79,7 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
   OMX_S32 isNewBuffer;	\
   /** @param audio_coding_type Field that indicate the supported audio format of audio decoder */ \
-  OMX_U8 audio_coding_type;   
+  OMX_U32 audio_coding_type;   
 ENDCLASS(omx_vorbisdec_component_PrivateType)
 
 /* Component private entry points declaration */

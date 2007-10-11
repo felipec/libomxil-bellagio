@@ -92,7 +92,7 @@ DERIVEDCLASS(omx_videodec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
   OMX_S32 isNewBuffer;	\
   /** @param video_coding_type Field that indicate the supported video format of video decoder */ \
-  OMX_U8 video_coding_type;   \
+  OMX_U32 video_coding_type;   \
   /** @param eOutFramePixFmt Field that indicate output frame pixel format */ \
   enum PixelFormat eOutFramePixFmt;
 ENDCLASS(omx_videodec_component_PrivateType)

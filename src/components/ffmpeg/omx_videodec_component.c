@@ -427,6 +427,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   int nSize;
   struct SwsContext *imgConvertYuvCtx = NULL;
 
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   /** Fill up the current input buffer when a new buffer has arrived */
   if(omx_videodec_component_Private->isNewBuffer) {
     omx_videodec_component_Private->inputCurrBuffer = pInputBuffer->pBuffer;

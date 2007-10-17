@@ -382,7 +382,7 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
   }
 
   if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
-    DEBUG(DEB_LEV_ERR, "In %s: Requested Buffer Size %i is Less than Minimum Buffer Size %i\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
+    DEBUG(DEB_LEV_ERR, "In %s: Requested Buffer Size %lu is less than Minimum Buffer Size %lu\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
     return OMX_ErrorIncorrectStateTransition;
   }
 	
@@ -460,7 +460,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
   }
 
   if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
-    DEBUG(DEB_LEV_ERR, "In %s: Given Buffer Size %i is less than Minimum Buffer Size %i\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
+    DEBUG(DEB_LEV_ERR, "In %s: Given Buffer Size %lu is less than Minimum Buffer Size %lu\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
     return OMX_ErrorIncorrectStateTransition;
   }
 	

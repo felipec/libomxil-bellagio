@@ -466,7 +466,7 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       }
             break;
     default :
-      DEBUG(DEB_LEV_ERR, "Audio format other than mp3 & vorbis not supported\nCodec type %x not found\n",omx_audiodec_component_Private->audio_coding_type);
+      DEBUG(DEB_LEV_ERR, "Audio format other than mp3, vorbis or AAC not supported\nCodec type %lu not found\n",omx_audiodec_component_Private->audio_coding_type);
       break;                       
     }//end of switch
 

@@ -31,12 +31,6 @@
 
 #include "omxcore.h"
 
-/** @brief Component loader private data structure.
- *   
- * This structure can contain specific private data of a component loader.
- */
-typedef void* BOSA_ComponentLoaderHandle;
-
 /** @brief Component loader entry points  
  * 
  * The component loader generic structure contains the entry points for 
@@ -51,11 +45,11 @@ typedef struct BOSA_COMPONENTLOADER
 	 * implemented by the specific component loader. It must allocate any 
 	 * resource needed by the component loader.
 	 * 
-	 * @param loaderHandle A private data structure, if needed by the component loader. 
+	 * @param loader A private data structure, if needed by the component loader. 
 	 * This data structure is passed every time a function of this loader is called.
 	 * @return OMX_ErrorInsufficientResources if the component loader can not be constructed
 	 */
-	OMX_ERRORTYPE (*BOSA_CreateComponentLoader)(BOSA_ComponentLoaderHandle *loaderHandle);
+	OMX_ERRORTYPE (*BOSA_InitComponentLoader)(struct BOSA_COMPONENTLOADER *loader);
 	
 	/** @brief The destructor of the component loader  
 	 * 
@@ -63,11 +57,11 @@ typedef struct BOSA_COMPONENTLOADER
 	 * implemented by the specific component loader. It must free every specific 
 	 * resource used by the component loader.
 	 * 
-	 * @param loaderHandle the specific component loader. This parameter is also specific
+	 * @param loader the specific component loader. This parameter is also specific
 	 * to the component loader, and its structure is defined by each loader.
 	 * @return OMX_ErrorNone
 	 */
-	OMX_ERRORTYPE (*BOSA_DestroyComponentLoader)(BOSA_ComponentLoaderHandle loaderHandle);
+	OMX_ERRORTYPE (*BOSA_DeInitComponentLoader)(struct BOSA_COMPONENTLOADER *loader);
 	
 	/** @brief The component costructor of the current component loader
 	 *  
@@ -76,7 +70,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 * standard GetHandle function, except that the first parameter
 	 * that contains the private data of the specific component loader.
 	 * 
-	 * @param loaderHandle Private data of the component loader
+	 * @param loader Private data of the component loader
 	 * @param pHandle the openmax handle returned by the function, or NULL 
 	 * in case of failure.
 	 * @param cComponentName A string that contains the standard 
@@ -90,18 +84,42 @@ typedef struct BOSA_COMPONENTLOADER
 	 * @return OMX_ErrorInsufficientResources if the component exists but can not be allocated.
 	 */ 
 	OMX_ERRORTYPE (*BOSA_CreateComponent)(
-		BOSA_ComponentLoaderHandle loaderHandle,
+		struct BOSA_COMPONENTLOADER *loader,
 		OMX_HANDLETYPE* pHandle,
 		OMX_STRING cComponentName,
 		OMX_PTR pAppData,
 		OMX_CALLBACKTYPE* pCallBacks);
+
+	/** @brief The component destructor of the current component loader
+	 *  
+	 * This function implements the OMX_FreeHandle function for the 
+	 * specific component loader. Its interface is the same as the 
+	 * standard FreeHandle function, except that the first parameter
+	 * that contains the private data of the specific component loader.
+	 * 
+	 * @param loader Private data of the component loader
+	 * @param pHandle the openmax handle returned by the function, or NULL 
+	 * in case of failure.
+	 * @param cComponentName A string that contains the standard 
+	 * component's name
+	 * @param pAppData private data of the component (if needed)
+	 * @param pCallBacks IL client callback function pointers passed
+	 * to the component
+	 * 
+	 * @return OMX_ErrorNone if the component is correctly constructed and returned
+	 * @return OMX_ErrorComponentNotFound if the component is not found
+	 * @return OMX_ErrorInsufficientResources if the component exists but can not be allocated.
+	 */ 
+	OMX_ERRORTYPE (*BOSA_DestroyComponent)(
+			struct BOSA_COMPONENTLOADER *loader, 
+			OMX_HANDLETYPE hComponent);
 	
-	/** @brief An enumeartor of the components handled by the current component loader.
+	/** @brief An enumerator of the components handled by the current component loader.
 	 * 
 	 * This function implements the OMX_ComponentNameEnum function 
 	 * for the specific component loader
 	 * 
-	 * @param loaderHandle Private data of the component loader
+	 * @param loader Private data of the component loader
 	 * @param cComponentName A pointer to a null terminated string 
 	 * with the component name.  The names of the components are 
 	 * strings less than 127 bytes in length plus the trailing null 
@@ -123,7 +141,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 * number of components handled by the component loader minus 1 
 	 */ 
 	OMX_ERRORTYPE (*BOSA_ComponentNameEnum)(
-		BOSA_ComponentLoaderHandle loaderHandle,
+		struct BOSA_COMPONENTLOADER *loader,
 		OMX_STRING cComponentName,
 		OMX_U32 nNameLength,
 		OMX_U32 nIndex);
@@ -141,7 +159,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 *   an array of names allocated according to the number 
 	 *   returned by the first call.
 	 * 
-	 * @param loaderHandle Private data of the component loader
+	 * @param loader Private data of the component loader
 	 * @param compName The name of the component being queried about.
 	 * @param pNumRoles This parameter is used both as input and output.
 	 * If roles is NULL, the input is ignored and the output specifies
@@ -155,7 +173,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 * component name. numComps indicates the number of names.
 	 */
 	OMX_ERRORTYPE (*BOSA_GetRolesOfComponent)( 
-		BOSA_ComponentLoaderHandle loaderHandle,
+		struct BOSA_COMPONENTLOADER *loader,
 		OMX_STRING compName,
 		OMX_U32 *pNumRoles,
 		OMX_U8 **roles);
@@ -174,7 +192,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 *   to an array of names allocated according to the number
 	 *   returned by the first call.
 	 *
-	 * @param loaderHandle Private data of the component loader
+	 * @param loader Private data of the component loader
 	 * @param role This is generic standard component name consisting 
 	 * only of component class name and the type within that class 
 	 * (e.g. 'audio_decoder.aac').
@@ -190,7 +208,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 * name. Each name is NULL terminated. numComps indicates the number of names.
 	 */
 	OMX_ERRORTYPE (*BOSA_GetComponentsOfRole) ( 
-		BOSA_ComponentLoaderHandle loaderHandle,
+		struct BOSA_COMPONENTLOADER *loader,
 		OMX_STRING role,
 		OMX_U32 *pNumComps,
 		OMX_U8  **compNames);
@@ -200,7 +218,7 @@ typedef struct BOSA_COMPONENTLOADER
 	 * The current loader specified by this structure is described with this
 	 * generic pointer that contains the private data of the loader.
 	 */
-	BOSA_ComponentLoaderHandle componentLoaderHandler;
+	void *loaderPrivate;
 	
 } BOSA_COMPONENTLOADER;
 

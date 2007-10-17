@@ -16,5 +16,5 @@ libomxil_la_SOURCES = st_static_component_loader.c \
                       component_loader.h \
                       st_static_component_loader.h
 
-libomxil_la_CFLAGS = -I$(top_srcdir)/include
+libomxil_la_CFLAGS = -I$(top_srcdir)/include  -I$(srcdir)/base
 libomxil_la_LIBADD = base/libomxbase.la

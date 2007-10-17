@@ -59,27 +59,34 @@ void st_static_InitComponentLoader();
  * registry file, and allows the components to register themself to the 
  * main list templateList.
  */
-OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHandle);
+OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader);
 
 /** @brief The destructor of the ST specific component loader. 
  * 
  * This function deallocates the list of available components.
  */
-OMX_ERRORTYPE BOSA_ST_DestroyComponentLoader(BOSA_ComponentLoaderHandle loaderHandle);
+OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader);
 
 /** @brief creator of the requested openmax component
  * 
  * This function searches for the requested component in the internal list.
- * If the copmponent is found, its constructor is called,
+ * If the component is found, its constructor is called,
  * and the standard callback are assigned.
  * A pointer to a standard openmax component is returned.
  */
 OMX_ERRORTYPE BOSA_ST_CreateComponent(
-    BOSA_ComponentLoaderHandle loaderHandle,
-    OMX_OUT OMX_HANDLETYPE* pHandle,
-    OMX_IN  OMX_STRING cComponentName,
-    OMX_IN  OMX_PTR pAppData,
-    OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
+    BOSA_COMPONENTLOADER *loader,
+    OMX_HANDLETYPE* pHandle,
+    OMX_STRING cComponentName,
+    OMX_PTR pAppData,
+    OMX_CALLBACKTYPE* pCallBacks);
+
+/** @brief destructor of the requested openmax component
+ * 
+ */
+OMX_ERRORTYPE BOSA_ST_DestroyComponent(
+    BOSA_COMPONENTLOADER *loader,
+	OMX_HANDLETYPE hComponent);
 
 /** @brief This function search for the index from 0 to end of the list
  * 
@@ -87,7 +94,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
  * both the class names and the role specific components.
  */ 
 OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
-    BOSA_ComponentLoaderHandle loaderHandle,
+    BOSA_COMPONENTLOADER *loader,
     OMX_STRING cComponentName,
     OMX_U32 nNameLength,
     OMX_U32 nIndex);
@@ -99,7 +106,7 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
  * component loader 
  */
 OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent( 
-    BOSA_ComponentLoaderHandle loaderHandle,
+    BOSA_COMPONENTLOADER *loader,
     OMX_STRING compName,
     OMX_U32 *pNumRoles,
     OMX_U8 **roles);
@@ -111,7 +118,7 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
  * component loader 
  */
 OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole ( 
-    BOSA_ComponentLoaderHandle loaderHandle,
+    BOSA_COMPONENTLOADER *loader,
     OMX_STRING role,
     OMX_U32 *pNumComps,
     OMX_U8  **compNames);

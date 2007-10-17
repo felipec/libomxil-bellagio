@@ -127,6 +127,7 @@ CLASS(omx_base_component_PrivateType)
   pthread_t messageHandlerThread; /** @param  messageHandlerThread This field contains the reference to the thread that receives messages for the components */ \
   int bufferMgmtThreadID; /** @param  bufferMgmtThreadID The ID of the pthread that process buffers */ \
   pthread_t bufferMgmtThread; /** @param  bufferMgmtThread This field contains the reference to the thread that process buffers */ \
+  void *loader; /**< pointer to the loader that created this component, used for destruction */ \
   void* (*BufferMgmtFunction)(void* param); /** @param BufferMgmtFunction This function processes input output buffers */ \
   OMX_ERRORTYPE (*messageHandler)(OMX_COMPONENTTYPE*,internalRequestMessageType*);/** This function receives messages from the message queue. It is needed for each Linux ST OpenMAX component */ \
   OMX_ERRORTYPE (*DoStateSet)(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32); /**< @param DoStateSet internal function called when a generic state transition is requested*/ \

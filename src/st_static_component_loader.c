@@ -36,6 +36,7 @@
 #include <errno.h>
 
 #include "st_static_component_loader.h"
+#include "omx_base_component.h"
 
 /** This pointer holds and handle allocate by this loader and requested by
  * some application. If the IL client does not de-allocate it calling 
@@ -52,11 +53,11 @@ OMX_U32 numLib=0;
  * 
  * This function allocates memory for the component loader and initialize other function pointer
  */
-void st_static_InitComponentLoader()
-{
-  st_static_loader.BOSA_CreateComponentLoader = &BOSA_ST_CreateComponentLoader;
-  st_static_loader.BOSA_DestroyComponentLoader = &BOSA_ST_DestroyComponentLoader;
+void st_static_InitComponentLoader() {
+  st_static_loader.BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;
+  st_static_loader.BOSA_DeInitComponentLoader = &BOSA_ST_DeInitComponentLoader;
   st_static_loader.BOSA_CreateComponent = &BOSA_ST_CreateComponent;
+  st_static_loader.BOSA_DestroyComponent = &BOSA_ST_DestroyComponent;
   st_static_loader.BOSA_ComponentNameEnum = &BOSA_ST_ComponentNameEnum;
   st_static_loader.BOSA_GetRolesOfComponent = &BOSA_ST_GetRolesOfComponent;
   st_static_loader.BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
@@ -69,7 +70,7 @@ void st_static_InitComponentLoader()
  * created by a separate appication. It is called omxregister, 
  * and must be called before the use of this loader
  */
-OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHandle) {
+OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   FILE* omxregistryfp;
   char* line = NULL;
   char omxregistryfile[200];
@@ -145,7 +146,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
   free(libname);
   libname = NULL;
   fclose(omxregistryfp);
-  *loaderHandle = templateList;
+  loader->loaderPrivate = templateList;
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
   return OMX_ErrorNone;
 }
@@ -154,11 +155,11 @@ OMX_ERRORTYPE BOSA_ST_CreateComponentLoader(BOSA_ComponentLoaderHandle *loaderHa
  * 
  * This function deallocates the list of available components.
  */
-OMX_ERRORTYPE BOSA_ST_DestroyComponentLoader(BOSA_ComponentLoaderHandle loaderHandle) {
+OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   int i,j,err;
   stLoaderComponentType** templateList;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  templateList = (stLoaderComponentType**)loaderHandle;
+	templateList = (stLoaderComponentType**)loader->loaderPrivate;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
@@ -221,20 +222,21 @@ OMX_ERRORTYPE BOSA_ST_DestroyComponentLoader(BOSA_ComponentLoaderHandle loaderHa
  * A pointer to a standard openmax component is returned.
  */
 OMX_ERRORTYPE BOSA_ST_CreateComponent(
-  BOSA_ComponentLoaderHandle loaderHandle,
-  OMX_OUT OMX_HANDLETYPE* pHandle,
-  OMX_IN  OMX_STRING cComponentName,
-  OMX_IN  OMX_PTR pAppData,
-  OMX_IN  OMX_CALLBACKTYPE* pCallBacks) {
+  BOSA_COMPONENTLOADER *loader,
+  OMX_HANDLETYPE* pHandle,
+  OMX_STRING cComponentName,
+  OMX_PTR pAppData,
+  OMX_CALLBACKTYPE* pCallBacks) {
 
   int i, j;
   int componentPosition = -1;
   OMX_ERRORTYPE eError = OMX_ErrorNone;
   stLoaderComponentType** templateList;
   OMX_COMPONENTTYPE *openmaxStandComp;
-
+  omx_base_component_PrivateType * priv;
+  
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  templateList = (stLoaderComponentType**)loaderHandle;
+	templateList = (stLoaderComponentType**)loader->loaderPrivate;
   i = 0;
   while(templateList[i]) {
     if(!strcmp(templateList[i]->name, cComponentName)) {
@@ -281,11 +283,33 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
     openmaxStandComp = NULL;
     return OMX_ErrorComponentNotFound;	
   }
+  priv = (omx_base_component_PrivateType *) openmaxStandComp->pComponentPrivate;
+  priv->loader = (void *)loader;
+ 
   *pHandle = openmaxStandComp;
   ((OMX_COMPONENTTYPE*)*pHandle)->SetCallbacks(*pHandle, pCallBacks, pAppData);
   DEBUG(DEB_LEV_FULL_SEQ, "Template %s found returning from OMX_GetHandle\n", cComponentName);
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
   return eError;
+}
+
+OMX_ERRORTYPE BOSA_ST_DestroyComponent(
+	BOSA_COMPONENTLOADER *loader,
+	OMX_HANDLETYPE hComponent) {
+	OMX_ERRORTYPE err = OMX_ErrorNone;
+	omx_base_component_PrivateType * priv = (omx_base_component_PrivateType *) ((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
+
+	/* check if this component was actually loaded from this loader */
+	if (priv->loader != loader) {
+		return OMX_ErrorComponentNotFound;
+	}
+
+	err = ((OMX_COMPONENTTYPE*)hComponent)->ComponentDeInit(hComponent);
+
+	free((OMX_COMPONENTTYPE*)hComponent);
+	hComponent = NULL;
+
+	return err;
 }
 
 /** @brief This function search for the index from 0 to end of the list
@@ -294,7 +318,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
  * both the class names and the role specific components.
  */ 
 OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
-  BOSA_ComponentLoaderHandle loaderHandle,
+	BOSA_COMPONENTLOADER *loader,
   OMX_STRING cComponentName,
   OMX_U32 nNameLength,
   OMX_U32 nIndex) {
@@ -304,7 +328,7 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
   int found = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	  
-  templateList = (stLoaderComponentType**)loaderHandle;
+	templateList = (stLoaderComponentType**)loader->loaderPrivate;
   i = 0;
   while(templateList[i]) {
     if (index == nIndex) {
@@ -343,7 +367,7 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
  * component loader 
  */
 OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent( 
-  BOSA_ComponentLoaderHandle loaderHandle,
+	BOSA_COMPONENTLOADER *loader,
   OMX_STRING compName,
   OMX_U32 *pNumRoles,
   OMX_U8 **roles) {
@@ -353,7 +377,7 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
   int max_roles = *pNumRoles;
   int found = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  templateList = (stLoaderComponentType**)loaderHandle;
+	templateList = (stLoaderComponentType**)loader->loaderPrivate;
   *pNumRoles = 0;
   i = 0;
   while (templateList[i]) {
@@ -407,7 +431,7 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
  * component loader 
  */
 OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole ( 
-  BOSA_ComponentLoaderHandle loaderHandle,
+	BOSA_COMPONENTLOADER *loader,
   OMX_STRING role,
   OMX_U32 *pNumComps,
   OMX_U8  **compNames) {
@@ -418,7 +442,7 @@ OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole (
   int max_entries = *pNumComps;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  templateList = (stLoaderComponentType**)loaderHandle;
+	templateList = (stLoaderComponentType**)loader->loaderPrivate;
   i = 0;
   while(templateList[i]) {
     for (j = 0; j<templateList[i]->name_specific_length; j++) {

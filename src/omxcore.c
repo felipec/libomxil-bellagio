@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <dlfcn.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <strings.h>
@@ -82,7 +81,7 @@ OMX_ERRORTYPE OMX_Init() {
     loadersList[0] = &st_static_loader;
 
     for (i = 0; i<NUM_LOADERS; i++) {
-      err = loadersList[i]->BOSA_CreateComponentLoader(&loadersList[i]->componentLoaderHandler);
+      err = loadersList[i]->BOSA_InitComponentLoader(loadersList[i]);
       if (err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "A Component loader constructor fails. Exiting\n");
         return err;
@@ -103,7 +102,7 @@ OMX_ERRORTYPE OMX_Deinit() {
   if(initialized) {
     int i;
     for (i = 0; i<NUM_LOADERS; i++) {
-      loadersList[i]->BOSA_DestroyComponentLoader(loadersList[i]->componentLoaderHandler);
+      loadersList[i]->BOSA_DeInitComponentLoader(loadersList[i]);
     }
     initialized = OMX_FALSE;
   }
@@ -134,7 +133,7 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
 
   for (i = 0; i<NUM_LOADERS; i++) {
     err = loadersList[i]->BOSA_CreateComponent(
-            loadersList[i]->componentLoaderHandler,
+            loadersList[i],
             pHandle,
             cComponentName,
             pAppData,
@@ -152,15 +151,19 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
 
 /** @brief the OMX_FreeHandle standard function
  * 
- * This function calls the DeInit standard function of the component, and frees the handle.
- * There is non need ofd a componente loader specific function, because the behavior of the
- * release of resources is completely described on the spec and can be done only in this way.
+ * This function calls the component loader destroy function.
  */
 OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent) {
-  OMX_ERRORTYPE err;
-  err = ((OMX_COMPONENTTYPE*)hComponent)->ComponentDeInit(hComponent);
-  free(hComponent);
-  return err;
+	int i;
+	OMX_ERRORTYPE err;
+	for (i = 0; i < NUM_LOADERS; i++) {
+		err = loadersList[i]->BOSA_DestroyComponent(loadersList[i], hComponent);
+		if (err == OMX_ErrorNone) {
+			// the component has been found and destroyed
+			return OMX_ErrorNone;
+		}
+	}
+	return OMX_ErrorComponentNotFound;
 }
 
 /** @brief the OMX_ComponentNameEnum standard function
@@ -175,11 +178,12 @@ OMX_ERRORTYPE OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
   OMX_IN OMX_U32 nIndex) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
   int i, offset = 0;
-	
+  int end_index, index = 0;
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  for (i = 0; i<NUM_LOADERS; i++) {
+  for (i = 0; i < NUM_LOADERS; i++) {
     err = loadersList[i]->BOSA_ComponentNameEnum(
-            loadersList[i]->componentLoaderHandler,
+            loadersList[i],
             cComponentName,
             nNameLength,
             nIndex - offset);
@@ -188,10 +192,11 @@ OMX_ERRORTYPE OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
       * the first step is to find the curent number of component for the
       * current loader, and use it as offset for the next loader
       */
-      int end_index = 0, index = 0;
+      end_index = 0;
+			index = 0;
       while (!end_index) {
         err = loadersList[i]->BOSA_ComponentNameEnum(
-        loadersList[i]->componentLoaderHandler,
+        loadersList[i],
         cComponentName,
         nNameLength,
         index);
@@ -282,7 +287,7 @@ OMX_ERRORTYPE OMX_GetRolesOfComponent (
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   for (i = 0; i<NUM_LOADERS; i++) {
     err = loadersList[i]->BOSA_GetRolesOfComponent(
-            loadersList[i]->componentLoaderHandler,
+            loadersList[i],
             CompName,
             pNumRoles,
             roles);
@@ -317,7 +322,7 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
   for (i = 0; i<NUM_LOADERS; i++) {
     temp_num_comp = *pNumComps;
     err = loadersList[i]->BOSA_GetComponentsOfRole(
-            loadersList[i]->componentLoaderHandler,
+            loadersList[i],
             role,
             &temp_num_comp,
             NULL);
@@ -327,7 +332,7 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
     }
     if (only_number_requested == 0) {
       err = loadersList[i]->BOSA_GetComponentsOfRole(
-              loadersList[i]->componentLoaderHandler,
+              loadersList[i],
               role,
               pNumComps,
               compNames);

@@ -39,11 +39,11 @@ struct BOSA_COMPONENTLOADER st_static_loader;
  * standard.
  */
 typedef struct stLoaderComponentType{
-  OMX_VERSIONTYPE componentVersion; /**< the verison of the component in the OpenMAX standard format */
+  OMX_VERSIONTYPE componentVersion; /**< the version of the component in the OpenMAX standard format */
   char* name; /**< String that represents the name of the component, ruled by the standard */
   int name_specific_length;/**< this field contains the number of roles of the component */
-  char** name_specific; /**< Strings those represent the names of the specifc format components */
-  char** role_specific; /**< Strings those represent the names of the specifc format components */
+  char** name_specific; /**< Strings those represent the names of the specific format components */
+  char** role_specific; /**< Strings those represent the names of the specific format components */
   char* name_requested; /**< This parameter is used to send to the component the string requested by the IL Client */
   OMX_ERRORTYPE (*constructor)(OMX_COMPONENTTYPE*,OMX_STRING cComponentName); /**< constructor function pointer for each Linux ST OpenMAX component */
 } stLoaderComponentType;

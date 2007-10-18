@@ -125,6 +125,10 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
 						stComponents[i] = malloc(sizeof(stLoaderComponentType));
 					}
 					fptr(stComponents);
+					
+					fwrite(lib_absolute_path, 1, strlen(lib_absolute_path), omxregistryfp);
+					fwrite("\n", 1, 1, omxregistryfp);
+
 
 					for (i = 0; i<num_of_comp; i++) {
 						DEBUG(DEB_LEV_PARAMS, "Found component %s version=%d.%d.%d.%d in shared object %s\n",
@@ -138,9 +142,7 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
               printf("Component %s registered\n", stComponents[i]->name);
 
 						// allocate max memory
-            len = sizeof(lib_absolute_path)     /* lib path */
-                 +1                             /* '\n' */
-                 +sizeof(arrow)                 /* arrow */
+            len = sizeof(arrow)                 /* arrow */
                  +strlen(stComponents[i]->name) /* component name */
                  +sizeof(arrow)                 /* arrow */
                  +1                             /* '\n' */
@@ -148,9 +150,7 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
             buffer = realloc(buffer, len);
 
             // insert first of all the name of the library
-            strcpy(buffer, lib_absolute_path);
-            strcat(buffer, "\n");
-						strcat(buffer, arrow);
+						strcpy(buffer, arrow);
 						strcat(buffer, stComponents[i]->name);
 
 						if (stComponents[i]->name_specific_length>0) {

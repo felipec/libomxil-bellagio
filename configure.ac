@@ -95,8 +95,8 @@ AC_ARG_ENABLE(
 AC_ARG_ENABLE(
     [install_devel],
     [AC_HELP_STRING(
-        [--enable-install_devel],
-        [whether to disable the alsa sink])],
+        [--enable-install-devel],
+	[whether to install component development header files])],
     [install_devel=true],
     [install_devel=false]) dnl default
 

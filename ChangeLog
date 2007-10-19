@@ -1,17 +1,30 @@
-Attention! the verison of ffmpegused has been changes, since the AAC is supported 
-only by the most recent veriosn of ffmpeg, 0.4.9-0.37.20070503
+Changes in 0.3.3:
+- Added AAC format to the audio decoder based on ffmpeg
+- The all makefile system has been updated
+  - It is possible to compile from a different directory
+- Added a directory for all the common functionalities of the tests
+- Updated OpenMAX header files to the 1.1.1 version
+- Added simple support to UseEGLImage function (video color converter component)
+- Updated component loader interface:
+  - added the function DestroyComponent
+  - changed the loader self reference
+- Added port construction function pointer
+- Removed CHECK_ERROR and CHECK_HEADER macros
+- Added optional installation of Bellagio internal header files for new 
+  components development outside Bellagio source tree. configure option --enable-install_devel
 
-Changes of the current editing respect to the 0.3.2 in the final components
-1) base_port_constuctor call replaced with the new constructor function pointer
-2) removed from final component destuctors the disposal of the ports
-3) removed CHECK_ERROR and CHECK_HEADER macros
+WARNING! the version of ffmpeg used has been changed, since the AAC is supported 
+only by the most recent version of ffmpeg, 0.4.9-0.37.20070503
 
 
-
-Public Release 0.3.2 of the OpenMAX core developed by Nokia and STMicroelectronics for Linux distributions
-
-Release 0.3.2
+Difference 0.3.1 -> 0.3.2:
 - Some bug fixed
+- improved code style
+- added SetHeader functionality for many parameters
+- removed destructor from function pointers exposed to ST static loader
+- removed empty functions from final components
+- removed unnecessary library dependencies
+- enhanced test applications
 
 
 Full list of components:
@@ -27,13 +40,3 @@ Video:
   - H.264 decoder based on ffmpeg (multiple roles component)
   - Color converter based on ffmpeg
   - video renderer based on devFB
-Major additions to the 0.2
-- New port classes
-The components are:
-- multiple formats audio decoder component 
-  that supports mp3, aac and ogg audio formats
-- alsa sink component
-- all the other components are NOT compatible with the new architecture.
-  They have been removed and will be ported to the new architecture in a 
-  further delivery
-

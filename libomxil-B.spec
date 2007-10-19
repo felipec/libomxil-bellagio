@@ -53,11 +53,6 @@ make install
 /usr/local/lib/omxilcomponents/libomxalsa.so
 /usr/local/lib/omxilcomponents/libomxalsa.so.0
 /usr/local/lib/omxilcomponents/libomxalsa.so.0.0.0
-/usr/local/lib/omxilcomponents/libomxfbdev.a
-/usr/local/lib/omxilcomponents/libomxfbdev.la
-/usr/local/lib/omxilcomponents/libomxfbdev.so
-/usr/local/lib/omxilcomponents/libomxfbdev.so.0
-/usr/local/lib/omxilcomponents/libomxfbdev.so.0.0.0
 /usr/local/lib/omxilcomponents/libomxffmpeg.a
 /usr/local/lib/omxilcomponents/libomxffmpeg.la
 /usr/local/lib/omxilcomponents/libomxffmpeg.so
@@ -85,6 +80,9 @@ make install
 /usr/local/lib/omxilcomponents/libomxvorbis.so.0.0.0
 
 %changelog
+* Fri Oct 19 2007 Giulio Urlini
+- removed fbdev from file list. It is experimental, 
+  and not installed on any platform
 * Tue Oct 01 2007 Giulio Urlini
 - Minor update and name change of this file
 * Tue Jun 04 2007 Giulio Urlini

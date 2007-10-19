@@ -68,7 +68,7 @@ long GetTime() {
 }
 
 /** The Constructor 
-  * @param cComponentName is the namje of the constructed component
+  * @param cComponentName is the name of the constructed component
   */
 OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;	

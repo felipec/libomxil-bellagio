@@ -91,6 +91,15 @@ AC_ARG_ENABLE(
     [with_alsasink=false],
     [with_alsasink=true]) dnl default
 
+#Enable the installation of all the header files
+AC_ARG_ENABLE(
+    [install_devel],
+    [AC_HELP_STRING(
+        [--enable-install_devel],
+        [whether to disable the alsa sink])],
+    [install_devel=true],
+    [install_devel=false]) dnl default
+
 ################################################################################
 # Check for programs                                                           #
 ################################################################################
@@ -203,5 +212,8 @@ AM_CONDITIONAL([WITH_MADCOMPONENTS],
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
                [test x$with_vorbiscomponents = xtrue])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xtrue])
+
+AM_CONDITIONAL([INSTALL_DEVEL_HEADERS], [test x$install_devel = xtrue])
+
 
 AC_OUTPUT

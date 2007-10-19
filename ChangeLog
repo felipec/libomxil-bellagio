@@ -11,7 +11,7 @@ Changes in 0.3.3:
 - Added port construction function pointer
 - Removed CHECK_ERROR and CHECK_HEADER macros
 - Added optional installation of Bellagio internal header files for new 
-  components development outside Bellagio source tree. configure option --enable-install_devel
+  components development outside Bellagio source tree. configure option --enable-install-devel
 
 WARNING! the version of ffmpeg used has been changed, since the AAC is supported 
 only by the most recent version of ffmpeg, 0.4.9-0.37.20070503

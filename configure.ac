@@ -208,9 +208,9 @@ AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS],
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS_2],
                [test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary_2 = xtrue])
 AM_CONDITIONAL([WITH_MADCOMPONENTS],
-               [test x$have_vorbis = xyes && test x$with_madcomponents = xtrue])
+               [test x$have_mad = xyes && test x$with_madcomponents = xtrue])
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
-               [test x$have_mad = xyes && test x$with_vorbiscomponents = xtrue])
+               [test x$have_vorbis = xyes && test x$with_vorbiscomponents = xtrue])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xtrue])
 
 AM_CONDITIONAL([INSTALL_DEVEL_HEADERS], [test x$install_devel = xtrue])

@@ -13,6 +13,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_FILES([
     Doxyfile
     Makefile
+    footer_SF.html
     libomxil-B.pc
     include/Makefile
     src/Makefile

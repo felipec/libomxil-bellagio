@@ -2,7 +2,7 @@ SUBDIRS = src include test m4
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = libomxil-B.spec Doxyfile 
+EXTRA_DIST = libomxil-B.spec Doxyfile footer_SF.html
 
 pkgconfigdir        = $(libdir)/pkgconfig
 pkgconfig_DATA      = libomxil-B.pc

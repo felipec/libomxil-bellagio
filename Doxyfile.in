@@ -6,9 +6,9 @@
 PROJECT_NAME = @PACKAGE_NAME@
 PROJECT_NUMBER = @PACKAGE_VERSION@
 OUTPUT_DIRECTORY = 
-CREATE_SUBDIRS = YES
+CREATE_SUBDIRS = NO
 OUTPUT_LANGUAGE = English
-USE_WINDOWS_ENCODING = YES
+USE_WINDOWS_ENCODING = NO
 BRIEF_MEMBER_DESC = YES
 REPEAT_BRIEF = YES
 ABBREVIATE_BRIEF = "The $name class" "The $name widget" "The $name file" is provides specifies contains represents a an the
@@ -72,8 +72,8 @@ WARN_LOGFILE =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT = 
-FILE_PATTERNS = *.c *.cc *.cxx *.cpp *.c++ *.d *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
+INPUT = @top_srcdir@
+FILE_PATTERNS = *.c *.h
 RECURSIVE = YES
 EXCLUDE = 
 EXCLUDE_SYMLINKS = NO
@@ -109,7 +109,7 @@ GENERATE_HTML = YES
 HTML_OUTPUT = html
 HTML_FILE_EXTENSION = .html
 HTML_HEADER = 
-HTML_FOOTER = 
+HTML_FOOTER = footer_SF.html 
 HTML_STYLESHEET = 
 HTML_ALIGN_MEMBERS = YES
 GENERATE_HTMLHELP = NO
@@ -125,7 +125,7 @@ TREEVIEW_WIDTH = 250
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
 #---------------------------------------------------------------------------
-GENERATE_LATEX = YES
+GENERATE_LATEX = NO
 LATEX_OUTPUT = latex
 LATEX_CMD_NAME = latex
 MAKEINDEX_CMD_NAME = makeindex

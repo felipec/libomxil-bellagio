@@ -41,12 +41,13 @@
 
 
 #include "omxcore.h"
+
 /** The following include file contains the st staic component loader st_static_loader
  */
 #include "st_static_component_loader.h"
 
-/** The static field initialized is equal to 0 if the core is not initialized. 
- * It is equal to 1 whern the OMX_Init has been called
+/** The static field initialized is equal to OMX_FALSE if the core is not initialized. 
+ * It is equal to OMX_TRUE whern the OMX_Init has been called
  */
 static OMX_BOOL initialized;
 
@@ -126,7 +127,7 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
   OMX_IN  OMX_STRING cComponentName,
   OMX_IN  OMX_PTR pAppData,
   OMX_IN  OMX_CALLBACKTYPE* pCallBacks) {
-	
+
   int i;
   OMX_ERRORTYPE err;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -154,16 +155,16 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
  * This function calls the component loader destroy function.
  */
 OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent) {
-	int i;
-	OMX_ERRORTYPE err;
-	for (i = 0; i < NUM_LOADERS; i++) {
-		err = loadersList[i]->BOSA_DestroyComponent(loadersList[i], hComponent);
-		if (err == OMX_ErrorNone) {
-			// the component has been found and destroyed
-			return OMX_ErrorNone;
-		}
-	}
-	return OMX_ErrorComponentNotFound;
+  int i;
+  OMX_ERRORTYPE err;
+  for (i = 0; i < NUM_LOADERS; i++) {
+    err = loadersList[i]->BOSA_DestroyComponent(loadersList[i], hComponent);
+    if (err == OMX_ErrorNone) {
+      // the component has been found and destroyed
+      return OMX_ErrorNone;
+    }
+  }
+  return OMX_ErrorComponentNotFound;
 }
 
 /** @brief the OMX_ComponentNameEnum standard function
@@ -193,7 +194,7 @@ OMX_ERRORTYPE OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
       * current loader, and use it as offset for the next loader
       */
       end_index = 0;
-			index = 0;
+      index = 0;
       while (!end_index) {
         err = loadersList[i]->BOSA_ComponentNameEnum(
         loadersList[i],
@@ -230,7 +231,7 @@ OMX_ERRORTYPE OMX_SetupTunnel(
   OMX_ERRORTYPE err;
   OMX_COMPONENTTYPE* component;
   OMX_TUNNELSETUPTYPE tunnelSetup;
-	
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
   if (hOutput == NULL && hInput == NULL) {
@@ -283,7 +284,7 @@ OMX_ERRORTYPE OMX_GetRolesOfComponent (
   OMX_OUT     OMX_U8 **roles) {
   OMX_ERRORTYPE err;
   int i;
-	
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   for (i = 0; i<NUM_LOADERS; i++) {
     err = loadersList[i]->BOSA_GetRolesOfComponent(

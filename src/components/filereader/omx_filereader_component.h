@@ -112,5 +112,10 @@ OMX_ERRORTYPE omx_filereader_component_SetConfig(
   OMX_IN  OMX_INDEXTYPE nIndex,
   OMX_IN  OMX_PTR pComponentConfigStructure);
 
+OMX_ERRORTYPE omx_filereader_component_GetConfig(
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nIndex,
+  OMX_IN  OMX_PTR pComponentConfigStructure);
+
 #endif
 

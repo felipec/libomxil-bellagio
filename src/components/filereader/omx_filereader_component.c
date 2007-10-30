@@ -115,6 +115,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   openmaxStandComp->SetParameter  = omx_filereader_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_filereader_component_GetParameter;
   openmaxStandComp->SetConfig     = omx_filereader_component_SetConfig;
+  openmaxStandComp->GetConfig     = omx_filereader_component_GetConfig;
 
   /* Write in the default paramenters */
 
@@ -449,12 +450,6 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
   case OMX_IndexVendorFileReadInputFilename : 
     strcpy((char *)ComponentParameterStructure, "still no filename");
     break;
-  case OMX_IndexVendorExtraData:
-    sExtraData.nPortIndex = 0;
-    sExtraData.nDataSize  = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
-    sExtraData.pData      = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
-    memcpy(ComponentParameterStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
-    break;
   default: /*Call the base component function*/
     return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
@@ -529,6 +524,29 @@ OMX_ERRORTYPE omx_filereader_component_SetConfig(
       return OMX_ErrorNone;
     default: // delegate to superclass
       return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
+  }
+  return OMX_ErrorNone;
+}
+
+/** setting configurations */
+OMX_ERRORTYPE omx_filereader_component_GetConfig(
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nIndex,
+  OMX_IN  OMX_PTR pComponentConfigStructure) {
+
+  OMX_VENDOR_EXTRADATATYPE sExtraData;
+  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
+  omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
+
+  switch (nIndex) {
+    case OMX_IndexVendorExtraData:
+      sExtraData.nPortIndex = 0;
+      sExtraData.nDataSize  = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
+      sExtraData.pData      = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
+      memcpy(pComponentConfigStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
+      break;
+    default: // delegate to superclass
+      return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
   return OMX_ErrorNone;
 }

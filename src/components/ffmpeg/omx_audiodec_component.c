@@ -158,8 +158,9 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   omx_audiodec_component_Private->destructor = omx_audiodec_component_Destructor;
   openmaxStandComp->SetParameter = omx_audiodec_component_SetParameter;
   openmaxStandComp->GetParameter = omx_audiodec_component_GetParameter;
+  openmaxStandComp->SetConfig    = omx_audiodec_component_SetConfig;
   openmaxStandComp->ComponentRoleEnum = omx_audiodec_component_ComponentRoleEnum;
-
+  
   noAudioDecInstance++;
 
   if(noAudioDecInstance>MAX_COMPONENT_AUDIODEC)
@@ -514,7 +515,6 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
   OMX_AUDIO_PARAM_VORBISTYPE *pAudioVorbis; //support for Vorbis format
   OMX_AUDIO_PARAM_AACPROFILETYPE *pAudioAac; //support for AAC format
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
-  OMX_VENDOR_EXTRADATATYPE* pExtradata;
   OMX_U32 portIndex;
 
   /* Check which structure we are being fed and make control its header */
@@ -543,25 +543,6 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
       return OMX_ErrorBadPortIndex;
     }
     break;	
-  case OMX_IndexVendorExtraData :  
-    pExtradata = (OMX_VENDOR_EXTRADATATYPE*)ComponentParameterStructure;
-    portIndex = pExtradata->nPortIndex;
-    if (portIndex <= 1) {
-      /** copy the extradata in the codec context private structure */
-      omx_audiodec_component_Private->extradata_size = (OMX_U32)pExtradata->nDataSize;
-      if(omx_audiodec_component_Private->extradata_size > 0) {
-        if(omx_audiodec_component_Private->extradata) {
-          free(omx_audiodec_component_Private->extradata);
-        }
-        omx_audiodec_component_Private->extradata = (unsigned char *)malloc((int)pExtradata->nDataSize*sizeof(char));
-        memcpy(omx_audiodec_component_Private->extradata,(unsigned char*)(pExtradata->pData),pExtradata->nDataSize);
-      } else {
-      		DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");
-      }	
-    } else {
-      	return OMX_ErrorBadPortIndex;
-    }
-    break;
   case OMX_IndexParamAudioPcm:
     pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
     portIndex = pAudioPcmMode->nPortIndex;
@@ -802,6 +783,48 @@ OMX_ERRORTYPE omx_audiodec_component_ComponentRoleEnum(
     return OMX_ErrorUnsupportedIndex;
   }
   return OMX_ErrorNone;
+}
+
+
+OMX_ERRORTYPE omx_audiodec_component_SetConfig(
+  OMX_HANDLETYPE hComponent,
+  OMX_INDEXTYPE nIndex,
+  OMX_PTR pComponentConfigStructure) {
+  
+  OMX_ERRORTYPE err = OMX_ErrorNone;
+  OMX_VENDOR_EXTRADATATYPE* pExtradata;
+
+  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
+  omx_audiodec_component_PrivateType* omx_audiodec_component_Private = (omx_audiodec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
+  if (pComponentConfigStructure == NULL) {
+    return OMX_ErrorBadParameter;
+  }
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "   Getting configuration %i\n", nIndex);
+  /* Check which structure we are being fed and fill its header */
+  switch (nIndex) {
+    case OMX_IndexVendorExtraData :  
+      pExtradata = (OMX_VENDOR_EXTRADATATYPE*)pComponentConfigStructure;
+      if (pExtradata->nPortIndex <= 1) {
+        /** copy the extradata in the codec context private structure */
+        omx_audiodec_component_Private->extradata_size = (OMX_U32)pExtradata->nDataSize;
+        if(omx_audiodec_component_Private->extradata_size > 0) {
+          if(omx_audiodec_component_Private->extradata) {
+            free(omx_audiodec_component_Private->extradata);
+          }
+          omx_audiodec_component_Private->extradata = (unsigned char *)malloc((int)pExtradata->nDataSize*sizeof(char));
+          memcpy(omx_audiodec_component_Private->extradata,(unsigned char*)(pExtradata->pData),pExtradata->nDataSize);
+        } else {
+      		  DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");
+        }	
+      } else {
+      	  return OMX_ErrorBadPortIndex;
+      }
+      break;		
+    		
+    default: // delegate to superclass
+      return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
+  }
+  return err;
 }
 
 

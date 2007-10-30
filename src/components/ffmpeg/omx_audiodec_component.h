@@ -127,5 +127,10 @@ OMX_ERRORTYPE omx_audiodec_component_ComponentRoleEnum(
 
 void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 
+OMX_ERRORTYPE omx_audiodec_component_SetConfig(
+  OMX_HANDLETYPE hComponent,
+  OMX_INDEXTYPE nIndex,
+  OMX_PTR pComponentConfigStructure);
+
 
 #endif

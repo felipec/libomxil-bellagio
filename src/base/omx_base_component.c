@@ -904,7 +904,7 @@ OMX_ERRORTYPE omx_base_component_GetExtensionIndex(
 
 	if(strcmp(cParameterName,"OMX.ST.index.param.filereader.inputfilename") == 0) {
 		*pIndexType = OMX_IndexVendorFileReadInputFilename;	
-	} else if(strcmp(cParameterName,"OMX.ST.index.param.extradata") == 0) {
+	} else if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
 		*pIndexType = OMX_IndexVendorExtraData;	
 	} else {
 		return OMX_ErrorBadParameter;

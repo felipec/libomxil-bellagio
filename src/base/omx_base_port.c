@@ -331,13 +331,6 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
       return err;
     }
     openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
-    /*
-    if (omx_base_component_Private->state==OMX_StateExecuting) {
-      for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual;i++) {
-        tsem_up(openmaxStandPort->pBufferSem);
-        tsem_up(omx_base_component_Private->bMgmtSem);
-      }
-    }*/
     DEBUG(DEB_LEV_PARAMS, "In %s Qelem=%d BSem=%d\n", __func__,openmaxStandPort->pBufferQueue->nelem,openmaxStandPort->pBufferSem->semval);
   }
 

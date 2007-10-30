@@ -1243,6 +1243,17 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
         OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
         message->messageParam, /* The state has been changed in message->messageParam */
         NULL);
+
+        if (omx_base_component_Private->state==OMX_StateExecuting) {
+          pPort=omx_base_component_Private->ports[message->messageParam];
+          if (PORT_IS_BUFFER_SUPPLIER(pPort)) {
+            for(i=0; i < pPort->sPortParam.nBufferCountActual;i++) {
+              tsem_up(pPort->pBufferSem);
+              tsem_up(omx_base_component_Private->bMgmtSem);
+            }
+          }
+        }
+
       } else {
         for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
           (*(omx_base_component_Private->callbacks->EventHandler))
@@ -1252,6 +1263,18 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
           OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
           i, /* The state has been changed in message->messageParam */
           NULL);
+        }
+
+        if (omx_base_component_Private->state==OMX_StateExecuting) {
+          for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
+            pPort=omx_base_component_Private->ports[i];
+            if (PORT_IS_BUFFER_SUPPLIER(pPort)) {
+              for(i=0; i < pPort->sPortParam.nBufferCountActual;i++) {
+                tsem_up(pPort->pBufferSem);
+                tsem_up(omx_base_component_Private->bMgmtSem);
+              }
+            }
+          }
         }
       }
     }

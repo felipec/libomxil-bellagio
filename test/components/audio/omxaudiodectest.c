@@ -41,6 +41,7 @@
 #define SINK_NAME "OMX.st.alsa.alsasink"
 #define FILE_READER "OMX.st.audio_filereader"
 #define AUDIO_EFFECT "OMX.st.volume.component"
+#define extradata_size 1024
 
 appPrivateType* appPriv;
 
@@ -285,8 +286,6 @@ int main(int argc, char** argv) {
   OMX_INDEXTYPE eIndexParamFilename;
   OMX_STRING full_component_name;
   int index;
-  OMX_PTR pExtraData;
-  OMX_INDEXTYPE eIndexExtraData;
   int data_read;
   int gain=-1;
   OMX_AUDIO_CONFIG_VOLUMETYPE sVolume;
@@ -646,97 +645,6 @@ int main(int argc, char** argv) {
     DEBUG(DEFAULT_MESSAGES,"File reader Port Settings Changed event \n");
   }
 
-  /*If Ports Are Tunneled the Disable Output port of File Reader and Input port of Audio Decoder*/
-  if (flagSetupTunnel && flagUsingFFMpeg) {
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"Sending Port Disable Command\n");
-    /*Port Disable for filereader is sent from Port Settings Changed event of FileReader*/
-    /*
-    err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandPortDisable, 0, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"file reader port disable failed\n");
-			exit(1);
-    }*/
-    err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortDisable, 0, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"file reader port disable failed\n");
-			exit(1);
-    }
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"Waiting File reader Port Disable event \n");
-    /*Wait for File Reader Ports Disable Event*/
-    tsem_down(appPriv->filereaderEventSem);
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Disable\n");
-    /*Wait for Audio Decoder Ports Disable Event*/
-    tsem_down(appPriv->decoderEventSem);
-  }
-
-  if(flagUsingFFMpeg) {
-    err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.param.extradata",&eIndexExtraData);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
-			exit(1);
-    } else {
-      pExtraData = malloc(128);
-      err = OMX_GetParameter(appPriv->filereaderhandle, eIndexExtraData, pExtraData);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"\n file reader Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
-				exit(1);
-      }
-      err = OMX_SetParameter(appPriv->audiodechandle, eIndexExtraData, pExtraData);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"\n audio decoder Set Param Failed error=%08x\n",err);
-				exit(1);
-      }
-      free(pExtraData);
-    }
-    // getting port parameters from file reader component //
-    paramPort.nPortIndex = 0;
-    setHeader(&paramPort, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-    err = OMX_GetParameter(appPriv->filereaderhandle, OMX_IndexParamPortDefinition, &paramPort);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"\n error in file reader port settings get\n");	
-			exit(1);
-    }
-    decparamPort.nPortIndex = 0;
-    setHeader(&decparamPort, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
-    err = OMX_GetParameter(appPriv->audiodechandle, OMX_IndexParamPortDefinition, &decparamPort);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"\n error in audiodechandle settings get\n");	
-			exit(1);
-    }
-
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"mime type=%s --- \n",paramPort.format.audio.cMIMEType);	
-    decparamPort.format.audio.cMIMEType=paramPort.format.audio.cMIMEType;
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"mime type=%s --- \n",decparamPort.format.audio.cMIMEType);	
-    decparamPort.format.audio.eEncoding=paramPort.format.audio.eEncoding;
-    err = OMX_SetParameter(appPriv->audiodechandle, OMX_IndexParamPortDefinition, &decparamPort);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"Error %08x setting audiodec port param --- \n",err);
-			exit(1);
-    } 
-  }
-
-  if (flagSetupTunnel && flagUsingFFMpeg) {
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"Sending Port Enable Command\n");
-
-    err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandPortEnable, 0, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"file reader port enable failed\n");
-			exit(1);
-    }
-    err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortEnable, 0, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"file reader port enable failed\n");
-			exit(1);
-    }
-    /*Wait for File Reader Ports Disable Event*/
-    tsem_down(appPriv->filereaderEventSem);
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Enable \n");
-    /*Wait for Audio Decoder Ports Disable Event*/
-    tsem_down(appPriv->decoderEventSem);
-
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"Ports are Enabled Now\n");
-  }
-
   /*Send State Change Idle command to Audio Decoder*/
   if (!flagSetupTunnel) {
     err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
@@ -1063,6 +971,8 @@ OMX_ERRORTYPE filereaderEventHandler(
   OMX_OUT OMX_U32 Data2,
   OMX_OUT OMX_PTR pEventData)
 {
+  OMX_PTR pExtraData;
+  OMX_INDEXTYPE eIndexExtraData;
   OMX_ERRORTYPE err;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
 
@@ -1101,13 +1011,25 @@ OMX_ERRORTYPE filereaderEventHandler(
     }
   }else if(eEvent == OMX_EventPortSettingsChanged) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Setting Changed event\n");
-    if (flagSetupTunnel && flagUsingFFMpeg) {
-      /*Sent Port Disable command. So that Audio Decoder Port which willl be disabled don't
-        receive further buffers*/
-      err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandPortDisable, 0, NULL);
+    if(flagUsingFFMpeg) {
+      err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.config.extradata",&eIndexExtraData);
       if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"file reader port disable failed\n");
+        DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
 			  exit(1);
+      } else {
+        pExtraData = malloc(extradata_size);
+        err = OMX_GetConfig(appPriv->filereaderhandle, eIndexExtraData, pExtraData);
+        if(err != OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR,"\n file reader Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
+				  exit(1);
+        }
+        DEBUG(DEB_LEV_SIMPLE_SEQ,"Setting ExtraData\n");
+        err = OMX_SetConfig(appPriv->audiodechandle, eIndexExtraData, pExtraData);
+        if(err != OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR,"\n audio decoder Set Config Failed error=%08x\n",err);
+				  exit(1);
+        }
+        free(pExtraData);
       }
     }
     /*Signal Port Setting Changed*/

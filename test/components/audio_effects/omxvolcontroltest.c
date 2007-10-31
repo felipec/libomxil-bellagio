@@ -52,10 +52,10 @@ static void setHeader(OMX_PTR header, OMX_U32 size) {
 
 void display_help() {
   printf("\n");
-  printf("Usage: omxvolcontroltest [-o outfile] [-g] filename\n");
+  printf("Usage: omxvolcontroltest [-o outfile] [-g gain] filename\n");
   printf("\n");
-  printf("       -o outfile: If this option is specified, the decoded stream is written to outfile\n");
-  printf("                   This option can't be used with '-t' \n");
+  printf("       -o outfile: If this option is specified, the output stream is written to outfile\n");
+  printf("                   otherwise redirected to std output\n");
   printf("       -g: Gain of the audio sink[0...100]\n");
   printf("       -h: Displays this help\n");
   printf("\n");

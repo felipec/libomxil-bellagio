@@ -160,6 +160,7 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   openmaxStandComp->GetParameter = omx_audiodec_component_GetParameter;
   openmaxStandComp->SetConfig    = omx_audiodec_component_SetConfig;
   openmaxStandComp->ComponentRoleEnum = omx_audiodec_component_ComponentRoleEnum;
+  openmaxStandComp->GetExtensionIndex = omx_audiodec_component_GetExtensionIndex;
   
   noAudioDecInstance++;
 
@@ -825,6 +826,21 @@ OMX_ERRORTYPE omx_audiodec_component_SetConfig(
       return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
   return err;
+}
+
+OMX_ERRORTYPE omx_audiodec_component_GetExtensionIndex(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_STRING cParameterName,
+	OMX_OUT OMX_INDEXTYPE* pIndexType) {		
+
+	DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
+
+	if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
+		*pIndexType = OMX_IndexVendorExtraData;	
+	} else {
+		return OMX_ErrorBadParameter;
+	}
+	return OMX_ErrorNone;	
 }
 
 

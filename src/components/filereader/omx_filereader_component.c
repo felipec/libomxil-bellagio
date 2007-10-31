@@ -116,6 +116,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   openmaxStandComp->GetParameter  = omx_filereader_component_GetParameter;
   openmaxStandComp->SetConfig     = omx_filereader_component_SetConfig;
   openmaxStandComp->GetConfig     = omx_filereader_component_GetConfig;
+  openmaxStandComp->GetExtensionIndex = omx_filereader_component_GetExtensionIndex;
 
   /* Write in the default paramenters */
 
@@ -418,7 +419,6 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
 
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;	
-  OMX_VENDOR_EXTRADATATYPE sExtraData;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
   omx_filereader_component_PortType *pPort = (omx_filereader_component_PortType *) omx_filereader_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];	
@@ -551,3 +551,19 @@ OMX_ERRORTYPE omx_filereader_component_GetConfig(
   return OMX_ErrorNone;
 }
 
+OMX_ERRORTYPE omx_filereader_component_GetExtensionIndex(
+	OMX_IN  OMX_HANDLETYPE hComponent,
+	OMX_IN  OMX_STRING cParameterName,
+	OMX_OUT OMX_INDEXTYPE* pIndexType) {		
+
+	DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
+
+	if(strcmp(cParameterName,"OMX.ST.index.param.filereader.inputfilename") == 0) {
+		*pIndexType = OMX_IndexVendorFileReadInputFilename;	
+	} else if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
+		*pIndexType = OMX_IndexVendorExtraData;	
+	} else {
+		return OMX_ErrorBadParameter;
+	}
+	return OMX_ErrorNone;	
+}

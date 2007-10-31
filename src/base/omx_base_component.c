@@ -902,14 +902,7 @@ OMX_ERRORTYPE omx_base_component_GetExtensionIndex(
 
 	DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
-	if(strcmp(cParameterName,"OMX.ST.index.param.filereader.inputfilename") == 0) {
-		*pIndexType = OMX_IndexVendorFileReadInputFilename;	
-	} else if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
-		*pIndexType = OMX_IndexVendorExtraData;	
-	} else {
-		return OMX_ErrorBadParameter;
-	}
-	return OMX_ErrorNone;	
+	return OMX_ErrorBadParameter;	
 }
 
 /** @return the state of the component

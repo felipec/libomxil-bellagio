@@ -275,6 +275,8 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
   if (eError != OMX_ErrorNone) {
     if (eError == OMX_ErrorInsufficientResources) {
       *pHandle = openmaxStandComp;
+      priv = (omx_base_component_PrivateType *) openmaxStandComp->pComponentPrivate;
+      priv->loader = (void *)loader;
       return OMX_ErrorInsufficientResources;
     }
     DEBUG(DEB_LEV_ERR, "Error during component construction\n");

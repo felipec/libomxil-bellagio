@@ -302,7 +302,6 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
 OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
   omx_base_component_PrivateType* omx_base_component_Private;
   OMX_ERRORTYPE err=OMX_ErrorNone;
-  OMX_U32 i;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   if (PORT_IS_ENABLED(openmaxStandPort)) {

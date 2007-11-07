@@ -155,6 +155,9 @@ AC_CHECK_HEADER([ffmpeg/avformat.h], [], [with_ffmpeglibrary=false])
 AC_CHECK_HEADER([ffmpeg/avutil.h], [], [with_ffmpeglibrary=false])
 AC_CHECK_HEADER([ffmpeg/swscale.h], [], [with_ffmpeglibrary=false])
 
+#Check for vorbis library existence
+AC_CHECK_HEADER([vorbis/codec.h], [], [with_vorbislibrary=false])
+
 ################################################################################
 # Check for pkg-config modules                                                 #
 ################################################################################
@@ -211,7 +214,7 @@ AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS_2],
 AM_CONDITIONAL([WITH_MADCOMPONENTS],
                [test x$have_mad = xyes && test x$with_madcomponents = xtrue])
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
-               [test x$have_vorbis = xyes && test x$with_vorbiscomponents = xtrue])
+               [test x$have_vorbis = xyes && test x$with_vorbiscomponents = xtrue && test x$with_vorbislibrary = xtrue])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xtrue])
 
 AM_CONDITIONAL([INSTALL_DEVEL_HEADERS], [test x$install_devel = xtrue])

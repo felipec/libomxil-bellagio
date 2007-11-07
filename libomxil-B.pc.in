@@ -7,5 +7,5 @@ Name: libomxil
 Description: OpenMAX Integration Layer library
 Version: @VERSION@
 Libs: -L${libdir} -lomxil
-Cflags: -I${includedir}
+Cflags: -I${includedir} -I${includedir}/bellagio
 

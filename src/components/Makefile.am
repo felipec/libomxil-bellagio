@@ -3,11 +3,6 @@ if WITH_FFMPEGCOMPONENTS
     MAYBE_FILEREADER = filereader
 endif
 
-if WITH_FFMPEGCOMPONENTS_2
-    MAYBE_FFMPEG = ffmpeg
-    MAYBE_FILEREADER = filereader
-endif
-
 if WITH_AUDIOEFFECTS
     MAYBE_AUDIO_EFFECTS = audio_effects
 endif

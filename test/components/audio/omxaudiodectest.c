@@ -520,13 +520,13 @@ int main(int argc, char** argv) {
     if((gain >= 0) && (gain <100)) {
       err = OMX_GetConfig(appPriv->volumehandle, OMX_IndexConfigAudioVolume, &sVolume);
       if(err!=OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetParameter 0 \n",err);
+        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_GetConfig 0 \n",err);
       }
       sVolume.sVolume.nValue = gain;
       DEBUG(DEFAULT_MESSAGES, "Setting Gain %d \n", gain);
       err = OMX_SetConfig(appPriv->volumehandle, OMX_IndexConfigAudioVolume, &sVolume);
       if(err!=OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetParameter 0 \n",err);
+        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig 0 \n",err);
       }
     }
   }

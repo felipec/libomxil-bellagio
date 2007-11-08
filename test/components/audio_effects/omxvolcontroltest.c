@@ -56,7 +56,7 @@ void display_help() {
   printf("\n");
   printf("       -o outfile: If this option is specified, the output stream is written to outfile\n");
   printf("                   otherwise redirected to std output\n");
-  printf("       -g: Gain of the audio sink[0...100]\n");
+  printf("       -g: Gain of pcm data [0...100]\n");
   printf("       -h: Displays this help\n");
   printf("\n");
   exit(1);

@@ -310,12 +310,17 @@ OMX_ERRORTYPE omx_maddec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   /*Restore temporary input buffer pointer*/
   omx_maddec_component_Private->temporary_buffer->pBuffer = temp_input_buffer;
-  DEBUG(DEB_LEV_ERR, "Freeing Temporary Buffer\n");
+  temp_input_buffer = NULL;
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing Temporary Buffer\n");
   /* freeing temporary memory allocation */
-  free(omx_maddec_component_Private->temporary_buffer->pBuffer);
-  omx_maddec_component_Private->temporary_buffer->pBuffer = NULL;
-  free(omx_maddec_component_Private->temporary_buffer);
-  omx_maddec_component_Private->temporary_buffer = NULL;
+  if(omx_maddec_component_Private->temporary_buffer->pBuffer) {
+    free(omx_maddec_component_Private->temporary_buffer->pBuffer);
+    omx_maddec_component_Private->temporary_buffer->pBuffer = NULL;
+  }
+  if(omx_maddec_component_Private->temporary_buffer) {
+    free(omx_maddec_component_Private->temporary_buffer);
+    omx_maddec_component_Private->temporary_buffer = NULL;
+  }
   
   return err;
 }

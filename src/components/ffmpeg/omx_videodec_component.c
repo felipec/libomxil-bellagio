@@ -571,6 +571,15 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
   switch(nParamIndex) {
+    case OMX_IndexParamPortDefinition:
+      {
+        OMX_PARAM_PORTDEFINITIONTYPE *pPortDef;
+        pPortDef = ComponentParameterStructure;
+        portIndex = pPortDef->nPortIndex;
+        port = omx_videodec_component_Private->ports[portIndex];
+        memcpy(&port->sPortParam, pPortDef, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
+        break;
+      }
     case OMX_IndexParamVideoPortFormat:
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
       portIndex = pVideoPortFormat->nPortIndex;

@@ -377,14 +377,10 @@ OMX_ERRORTYPE omx_videodec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
   OMX_ERRORTYPE eError = OMX_ErrorNone;
-  OMX_U32 nBufferSize;
 
   /** Temporary First Output buffer size */
   omx_videodec_component_Private->inputCurrBuffer = NULL;
   omx_videodec_component_Private->inputCurrLength = 0;
-  nBufferSize = omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
-  omx_videodec_component_Private->internalOutputBuffer = (OMX_U8 *)malloc(nBufferSize);
-  memset(omx_videodec_component_Private->internalOutputBuffer, 0, nBufferSize);
   omx_videodec_component_Private->isFirstBuffer = 1;
   omx_videodec_component_Private->positionInOutBuf = 0;
   omx_videodec_component_Private->isNewBuffer = 1;
@@ -402,11 +398,6 @@ OMX_ERRORTYPE omx_videodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   if (omx_videodec_component_Private->avcodecReady) {
     omx_videodec_component_ffmpegLibDeInit(omx_videodec_component_Private);
     omx_videodec_component_Private->avcodecReady = OMX_FALSE;
-  }
-
-  if(omx_videodec_component_Private->internalOutputBuffer) {
-    free(omx_videodec_component_Private->internalOutputBuffer);
-    omx_videodec_component_Private->internalOutputBuffer = NULL;
   }
 
   return eError;

@@ -83,8 +83,6 @@ DERIVEDCLASS(omx_videodec_component_PrivateType, omx_base_filter_PrivateType)
   OMX_U8* inputCurrBuffer;\
   /** @param inputCurrLength Field that stores current input buffer length in bytes */ \
   OMX_U32 inputCurrLength;\
-  /** @param internalOutputBuffer Field used for first internal output buffer */ \
-  OMX_U8* internalOutputBuffer;\
   /** @param isFirstBuffer Field that the buffer is the first buffer */ \
   OMX_S32 isFirstBuffer;\
   /** @param positionInOutBuf Field that used to calculate starting address of the next output frame to be written */ \

@@ -133,12 +133,6 @@ AC_SEARCH_LIBS([dlopen], [dl], [], [AC_MSG_ERROR([libdl is required])])
 # Check if Alsa sound library is present
 AC_CHECK_LIB(asound, snd_pcm_plugin_init, [with_alsalibrary=true], [with_alsalibrary=false])
 
-#Check for ffmpeg (old version) library existence
-AC_CHECK_LIB(avcodec, avcodec_decode_audio, [with_ffmpeglibrary=true], [with_ffmpeglibrary=false])
-
-#Check for ffmpeg (new version) library existence
-AC_CHECK_LIB(avcodec, avcodec_decode_audio2, [with_ffmpeglibrary_2=true], [with_ffmpeglibrary_2=false])
-
 ################################################################################
 # Check for header files                                                       #
 ################################################################################
@@ -148,12 +142,6 @@ AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=true], [with_framebuffer=false])
 
 # Check if Alsa sound library is present
 AC_CHECK_HEADER([alsa/asoundlib.h], [], [with_alsalibrary=false])
-
-#Check for ffmpeg library existence
-AC_CHECK_HEADER([ffmpeg/avcodec.h], [], [with_ffmpeglibrary=false])
-AC_CHECK_HEADER([ffmpeg/avformat.h], [], [with_ffmpeglibrary=false])
-AC_CHECK_HEADER([ffmpeg/avutil.h], [], [with_ffmpeglibrary=false])
-AC_CHECK_HEADER([ffmpeg/swscale.h], [], [with_ffmpeglibrary=false])
 
 #Check for vorbis library existence
 AC_CHECK_HEADER([vorbis/codec.h], [], [with_vorbislibrary=false])
@@ -219,9 +207,9 @@ fi
 AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xtrue && test x$with_framebuffer = xtrue])
 AM_CONDITIONAL([WITH_ALSASINK], [test x$with_alsasink = xtrue && test x$with_alsalibrary = xtrue])
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS],
-               [test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary = xtrue])
-AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS_2],
-               [test x$with_ffmpegcomponents = xtrue && test x$with_ffmpeglibrary_2 = xtrue])
+               [test x$have_ffmpeg = xyes && test x$with_ffmpegcomponents = xtrue])
+AM_CONDITIONAL([HAVE_FFMPEG_DECODE_AUDIO_2],
+               [test x$have_ffmpeg = xyes && test x$have_decode_audio2 = xyes])
 AM_CONDITIONAL([WITH_MADCOMPONENTS],
                [test x$have_mad = xyes && test x$with_madcomponents = xtrue])
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS],

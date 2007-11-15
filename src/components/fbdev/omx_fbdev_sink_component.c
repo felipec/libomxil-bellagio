@@ -1264,7 +1264,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       //	Figure out stride, slice height, min buffer size
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
-      pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
+      // Read-only field by spec
+      // pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
 
       pPort->omxConfigCrop.nWidth = pPort->sPortParam.format.video.nFrameWidth;
       pPort->omxConfigCrop.nHeight = pPort->sPortParam.format.video.nFrameHeight;

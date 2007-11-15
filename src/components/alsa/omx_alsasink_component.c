@@ -91,16 +91,16 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingPCM;
 
   /* OMX_AUDIO_PARAM_PCMMODETYPE */
-  setHeader(&pPort->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-  pPort->omxAudioParamPcmMode.nPortIndex = 0;
-  pPort->omxAudioParamPcmMode.nChannels = 2;
-  pPort->omxAudioParamPcmMode.eNumData = OMX_NumericalDataSigned;
-  pPort->omxAudioParamPcmMode.eEndian = OMX_EndianLittle;
-  pPort->omxAudioParamPcmMode.bInterleaved = OMX_TRUE;
-  pPort->omxAudioParamPcmMode.nBitPerSample = 16;
-  pPort->omxAudioParamPcmMode.nSamplingRate = 44100;
-  pPort->omxAudioParamPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
-  pPort->omxAudioParamPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
+  setHeader(&omx_alsasink_component_Private->sPCMModeParam, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+  omx_alsasink_component_Private->sPCMModeParam.nPortIndex = 0;
+  omx_alsasink_component_Private->sPCMModeParam.nChannels = 2;
+  omx_alsasink_component_Private->sPCMModeParam.eNumData = OMX_NumericalDataSigned;
+  omx_alsasink_component_Private->sPCMModeParam.eEndian = OMX_EndianLittle;
+  omx_alsasink_component_Private->sPCMModeParam.bInterleaved = OMX_TRUE;
+  omx_alsasink_component_Private->sPCMModeParam.nBitPerSample = 16;
+  omx_alsasink_component_Private->sPCMModeParam.nSamplingRate = 44100;
+  omx_alsasink_component_Private->sPCMModeParam.ePCMMode = OMX_AUDIO_PCMModeLinear;
+  omx_alsasink_component_Private->sPCMModeParam.eChannelMapping[0] = OMX_AUDIO_ChannelNone;
 
   noAlsasinkInstance++;
   if(noAlsasinkInstance > MAX_COMPONENT_ALSASINK) {
@@ -108,21 +108,21 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   }
 	
   /* Allocate the playback handle and the hardware parameter structure */
-  if ((err = snd_pcm_open (&pPort->playback_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+  if ((err = snd_pcm_open (&omx_alsasink_component_Private->playback_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
     DEBUG(DEB_LEV_ERR, "cannot open audio device %s (%s)\n", "default", snd_strerror (err));
     return OMX_ErrorHardware;
   }
   else
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got playback handle at %08x %08X in %i\n", (int)pPort->playback_handle, (int)&pPort->playback_handle, getpid());
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got playback handle at %08x %08X in %i\n", (int)omx_alsasink_component_Private->playback_handle, (int)&omx_alsasink_component_Private->playback_handle, getpid());
 
-  if (snd_pcm_hw_params_malloc(&pPort->hw_params) < 0) {
+  if (snd_pcm_hw_params_malloc(&omx_alsasink_component_Private->hw_params) < 0) {
     DEBUG(DEB_LEV_ERR, "%s: failed allocating input pPort hw parameters\n", __func__);
     return OMX_ErrorHardware;
   }
   else
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got hw parameters at %08x\n", (int)pPort->hw_params);
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got hw parameters at %08x\n", (int)omx_alsasink_component_Private->hw_params);
 
-  if ((err = snd_pcm_hw_params_any (pPort->playback_handle, pPort->hw_params)) < 0) {
+  if ((err = snd_pcm_hw_params_any (omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params)) < 0) {
     DEBUG(DEB_LEV_ERR, "cannot initialize hardware parameter structure (%s)\n",	snd_strerror (err));
     return OMX_ErrorHardware;
   }
@@ -131,11 +131,11 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   openmaxStandComp->GetParameter  = omx_alsasink_component_GetParameter;
 
   /* Write in the default paramenters */
-  pPort->AudioPCMConfigured	= 0;
+  omx_alsasink_component_Private->AudioPCMConfigured	= 0;
 
-  if (!pPort->AudioPCMConfigured) {
+  if (!omx_alsasink_component_Private->AudioPCMConfigured) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface in the Init function\n");
-    err = omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioPcm, &pPort->omxAudioParamPcmMode);
+    err = omx_alsasink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioPcm, &omx_alsasink_component_Private->sPCMModeParam);
     if(err != OMX_ErrorNone){
       DEBUG(DEB_LEV_ERR, "In %s Error %08x\n",__func__,err);
     }
@@ -155,11 +155,11 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
     pPort->sPortParam.format.audio.cMIMEType = NULL;
   }
 
-  if(pPort->hw_params) {
-    snd_pcm_hw_params_free (pPort->hw_params);
+  if(omx_alsasink_component_Private->hw_params) {
+    snd_pcm_hw_params_free (omx_alsasink_component_Private->hw_params);
   }
-  if(pPort->playback_handle) {
-    snd_pcm_close(pPort->playback_handle);
+  if(omx_alsasink_component_Private->playback_handle) {
+    snd_pcm_close(omx_alsasink_component_Private->playback_handle);
   }
 
   noAlsasinkInstance--;
@@ -178,12 +178,11 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   OMX_S32 offsetBuffer;
   OMX_BOOL allDataSent;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_alsasink_component_PortType *pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
   /* Feed it to ALSA */
-  frameSize = (pPort->omxAudioParamPcmMode.nChannels * pPort->omxAudioParamPcmMode.nBitPerSample) >> 3;
+  frameSize = (omx_alsasink_component_Private->sPCMModeParam.nChannels * omx_alsasink_component_Private->sPCMModeParam.nBitPerSample) >> 3;
   DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n", 
-  (int)frameSize, (int)pPort->omxAudioParamPcmMode.nChannels, (int)inputbuffer->nFilledLen);
+  (int)frameSize, (int)omx_alsasink_component_Private->sPCMModeParam.nChannels, (int)inputbuffer->nFilledLen);
 
   if(inputbuffer->nFilledLen < frameSize){
     DEBUG(DEB_LEV_ERR, "Ouch!! In %s input buffer filled len(%d) less than frame size(%d)\n",__func__, (int)inputbuffer->nFilledLen, (int)frameSize);
@@ -194,11 +193,11 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   totalBuffer = inputbuffer->nFilledLen/frameSize;
   offsetBuffer = 0;
   while (!allDataSent) {
-    written = snd_pcm_writei(pPort->playback_handle, inputbuffer->pBuffer + (offsetBuffer * frameSize), totalBuffer);
+    written = snd_pcm_writei(omx_alsasink_component_Private->playback_handle, inputbuffer->pBuffer + (offsetBuffer * frameSize), totalBuffer);
     if (written < 0) {
       if(written == -EPIPE){
         DEBUG(DEB_LEV_ERR, "ALSA Underrun..\n");
-        snd_pcm_prepare(pPort->playback_handle);
+        snd_pcm_prepare(omx_alsasink_component_Private->playback_handle);
         written = 0;
       } else {
         DEBUG(DEB_LEV_ERR, "Cannot send any data to the audio device %s (%s)\n", "default", snd_strerror (written));
@@ -234,8 +233,8 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
   omx_alsasink_component_PortType* pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
-  snd_pcm_t* playback_handle = pPort->playback_handle;
-  snd_pcm_hw_params_t* hw_params = pPort->hw_params;
+  snd_pcm_t* playback_handle = omx_alsasink_component_Private->playback_handle;
+  snd_pcm_hw_params_t* hw_params = omx_alsasink_component_Private->hw_params;
 
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
@@ -248,7 +247,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   * e.g.: changing a previously configured sampling rate does not have
   * any effect if we are not calling this each time.
   */
-  err = snd_pcm_hw_params_any (pPort->playback_handle, pPort->hw_params);
+  err = snd_pcm_hw_params_any (omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params);
 
   switch(nParamIndex) {
   case OMX_IndexParamAudioPortFormat:
@@ -269,74 +268,74 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   case OMX_IndexParamAudioPcm:
     {
       unsigned int rate;
-      OMX_AUDIO_PARAM_PCMMODETYPE* omxAudioParamPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
+      OMX_AUDIO_PARAM_PCMMODETYPE* sPCMModeParam = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
 
-      portIndex = omxAudioParamPcmMode->nPortIndex;
+      portIndex = sPCMModeParam->nPortIndex;
       /*Check Structure Header and verify component state*/
-      err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+      err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, sPCMModeParam, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
       if(err!=OMX_ErrorNone) { 
         DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
         break;
       } 
 
-      pPort->AudioPCMConfigured	= 1;
-      if(omxAudioParamPcmMode->nPortIndex != pPort->omxAudioParamPcmMode.nPortIndex){
+      omx_alsasink_component_Private->AudioPCMConfigured	= 1;
+      if(sPCMModeParam->nPortIndex != omx_alsasink_component_Private->sPCMModeParam.nPortIndex){
         DEBUG(DEB_LEV_ERR, "Error setting input pPort index\n");
         err = OMX_ErrorBadParameter;
         break;
       }
 
-      if(snd_pcm_hw_params_set_channels(playback_handle, hw_params, omxAudioParamPcmMode->nChannels)){
+      if(snd_pcm_hw_params_set_channels(playback_handle, hw_params, sPCMModeParam->nChannels)){
         DEBUG(DEB_LEV_ERR, "Error setting number of channels\n");
         return OMX_ErrorBadParameter;
       }
 
-      if(omxAudioParamPcmMode->bInterleaved == OMX_TRUE){
-        if ((err = snd_pcm_hw_params_set_access(pPort->playback_handle, pPort->hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+      if(sPCMModeParam->bInterleaved == OMX_TRUE){
+        if ((err = snd_pcm_hw_params_set_access(omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
           DEBUG(DEB_LEV_ERR, "cannot set access type intrleaved (%s)\n", snd_strerror (err));
           return OMX_ErrorHardware;
         }
       }
       else{
-        if ((err = snd_pcm_hw_params_set_access(pPort->playback_handle, pPort->hw_params, SND_PCM_ACCESS_RW_NONINTERLEAVED)) < 0) {
+        if ((err = snd_pcm_hw_params_set_access(omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params, SND_PCM_ACCESS_RW_NONINTERLEAVED)) < 0) {
           DEBUG(DEB_LEV_ERR, "cannot set access type non interleaved (%s)\n", snd_strerror (err));
           return OMX_ErrorHardware;
         }
       }
-      rate = omxAudioParamPcmMode->nSamplingRate;
-      if ((err = snd_pcm_hw_params_set_rate_near(pPort->playback_handle, pPort->hw_params, &rate, 0)) < 0) {
+      rate = sPCMModeParam->nSamplingRate;
+      if ((err = snd_pcm_hw_params_set_rate_near(omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params, &rate, 0)) < 0) {
         DEBUG(DEB_LEV_ERR, "cannot set sample rate (%s)\n", snd_strerror (err));
         return OMX_ErrorHardware;
       }
       else{
-        DEBUG(DEB_LEV_PARAMS, "Set correctly sampling rate to %i\n", (int)pPort->omxAudioParamPcmMode.nSamplingRate);
+        DEBUG(DEB_LEV_PARAMS, "Set correctly sampling rate to %i\n", (int)omx_alsasink_component_Private->sPCMModeParam.nSamplingRate);
       }
 
-      if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeLinear){
+      if(sPCMModeParam->ePCMMode == OMX_AUDIO_PCMModeLinear){
         snd_pcm_format_t snd_pcm_format = SND_PCM_FORMAT_UNKNOWN;
         DEBUG(DEB_LEV_PARAMS, "Bit per sample %i, signed=%i, little endian=%i\n",
-        (int)omxAudioParamPcmMode->nBitPerSample,
-        (int)omxAudioParamPcmMode->eNumData == OMX_NumericalDataSigned,
-        (int)omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle);
+        (int)sPCMModeParam->nBitPerSample,
+        (int)sPCMModeParam->eNumData == OMX_NumericalDataSigned,
+        (int)sPCMModeParam->eEndian ==  OMX_EndianLittle);
 
-        switch(omxAudioParamPcmMode->nBitPerSample){
+        switch(sPCMModeParam->nBitPerSample){
         case 8:
-          if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataSigned) {
+          if(sPCMModeParam->eNumData == OMX_NumericalDataSigned) {
             snd_pcm_format = SND_PCM_FORMAT_S8;
           } else {
             snd_pcm_format = SND_PCM_FORMAT_U8;
           }
           break;
         case 16:
-          if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataSigned){
-            if(omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle) {
+          if(sPCMModeParam->eNumData == OMX_NumericalDataSigned){
+            if(sPCMModeParam->eEndian ==  OMX_EndianLittle) {
               snd_pcm_format = SND_PCM_FORMAT_S16_LE;
             } else {
               snd_pcm_format = SND_PCM_FORMAT_S16_BE;
             }
           }
-        if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataUnsigned){
-          if(omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle){
+        if(sPCMModeParam->eNumData == OMX_NumericalDataUnsigned){
+          if(sPCMModeParam->eEndian ==  OMX_EndianLittle){
             snd_pcm_format = SND_PCM_FORMAT_U16_LE;
           } else {
             snd_pcm_format = SND_PCM_FORMAT_U16_BE;
@@ -344,15 +343,15 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
         }
         break;
         case 24:
-          if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataSigned){
-            if(omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle) {
+          if(sPCMModeParam->eNumData == OMX_NumericalDataSigned){
+            if(sPCMModeParam->eEndian ==  OMX_EndianLittle) {
               snd_pcm_format = SND_PCM_FORMAT_S24_LE;
             } else {
               snd_pcm_format = SND_PCM_FORMAT_S24_BE;
             }
           }
-          if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataUnsigned){
-            if(omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle) {
+          if(sPCMModeParam->eNumData == OMX_NumericalDataUnsigned){
+            if(sPCMModeParam->eEndian ==  OMX_EndianLittle) {
               snd_pcm_format = SND_PCM_FORMAT_U24_LE;
             } else {
               snd_pcm_format = SND_PCM_FORMAT_U24_BE;
@@ -361,15 +360,15 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
           break;
 
         case 32:
-          if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataSigned){
-            if(omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle) {
+          if(sPCMModeParam->eNumData == OMX_NumericalDataSigned){
+            if(sPCMModeParam->eEndian ==  OMX_EndianLittle) {
               snd_pcm_format = SND_PCM_FORMAT_S32_LE;
             } else {
               snd_pcm_format = SND_PCM_FORMAT_S32_BE;
             }
           }
-          if(omxAudioParamPcmMode->eNumData == OMX_NumericalDataUnsigned){
-            if(omxAudioParamPcmMode->eEndian ==  OMX_EndianLittle) {
+          if(sPCMModeParam->eNumData == OMX_NumericalDataUnsigned){
+            if(sPCMModeParam->eEndian ==  OMX_EndianLittle) {
               snd_pcm_format = SND_PCM_FORMAT_U32_LE;
             } else {
               snd_pcm_format = SND_PCM_FORMAT_U32_BE;
@@ -386,36 +385,36 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
             DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
             return OMX_ErrorHardware;
           }
-          memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+          memcpy(&omx_alsasink_component_Private->sPCMModeParam, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
         } else{
           DEBUG(DEB_LEV_SIMPLE_SEQ, "ALSA OMX_IndexParamAudioPcm configured\n");
-          memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+          memcpy(&omx_alsasink_component_Private->sPCMModeParam, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
         }
       }
-      else if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeALaw){
+      else if(sPCMModeParam->ePCMMode == OMX_AUDIO_PCMModeALaw){
         DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
         if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_A_LAW)) < 0) {
           DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",	snd_strerror (err));
           return OMX_ErrorHardware;
         }
-        memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+        memcpy(&omx_alsasink_component_Private->sPCMModeParam, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
       }
-      else if(omxAudioParamPcmMode->ePCMMode == OMX_AUDIO_PCMModeMULaw){
+      else if(sPCMModeParam->ePCMMode == OMX_AUDIO_PCMModeMULaw){
         DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring ALAW format\n\n");
         if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_MU_LAW)) < 0) {
           DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n", snd_strerror (err));
           return OMX_ErrorHardware;
         }
-        memcpy(&pPort->omxAudioParamPcmMode, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+        memcpy(&omx_alsasink_component_Private->sPCMModeParam, ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
       }
       /** Configure and prepare the ALSA handle */
       DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface\n");
-      if ((err = snd_pcm_hw_params (pPort->playback_handle, pPort->hw_params)) < 0) {
+      if ((err = snd_pcm_hw_params (omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params)) < 0) {
         DEBUG(DEB_LEV_ERR, "cannot set parameters (%s)\n",	snd_strerror (err));
         return OMX_ErrorHardware;
       }
 
-      if ((err = snd_pcm_prepare (pPort->playback_handle)) < 0) {
+      if ((err = snd_pcm_prepare (omx_alsasink_component_Private->playback_handle)) < 0) {
         DEBUG(DEB_LEV_ERR, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
         return OMX_ErrorHardware;
       }
@@ -471,13 +470,13 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
     break;		
   case OMX_IndexParamAudioPcm:
     if(((OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure)->nPortIndex !=
-      pPort->omxAudioParamPcmMode.nPortIndex) {
+      omx_alsasink_component_Private->sPCMModeParam.nPortIndex) {
       return OMX_ErrorBadParameter;
     }
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
       break;
     }
-    memcpy(ComponentParameterStructure, &pPort->omxAudioParamPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+    memcpy(ComponentParameterStructure, &omx_alsasink_component_Private->sPCMModeParam, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
     break;
   default: /*Call the base component function*/
   return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);

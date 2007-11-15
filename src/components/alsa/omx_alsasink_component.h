@@ -45,32 +45,22 @@
 DERIVEDCLASS(omx_alsasink_component_PortType, omx_base_PortType)
 #define omx_alsasink_component_PortType_FIELDS omx_base_PortType_FIELDS \
   /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; \
-  /** @param omxAudioParamPcmMode Audio PCM pecific OpenMAX parameter */ \
-  OMX_AUDIO_PARAM_PCMMODETYPE omxAudioParamPcmMode;	\
-  /** @param omxAudioConfigVolume Audio Volume OpenMAX parameter */	\
-  OMX_AUDIO_CONFIG_VOLUMETYPE omxAudioConfigVolume;	\
-  /** @param omxAudioChannelVolume Audio Volume OpenMAX parameter for channel */	\
-  OMX_AUDIO_CONFIG_CHANNELVOLUMETYPE omxAudioChannelVolume;	\
-  /** @param omxAudioChannelMute Audio Volume OpenMAX parameter for mute for channel */	\
-  OMX_AUDIO_CONFIG_CHANNELMUTETYPE omxAudioChannelMute;	\
-  /** @param omxAudioMute Audio Volume OpenMAX parameter for mute */	\
-  OMX_AUDIO_CONFIG_MUTETYPE omxAudioMute;	\
-  /** @param AudioPCMConfigured boolean flag to check if the audio has been configured */	\
-  char AudioPCMConfigured;	\
-  /** @param playback_handle ALSA specif handle for audio player */	\
-  snd_pcm_t* playback_handle;	\
-  /** @param hw_params ALSA specif hardware parameters */	\
-  snd_pcm_hw_params_t* hw_params;	\
-  /** @param rate Audio sample rate */	\
-  OMX_U32 rate;	
+  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam;
 ENDCLASS(omx_alsasink_component_PortType)
 
 /** Alsasinkport component private structure.
  * see the define above
  */
 DERIVEDCLASS(omx_alsasink_component_PrivateType, omx_base_sink_PrivateType)
-#define omx_alsasink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS 
+#define omx_alsasink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS \
+  /** @param sPCMModeParam Audio PCM specific OpenMAX parameter */ \
+  OMX_AUDIO_PARAM_PCMMODETYPE sPCMModeParam; \
+   /** @param AudioPCMConfigured boolean flag to check if the audio has been configured */	\
+  char AudioPCMConfigured;	\
+  /** @param playback_handle ALSA specif handle for audio player */	\
+  snd_pcm_t* playback_handle;	\
+  /** @param hw_params ALSA specif hardware parameters */	\
+  snd_pcm_hw_params_t* hw_params;
 ENDCLASS(omx_alsasink_component_PrivateType)
 
 /* Component private entry points declaration */

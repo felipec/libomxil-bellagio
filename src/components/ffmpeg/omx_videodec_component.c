@@ -335,6 +335,21 @@ OMX_ERRORTYPE omx_videodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   return eError;
 } 
 
+/** Executes all the required steps after an output buffer frame-size has changed.
+*/
+static inline void UpdateFrameSize(OMX_COMPONENTTYPE *openmaxStandComp) {
+  omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_base_video_PortType *outPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
+  switch(outPort->sVideoParam.eColorFormat) {
+    case OMX_COLOR_FormatYUV420Planar:
+      outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 1.5;
+      break;
+    default:
+      outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 2;
+      break;
+  }
+}
+
 /** This function is used to process the input buffer and provide one output buffer
   */
 void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer, OMX_BUFFERHEADERTYPE* pOutputBuffer) {
@@ -395,6 +410,8 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
           DEBUG(DEB_LEV_ERR, "Video format other than mpeg4 & avc not supported\nCodec not found\n");
           break;           
       }
+
+      UpdateFrameSize (openmaxStandComp);
 
       /** Send Port Settings changed call back */
       (*(omx_videodec_component_Private->callbacks->EventHandler))
@@ -499,6 +516,12 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
   switch(nParamIndex) {
+    case OMX_IndexParamPortDefinition:
+      {
+        eError = omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+        UpdateFrameSize (openmaxStandComp);
+        break;
+      }
     case OMX_IndexParamVideoPortFormat:
       {
         OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
@@ -542,6 +565,7 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_YUV420P;
                 break;
             }
+            UpdateFrameSize (openmaxStandComp);
           }
         } else {
           return OMX_ErrorBadPortIndex;

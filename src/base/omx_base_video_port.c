@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-11-07 21:22:58 +0530 (Wed, 07 Nov 2007) $
-  Revision $Rev: 361 $
-  Author $Author: gsent $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #include <stdlib.h>

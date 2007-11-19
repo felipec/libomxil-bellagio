@@ -786,7 +786,15 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
       DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
       break;
     } 
-    omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
+    {
+      OMX_PARAM_PORTDEFINITIONTYPE *pPortParam;
+      pPortParam = &omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam;
+      pPortParam->nBufferCountActual = pPortDef->nBufferCountActual;
+      memcpy(&pPortParam->format.video, &pPortDef->format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
+      memcpy(&pPortParam->format.audio, &pPortDef->format.audio, sizeof(OMX_AUDIO_PORTDEFINITIONTYPE));
+      memcpy(&pPortParam->format.image, &pPortDef->format.image, sizeof(OMX_IMAGE_PORTDEFINITIONTYPE));
+      memcpy(&pPortParam->format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
+    }
     break;
   case OMX_IndexParamPriorityMgmt:
     pPrioMgmt = (OMX_PRIORITYMGMTTYPE*)ComponentParameterStructure;

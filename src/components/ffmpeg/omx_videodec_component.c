@@ -515,31 +515,33 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
           memcpy(&port->sVideoParam, pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
           omx_videodec_component_Private->ports[portIndex]->sPortParam.format.video.eColorFormat = port->sVideoParam.eColorFormat;
 
-          switch(port->sVideoParam.eColorFormat) {
-            case OMX_COLOR_Format24bitRGB888 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB24;
-              break; 
-            case OMX_COLOR_Format24bitBGR888 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR24;
-              break;
-            case OMX_COLOR_Format32bitBGRA8888 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR32;
-              break;
-            case OMX_COLOR_Format32bitARGB8888 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB32;
-              break; 
-            case OMX_COLOR_Format16bitARGB1555 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB555;
-              break;
-            case OMX_COLOR_Format16bitRGB565 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB565;
-              break; 
-            case OMX_COLOR_Format16bitBGR565 :
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR565;
-              break;
-            default:
-              omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_YUV420P;
-              break;
+          if (portIndex == 1) {
+            switch(port->sVideoParam.eColorFormat) {
+              case OMX_COLOR_Format24bitRGB888 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB24;
+                break; 
+              case OMX_COLOR_Format24bitBGR888 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR24;
+                break;
+              case OMX_COLOR_Format32bitBGRA8888 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR32;
+                break;
+              case OMX_COLOR_Format32bitARGB8888 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB32;
+                break; 
+              case OMX_COLOR_Format16bitARGB1555 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB555;
+                break;
+              case OMX_COLOR_Format16bitRGB565 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB565;
+                break; 
+              case OMX_COLOR_Format16bitBGR565 :
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR565;
+                break;
+              default:
+                omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_YUV420P;
+                break;
+            }
           }
         } else {
           return OMX_ErrorBadPortIndex;

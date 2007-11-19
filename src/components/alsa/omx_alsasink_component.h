@@ -40,14 +40,6 @@
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_alsasink_component_INSTANCES 1
 
-/** Alsasinkport component port structure.
- */
-DERIVEDCLASS(omx_alsasink_component_PortType, omx_base_PortType)
-#define omx_alsasink_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam;
-ENDCLASS(omx_alsasink_component_PortType)
-
 /** Alsasinkport component private structure.
  * see the define above
  */

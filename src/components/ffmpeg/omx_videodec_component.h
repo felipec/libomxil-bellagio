@@ -51,14 +51,6 @@
 #define VIDEO_DEC_MPEG4_ROLE "video_decoder.mpeg4"
 #define VIDEO_DEC_H264_ROLE "video_decoder.avc"
 
-/** Video Decoder component port structure.
-  */
-DERIVEDCLASS(omx_videodec_component_PortType, omx_base_PortType)
-#define omx_videodec_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sVideoParam Domain specific (video) OpenMAX port parameter */ \
-  OMX_VIDEO_PARAM_PORTFORMATTYPE sVideoParam; 
-ENDCLASS(omx_videodec_component_PortType)
-
 /** Video Decoder component private structure.
   */
 DERIVEDCLASS(omx_videodec_component_PrivateType, omx_base_filter_PrivateType)

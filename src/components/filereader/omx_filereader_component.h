@@ -46,21 +46,13 @@
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_filereader_component_INSTANCES 1
 
-/** Filereaderport component port structure.
- */
-DERIVEDCLASS(omx_filereader_component_PortType, omx_base_PortType)
-#define omx_filereader_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 	\
-  /** @param sTimeStamp Store Time Stamp to be set*/ \
-  OMX_TIME_CONFIG_TIMESTAMPTYPE sTimeStamp;
-ENDCLASS(omx_filereader_component_PortType)
-
 /** Filereader component private structure.
  * see the define above
  */
 DERIVEDCLASS(omx_filereader_component_PrivateType, omx_base_source_PrivateType)
 #define omx_filereader_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
+  /** @param sTimeStamp Store Time Stamp to be set*/ \
+  OMX_TIME_CONFIG_TIMESTAMPTYPE sTimeStamp; \
   /** @param avformatcontext is the ffmpeg audio format context */ \
   AVFormatContext *avformatcontext; \
   /** @param avformatparameters is the ffmpeg audio format related parameters */ \

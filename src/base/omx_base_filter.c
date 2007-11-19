@@ -58,6 +58,14 @@ OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OM
 
   omx_base_filter_Private->BufferMgmtFunction = omx_base_filter_BufferMgmtFunction;
 
+  if(omx_base_filter_Private->PortConstructor){
+    if (!omx_base_filter_Private->ports) {
+      omx_base_filter_Private->ports = calloc(omx_base_filter_Private->sPortTypesParam.nPorts,sizeof (omx_base_PortType *));
+    }
+    omx_base_filter_Private->PortConstructor(openmaxStandComp,&omx_base_filter_Private->ports[0],0, OMX_TRUE);
+    omx_base_filter_Private->PortConstructor(openmaxStandComp,&omx_base_filter_Private->ports[1],1, OMX_FALSE);
+  }
+
   return err;
 }
 

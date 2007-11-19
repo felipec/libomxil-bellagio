@@ -41,22 +41,9 @@
 //specific include files
 #include <mad.h>  
 
-
 #define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3.mad"
 #define AUDIO_DEC_MP3_ROLE "mad_decoder.mp3"
-
-
-/** Mp3 mad Decoder component port structure.
- */
-DERIVEDCLASS(omx_maddec_component_PortType, omx_base_PortType)
-#define omx_maddec_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
-ENDCLASS(omx_maddec_component_PortType)
-
-
-//------------------------------------------------------------------------------------------------------------------
 
 /** Mp3Dec mad component private structure.
  */

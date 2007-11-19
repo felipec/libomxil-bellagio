@@ -138,7 +138,10 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   omx_base_component_Private->DoStateSet = &omx_base_component_DoStateSet;
   omx_base_component_Private->messageHandler = omx_base_component_MessageHandler;
   omx_base_component_Private->destructor = omx_base_component_Destructor;
-  omx_base_component_Private->PortConstructor = base_port_Constructor;
+
+  if(!omx_base_component_Private->PortConstructor) {
+    omx_base_component_Private->PortConstructor = base_port_Constructor;
+  }
 
   pthread_mutex_init(&omx_base_component_Private->flush_mutex, NULL);
   pthread_cond_init(&omx_base_component_Private->flush_all_condition, NULL);

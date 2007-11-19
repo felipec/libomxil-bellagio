@@ -27,6 +27,7 @@
 */
 
 #include <omxcore.h>
+#include <omx_base_audio_port.h>
 #include <omx_audiodec_component.h>
 /** modification to include audio formats */
 #include<OMX_Audio.h>
@@ -45,7 +46,6 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private;
-  OMX_S32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME,"In %s, allocating component\n",__func__);
@@ -56,32 +56,20 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   else 
     DEBUG(DEB_LEV_FUNCTION_NAME,"In %s, Error Component %x Already Allocated\n",__func__, (int)openmaxStandComp->pComponentPrivate);
 
-  // we could create our own port structures here
-  // fixme maybe the base class could use a "port factory" function pointer?	
+  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
+  omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_audiodec_component_Private->ports = NULL;
+  omx_audiodec_component_Private->PortConstructor = base_audio_port_Constructor;
+
+  /** Calling base filter constructor */
   err = omx_base_filter_Constructor(openmaxStandComp,cComponentName);
   
-  /* here we can override whatever defaults the base_component constructor set
-  * e.g. we can override the function pointers in the private struct  */
-  omx_audiodec_component_Private = (omx_audiodec_component_PrivateType *)openmaxStandComp->pComponentPrivate;
+  /** here we can override whatever defaults the base_component constructor set
+    * e.g. we can override the function pointers in the private struct  
+    */
   
   //debug statement
   DEBUG(DEB_LEV_SIMPLE_SEQ,"constructor of audiodecoder component is called\n");
-
-  /** Allocate Ports and Call base port constructor. */	
-  if (omx_audiodec_component_Private->sPortTypesParam.nPorts && !omx_audiodec_component_Private->ports) {
-    omx_audiodec_component_Private->ports = calloc(omx_audiodec_component_Private->sPortTypesParam.nPorts,sizeof (omx_base_PortType *));
-    if (!omx_audiodec_component_Private->ports) return OMX_ErrorInsufficientResources;
-
-    for (i=0; i < omx_audiodec_component_Private->sPortTypesParam.nPorts; i++) {
-      // this is the important thing separating this from the base class; size of the struct is for derived class port type
-      // this could be refactored as a smarter factory function instead?
-      omx_audiodec_component_Private->ports[i] = calloc(1, sizeof(omx_audiodec_component_PortType));
-      if (!omx_audiodec_component_Private->ports[i]) return OMX_ErrorInsufficientResources;
-    }
-  }
-
-  omx_audiodec_component_Private->PortConstructor(openmaxStandComp,&omx_audiodec_component_Private->ports[0],0, OMX_TRUE);
-  omx_audiodec_component_Private->PortConstructor(openmaxStandComp,&omx_audiodec_component_Private->ports[1],1, OMX_FALSE);
 
   /** Domain specific section for the ports. */	
   // first we set the parameter common to both formats
@@ -175,20 +163,7 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) 
 {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_audiodec_component_PortType *pPort;
-  OMX_U32 i;
-
-  /* frees port/s */
-  if (omx_audiodec_component_Private->sPortTypesParam.nPorts && omx_audiodec_component_Private->ports) {
-    for (i=0; i < omx_audiodec_component_Private->sPortTypesParam.nPorts; i++) {
-      pPort = (omx_audiodec_component_PortType *)omx_audiodec_component_Private->ports[i];
-      if(pPort->sPortParam.format.audio.cMIMEType != NULL) {
-        free(pPort->sPortParam.format.audio.cMIMEType);
-        pPort->sPortParam.format.audio.cMIMEType = NULL;
-      }
-    }
-  }
-
+  
   if(omx_audiodec_component_Private->extradata) {
     free(omx_audiodec_component_Private->extradata);
   }
@@ -273,15 +248,12 @@ void omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_PrivateType* 
 
 void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private;
-  omx_audiodec_component_PortType *pPort;
+  omx_base_audio_PortType *pPort;
 
   omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
 
-  pPort = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
+  pPort = (omx_base_audio_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
 
-  setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-  pPort->sAudioParam.nPortIndex = 1;
-  pPort->sAudioParam.nIndex = OMX_IndexParamAudioPcm;
   pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingPCM;
 	
   if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) 
@@ -301,10 +273,8 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     omx_audiodec_component_Private->pAudioMp3.nPortIndex=0;
     omx_audiodec_component_Private->pAudioMp3.eFormat=OMX_AUDIO_MP3StreamFormatMP1Layer3;
 
-    pPort = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+    pPort = (omx_base_audio_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 
-    setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    pPort->sAudioParam.nPortIndex = 0;
     pPort->sAudioParam.nIndex = OMX_IndexParamAudioMp3;
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingMP3;
   } 
@@ -322,10 +292,8 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     omx_audiodec_component_Private->pAudioVorbis.nAudioBandWidth = 0; //encoder decides the needed bandwidth
     omx_audiodec_component_Private->pAudioVorbis.nQuality = 3; //default quality
 		
-    pPort = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+    pPort = (omx_base_audio_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 
-    setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    pPort->sAudioParam.nPortIndex = 0;
     pPort->sAudioParam.nIndex = OMX_IndexParamAudioVorbis;
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingVORBIS;
 
@@ -344,10 +312,8 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     omx_audiodec_component_Private->pAudioAac.eChannelMode = OMX_AUDIO_ChannelModeStereo;
     omx_audiodec_component_Private->pAudioAac.nFrameLength = 0; //encoder decides the framelength
 		
-    pPort = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+    pPort = (omx_base_audio_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 
-    setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    pPort->sAudioParam.nPortIndex = 0;
     pPort->sAudioParam.nIndex = OMX_IndexParamAudioAac;
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingAAC;
 
@@ -521,7 +487,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
   /* Check which structure we are being fed and make control its header */
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_audiodec_component_PortType *port;
+  omx_base_audio_PortType *port;
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -538,7 +504,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetParameter(
       break;
     } 
     if (portIndex <= 1) {
-      port = (omx_audiodec_component_PortType *) omx_audiodec_component_Private->ports[portIndex];
+      port = (omx_base_audio_PortType *) omx_audiodec_component_Private->ports[portIndex];
       memcpy(&port->sAudioParam,pAudioPortFormat,sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
       return OMX_ErrorBadPortIndex;
@@ -629,7 +595,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   OMX_AUDIO_PARAM_AACPROFILETYPE *pAudioAac; //support for AAC format	 
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
-  omx_audiodec_component_PortType *port;
+  omx_base_audio_PortType *port;
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
@@ -652,7 +618,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetParameter(
       break;
     }
     if (pAudioPortFormat->nPortIndex <= 1) {
-      port = (omx_audiodec_component_PortType *)omx_audiodec_component_Private->ports[pAudioPortFormat->nPortIndex];
+      port = (omx_base_audio_PortType *)omx_audiodec_component_Private->ports[pAudioPortFormat->nPortIndex];
       memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
       return OMX_ErrorBadPortIndex;

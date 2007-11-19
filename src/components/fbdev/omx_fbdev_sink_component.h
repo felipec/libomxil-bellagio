@@ -43,6 +43,7 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include <omx_base_video_port.h>
 #include <omx_base_sink.h>
 #include <linux/fb.h>
 
@@ -56,10 +57,8 @@
 
 /** FBDEV sink port component port structure.
   */
-DERIVEDCLASS(omx_fbdev_sink_component_PortType, omx_base_PortType)
-#define omx_fbdev_sink_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sVideoParam Domain specific (IVCommon) OpenMAX port parameter */ \
-  OMX_VIDEO_PARAM_PORTFORMATTYPE sVideoParam; \
+DERIVEDCLASS(omx_fbdev_sink_component_PortType, omx_base_video_PortType)
+#define omx_fbdev_sink_component_PortType_FIELDS omx_base_video_PortType_FIELDS \
   /** @param omxConfigCrop Crop rectangle of image */ \
   OMX_CONFIG_RECTTYPE omxConfigCrop; \
   /** @param omxConfigRotate Set rotation angle of image */ \
@@ -142,5 +141,22 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
  *  return a value of (approximately) (n+m). This method is used, for
  *  instance, to compute the duration of call. */
 long GetTime();
+
+/** 
+  * @brief the Constructor for the openmax Video Sink port
+  * 
+  * @param openmaxStandComp pointer to the Handle of the component
+  * @param openmaxStandPort the ST port to be initialized
+  * @param nPortIndex Index of the port to be constructed
+  * @param isInput specifices if the port is an input or an output
+  * 
+  * @return OMX_ErrorInsufficientResources if a memory allocation fails
+  */
+
+OMX_ERRORTYPE omx_fbdev_sink_port_Constructor(
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  omx_base_PortType **openmaxStandPort,
+  OMX_U32 nPortIndex, 
+  OMX_BOOL isInput);
 
 #endif

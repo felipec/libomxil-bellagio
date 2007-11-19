@@ -204,7 +204,6 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
 	omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private;
 	omx_ffmpeg_colorconv_component_PortType *inPort,*outPort;
-	OMX_S32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, allocating component\n", __func__);
@@ -216,6 +215,11 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
+  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
+  omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_ffmpeg_colorconv_component_Private->ports = NULL;
+  omx_ffmpeg_colorconv_component_Private->PortConstructor = omx_ffmpeg_colorconv_port_Constructor;
+
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -224,81 +228,36 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   /** here we can override whatever defaults the base_component constructor set
     * e.g. we can override the function pointers in the private struct  
     */
-  omx_ffmpeg_colorconv_component_Private = (omx_ffmpeg_colorconv_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-
-  /** Allocate Ports and Call base port constructor. */	
-  if (omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts && !omx_ffmpeg_colorconv_component_Private->ports) {
-    omx_ffmpeg_colorconv_component_Private->ports = calloc(omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts, sizeof (omx_base_PortType *));
-    if (!omx_ffmpeg_colorconv_component_Private->ports) {
-      return OMX_ErrorInsufficientResources;
-    }
-    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts; i++) {
-      /** this is the important thing separating this from the base class; size of the struct is for derived class port type
-        * this could be refactored as a smarter factory function instead?
-        */
-      omx_ffmpeg_colorconv_component_Private->ports[i] = calloc(1, sizeof(omx_ffmpeg_colorconv_component_PortType));
-      if (!omx_ffmpeg_colorconv_component_Private->ports[i]) {
-        return OMX_ErrorInsufficientResources;
-      }
-    }
-  }
-
-  omx_ffmpeg_colorconv_component_Private->PortConstructor(openmaxStandComp, &omx_ffmpeg_colorconv_component_Private->ports[0], 0, OMX_TRUE);
-  omx_ffmpeg_colorconv_component_Private->PortConstructor(openmaxStandComp, &omx_ffmpeg_colorconv_component_Private->ports[1], 1, OMX_FALSE);
-	
+  	
   inPort = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
   outPort = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
 
   /** Domain specific section for the ports. */	
 
-  setHeader(&inPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-  inPort->sVideoParam.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
-  inPort->sVideoParam.nIndex = 0;
-  inPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
   inPort->sVideoParam.eColorFormat = OMX_COLOR_FormatYUV420Planar;
-
-  setHeader(&outPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-  outPort->sVideoParam.nPortIndex = OMX_BASE_FILTER_OUTPUTPORT_INDEX;
-  outPort->sVideoParam.nIndex = 0;
-  outPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
   outPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
   //input port parameter settings
-  inPort->sPortParam.eDomain = OMX_PortDomainVideo;
-  inPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
-  strcpy(inPort->sPortParam.format.video.cMIMEType, "raw");
-  inPort->sPortParam.format.video.pNativeRender = NULL;
   inPort->sPortParam.format.video.nFrameWidth = 640;
   inPort->sPortParam.format.video.nFrameHeight = 480;
   inPort->sPortParam.format.video.nStride = calcStride(inPort->sPortParam.format.video.nFrameWidth, inPort->sVideoParam.eColorFormat);
   inPort->sPortParam.format.video.nSliceHeight = inPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
 
-  inPort->sPortParam.format.video.nBitrate = 0;
   inPort->sPortParam.format.video.xFramerate = 25; 
-  inPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
   inPort->ffmpeg_pxlfmt = PIX_FMT_YUV420P;
   inPort->sPortParam.nBufferSize = MAX_VIDEO_INPUT_BUF_SIZE;
   inPort->sPortParam.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
-  inPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
   inPort->sPortParam.format.video.pNativeWindow = NULL;
 
   //output port parameter settings
-  outPort->sPortParam.eDomain = OMX_PortDomainVideo;
-  outPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*128);
-  strcpy(outPort->sPortParam.format.video.cMIMEType, "raw");
-  outPort->sPortParam.format.video.pNativeRender = NULL;
   outPort->sPortParam.format.video.nFrameWidth = 640;
   outPort->sPortParam.format.video.nFrameHeight = 480;
   outPort->sPortParam.format.video.nStride = calcStride(outPort->sPortParam.format.video.nFrameWidth, outPort->sVideoParam.eColorFormat);
   outPort->sPortParam.format.video.nSliceHeight = outPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
-  outPort->sPortParam.format.video.nBitrate = 0;
   outPort->sPortParam.format.video.xFramerate = 25; 
-  outPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
   outPort->ffmpeg_pxlfmt = PIX_FMT_RGB24;
   outPort->sPortParam.nBufferSize = MAX_VIDEO_INPUT_BUF_SIZE * 3;
   outPort->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
-  outPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
-  outPort->sPortParam.format.video.pNativeWindow = NULL;
 
   setHeader(&inPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
   inPort->omxConfigCrop.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
@@ -1218,4 +1177,25 @@ OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
 	                                pAppPrivate,
 	                                pPort->sPortParam.nBufferSize,
 	                                eglImage);
+}
+
+OMX_ERRORTYPE omx_ffmpeg_colorconv_port_Constructor(
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  omx_base_PortType **openmaxStandPort,
+  OMX_U32 nPortIndex, 
+  OMX_BOOL isInput) {
+
+  //omx_ffmpeg_colorconv_component_PortType *omx_ffmpeg_colorconv_component_Port;
+
+  if (!(*openmaxStandPort)) {
+    *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_ffmpeg_colorconv_component_PortType));
+  }
+
+  if (!(*openmaxStandPort)) {
+    return OMX_ErrorInsufficientResources;
+  }
+
+  base_video_port_Constructor(openmaxStandComp,openmaxStandPort,nPortIndex, isInput);
+
+  return OMX_ErrorNone;
 }

@@ -27,6 +27,7 @@
 */
 
 #include <omxcore.h>
+#include <omx_base_audio_port.h>
 #include <omx_alsasink_component.h>
 
 #define MAX_COMPONENT_ALSASINK 1
@@ -38,8 +39,7 @@ OMX_U32 noAlsasinkInstance=0;
  */
 OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;	
-  OMX_S32 i;
-  omx_alsasink_component_PortType *pPort;
+  omx_base_audio_PortType *pPort;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private;
 
   if (!openmaxStandComp->pComponentPrivate) {
@@ -49,35 +49,17 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     }
   }
 
+  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
+  omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_alsasink_component_Private->ports = NULL;
+  omx_alsasink_component_Private->PortConstructor = base_audio_port_Constructor;
+
   err = omx_base_sink_Constructor(openmaxStandComp,cComponentName);
 
-  omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  
-  if (omx_alsasink_component_Private->sPortTypesParam.nPorts && !omx_alsasink_component_Private->ports) {
-    omx_alsasink_component_Private->ports = calloc(omx_alsasink_component_Private->sPortTypesParam.nPorts,sizeof (omx_base_PortType *));
-    if (!omx_alsasink_component_Private->ports) return OMX_ErrorInsufficientResources;
-
-    for (i=0; i < omx_alsasink_component_Private->sPortTypesParam.nPorts; i++) {
-      // this is the important thing separating this from the base class; size of the struct is for derived class pPort type
-      // this could be refactored as a smarter factory function instead?
-      omx_alsasink_component_Private->ports[i] = calloc(1, sizeof(omx_alsasink_component_PortType));
-      if (!omx_alsasink_component_Private->ports[i]) return OMX_ErrorInsufficientResources;
-    }
-  }
-  else 
-  DEBUG(DEB_LEV_ERR, "In %s Not allocated ports\n", __func__);
-	 
-  omx_alsasink_component_Private->PortConstructor(openmaxStandComp,&omx_alsasink_component_Private->ports[0],0, OMX_TRUE);
-
-  pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  pPort = (omx_base_audio_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
   // set the pPort params, now that the ports exist	
   /** Domain specific section for the ports. */	
-  pPort->sPortParam.eDomain = OMX_PortDomainAudio;
-  pPort->sPortParam.format.audio.pNativeRender = 0;
-  pPort->sPortParam.format.audio.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
-  strcpy(pPort->sPortParam.format.audio.cMIMEType, "raw/audio");
-  pPort->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
   /*Input pPort buffer size is equal to the size of the output buffer of the previous component*/
   pPort->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
@@ -148,12 +130,6 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
  */
 OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_alsasink_component_PortType* pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
-  
-  if(pPort->sPortParam.format.audio.cMIMEType != NULL) {
-    free(pPort->sPortParam.format.audio.cMIMEType);
-    pPort->sPortParam.format.audio.cMIMEType = NULL;
-  }
 
   if(omx_alsasink_component_Private->hw_params) {
     snd_pcm_hw_params_free (omx_alsasink_component_Private->hw_params);
@@ -232,7 +208,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   /* Check which structure we are being fed and make control its header */
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_alsasink_component_PortType* pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  omx_base_audio_PortType* pPort = (omx_base_audio_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   snd_pcm_t* playback_handle = omx_alsasink_component_Private->playback_handle;
   snd_pcm_hw_params_t* hw_params = omx_alsasink_component_Private->hw_params;
 
@@ -444,7 +420,7 @@ OMX_ERRORTYPE omx_alsasink_component_GetParameter(
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_alsasink_component_PortType *pPort = (omx_alsasink_component_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];	
+  omx_base_audio_PortType *pPort = (omx_base_audio_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];	
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }

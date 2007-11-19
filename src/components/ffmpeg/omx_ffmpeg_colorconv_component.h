@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
+#include <omx_base_video_port.h>
 
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
@@ -52,10 +53,8 @@
 
 /** ffmpeg color converter component port structure.
   */
-DERIVEDCLASS(omx_ffmpeg_colorconv_component_PortType, omx_base_PortType)
-#define omx_ffmpeg_colorconv_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sVideoParam Domain specific (IVCommon) OpenMAX port parameter */ \
-  OMX_VIDEO_PARAM_PORTFORMATTYPE sVideoParam; \
+DERIVEDCLASS(omx_ffmpeg_colorconv_component_PortType, omx_base_video_PortType)
+#define omx_ffmpeg_colorconv_component_PortType_FIELDS omx_base_video_PortType_FIELDS \
   /** @param omxConfigCrop Crop rectangle of image */ \
   OMX_CONFIG_RECTTYPE omxConfigCrop; \
   /** @param omxConfigRotate Set rotation angle of image */ \
@@ -140,5 +139,22 @@ OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
         OMX_U32 nPortIndex,
         OMX_PTR pAppPrivate,
         void* eglImage);
+
+/** 
+  * @brief the omx_ffmpeg_colorconv for the openmax Color Converter Video port
+  * 
+  * @param openmaxStandComp pointer to the Handle of the component
+  * @param openmaxStandPort the ST port to be initialized
+  * @param nPortIndex Index of the port to be constructed
+  * @param isInput specifices if the port is an input or an output
+  * 
+  * @return OMX_ErrorInsufficientResources if a memory allocation fails
+  */
+
+OMX_ERRORTYPE omx_ffmpeg_colorconv_port_Constructor(
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  omx_base_PortType **openmaxStandPort,
+  OMX_U32 nPortIndex, 
+  OMX_BOOL isInput);
 
 #endif

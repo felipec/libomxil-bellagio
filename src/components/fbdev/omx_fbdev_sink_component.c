@@ -72,7 +72,6 @@ long GetTime() {
   */
 OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;	
-  OMX_S32 i;
   omx_fbdev_sink_component_PortType *pPort;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private;
 
@@ -86,6 +85,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
+  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
+  omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_fbdev_sink_component_Private->ports = NULL;
+  omx_fbdev_sink_component_Private->PortConstructor = omx_fbdev_sink_port_Constructor;
+
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -93,49 +97,26 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   /** here we can override whatever defaults the base_component constructor set
     * e.g. we can override the function pointers in the private struct  
     */
-  omx_fbdev_sink_component_Private = (omx_fbdev_sink_component_PrivateType *)openmaxStandComp->pComponentPrivate;
 
-  /** Allocate Ports and Call base port constructor. */	
-  if (omx_fbdev_sink_component_Private->sPortTypesParam.nPorts && !omx_fbdev_sink_component_Private->ports) {
-    omx_fbdev_sink_component_Private->ports = calloc(omx_fbdev_sink_component_Private->sPortTypesParam.nPorts, sizeof (omx_base_PortType *));
-    if (!omx_fbdev_sink_component_Private->ports) {
-      return OMX_ErrorInsufficientResources;
-    }
-    for (i=0; i < omx_fbdev_sink_component_Private->sPortTypesParam.nPorts; i++) {
-      /** this is the important thing separating this from the base class; size of the struct is for derived class port type
-        * this could be refactored as a smarter factory function instead?
-        */
-      omx_fbdev_sink_component_Private->ports[i] = calloc(1, sizeof(omx_fbdev_sink_component_PortType));
-      if (!omx_fbdev_sink_component_Private->ports[i]) {
-        return OMX_ErrorInsufficientResources;
-      }
-    }
-  }
-  omx_fbdev_sink_component_Private->PortConstructor(openmaxStandComp, &omx_fbdev_sink_component_Private->ports[0], 0, OMX_TRUE);
   pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
-  /** Domain specific section for the allocated port. */	
-  pPort->sPortParam.eDomain = OMX_PortDomainVideo;
-  setHeader(&pPort->sPortParam.format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
-  pPort->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
-  strcpy(pPort->sPortParam.format.video.cMIMEType, "raw/video");
-  pPort->sPortParam.format.video.pNativeRender = NULL;
-  pPort->sPortParam.format.video.nFrameWidth = 0;
-  pPort->sPortParam.format.video.nFrameHeight = 0;
-  pPort->sPortParam.format.video.nStride = 0;
-  pPort->sPortParam.format.video.nSliceHeight = 0;
+  /** Domain specific section for the allocated port. */
+
+  pPort->sPortParam.format.video.nFrameWidth = 352;
+  pPort->sPortParam.format.video.nFrameHeight = 288;
   pPort->sPortParam.format.video.nBitrate = 0;
   pPort->sPortParam.format.video.xFramerate = 25;
-  pPort->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;
-  pPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
   pPort->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
-  setHeader(&pPort->sVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-  pPort->sVideoParam.nPortIndex = 0;
-  pPort->sVideoParam.nIndex = 0;
-  pPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingUnused;
+  //	Figure out stride, slice height, min buffer size
+  pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sPortParam.format.video.eColorFormat);
+  pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+  pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
+
   pPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
   pPort->sVideoParam.xFramerate = 25;
+
+  DEBUG(DEB_LEV_PARAMS, "In %s, bSize=%d stride=%d\n", __func__,(int)pPort->sPortParam.nBufferSize,(int)pPort->sPortParam.format.video.nStride);
   
   /** Set configs */
   setHeader(&pPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
@@ -178,13 +159,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 /** The Destructor 
  */
 OMX_ERRORTYPE omx_fbdev_sink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-  omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
-  
-  if(pPort->sPortParam.format.video.cMIMEType) {
-    free(pPort->sPortParam.format.video.cMIMEType);
-  }
-
+ 
   omx_base_sink_Destructor(openmaxStandComp);
   nofbdev_sinkInstance--;
 
@@ -493,7 +468,6 @@ OMX_COLOR_FORMATTYPE find_omx_pxlfmt(struct fb_var_screeninfo *vscr_info) {
                 vscr_info->green.length == 8 && vscr_info->blue.length == 8 && 
                 vscr_info->transp.offset == 0 && vscr_info->red.offset == 0 &&
                 vscr_info->green.offset == 0 && vscr_info->blue.offset == 0) {
-      //omx_pxlfmt = OMX_COLOR_Format32bitARGB8888;		
       omx_pxlfmt = OMX_COLOR_Format8bitRGB332;
     } else {
       omx_pxlfmt = OMX_COLOR_FormatUnused;
@@ -1265,7 +1239,6 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
       // Read-only field by spec
-      // pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
 
       pPort->omxConfigCrop.nWidth = pPort->sPortParam.format.video.nFrameWidth;
       pPort->omxConfigCrop.nHeight = pPort->sPortParam.format.video.nFrameHeight;
@@ -1298,7 +1271,6 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       //	Figure out stride, slice height, min buffer size
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
-      pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
       break;
     default: /*Call the base component function*/
       return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -1379,4 +1351,23 @@ OMX_ERRORTYPE omx_fbdev_sink_component_MessageHandler(OMX_COMPONENTTYPE* openmax
     }
   }
   return err;
+}
+
+OMX_ERRORTYPE omx_fbdev_sink_port_Constructor(
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  omx_base_PortType **openmaxStandPort,
+  OMX_U32 nPortIndex, 
+  OMX_BOOL isInput) {
+
+  if (!(*openmaxStandPort)) {
+    *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_fbdev_sink_component_PortType));
+  }
+
+  if (!(*openmaxStandPort)) {
+    return OMX_ErrorInsufficientResources;
+  }
+
+  base_video_port_Constructor(openmaxStandComp,openmaxStandPort,nPortIndex, isInput);
+
+  return OMX_ErrorNone;
 }

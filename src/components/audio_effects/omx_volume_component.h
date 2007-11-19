@@ -26,8 +26,6 @@
   Author $Author$
 */
 
-
-
 #ifndef _OMX_VOLUME_COMPONENT_H_
 #define _OMX_VOLUME_COMPONENT_H_
 
@@ -38,14 +36,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <omx_base_filter.h>
-
-/** Volume component port structure.
-  */
-DERIVEDCLASS(omx_volume_component_PortType, omx_base_PortType)
-#define omx_volume_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
-ENDCLASS(omx_volume_component_PortType)
 
 /** Twoport component private structure.
 * see the define above

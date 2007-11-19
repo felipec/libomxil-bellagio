@@ -48,14 +48,6 @@
 #define AUDIO_DEC_VORBIS_ROLE "audio_decoder.ogg"
 #define AUDIO_DEC_AAC_ROLE "audio_decoder.aac"   
 
-/** Audio Decoder component port structure.
- */
-DERIVEDCLASS(omx_audiodec_component_PortType, omx_base_PortType)
-#define omx_audiodec_component_PortType_FIELDS omx_base_PortType_FIELDS \
-  /** @param sAudioParam Domain specific (audio) OpenMAX port parameter */ \
-  OMX_AUDIO_PARAM_PORTFORMATTYPE sAudioParam; 
-ENDCLASS(omx_audiodec_component_PortType)
-
 /** AudioDec component private structure.
  */
 DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)

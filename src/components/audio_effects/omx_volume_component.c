@@ -27,6 +27,7 @@
 */
 
 #include <omxcore.h>
+#include <omx_base_audio_port.h>
 #include <omx_volume_component.h>
 #include<OMX_Audio.h>
 
@@ -43,8 +44,7 @@ OMX_U32 noVolumeCompInstance = 0;
 OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_volume_component_PrivateType* omx_volume_component_Private;
-  omx_volume_component_PortType *inPort, *outPort;
-  OMX_S32 i;
+  omx_base_audio_PortType *inPort, *outPort;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, allocating component\n",__func__);
@@ -55,60 +55,25 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   } else {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
-  /** we could create our own port structures here
-    * fixme maybe the base class could use a "port factory" function pointer?	
-    */
+
+  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
+  omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_volume_component_Private->ports = NULL;
+  omx_volume_component_Private->PortConstructor = base_audio_port_Constructor;
+
+  /** Calling base filter constructor */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
   /** here we can override whatever defaults the base_component constructor set
     * e.g. we can override the function pointers in the private struct  
     */
-  omx_volume_component_Private = (omx_volume_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-  
-  /** Allocate Ports and Call base port constructor. */	
-  if (omx_volume_component_Private->sPortTypesParam.nPorts && !omx_volume_component_Private->ports) {
-    omx_volume_component_Private->ports = calloc(omx_volume_component_Private->sPortTypesParam.nPorts, sizeof (omx_base_PortType *));
-    if (!omx_volume_component_Private->ports) {
-      return OMX_ErrorInsufficientResources;
-    }
-    for (i=0; i < omx_volume_component_Private->sPortTypesParam.nPorts; i++) {
-      /** this is the important thing separating this from the base class; 
-        * size of the struct is for derived class port type
-        * this could be refactored as a smarter factory function instead?
-        */
-      omx_volume_component_Private->ports[i] = calloc(1, sizeof(omx_volume_component_PortType));
-      if (!omx_volume_component_Private->ports[i]) {
-        return OMX_ErrorInsufficientResources;
-      }
-    }
-  } 
-
-  omx_volume_component_Private->PortConstructor(openmaxStandComp, &omx_volume_component_Private->ports[0], 0, OMX_TRUE);
-  omx_volume_component_Private->PortConstructor(openmaxStandComp, &omx_volume_component_Private->ports[1], 1, OMX_FALSE);
 
   /** Domain specific section for the ports. */	
-  omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-  omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
-  omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
- 
-  omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.eDomain = OMX_PortDomainAudio;
-  omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType = "raw";
-  omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.format.audio.bFlagErrorConcealment = OMX_FALSE;
   omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
 
-  inPort = (omx_volume_component_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
-  outPort = (omx_volume_component_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
-
-  setHeader(&inPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-  inPort->sAudioParam.nPortIndex = 0;
-  inPort->sAudioParam.nIndex = 0;
-  inPort->sAudioParam.eEncoding = 0;
-
-  setHeader(&outPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-  outPort->sAudioParam.nPortIndex = 1;
-  outPort->sAudioParam.nIndex = 0;
-  outPort->sAudioParam.eEncoding = 0;
+  inPort = (omx_base_audio_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+  outPort = (omx_base_audio_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
 
   omx_volume_component_Private->gain = GAIN_VALUE; //100.0f; // default gain
   omx_volume_component_Private->destructor = omx_volume_component_Destructor;
@@ -211,7 +176,7 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_U32 portIndex;
-  omx_volume_component_PortType *port;
+  omx_base_audio_PortType *port;
 
   /* Check which structure we are being fed and make control its header */
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
@@ -231,7 +196,7 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
         break;
       }
       if (portIndex <= 1) {
-        port= (omx_volume_component_PortType *)omx_volume_component_Private->ports[portIndex];
+        port= (omx_base_audio_PortType *)omx_volume_component_Private->ports[portIndex];
         memcpy(&port->sAudioParam, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
         return OMX_ErrorBadPortIndex;
@@ -251,7 +216,7 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;	
   OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
   OMX_ERRORTYPE err = OMX_ErrorNone;
-  omx_volume_component_PortType *port;
+  omx_base_audio_PortType *port;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_volume_component_PrivateType* omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
   if (ComponentParameterStructure == NULL) {
@@ -272,7 +237,7 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
         break;
       }
       if (pAudioPortFormat->nPortIndex <= 1) {
-        port= (omx_volume_component_PortType *)omx_volume_component_Private->ports[pAudioPortFormat->nPortIndex];
+        port= (omx_base_audio_PortType *)omx_volume_component_Private->ports[pAudioPortFormat->nPortIndex];
         memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
         return OMX_ErrorBadPortIndex;

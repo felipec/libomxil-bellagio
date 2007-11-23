@@ -144,7 +144,7 @@ AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=true], [with_framebuffer=false])
 AC_CHECK_HEADER([alsa/asoundlib.h], [], [with_alsalibrary=false])
 
 #Check for vorbis library existence
-AC_CHECK_HEADER([vorbis/codec.h], [], [with_vorbislibrary=false])
+AC_CHECK_HEADER([vorbis/codec.h], [with_vorbislibrary=true], [with_vorbislibrary=false])
 
 ################################################################################
 # Check for pkg-config modules                                                 #

@@ -4,6 +4,8 @@ AM_INIT_AUTOMAKE
 # Prerequisite autoconf version
 AC_PREREQ([2.59])
 
+AC_CONFIG_HEADERS([config.h])
+
 # Check if the OMX_Core.h file is present
 AC_CONFIG_SRCDIR([include/OMX_Core.h])
 
@@ -38,14 +40,14 @@ AC_CONFIG_FILES([
 # Define the extra arguments the user can pass to the configure script         #
 ################################################################################
 
-# Check whether ffmpeg components have been requested
+# Check whether FFmpeg components have been requested
 AC_ARG_ENABLE(
     [ffmpegcomponents],
     [AC_HELP_STRING(
         [--disable-ffmpegcomponents],
         [whether to disable ffmpeg components compilation])],
-    [with_ffmpegcomponents=false],
-    [with_ffmpegcomponents=true]) dnl default
+    [with_ffmpeg=no],
+    [with_ffmpeg=yes]) dnl default
 
 # Check whether mad components have been requested
 AC_ARG_ENABLE(
@@ -53,8 +55,8 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-madcomponents],
         [whether to disable mad components compilation])],
-    [with_madcomponents=false],
-    [with_madcomponents=true]) dnl default
+    [with_mad=no],
+    [with_mad=yes]) dnl default
 
 # Check whether vorbis components have been requested
 AC_ARG_ENABLE(
@@ -62,8 +64,8 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-vorbiscomponents],
         [whether to disable vorbis components compilation])],
-    [with_vorbiscomponents=false],
-    [with_vorbiscomponents=true]) dnl default
+    [with_vorbis=no],
+    [with_vorbis=yes]) dnl default
 
 # Check whether volume component has been requested
 AC_ARG_ENABLE(
@@ -71,8 +73,8 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-audioeffects],
         [whether to disable the audio effects components compilation])],
-    [with_audioeffects=false],
-    [with_audioeffects=true]) dnl default
+    [with_audioeffects=no],
+    [with_audioeffects=yes]) dnl default
 
 #Check whether fbdev_videosink component has been requested
 AC_ARG_ENABLE(
@@ -94,12 +96,12 @@ AC_ARG_ENABLE(
 
 #Enable the installation of all the header files
 AC_ARG_ENABLE(
-    [install_devel],
+    [install_extra],
     [AC_HELP_STRING(
-        [--enable-install-devel],
-	[whether to install component development header files])],
-    [install_devel=true],
-    [install_devel=false]) dnl default
+        [--enable-install-extra],
+        [whether to install component extra header files])],
+    [install_extra=yes],
+    [install_extra=no]) dnl default
 
 ################################################################################
 # Check for programs                                                           #
@@ -143,29 +145,45 @@ AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=true], [with_framebuffer=false])
 # Check if Alsa sound library is present
 AC_CHECK_HEADER([alsa/asoundlib.h], [], [with_alsalibrary=false])
 
-#Check for vorbis library existence
-AC_CHECK_HEADER([vorbis/codec.h], [with_vorbislibrary=true], [with_vorbislibrary=false])
-
 ################################################################################
 # Check for pkg-config modules                                                 #
 ################################################################################
 
-dnl Check for vorbis component dependencies
-PKG_CHECK_MODULES([VORBIS], [vorbis], have_vorbis=yes, have_vorbis=no)
+# Check for vorbis component dependencies
+if test "x$with_vorbis" = "xyes"; then
+	PKG_CHECK_MODULES([VORBIS], [vorbis], [with_vorbis=yes], [with_vorbis=no])
+fi
 
 # Check for mad component dependencies
-PKG_CHECK_MODULES([MAD], [mad id3tag], have_mad=yes, have_mad=no)
+if test "x$with_mad" = "xyes"; then
+	PKG_CHECK_MODULES([MAD], [mad id3tag], [with_mad=yes], [with_mad=no])
+fi
 
-# Check for ffmpeg component dependencies
-PKG_CHECK_MODULES([FFMPEG], [libavcodec libavformat libavutil libswscale], [have_ffmpeg=yes], [have_ffmpeg=no])
+# Check for FFmpeg component dependencies
+if test "x$with_ffmpeg" = "xyes"; then
+	PKG_CHECK_MODULES([FFMPEG], [libavcodec libavformat libavutil libswscale], [with_ffmpeg=yes], [with_ffmpeg=no])
+fi
 
-# Check for ffmpeg API version
-if test "x$have_ffmpeg" = "xyes"; then
+# Check for FFmpeg API version
+if test "x$with_ffmpeg" = "xyes"; then
+	AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API])
 	old_CPPFLAGS="${CPPFLAGS}"
 	old_LDFLAGS="${LDFLAGS}"
 	CPPFLAGS="${CPPFLAGS} ${FFMPEG_CFLAGS}"
 	LDFLAGS="${LDFLAGS} ${FFMPEG_LIBS}"
-	AC_CHECK_LIB([avcodec], [avcodec_decode_audio2], [have_decode_audio2=yes], [have_decode_audio2=no])
+	AC_CHECK_LIB([avcodec], [avcodec_decode_audio2],
+		     [AC_DEFINE([FFMPEG_DECODER_VERSION], [2])])
+	CPPFLAGS="${old_CPPFLAGS}"
+	LDFLAGS="${old_LDFLAGS}"
+fi
+
+# Check for vorbis library existence
+if test "x$with_vorbis" = "xyes"; then
+	old_CPPFLAGS="${CPPFLAGS}"
+	old_LDFLAGS="${LDFLAGS}"
+	CPPFLAGS="${CPPFLAGS} ${VORBIS_CFLAGS}"
+	LDFLAGS="${LDFLAGS} ${VORBIS_LIBS}"
+	AC_CHECK_HEADER([vorbis/codec.h], [with_vorbis=yes], [with_vorbis=no])
 	CPPFLAGS="${old_CPPFLAGS}"
 	LDFLAGS="${old_LDFLAGS}"
 fi
@@ -204,18 +222,15 @@ fi
 # Conditionals and file output                                                 #
 ################################################################################
 
-AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xtrue && test x$with_framebuffer = xtrue])
-AM_CONDITIONAL([WITH_ALSASINK], [test x$with_alsasink = xtrue && test x$with_alsalibrary = xtrue])
-AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS],
-               [test x$have_ffmpeg = xyes && test x$with_ffmpegcomponents = xtrue])
-AM_CONDITIONAL([HAVE_FFMPEG_DECODE_AUDIO_2],
-               [test x$have_ffmpeg = xyes && test x$have_decode_audio2 = xyes])
-AM_CONDITIONAL([WITH_MADCOMPONENTS],
-               [test x$have_mad = xyes && test x$with_madcomponents = xtrue])
-AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
-               [test x$have_vorbis = xyes && test x$with_vorbiscomponents = xtrue && test x$with_vorbislibrary = xtrue])
-AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xtrue])
+AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK],
+	       [test x$with_fbdev_videosink = xtrue && test x$with_framebuffer = xtrue])
+AM_CONDITIONAL([WITH_ALSASINK],
+	       [test x$with_alsasink = xtrue && test x$with_alsalibrary = xtrue])
+AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test ! "x$with_ffmpeg" = "xno"])
+AM_CONDITIONAL([WITH_MADCOMPONENTS], [test ! "x$with_mad" = "xno"])
+AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test ! "x$with_vorbis" = "xno"])
+AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test ! "x$with_audioeffects" = "xno"])
 
-AM_CONDITIONAL([INSTALL_DEVEL_HEADERS], [test x$install_devel = xtrue])
+AM_CONDITIONAL([INSTALL_EXTRA_HEADERS], [test ! "x$install_extra" = "xno"])
 
 AC_OUTPUT

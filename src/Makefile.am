@@ -19,11 +19,11 @@ libomxil_la_SOURCES = st_static_component_loader.c \
 libomxil_la_CFLAGS = -I$(top_srcdir)/include  -I$(srcdir)/base
 libomxil_la_LIBADD = base/libomxbase.la
 
-if INSTALL_DEVEL_HEADERS
+if INSTALL_EXTRA_HEADERS
 
-includedeveldir = $(includedir)/bellagio
+includeextradir = $(includedir)/bellagio
 
-includedevel_HEADERS = omxcore.h queue.h component_loader.h st_static_component_loader.h \
+includeextra_HEADERS = omxcore.h queue.h component_loader.h st_static_component_loader.h \
 		       tsemaphore.h omx_comp_debug_levels.h \
 		       $(srcdir)/base/omx_base_component.h \
 		       $(srcdir)/base/omx_base_port.h \

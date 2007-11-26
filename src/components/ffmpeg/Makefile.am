@@ -15,7 +15,3 @@ libomxffmpeg_la_CFLAGS = $(FFMPEG_CFLAGS) \
 			 -I$(top_srcdir)/include \
 			 -I$(top_srcdir)/src \
 			 -I$(top_srcdir)/src/base
-
-if HAVE_FFMPEG_DECODE_AUDIO_2
-libomxffmpeg_la_CFLAGS += -DFFMPEG_DECODER_VERSION=2
-endif

@@ -32,6 +32,9 @@
 /** modification to include audio formats */
 #include<OMX_Audio.h>
 
+/* For FFMPEG_DECODER_VERSION */
+#include <config.h>
+
 #define MAX_COMPONENT_AUDIODEC 4
 
 /** output length arguement passed along decoding function */
@@ -379,7 +382,7 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   pOutputBuffer->nOffset=0;
   /** resetting output length to a predefined value */
   output_length = OUTPUT_LEN_STANDARD_FFMPEG;
-#ifdef FFMPEG_DECODER_VERSION
+#if FFMPEG_DECODER_VERSION >= 2
   len  = avcodec_decode_audio2(omx_audiodec_component_Private->avCodecContext,
                               (short*)(pOutputBuffer->pBuffer),
                               &output_length,

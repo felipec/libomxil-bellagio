@@ -133,9 +133,12 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
   int error;
   OMX_VENDOR_EXTRADATATYPE *pExtraData;
-	
-	DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
-	
+
+  DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
+
+  avcodec_init();
+  av_register_all();
+  
   /** initialization of file reader component private data structures */
   /** opening the input file whose name is already set via setParameter */
   error = av_open_input_file(&omx_filereader_component_Private->avformatcontext, 

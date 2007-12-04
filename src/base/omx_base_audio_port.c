@@ -72,6 +72,7 @@ OMX_ERRORTYPE base_audio_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   omx_base_audio_Port->sAudioParam.nIndex = 0;
   omx_base_audio_Port->sAudioParam.eEncoding = OMX_AUDIO_CodingUnused;
   
+  omx_base_audio_Port->sPortParam.eDomain = OMX_PortDomainAudio;
   omx_base_audio_Port->sPortParam.format.audio.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
   strcpy(omx_base_audio_Port->sPortParam.format.audio.cMIMEType, "raw/audio");
   omx_base_audio_Port->sPortParam.format.audio.pNativeRender = 0;

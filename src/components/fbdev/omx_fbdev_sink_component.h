@@ -142,21 +142,4 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
  *  instance, to compute the duration of call. */
 long GetTime();
 
-/** 
-  * @brief the Constructor for the openmax Video Sink port
-  * 
-  * @param openmaxStandComp pointer to the Handle of the component
-  * @param openmaxStandPort the ST port to be initialized
-  * @param nPortIndex Index of the port to be constructed
-  * @param isInput specifices if the port is an input or an output
-  * 
-  * @return OMX_ErrorInsufficientResources if a memory allocation fails
-  */
-
-OMX_ERRORTYPE omx_fbdev_sink_port_Constructor(
-  OMX_COMPONENTTYPE *openmaxStandComp,
-  omx_base_PortType **openmaxStandPort,
-  OMX_U32 nPortIndex, 
-  OMX_BOOL isInput);
-
 #endif

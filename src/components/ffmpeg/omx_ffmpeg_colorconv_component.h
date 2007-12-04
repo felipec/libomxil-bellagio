@@ -140,21 +140,4 @@ OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
         OMX_PTR pAppPrivate,
         void* eglImage);
 
-/** 
-  * @brief the omx_ffmpeg_colorconv for the openmax Color Converter Video port
-  * 
-  * @param openmaxStandComp pointer to the Handle of the component
-  * @param openmaxStandPort the ST port to be initialized
-  * @param nPortIndex Index of the port to be constructed
-  * @param isInput specifices if the port is an input or an output
-  * 
-  * @return OMX_ErrorInsufficientResources if a memory allocation fails
-  */
-
-OMX_ERRORTYPE omx_ffmpeg_colorconv_port_Constructor(
-  OMX_COMPONENTTYPE *openmaxStandComp,
-  omx_base_PortType **openmaxStandPort,
-  OMX_U32 nPortIndex, 
-  OMX_BOOL isInput);
-
 #endif

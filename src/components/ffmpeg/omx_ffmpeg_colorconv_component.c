@@ -204,6 +204,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
 	OMX_ERRORTYPE err = OMX_ErrorNone;	
 	omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private;
 	omx_ffmpeg_colorconv_component_PortType *inPort,*outPort;
+  OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, allocating component\n", __func__);
@@ -215,19 +216,30 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
-  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
   omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
   omx_ffmpeg_colorconv_component_Private->ports = NULL;
-  omx_ffmpeg_colorconv_component_Private->PortConstructor = omx_ffmpeg_colorconv_port_Constructor;
-
+  
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
-  /** here we can override whatever defaults the base_component constructor set
-    * e.g. we can override the function pointers in the private struct  
-    */
+  /** Allocate Ports and call port constructor. */	
+  if (omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts && !omx_ffmpeg_colorconv_component_Private->ports) {
+    omx_ffmpeg_colorconv_component_Private->ports = calloc(omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+    if (!omx_ffmpeg_colorconv_component_Private->ports) {
+      return OMX_ErrorInsufficientResources;
+    }
+    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts; i++) {
+      omx_ffmpeg_colorconv_component_Private->ports[i] = calloc(1, sizeof(omx_ffmpeg_colorconv_component_PortType));
+      if (!omx_ffmpeg_colorconv_component_Private->ports[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+    }
+  }
+
+  base_video_port_Constructor(openmaxStandComp, &omx_ffmpeg_colorconv_component_Private->ports[0], 0, OMX_TRUE);
+  base_video_port_Constructor(openmaxStandComp, &omx_ffmpeg_colorconv_component_Private->ports[1], 1, OMX_FALSE);
   	
   inPort = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
   outPort = (omx_ffmpeg_colorconv_component_PortType *) omx_ffmpeg_colorconv_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
@@ -328,7 +340,21 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
 /** The destructor
  */
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
+  omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_U32 i;
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of video color converter component is called\n");
+
+  /* frees port/s */
+  if (omx_ffmpeg_colorconv_component_Private->ports) {
+    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts; i++) {
+      if(omx_ffmpeg_colorconv_component_Private->ports[i])
+        omx_ffmpeg_colorconv_component_Private->ports[i]->PortDestructor(omx_ffmpeg_colorconv_component_Private->ports[i]);
+    }
+    free(omx_ffmpeg_colorconv_component_Private->ports);
+    omx_ffmpeg_colorconv_component_Private->ports=NULL;
+  }
+
   omx_base_filter_Destructor(openmaxStandComp);
   noVideoColorConvInstance--;
 
@@ -1177,25 +1203,4 @@ OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
 	                                pAppPrivate,
 	                                pPort->sPortParam.nBufferSize,
 	                                eglImage);
-}
-
-OMX_ERRORTYPE omx_ffmpeg_colorconv_port_Constructor(
-  OMX_COMPONENTTYPE *openmaxStandComp,
-  omx_base_PortType **openmaxStandPort,
-  OMX_U32 nPortIndex, 
-  OMX_BOOL isInput) {
-
-  //omx_ffmpeg_colorconv_component_PortType *omx_ffmpeg_colorconv_component_Port;
-
-  if (!(*openmaxStandPort)) {
-    *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_ffmpeg_colorconv_component_PortType));
-  }
-
-  if (!(*openmaxStandPort)) {
-    return OMX_ErrorInsufficientResources;
-  }
-
-  base_video_port_Constructor(openmaxStandComp,openmaxStandPort,nPortIndex, isInput);
-
-  return OMX_ErrorNone;
 }

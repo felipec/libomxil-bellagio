@@ -78,6 +78,7 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_maddec_component_PrivateType* omx_maddec_component_Private;
   omx_base_audio_PortType *inPort,*outPort;
+  OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     openmaxStandComp->pComponentPrivate = calloc(1, sizeof(omx_maddec_component_PrivateType));
@@ -89,10 +90,9 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
               __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 	
-  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
   omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_maddec_component_Private->ports = NULL;
-  omx_maddec_component_Private->PortConstructor = base_audio_port_Constructor;
+
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
@@ -104,6 +104,24 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   /** first we set the parameter common to both formats
     * parameters related to input port which does not depend upon input audio format
     */
+
+  /** Allocate Ports and call port constructor. */	
+  if (omx_maddec_component_Private->sPortTypesParam.nPorts && !omx_maddec_component_Private->ports) {
+    omx_maddec_component_Private->ports = calloc(omx_maddec_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+    if (!omx_maddec_component_Private->ports) {
+      return OMX_ErrorInsufficientResources;
+    }
+    for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
+      omx_maddec_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
+      if (!omx_maddec_component_Private->ports[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+    }
+  }
+
+  base_audio_port_Constructor(openmaxStandComp, &omx_maddec_component_Private->ports[0], 0, OMX_TRUE);
+  base_audio_port_Constructor(openmaxStandComp, &omx_maddec_component_Private->ports[1], 1, OMX_FALSE);
+  
   
   /** parameters related to input port */
   inPort = (omx_base_audio_PortType *) omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
@@ -219,6 +237,7 @@ void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandC
 OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_U32 i;
 
   if(omx_maddec_component_Private->madDecSyncSem) {
     tsem_deinit(omx_maddec_component_Private->madDecSyncSem);
@@ -233,6 +252,16 @@ OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
   omx_maddec_component_Private->synth = NULL;
   free(omx_maddec_component_Private->frame);
   omx_maddec_component_Private->frame = NULL;
+
+  /* frees port/s */
+  if (omx_maddec_component_Private->ports) {
+    for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
+      if(omx_maddec_component_Private->ports[i])
+        omx_maddec_component_Private->ports[i]->PortDestructor(omx_maddec_component_Private->ports[i]);
+    }
+    free(omx_maddec_component_Private->ports);
+    omx_maddec_component_Private->ports=NULL;
+  }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of mad decoder component is called\n");
 

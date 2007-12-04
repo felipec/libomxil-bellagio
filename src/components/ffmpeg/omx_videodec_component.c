@@ -48,6 +48,7 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   OMX_ERRORTYPE eError = OMX_ErrorNone;	
   omx_videodec_component_PrivateType* omx_videodec_component_Private;
   omx_base_video_PortType *inPort,*outPort;
+  OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, allocating component\n", __func__);
@@ -59,19 +60,30 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
-  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
   omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_videodec_component_Private->ports = NULL;
-  omx_videodec_component_Private->PortConstructor = base_video_port_Constructor;
 
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
   eError = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
-  /** here we can override whatever defaults the base_component constructor set
-    * e.g. we can override the function pointers in the private struct  
-    */
+  /** Allocate Ports and call port constructor. */	
+  if (omx_videodec_component_Private->sPortTypesParam.nPorts && !omx_videodec_component_Private->ports) {
+    omx_videodec_component_Private->ports = calloc(omx_videodec_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+    if (!omx_videodec_component_Private->ports) {
+      return OMX_ErrorInsufficientResources;
+    }
+    for (i=0; i < omx_videodec_component_Private->sPortTypesParam.nPorts; i++) {
+      omx_videodec_component_Private->ports[i] = calloc(1, sizeof(omx_base_video_PortType));
+      if (!omx_videodec_component_Private->ports[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+    }
+  }
+
+  base_video_port_Constructor(openmaxStandComp, &omx_videodec_component_Private->ports[0], 0, OMX_TRUE);
+  base_video_port_Constructor(openmaxStandComp, &omx_videodec_component_Private->ports[1], 1, OMX_FALSE);
 
   /** Domain specific section for the ports. 	
     * first we set the parameter common to both formats
@@ -86,6 +98,8 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   outPort->sPortParam.format.video.eColorFormat = OUTPUT_DECODED_COLOR_FMT;
   outPort->sPortParam.nBufferSize = MAX_VIDEO_OUTPUT_BUF_SIZE;
   outPort->sPortParam.format.video.xFramerate = 25;
+  outPort->sPortParam.format.video.nFrameWidth = 352;
+  outPort->sPortParam.format.video.nFrameHeight = 288;
 
   /** settings of output port parameter definition */
   outPort->sVideoParam.eColorFormat = OUTPUT_DECODED_COLOR_FMT;
@@ -149,11 +163,23 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   */
 OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_U32 i;
   
   if(omx_videodec_component_Private->avCodecSyncSem) {
     free(omx_videodec_component_Private->avCodecSyncSem);
     omx_videodec_component_Private->avCodecSyncSem = NULL;
   }
+
+  /* frees port/s */
+  if (omx_videodec_component_Private->ports) {
+    for (i=0; i < omx_videodec_component_Private->sPortTypesParam.nPorts; i++) {
+      if(omx_videodec_component_Private->ports[i])
+        omx_videodec_component_Private->ports[i]->PortDestructor(omx_videodec_component_Private->ports[i]);
+    }
+    free(omx_videodec_component_Private->ports);
+    omx_videodec_component_Private->ports=NULL;
+  }
+
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of video decoder component is called\n");
 
@@ -345,7 +371,7 @@ static inline void UpdateFrameSize(OMX_COMPONENTTYPE *openmaxStandComp) {
       outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 1.5;
       break;
     default:
-      outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 2;
+      outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 3;
       break;
   }
 }

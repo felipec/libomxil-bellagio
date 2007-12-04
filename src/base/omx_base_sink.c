@@ -57,31 +57,11 @@ OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_
 
   omx_base_sink_Private->BufferMgmtFunction = omx_base_sink_BufferMgmtFunction;
 
-  if(omx_base_sink_Private->PortConstructor){
-    if (!omx_base_sink_Private->ports) {
-      omx_base_sink_Private->ports = calloc(omx_base_sink_Private->sPortTypesParam.nPorts,sizeof (omx_base_PortType *));
-    }
-    omx_base_sink_Private->PortConstructor(openmaxStandComp,&omx_base_sink_Private->ports[0],0, OMX_TRUE);
-  }
-
   return err;
 }
 
 OMX_ERRORTYPE omx_base_sink_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
 {
-  omx_base_sink_PrivateType* omx_base_sink_Private  = (omx_base_sink_PrivateType*)openmaxStandComp->pComponentPrivate;
-  OMX_U32 i;
-
-  /* frees port/s */
-  if (omx_base_sink_Private->sPortTypesParam.nPorts && omx_base_sink_Private->ports) {
-    for (i=0; i < omx_base_sink_Private->sPortTypesParam.nPorts; i++) {
-      if(omx_base_sink_Private->ports[i])
-        omx_base_sink_Private->ports[i]->PortDestructor(omx_base_sink_Private->ports[i]);
-    }
-    free(omx_base_sink_Private->ports);
-    omx_base_sink_Private->ports=NULL;
-  }
-
   return omx_base_component_Destructor(openmaxStandComp);
 }
 

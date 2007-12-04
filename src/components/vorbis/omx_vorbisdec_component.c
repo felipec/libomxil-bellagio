@@ -80,10 +80,8 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
-  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
   omx_vorbisdec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_vorbisdec_component_Private->ports = NULL;
-  omx_vorbisdec_component_Private->PortConstructor = base_audio_port_Constructor;
 
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
@@ -94,6 +92,23 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
   /** first we set the parameter common to both formats
   	* common parameters related to input port
 		*/
+
+  /** Allocate Ports and call port constructor. */	
+  if (omx_vorbisdec_component_Private->sPortTypesParam.nPorts && !omx_vorbisdec_component_Private->ports) {
+    omx_vorbisdec_component_Private->ports = calloc(omx_vorbisdec_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+    if (!omx_vorbisdec_component_Private->ports) {
+      return OMX_ErrorInsufficientResources;
+    }
+    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam.nPorts; i++) {
+      omx_vorbisdec_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
+      if (!omx_vorbisdec_component_Private->ports[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+    }
+  }
+
+  base_audio_port_Constructor(openmaxStandComp, &omx_vorbisdec_component_Private->ports[0], 0, OMX_TRUE);
+  base_audio_port_Constructor(openmaxStandComp, &omx_vorbisdec_component_Private->ports[1], 1, OMX_FALSE);
 
   inPort = (omx_base_audio_PortType *) omx_vorbisdec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 
@@ -176,11 +191,22 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
  */
 OMX_ERRORTYPE omx_vorbisdec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_vorbisdec_component_PrivateType* omx_vorbisdec_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_U32 i;
 
   if(omx_vorbisdec_component_Private->avCodecSyncSem) {
     tsem_deinit(omx_vorbisdec_component_Private->avCodecSyncSem);
     free(omx_vorbisdec_component_Private->avCodecSyncSem);
     omx_vorbisdec_component_Private->avCodecSyncSem = NULL;
+  }
+
+  /* frees port/s */
+  if (omx_vorbisdec_component_Private->ports) {
+    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam.nPorts; i++) {
+      if(omx_vorbisdec_component_Private->ports[i])
+        omx_vorbisdec_component_Private->ports[i]->PortDestructor(omx_vorbisdec_component_Private->ports[i]);
+    }
+    free(omx_vorbisdec_component_Private->ports);
+    omx_vorbisdec_component_Private->ports=NULL;
   }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of vorbisdecoder component is called\n");

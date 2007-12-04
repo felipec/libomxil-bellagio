@@ -44,6 +44,8 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_base_audio_PortType *pPort;
   omx_filereader_component_PrivateType* omx_filereader_component_Private;
+  OMX_U32 i;
+
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 
   if (!openmaxStandComp->pComponentPrivate) {
@@ -53,12 +55,26 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     }
   }
 
-  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
   omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
   omx_filereader_component_Private->ports = NULL;
-  omx_filereader_component_Private->PortConstructor = base_audio_port_Constructor;
-
+  
   err = omx_base_source_Constructor(openmaxStandComp, cComponentName);
+
+  /** Allocate Ports and call port constructor. */	
+  if (omx_filereader_component_Private->sPortTypesParam.nPorts && !omx_filereader_component_Private->ports) {
+    omx_filereader_component_Private->ports = calloc(omx_filereader_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+    if (!omx_filereader_component_Private->ports) {
+      return OMX_ErrorInsufficientResources;
+    }
+    for (i=0; i < omx_filereader_component_Private->sPortTypesParam.nPorts; i++) {
+      omx_filereader_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
+      if (!omx_filereader_component_Private->ports[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+    }
+  }
+
+  base_audio_port_Constructor(openmaxStandComp, &omx_filereader_component_Private->ports[0], 0, OMX_FALSE);
   
   pPort = (omx_base_audio_PortType *) omx_filereader_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
   
@@ -110,6 +126,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
  */
 OMX_ERRORTYPE omx_filereader_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 	omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_U32 i;
   
   if(omx_filereader_component_Private->avformatSyncSem) {
     tsem_deinit(omx_filereader_component_Private->avformatSyncSem);
@@ -121,6 +138,16 @@ OMX_ERRORTYPE omx_filereader_component_Destructor(OMX_COMPONENTTYPE *openmaxStan
     free(omx_filereader_component_Private->sInputFileName);
   }
   
+  /* frees port/s */
+  if (omx_filereader_component_Private->ports) {
+    for (i=0; i < omx_filereader_component_Private->sPortTypesParam.nPorts; i++) {
+      if(omx_filereader_component_Private->ports[i])
+        omx_filereader_component_Private->ports[i]->PortDestructor(omx_filereader_component_Private->ports[i]);
+    }
+    free(omx_filereader_component_Private->ports);
+    omx_filereader_component_Private->ports=NULL;
+  }
+
   noFilereaderInstance--;
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
   return omx_base_source_Destructor(openmaxStandComp);

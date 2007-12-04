@@ -74,6 +74,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_fbdev_sink_component_PortType *pPort;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private;
+  OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, allocating component\n", __func__);
@@ -85,18 +86,29 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
   }
 
-  /*Assign size of the derived port class,so that proper memory for port class can be allocated*/
   omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
   omx_fbdev_sink_component_Private->ports = NULL;
-  omx_fbdev_sink_component_Private->PortConstructor = omx_fbdev_sink_port_Constructor;
-
+  
   /** we could create our own port structures here
     * fixme maybe the base class could use a "port factory" function pointer?	
     */
   err = omx_base_sink_Constructor(openmaxStandComp, cComponentName);
-  /** here we can override whatever defaults the base_component constructor set
-    * e.g. we can override the function pointers in the private struct  
-    */
+  
+  /** Allocate Ports and call port constructor. */	
+  if (omx_fbdev_sink_component_Private->sPortTypesParam.nPorts && !omx_fbdev_sink_component_Private->ports) {
+    omx_fbdev_sink_component_Private->ports = calloc(omx_fbdev_sink_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+    if (!omx_fbdev_sink_component_Private->ports) {
+      return OMX_ErrorInsufficientResources;
+    }
+    for (i=0; i < omx_fbdev_sink_component_Private->sPortTypesParam.nPorts; i++) {
+      omx_fbdev_sink_component_Private->ports[i] = calloc(1, sizeof(omx_fbdev_sink_component_PortType));
+      if (!omx_fbdev_sink_component_Private->ports[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+    }
+  }
+
+  base_video_port_Constructor(openmaxStandComp, &omx_fbdev_sink_component_Private->ports[0], 0, OMX_TRUE);
 
   pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
 
@@ -159,7 +171,19 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
 /** The Destructor 
  */
 OMX_ERRORTYPE omx_fbdev_sink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
+  omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_U32 i;
  
+  /* frees port/s */
+  if (omx_fbdev_sink_component_Private->ports) {
+    for (i=0; i < omx_fbdev_sink_component_Private->sPortTypesParam.nPorts; i++) {
+      if(omx_fbdev_sink_component_Private->ports[i])
+        omx_fbdev_sink_component_Private->ports[i]->PortDestructor(omx_fbdev_sink_component_Private->ports[i]);
+    }
+    free(omx_fbdev_sink_component_Private->ports);
+    omx_fbdev_sink_component_Private->ports=NULL;
+  }
+
   omx_base_sink_Destructor(openmaxStandComp);
   nofbdev_sinkInstance--;
 
@@ -1240,6 +1264,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
       // Read-only field by spec
 
+      pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
       pPort->omxConfigCrop.nWidth = pPort->sPortParam.format.video.nFrameWidth;
       pPort->omxConfigCrop.nHeight = pPort->sPortParam.format.video.nFrameHeight;
       break;
@@ -1351,23 +1376,4 @@ OMX_ERRORTYPE omx_fbdev_sink_component_MessageHandler(OMX_COMPONENTTYPE* openmax
     }
   }
   return err;
-}
-
-OMX_ERRORTYPE omx_fbdev_sink_port_Constructor(
-  OMX_COMPONENTTYPE *openmaxStandComp,
-  omx_base_PortType **openmaxStandPort,
-  OMX_U32 nPortIndex, 
-  OMX_BOOL isInput) {
-
-  if (!(*openmaxStandPort)) {
-    *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_fbdev_sink_component_PortType));
-  }
-
-  if (!(*openmaxStandPort)) {
-    return OMX_ErrorInsufficientResources;
-  }
-
-  base_video_port_Constructor(openmaxStandComp,openmaxStandPort,nPortIndex, isInput);
-
-  return OMX_ErrorNone;
 }

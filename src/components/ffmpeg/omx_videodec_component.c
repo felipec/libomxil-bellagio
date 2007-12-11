@@ -40,6 +40,11 @@ OMX_U32 noVideoDecInstance = 0;
 /** The output decoded color format */
 #define OUTPUT_DECODED_COLOR_FMT OMX_COLOR_FormatYUV420Planar
 
+#define DEFAULT_WIDTH 352
+#define DEFAULT_HEIGHT 288
+/** define the max input buffer size */
+#define DEFAULT_VIDEO_OUTPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*1.5   // YUV 420P
+
 /** The Constructor of the video decoder component
   * @param cComponentName is the name of the constructed component
   */
@@ -96,10 +101,8 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   //common parameters related to output port
   outPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   outPort->sPortParam.format.video.eColorFormat = OUTPUT_DECODED_COLOR_FMT;
-  outPort->sPortParam.nBufferSize = MAX_VIDEO_OUTPUT_BUF_SIZE;
+  outPort->sPortParam.nBufferSize = DEFAULT_VIDEO_OUTPUT_BUF_SIZE;
   outPort->sPortParam.format.video.xFramerate = 25;
-  outPort->sPortParam.format.video.nFrameWidth = 352;
-  outPort->sPortParam.format.video.nFrameHeight = 288;
 
   /** settings of output port parameter definition */
   outPort->sVideoParam.eColorFormat = OUTPUT_DECODED_COLOR_FMT;

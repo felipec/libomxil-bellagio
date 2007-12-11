@@ -36,8 +36,10 @@
 /** Counter of Video Component Instance*/
 OMX_U32 noVideoColorConvInstance = 0;
 
+#define DEFAULT_WIDTH 352
+#define DEFAULT_HEIGHT 288
 /** define the max input buffer size */
-#define MAX_VIDEO_INPUT_BUF_SIZE 460800
+#define DEFAULT_VIDEO_INPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*1.5
 
 
 /**	Figure out equivalent ffmpeg PixelFormat based on OMX_COLOR_FORMATTYPE 
@@ -250,32 +252,32 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   outPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
   //input port parameter settings
-  inPort->sPortParam.format.video.nFrameWidth = 640;
-  inPort->sPortParam.format.video.nFrameHeight = 480;
+  inPort->sPortParam.format.video.nFrameWidth = DEFAULT_WIDTH;
+  inPort->sPortParam.format.video.nFrameHeight = DEFAULT_HEIGHT;
   inPort->sPortParam.format.video.nStride = calcStride(inPort->sPortParam.format.video.nFrameWidth, inPort->sVideoParam.eColorFormat);
   inPort->sPortParam.format.video.nSliceHeight = inPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
 
   inPort->sPortParam.format.video.xFramerate = 25; 
   inPort->ffmpeg_pxlfmt = PIX_FMT_YUV420P;
-  inPort->sPortParam.nBufferSize = MAX_VIDEO_INPUT_BUF_SIZE;
+  inPort->sPortParam.nBufferSize = DEFAULT_VIDEO_INPUT_BUF_SIZE;
   inPort->sPortParam.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
   inPort->sPortParam.format.video.pNativeWindow = NULL;
 
   //output port parameter settings
-  outPort->sPortParam.format.video.nFrameWidth = 640;
-  outPort->sPortParam.format.video.nFrameHeight = 480;
+  outPort->sPortParam.format.video.nFrameWidth = DEFAULT_WIDTH;
+  outPort->sPortParam.format.video.nFrameHeight = DEFAULT_HEIGHT;
   outPort->sPortParam.format.video.nStride = calcStride(outPort->sPortParam.format.video.nFrameWidth, outPort->sVideoParam.eColorFormat);
   outPort->sPortParam.format.video.nSliceHeight = outPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
   outPort->sPortParam.format.video.xFramerate = 25; 
   outPort->ffmpeg_pxlfmt = PIX_FMT_RGB24;
-  outPort->sPortParam.nBufferSize = MAX_VIDEO_INPUT_BUF_SIZE * 3;
+  outPort->sPortParam.nBufferSize = DEFAULT_VIDEO_INPUT_BUF_SIZE * 2;
   outPort->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
   setHeader(&inPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
   inPort->omxConfigCrop.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
   inPort->omxConfigCrop.nLeft = inPort->omxConfigCrop.nTop = 0;
-  inPort->omxConfigCrop.nWidth = 640;
-  inPort->omxConfigCrop.nHeight = 480;
+  inPort->omxConfigCrop.nWidth = DEFAULT_WIDTH;
+  inPort->omxConfigCrop.nHeight = DEFAULT_HEIGHT;
 
   setHeader(&inPort->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));	
   inPort->omxConfigRotate.nPortIndex = OMX_BASE_FILTER_INPUTPORT_INDEX;
@@ -296,8 +298,8 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
   setHeader(&outPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
   outPort->omxConfigCrop.nPortIndex = OMX_BASE_FILTER_OUTPUTPORT_INDEX;
   outPort->omxConfigCrop.nLeft = outPort->omxConfigCrop.nTop = 0;
-  outPort->omxConfigCrop.nWidth = 640;
-  outPort->omxConfigCrop.nHeight = 480;
+  outPort->omxConfigCrop.nWidth = DEFAULT_WIDTH;
+  outPort->omxConfigCrop.nHeight = DEFAULT_HEIGHT;
 
   setHeader(&outPort->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));	
   outPort->omxConfigRotate.nPortIndex = OMX_BASE_FILTER_OUTPUTPORT_INDEX;
@@ -1069,7 +1071,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
       // Read-only field by spec
-      //pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
+      pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
       pPort->omxConfigCrop.nWidth = pPort->sPortParam.format.video.nFrameWidth;
       pPort->omxConfigCrop.nHeight = pPort->sPortParam.format.video.nFrameHeight;
       break;

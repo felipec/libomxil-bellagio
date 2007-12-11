@@ -39,7 +39,7 @@ OMX_U32 noVideoColorConvInstance = 0;
 #define DEFAULT_WIDTH 352
 #define DEFAULT_HEIGHT 288
 /** define the max input buffer size */
-#define DEFAULT_VIDEO_INPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*1.5
+#define DEFAULT_VIDEO_INPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*3/2
 
 
 /**	Figure out equivalent ffmpeg PixelFormat based on OMX_COLOR_FORMATTYPE 

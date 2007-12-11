@@ -662,7 +662,7 @@ int main(int argc, char** argv) {
   DEBUG(DEB_LEV_SIMPLE_SEQ, "The role currently set is %s\n", paramRole.cRole);
 
   /** output buffer size calculation based on input dimension speculation */
-  buffer_out_size = out_width * out_height * 1.5; //yuv420 format -- bpp = 12
+  buffer_out_size = out_width * out_height * 3/2; //yuv420 format -- bpp = 12
   DEBUG(DEB_LEV_SIMPLE_SEQ, "\n buffer_out_size : %d \n", (int)buffer_out_size);
 
   /** if tunneling option is given then set up the tunnel between the components */

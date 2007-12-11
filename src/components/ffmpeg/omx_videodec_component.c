@@ -43,7 +43,7 @@ OMX_U32 noVideoDecInstance = 0;
 #define DEFAULT_WIDTH 352
 #define DEFAULT_HEIGHT 288
 /** define the max input buffer size */
-#define DEFAULT_VIDEO_OUTPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*1.5   // YUV 420P
+#define DEFAULT_VIDEO_OUTPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*3/2   // YUV 420P
 
 /** The Constructor of the video decoder component
   * @param cComponentName is the name of the constructed component
@@ -371,10 +371,14 @@ static inline void UpdateFrameSize(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_base_video_PortType *outPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   switch(outPort->sVideoParam.eColorFormat) {
     case OMX_COLOR_FormatYUV420Planar:
-      outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 1.5;
+      if(outPort->sPortParam.format.video.nFrameWidth && outPort->sPortParam.format.video.nFrameHeight) {
+        outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 3/2;
+      }
       break;
     default:
-      outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 3;
+      if(outPort->sPortParam.format.video.nFrameWidth && outPort->sPortParam.format.video.nFrameHeight) {
+        outPort->sPortParam.nBufferSize = outPort->sPortParam.format.video.nFrameWidth * outPort->sPortParam.format.video.nFrameHeight * 3;
+      }
       break;
   }
 }

@@ -28,6 +28,7 @@ AC_CONFIG_FILES([
     src/components/filereader/Makefile
     src/components/fbdev/Makefile
     src/components/audio_effects/Makefile
+    src/components/video_src/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile
@@ -102,6 +103,15 @@ AC_ARG_ENABLE(
         [whether to install component extra header files])],
     [install_extra=yes],
     [install_extra=no]) dnl default
+
+#Check whether video src/camera component has been requested
+AC_ARG_ENABLE(
+    [videosrc],
+    [AC_HELP_STRING(
+        [--enable-videosrc],
+        [whether to enable the video src/camera])],
+    [with_videosrc=true],
+    [with_videosrc=false])
 
 ################################################################################
 # Check for programs                                                           #
@@ -232,5 +242,7 @@ AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test ! "x$with_vorbis" = "xno"])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test ! "x$with_audioeffects" = "xno"])
 
 AM_CONDITIONAL([INSTALL_EXTRA_HEADERS], [test ! "x$install_extra" = "xno"])
+
+AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xtrue])
 
 AC_OUTPUT

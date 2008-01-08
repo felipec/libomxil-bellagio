@@ -383,7 +383,9 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
         DEBUG(DEB_LEV_FULL_SEQ, "Flushing Port %i\n",(int)i);
         pPort = omx_base_component_Private->ports[i];
-        pPort->FlushProcessingBuffers(pPort);
+        if(PORT_IS_ENABLED(pPort)) {
+          pPort->FlushProcessingBuffers(pPort);
+        }
       }
       omx_base_component_Private->state = OMX_StateIdle;
       break;
@@ -434,7 +436,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
           for(j=0;j<omx_base_component_Private->ports[i]->nNumTunnelBuffer;j++) {
             tsem_up(omx_base_component_Private->ports[i]->pBufferSem);
             /*signal buffer management thread availability of buffers*/
-          	tsem_up(omx_base_component_Private->bMgmtSem);
+            tsem_up(omx_base_component_Private->bMgmtSem);
           }
         }
       }
@@ -838,11 +840,13 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
         err = OMX_ErrorNone;
       }
       pPort->nTunnelFlags |= TUNNEL_IS_SUPPLIER;
+      pBufferSupplier->nPortIndex = pPort->nTunneledPort;
       err = OMX_SetParameter(pPort->hTunneledComponent, OMX_IndexParamCompBufferSupplier, pBufferSupplier);
     } else if ((pBufferSupplier->eBufferSupplier == OMX_BufferSupplyOutput) && 
                (pPort->sPortParam.eDir == OMX_DirInput)) {
       if (PORT_IS_BUFFER_SUPPLIER(pPort)) {
         pPort->nTunnelFlags &= ~TUNNEL_IS_SUPPLIER;
+        pBufferSupplier->nPortIndex = pPort->nTunneledPort;
         err = OMX_SetParameter(pPort->hTunneledComponent, OMX_IndexParamCompBufferSupplier, pBufferSupplier);
       }
       err = OMX_ErrorNone;

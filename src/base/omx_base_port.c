@@ -80,7 +80,9 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
 
   if((*openmaxStandPort)->pAllocSem==NULL) {
     (*openmaxStandPort)->pAllocSem = calloc(1,sizeof(tsem_t));
-    if((*openmaxStandPort)->pAllocSem==NULL)	return OMX_ErrorInsufficientResources;
+    if((*openmaxStandPort)->pAllocSem==NULL) {
+    	return OMX_ErrorInsufficientResources;
+    }
     tsem_init((*openmaxStandPort)->pAllocSem, 0);
   }
   (*openmaxStandPort)->nNumBufferFlushed=0; 
@@ -302,6 +304,7 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
 OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
   omx_base_component_PrivateType* omx_base_component_Private;
   OMX_ERRORTYPE err=OMX_ErrorNone;
+  OMX_U32 i;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   if (PORT_IS_ENABLED(openmaxStandPort)) {
@@ -330,6 +333,12 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
       return err;
     }
     openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
+    if (omx_base_component_Private->state==OMX_StateExecuting) {
+      for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual;i++) {
+        tsem_up(openmaxStandPort->pBufferSem);
+        tsem_up(omx_base_component_Private->bMgmtSem);
+      }
+    }
     DEBUG(DEB_LEV_PARAMS, "In %s Qelem=%d BSem=%d\n", __func__,openmaxStandPort->pBufferQueue->nelem,openmaxStandPort->pBufferSem->semval);
   }
 
@@ -435,6 +444,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
   OMX_U8* pBuffer) {
 
   int i;
+  OMX_BUFFERHEADERTYPE* returnBufferHeader;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -472,13 +482,23 @@ OMX_ERRORTYPE base_port_UseBuffer(
       openmaxStandPort->pInternalBufferStorage[i]->pAppPrivate = pAppPrivate;
       openmaxStandPort->bBufferStateAllocated[i] = BUFFER_ASSIGNED;
       openmaxStandPort->bBufferStateAllocated[i] |= HEADER_ALLOCATED;
+      returnBufferHeader = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
+      if (!returnBufferHeader) {
+        return OMX_ErrorInsufficientResources;
+      }
+      setHeader(returnBufferHeader, sizeof(OMX_BUFFERHEADERTYPE));
+      returnBufferHeader->pBuffer = pBuffer;
+      returnBufferHeader->nAllocLen = nSizeBytes;
+      returnBufferHeader->pPlatformPrivate = openmaxStandPort;
+      returnBufferHeader->pAppPrivate = pAppPrivate;
       if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
         openmaxStandPort->pInternalBufferStorage[i]->nInputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
+        returnBufferHeader->nInputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
       } else {
         openmaxStandPort->pInternalBufferStorage[i]->nOutputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
+        returnBufferHeader->nOutputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
       }
-      *ppBufferHdr = openmaxStandPort->pInternalBufferStorage[i];
-
+      *ppBufferHdr = returnBufferHeader;
       openmaxStandPort->nNumAssignedBuffers++;
       DEBUG(DEB_LEV_PARAMS, "openmaxStandPort->nNumAssignedBuffers %i\n", (int)openmaxStandPort->nNumAssignedBuffers);
 
@@ -539,6 +559,9 @@ OMX_ERRORTYPE base_port_FreeBuffer(
           free(openmaxStandPort->pInternalBufferStorage[i]->pBuffer);
           openmaxStandPort->pInternalBufferStorage[i]->pBuffer=NULL;
         }
+      } else if (openmaxStandPort->bBufferStateAllocated[i] & BUFFER_ASSIGNED) {
+        free(pBuffer);
+        pBuffer=NULL;
       }
       if(openmaxStandPort->bBufferStateAllocated[i] & HEADER_ALLOCATED) {
         free(openmaxStandPort->pInternalBufferStorage[i]);
@@ -715,7 +738,8 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   OMX_U32 portIndex;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
-
+  int i;
+  OMX_BOOL foundBuffer = OMX_FALSE;
   portIndex = (openmaxStandPort->sPortParam.eDir == OMX_DirInput)?pBuffer->nInputPortIndex:pBuffer->nOutputPortIndex;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s portIndex %lu\n", __func__, portIndex);
 
@@ -741,6 +765,18 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
     DEBUG(DEB_LEV_FULL_SEQ, "In %s: Port %d is disabled\n", __func__, (int)portIndex);
     return OMX_ErrorIncorrectStateOperation;
   }
+
+  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+    if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
+      if (pBuffer->pBuffer == openmaxStandPort->pInternalBufferStorage[i]->pBuffer) {
+    	  foundBuffer = OMX_TRUE;
+      }
+    }
+  }
+  if (!foundBuffer) {
+    return OMX_ErrorBadParameter;
+  }
+
   if ((err = checkHeader(pBuffer, sizeof(OMX_BUFFERHEADERTYPE))) != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "In %s: received wrong buffer header on input port\n", __func__);
     return err;

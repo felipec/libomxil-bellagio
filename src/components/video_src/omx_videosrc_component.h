@@ -90,7 +90,6 @@ OMX_ERRORTYPE omx_videosrc_component_MessageHandler(OMX_COMPONENTTYPE*,internalR
 OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_videosrc_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp);
 
-
 void omx_videosrc_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
   OMX_BUFFERHEADERTYPE* outputbuffer);

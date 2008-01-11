@@ -34,7 +34,7 @@
 #define MAX_COMPONENT_VIDEOSRC 1
 
 /** Maximum Number of Video Source Instance*/
-OMX_U32 noViderSrcInstance=0;
+static OMX_U32 noViderSrcInstance=0;
 #define DEFAULT_FILENAME_LENGTH 256
 
 /** The Constructor 
@@ -57,6 +57,7 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
   omx_videosrc_component_Private->ports = NULL;
+  omx_videosrc_component_Private->deviceHandle = -1;
   
   err = omx_base_source_Constructor(openmaxStandComp, cComponentName);
   
@@ -119,8 +120,8 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   /* Test if Camera Attached */
   omx_videosrc_component_Private->deviceHandle = open(VIDEO_DEV_NAME, O_RDWR);
   if (omx_videosrc_component_Private->deviceHandle < 0) {
-    DEBUG(DEB_LEV_ERR, "In %s Unable to open video capture device %s!  open returned: %i, errno=%d  ENODEV : %d \n", 
-      __func__,VIDEO_DEV_NAME, (int)omx_videosrc_component_Private->deviceHandle,errno,ENODEV);
+    DEBUG(DEB_LEV_ERR, "In %s Unable to open video capture device %s! errno=%d  ENODEV : %d \n", 
+      __func__,VIDEO_DEV_NAME,errno,ENODEV);
     return OMX_ErrorHardware;
   } 
 
@@ -131,7 +132,7 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 /** The Destructor 
  */
 OMX_ERRORTYPE omx_videosrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
-	omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
   OMX_U32 i;
   
   if(omx_videosrc_component_Private->videoSyncSem) {
@@ -157,7 +158,6 @@ OMX_ERRORTYPE omx_videosrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
   if(omx_videosrc_component_Private->deviceHandle != -1) {
     if(-1 == close(omx_videosrc_component_Private->deviceHandle)) {
       DEBUG(DEB_LEV_ERR, "In %s Closing video capture device failed \n",__func__);
-      exit(1);
     }
     omx_videosrc_component_Private->deviceHandle = -1;
   }
@@ -197,7 +197,6 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   else
   {       // query failed
     DEBUG(DEB_LEV_ERR, "Video Capability Query Failed\n");
-    exit(1);
   }
 
   if ((omx_videosrc_component_Private->capability.type & VID_TYPE_CAPTURE) != 0)
@@ -214,9 +213,8 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
         omx_videosrc_component_Private->capability.minheight  /* And height */);
   }
   else
-  {       // this device cannot capture video to memory, exit
+  {       // this device cannot capture video to memory
     DEBUG(DEB_LEV_ERR,"This device cannot capture video to memory\n");
-    exit(1);
   }
 
   DEBUG(DEB_LEV_FULL_SEQ,"CaptureWindow Type=%x x=%d,y=%d,w=%d,h=%d, chromakey=%d,flags =%x clipcount=%x\n",
@@ -249,7 +247,6 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   /*Default output frame size*/
   omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
                                                pPort->sPortParam.format.video.nFrameHeight*3/2;
-
   
   // get image properties
   if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCGPICT, &omx_videosrc_component_Private->imageProperties) != -1)
@@ -310,15 +307,13 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
     if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSPICT, &omx_videosrc_component_Private->imageProperties) == -1)
     {       // failed to set the image properties
       DEBUG(DEB_LEV_ERR,"failed to set the image properties\n");
-      exit(1);
     }
   }
   
   vchannel.channel=0;
   if(ioctl(omx_videosrc_component_Private->deviceHandle, VIDIOCGCHAN, &vchannel)==-1) {
     DEBUG(DEB_LEV_ERR,"failed to get video channel\n");
-  }  else {
-
+  } else {
     DEBUG(DEB_LEV_FULL_SEQ,"video channel=%d,name=%s,tuners=%d,flags=%d,type=%x norm=%d\n",
        vchannel.channel,
        vchannel.name,
@@ -339,8 +334,7 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   audio.audio = 0;
   if(ioctl(omx_videosrc_component_Private->deviceHandle, VIDIOCGAUDIO, &audio)==-1) {
     DEBUG(DEB_LEV_ERR,"failed to get audio\n");
-  }  else {
-
+  } else {
     DEBUG(DEB_LEV_FULL_SEQ,"audio=%d,vol=%d,bass=%d,treble=%d,flags=%x \nname=%s,mode=%d,balance=%d,step=%d\n",
       audio.audio,          /* Audio channel */
       audio.volume,         /* If settable */
@@ -373,23 +367,23 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
    */
  
   // obtain memory mapped area
-  omx_videosrc_component_Private->memoryMap = (char*)mmap (0, omx_videosrc_component_Private->memoryBuffer.size, PROT_READ | PROT_WRITE, MAP_SHARED, omx_videosrc_component_Private->deviceHandle, 0);
+  omx_videosrc_component_Private->memoryMap = mmap (0, omx_videosrc_component_Private->memoryBuffer.size, PROT_READ | PROT_WRITE, MAP_SHARED, omx_videosrc_component_Private->deviceHandle, 0);
   if (omx_videosrc_component_Private->memoryMap == NULL)
   { // failed to retrieve pointer to memory mapped area
     DEBUG(DEB_LEV_ERR,"failed to retrieve pointer to memory mapped area\n");
-    exit(1);
   }
 
-  omx_videosrc_component_Private->mmaps = (struct video_mmap*)(malloc (omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap)));
+  omx_videosrc_component_Private->mmaps = (malloc (omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap)));
 
+  i = 0;
   // fill out the fields
   while (i < omx_videosrc_component_Private->memoryBuffer.frames)
   {
-	  omx_videosrc_component_Private->mmaps[i].frame = i;
-	  omx_videosrc_component_Private->mmaps[i].width = pPort->sPortParam.format.video.nFrameWidth;
-	  omx_videosrc_component_Private->mmaps[i].height = pPort->sPortParam.format.video.nFrameHeight;
-	  omx_videosrc_component_Private->mmaps[i].format = omx_videosrc_component_Private->imageProperties.palette;
-	  ++ i;
+    omx_videosrc_component_Private->mmaps[i].frame = i;
+    omx_videosrc_component_Private->mmaps[i].width = pPort->sPortParam.format.video.nFrameWidth;
+    omx_videosrc_component_Private->mmaps[i].height = pPort->sPortParam.format.video.nFrameHeight;
+    omx_videosrc_component_Private->mmaps[i].format = omx_videosrc_component_Private->imageProperties.palette;
+    ++ i;
   }
 
   /** initialization for buff mgmt callback function */
@@ -434,8 +428,6 @@ OMX_ERRORTYPE omx_videosrc_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
 void omx_videosrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pOutputBuffer) {
 
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
-  struct timeval now,later;
-  
   
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 
@@ -456,16 +448,12 @@ void omx_videosrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   {       // capture request failed
     DEBUG(DEB_LEV_ERR,"capture request failed\n");
   }
-  gettimeofday(&now, NULL);
   // wait for the currently indexed frame to complete capture
   if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSYNC, &omx_videosrc_component_Private->iFrameIndex) == -1)
   {       // sync request failed
     DEBUG(DEB_LEV_ERR,"sync request failed\n");
     return;
   }
-  gettimeofday(&later, NULL);
-  DEBUG(DEB_LEV_FULL_SEQ,"s=%d,ms=%d\n",(int)(later.tv_sec - now.tv_sec),(int)(later.tv_usec - now.tv_usec));
-  
 
   DEBUG(DEB_LEV_FULL_SEQ,"%d-%d\n",(int)omx_videosrc_component_Private->iFrameIndex,(int)omx_videosrc_component_Private->memoryBuffer.frames);
   memcpy(pOutputBuffer->pBuffer,omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[omx_videosrc_component_Private->iFrameIndex],omx_videosrc_component_Private->iFrameSize);
@@ -498,7 +486,7 @@ OMX_ERRORTYPE omx_videosrc_component_SetParameter(
     return OMX_ErrorBadParameter;
   }
 
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "   Setting parameter %i\n", nParamIndex);
 
   switch(nParamIndex) {
   case OMX_IndexParamVideoPortFormat:
@@ -550,7 +538,7 @@ OMX_ERRORTYPE omx_videosrc_component_GetParameter(
     return OMX_ErrorBadParameter;
   }
 
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Getting parameter %08x\n",__func__, nParamIndex);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Getting parameter %08x\n",__func__, nParamIndex);
 	
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
@@ -598,17 +586,14 @@ OMX_ERRORTYPE omx_videosrc_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
       err = omx_videosrc_component_Init(openmaxStandComp);
       if(err!=OMX_ErrorNone) { 
         DEBUG(DEB_LEV_ERR, "In %s Video Source Init Failed Error=%x\n",__func__,err); 
-        return err;
       }
     } else if ((message->messageParam == OMX_StateIdle) && (oldState == OMX_StateExecuting)) {
       err = omx_videosrc_component_Deinit(openmaxStandComp);
       if(err!=OMX_ErrorNone) { 
         DEBUG(DEB_LEV_ERR, "In %s Video Source Deinit Failed Error=%x\n",__func__,err); 
-        return err;
       }
     }
   }
-
   return err;
 }
 

@@ -20,12 +20,14 @@ VIDEO
 - OMX video decoder decoding input mpeg4 or h264 format file (in h264 format, there is no interlacing support) to produce  output .yuv file.
 - OMX video color converter component converting from decoded output .yuv file to produce .rgb file.
 - OMX video sink component which uses the frame buffer to display the color converter component output .rgb file.
+- OMX video capture component which captures video frame using a video camera and stores into a file or display using video sink.
 
 The following simple test application is provided:
 
 test/components/audio/omxaudiodectest
 test/components/audio_effects/omxvolcontroltest
 test/components/video/omxvideodectest
+test/components/video/omxvideocapnplay
 
 
 Check the distribution build:
@@ -70,7 +72,7 @@ Usage: omxaudiodectest [-o outfile] [-stmdgh] filename
        -g: Gain of the audio sink[0...100]
        -h: Displays this help
 
-VIDEO DECODER, COLOR CONVERTER AND SINK COMPONENT USAGE
+VIDEO DECODER, COLOR CONVERTER, SINK AND CAPTURE COMPONENT USAGE
 -------------------------------------------------------
 
 Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filename
@@ -102,6 +104,33 @@ Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filen
            video sink components are selected even if those two options are not specified - 
            the components are tunneled between themselves
 
+Usage: omxvideocapnplay -o outputfile [-t] [-c] [-h] [-f input_fmt] [-s]
+
+       -o outfile: If this option is specified, the output is written to user specified outfile
+                   If the color conv option (-c) is specified then outfile will be .rgb file
+                   Else outfile will be in .yuv format 
+                   N.B : This option is not needed if you use the sink component
+
+       -c : Color conv option - input file is decoded and color converted in outfile (.rgb file)
+       -h: Displays this help
+
+       -f : input format specification in case of color conv comp usage 
+            The available input formats are - 
+              - OMX_COLOR_Format24bitRGB888  (default format) 
+              - OMX_COLOR_Format24bitBGR888  
+              - OMX_COLOR_Format32bitBGRA8888  
+              - OMX_COLOR_Format32bitARGB8888  
+              - OMX_COLOR_Format16bitARGB1555  
+              - OMX_COLOR_Format16bitRGB565  
+              - OMX_COLOR_Format16bitBGR565  
+
+       -W 176: Width of the frame  [default 176]
+       -H 144: Height of the frame [default 144]
+       -s: Uses the video sink component to display the output of the color converter(.rgb file)
+
+       -t: Tunneling option - if this option is selected then by default the color converter and 
+           video sink components are selected even if those two options are not specified - 
+           the components are tunneled between themselves
 
 N.B : The input picture resolution can be maximum 640x480 for decoding and displaying
 

@@ -198,7 +198,7 @@ int setPortParameters() {
 /** help display */
 void display_help() {
   printf("\n");
-  printf("Usage: omxvideosrctest -o outputfile [-t] [-c] [-h] [-f input_fmt] [-s]\n");
+  printf("Usage: omxvideocapnplay -o outputfile [-t] [-c] [-h] [-f input_fmt] [-s]\n");
   printf("\n");
   printf("       -o outfile: If this option is specified, the output is written to user specified outfile\n");
   printf("                   If the color conv option (-c) is specified then outfile will be .rgb file\n");

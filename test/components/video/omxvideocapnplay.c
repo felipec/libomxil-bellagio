@@ -774,20 +774,20 @@ int main(int argc, char** argv) {
   /** freeing buffers of color conv and sink component */
   if(flagIsColorConvRequested == 1 && !flagSetupTunnel) {
     if(flagIsSinkRequested == 1 && !flagSetupTunnel) {
-      DEBUG(DEB_LEV_PARAMS, "Video sink to loaded\n");
-      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pOutBufferColorConv1);
-      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pOutBufferColorConv1);
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "Video sink to loaded\n");
+      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pInBufferSink1);
+      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pInBufferSink2);
     }
-    DEBUG(DEB_LEV_PARAMS, "Color conv to loaded\n");
-    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pOutBuffer1);
-    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pOutBuffer2);
-  
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "Color conv to loaded\n");
+    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pInBufferColorConv1);
+    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pInBufferColorConv2);
+
     err = OMX_FreeBuffer(appPriv->colorconv_handle, 1, pOutBufferColorConv1);
     err = OMX_FreeBuffer(appPriv->colorconv_handle, 1, pOutBufferColorConv2);
   }
 
   /** freeing buffers of video source input ports */
-  DEBUG(DEB_LEV_PARAMS, "Video dec to loaded\n");
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Video dec to loaded\n");
   if(!flagSetupTunnel) {
     DEBUG(DEB_LEV_PARAMS, "Free Video dec output ports\n");
     err = OMX_FreeBuffer(appPriv->videosrchandle, 0, pOutBuffer1);

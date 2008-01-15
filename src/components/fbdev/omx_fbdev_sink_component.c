@@ -35,26 +35,10 @@
 #define HEIGHT_OFFSET 10
 
 /** we assume, frame rate = 25 fps ; so one frame processing time = 40000 us */
-OMX_U32 nFrameProcessTime = 40000; // in micro second
+static OMX_U32 nFrameProcessTime = 40000; // in micro second
 
 /** Counter of sink component instance*/
-OMX_U32 nofbdev_sinkInstance=0;
-
-/** global variables that stores the frame buffer settings */
-OMX_COLOR_FORMATTYPE fbpxlfmt;
-OMX_U32 fbwidth; //frame buffer display width
-OMX_U32 fbheight; //frame buffer display height
-OMX_U32 fbbpp; //frame buffer pixel depth
-OMX_S32 fbstride; // frame buffer display stride 
-OMX_U32 product; // frame buffer memory area 
-
-/** global variables for image format adjustment */
-OMX_U8* org_src_cpy_ptr;
-OMX_U8* org_dst_cpy_ptr;
-int j;
-int cp_byte; //equal to source image byte per pixel value
-OMX_U8 r,g,b,a;
-
+static OMX_U32 nofbdev_sinkInstance=0;
 
 /** Returns a time value in milliseconds based on a clock starting at
  *  some arbitrary base. Given a call to GetTime that returns a value
@@ -228,8 +212,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   /** From the frame buffer display rgb formats, find the corresponding standard OMX format 
     * It is needed to convert the input rgb content onto frame buffer supported rgb content
     */
-  fbpxlfmt = find_omx_pxlfmt(&omx_fbdev_sink_component_Private->vscr_info);
-  if (fbpxlfmt == OMX_COLOR_FormatUnused) {
+  omx_fbdev_sink_component_Private->fbpxlfmt = find_omx_pxlfmt(&omx_fbdev_sink_component_Private->vscr_info);
+  if (omx_fbdev_sink_component_Private->fbpxlfmt == OMX_COLOR_FormatUnused) {
     DEBUG(DEB_LEV_ERR,"\n in %s finding omx pixel format returned error\n", __func__);
     return OMX_ErrorUnsupportedSetting;
   }
@@ -254,31 +238,31 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_fbdev_sink_component_Private->vscr_info.transp.offset,omx_fbdev_sink_component_Private->vscr_info.transp.length);
 
 
-  fbwidth = omx_fbdev_sink_component_Private->vscr_info.xres;
-  fbheight = pPort->sPortParam.format.video.nFrameHeight;
-  fbbpp = omx_fbdev_sink_component_Private->vscr_info.bits_per_pixel;
-  //fbstride = calcStride(fbwidth, fbpxlfmt);
-  //fbstride = omx_fbdev_sink_component_Private->fscr_info.line_length*
+  omx_fbdev_sink_component_Private->fbwidth = omx_fbdev_sink_component_Private->vscr_info.xres;
+  omx_fbdev_sink_component_Private->fbheight = pPort->sPortParam.format.video.nFrameHeight;
+  omx_fbdev_sink_component_Private->fbbpp = omx_fbdev_sink_component_Private->vscr_info.bits_per_pixel;
+  //omx_fbdev_sink_component_Private->fbstride = calcStride(omx_fbdev_sink_component_Private->fbwidth, omx_fbdev_sink_component_Private->fbpxlfmt);
+  //omx_fbdev_sink_component_Private->fbstride = omx_fbdev_sink_component_Private->fscr_info.line_length*
     //         omx_fbdev_sink_component_Private->vscr_info.bits_per_pixel/8;
-  fbstride = calcStride2(omx_fbdev_sink_component_Private);
+  omx_fbdev_sink_component_Private->fbstride = calcStride2(omx_fbdev_sink_component_Private);
 
   /** the allocated memory has more vertical reolution than needed because we want to show the 
     * output displayed not at the corner of screen, but at the centre of upper part of screen
     */
-  product = fbstride * (fbheight + HEIGHT_OFFSET); 
+  omx_fbdev_sink_component_Private->product = omx_fbdev_sink_component_Private->fbstride * (omx_fbdev_sink_component_Private->fbheight + HEIGHT_OFFSET); 
 
   /** memory map frame buf memory */
-  omx_fbdev_sink_component_Private->scr_ptr = (unsigned char*) mmap(0, product, PROT_READ | PROT_WRITE, MAP_SHARED, omx_fbdev_sink_component_Private->fd,0);
+  omx_fbdev_sink_component_Private->scr_ptr = (unsigned char*) mmap(0, omx_fbdev_sink_component_Private->product, PROT_READ | PROT_WRITE, MAP_SHARED, omx_fbdev_sink_component_Private->fd,0);
   if (omx_fbdev_sink_component_Private->scr_ptr == NULL) {
     DEBUG(DEB_LEV_ERR, "in %s Failed to mmap framebuffer memory!\n", __func__);
     close (omx_fbdev_sink_component_Private->fd);
     return OMX_ErrorHardware;
   }
 
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "mmap framebuffer memory =%x product=%d stride=%d\n",(int)omx_fbdev_sink_component_Private->scr_ptr,(int)product,(int)fbstride);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "mmap framebuffer memory =%x omx_fbdev_sink_component_Private->product=%d stride=%d\n",(int)omx_fbdev_sink_component_Private->scr_ptr,(int)omx_fbdev_sink_component_Private->product,(int)omx_fbdev_sink_component_Private->fbstride);
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Successfully opened %s for display.\n", "/dev/fb0");
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "Display Size: %u x %u\n", (int)fbwidth, (int)fbheight);
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "Bitdepth: %u\n", (int)fbbpp);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Display Size: %u x %u\n", (int)omx_fbdev_sink_component_Private->fbwidth, (int)omx_fbdev_sink_component_Private->fbheight);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Bitdepth: %u\n", (int)omx_fbdev_sink_component_Private->fbbpp);
 
   return OMX_ErrorNone;
 }
@@ -290,7 +274,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
 
   if (omx_fbdev_sink_component_Private->scr_ptr) {
-    munmap(omx_fbdev_sink_component_Private->scr_ptr, product);
+    munmap(omx_fbdev_sink_component_Private->scr_ptr, omx_fbdev_sink_component_Private->product);
   }
   if (close(omx_fbdev_sink_component_Private->fd) == -1) {
     return OMX_ErrorHardware;
@@ -302,7 +286,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   * @param width is the input picture width
   * @param omx_pxlfmt is the input openmax standard pixel format
   * It calculates the byte per pixel needed to display the picture with the input omx_pxlfmt
-  * The output stride for display is thus product of input width and byte per pixel
+  * The output stride for display is thus omx_fbdev_sink_component_Private->product of input width and byte per pixel
   */
 OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt) {
   OMX_U32 stride;
@@ -518,9 +502,13 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
                   OMX_S32 src_offset_x, OMX_S32 src_offset_y,
                   OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height, 
                   OMX_S32 dest_offset_x, OMX_S32 dest_offset_y, 
-                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat ) {	
+                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat,OMX_COLOR_FORMATTYPE fbpxlfmt) {	
 
-  OMX_U32 i;
+  OMX_U32 i,j;
+  OMX_U32 cp_byte; //equal to source image byte per pixel value
+  OMX_U8 r,g,b,a;
+  OMX_U8* org_src_cpy_ptr;
+  OMX_U8* org_dst_cpy_ptr;
   /**	CAUTION: We don't do any checking of boundaries! (FIXME - see omx_ffmpeg_colorconv_component_BufferMgmtCallback)
     * Input frame is planar, not interleaved
     * Feel free to add more formats if implementing them
@@ -986,16 +974,16 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   OMX_S32 input_src_offset_x = pPort->omxConfigCrop.nLeft;		//	Offset (in columns) to left side of crop rectangle
   OMX_S32 input_src_offset_y = pPort->omxConfigCrop.nTop;		//	Offset (in rows) from top of the image to crop rectangle
 
-  OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr + (fbstride * HEIGHT_OFFSET); 
+  OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr + (omx_fbdev_sink_component_Private->fbstride * HEIGHT_OFFSET); 
   //OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr; 
-  OMX_S32 input_dest_stride = (input_src_stride < 0) ? -1 * fbstride : fbstride;
+  OMX_S32 input_dest_stride = (input_src_stride < 0) ? -1 * omx_fbdev_sink_component_Private->fbstride : omx_fbdev_sink_component_Private->fbstride;
 
   if (pPort->omxConfigMirror.eMirror == OMX_MirrorVertical || pPort->omxConfigMirror.eMirror == OMX_MirrorBoth) {
     input_dest_stride *= -1;
   }
 
-  OMX_U32 input_dest_width = fbwidth;
-  OMX_U32 input_dest_height = fbheight;
+  OMX_U32 input_dest_width = omx_fbdev_sink_component_Private->fbwidth;
+  OMX_U32 input_dest_height = omx_fbdev_sink_component_Private->fbheight;
 
   OMX_U32 input_dest_offset_x = pPort->omxConfigOutputPosition.nX;
   OMX_U32 input_dest_offset_y = pPort->omxConfigOutputPosition.nY;
@@ -1017,7 +1005,7 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
                 input_src_offset_x, input_src_offset_y,
                 input_dest_ptr, input_dest_stride, input_dest_width, input_dest_height, 
                 input_dest_offset_x, input_dest_offset_y,
-                input_cpy_width, input_cpy_height, input_colorformat);
+                input_cpy_width, input_cpy_height, input_colorformat,omx_fbdev_sink_component_Private->fbpxlfmt);
 
   pInputBuffer->nFilledLen = 0;
 }

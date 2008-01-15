@@ -83,7 +83,19 @@ DERIVEDCLASS(omx_fbdev_sink_component_PrivateType, omx_base_sink_PrivateType)
   /** @param fscr_info The fb_fix_screeninfo structure for the framebuffer */ \
   struct fb_fix_screeninfo fscr_info; \
   /** @param scr_data Pointer to the mmapped memory for the framebuffer */ \
-  unsigned char *scr_ptr;
+  unsigned char *scr_ptr; \
+  /** @param fbpxlfmt frame buffer pixel format*/ \
+  OMX_COLOR_FORMATTYPE fbpxlfmt; \
+  /** @param fbwidth frame buffer display width */ \
+  OMX_U32 fbwidth; \
+  /** @param fbheight frame buffer display height */ \
+  OMX_U32 fbheight; \
+  /** @param fbbpp frame buffer pixel depth*/ \
+  OMX_U32 fbbpp; \
+  /** @param fbstride frame buffer display stride */ \
+  OMX_S32 fbstride; \
+  /** @param product frame buffer memory area */ \
+  OMX_U32 product;
 ENDCLASS(omx_fbdev_sink_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -133,7 +145,7 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
                   OMX_S32 src_offset_x, OMX_S32 src_offset_y,
                   OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height, 
                   OMX_S32 dest_offset_x, OMX_S32 dest_offset_y, 
-                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat );
+                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat,OMX_COLOR_FORMATTYPE fbpxlfmt);
 
 /** Returns a time value in milliseconds based on a clock starting at
  *  some arbitrary base. Given a call to GetTime that returns a value

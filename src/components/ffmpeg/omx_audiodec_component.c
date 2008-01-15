@@ -41,7 +41,7 @@
 #define OUTPUT_LEN_STANDARD_FFMPEG 192000
 
 /** Number of Audio Component Instance*/
-OMX_U32 noAudioDecInstance=0;
+static OMX_U32 noAudioDecInstance=0;
 
 /** The Constructor 
  */

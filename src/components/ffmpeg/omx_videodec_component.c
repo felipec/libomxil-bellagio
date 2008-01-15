@@ -35,7 +35,7 @@
 #define MAX_COMPONENT_VIDEODEC 4
 
 /** Counter of Video Component Instance*/
-OMX_U32 noVideoDecInstance = 0;
+static OMX_U32 noVideoDecInstance = 0;
 
 /** The output decoded color format */
 #define OUTPUT_DECODED_COLOR_FMT OMX_COLOR_FormatYUV420Planar

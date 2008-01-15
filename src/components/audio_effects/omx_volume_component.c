@@ -38,7 +38,7 @@
 #define MAX_COMPONENT_VOLUME 1
 
 /** Maximum Number of Volume Component Instance*/
-OMX_U32 noVolumeCompInstance = 0;
+static OMX_U32 noVolumeCompInstance = 0;
 
 
 OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {

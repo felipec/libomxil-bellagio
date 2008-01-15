@@ -34,7 +34,7 @@
 #define MAX_COMPONENT_VIDEOCOLORCONV 2
 
 /** Counter of Video Component Instance*/
-OMX_U32 noVideoColorConvInstance = 0;
+static OMX_U32 noVideoColorConvInstance = 0;
 
 #define DEFAULT_WIDTH 352
 #define DEFAULT_HEIGHT 288

@@ -128,9 +128,9 @@ OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt);
 /** image copy function */
 void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U32 src_height, 
                   OMX_S32 src_offset_x, OMX_S32 src_offset_y,
-					        OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height, 
+                  OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height, 
                   OMX_S32 dest_offset_x, OMX_S32 dest_offset_y, 
-					        OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat );
+                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat );
 
 
 OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (

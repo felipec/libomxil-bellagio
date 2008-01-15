@@ -38,7 +38,7 @@
 #define MAX_COMPONENT_MADDEC 4
 
 /** a counter of existing instances of mad decoder */
-OMX_U32 noMadDecInstance = 0;
+static OMX_U32 noMadDecInstance = 0;
 
 /** This is used when the temporary buffer takes data of this length specified
   from input buffer before its processing */
@@ -48,7 +48,7 @@ OMX_U32 noMadDecInstance = 0;
 #define TEMP_BUFFER_SIZE DEFAULT_IN_BUFFER_SIZE * 2
 
 /** global variable declaration */
-unsigned char *temp_input_buffer = NULL;
+static unsigned char *temp_input_buffer = NULL;
 
 /** this function initializates the mad framework, and opens an mad decoder of type specified by IL client */ 
 OMX_ERRORTYPE omx_maddec_component_madLibInit(omx_maddec_component_PrivateType* omx_maddec_component_Private) {

@@ -34,7 +34,8 @@
 #define MAX_COMPONENT_FILEREADER 1
 
 /** Maximum Number of FileReader Instance*/
-OMX_U32 noFilereaderInstance=0;
+static OMX_U32 noFilereaderInstance=0;
+
 #define DEFAULT_FILENAME_LENGTH 256
 
 /** The Constructor 

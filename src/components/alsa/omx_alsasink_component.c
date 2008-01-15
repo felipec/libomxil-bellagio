@@ -33,7 +33,7 @@
 #define MAX_COMPONENT_ALSASINK 1
 
 /** Maximum Number of AlsaSink Instance*/
-OMX_U32 noAlsasinkInstance=0;
+static OMX_U32 noAlsasinkInstance=0;
 
 /** The Constructor 
  */

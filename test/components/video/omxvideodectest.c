@@ -5,26 +5,26 @@
   The application receives an video stream (.m4v or .264) decoded by a multiple format decoder component.
   The decoded output is seen by a yuv viewer.
 	
-	Copyright (C) 2007  STMicroelectronics and Nokia
+  Copyright (C) 2007  STMicroelectronics and Nokia
 
-	This library is free software; you can redistribute it and/or modify it under
-	the terms of the GNU Lesser General Public License as published by the Free
-	Software Foundation; either version 2.1 of the License, or (at your option)
-	any later version.
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
 
-	This library is distributed in the hope that it will be useful, but WITHOUT
-	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-	details.
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
 
-	You should have received a copy of the GNU Lesser General Public License
-	along with this library; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin St, Fifth Floor, Boston, MA
-	02110-1301  USA
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
 	
-	$Date$
-	Revision $Rev$
-	Author $Author$
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #include "omxvideodectest.h"
@@ -40,8 +40,6 @@
 OMX_COLOR_FORMATTYPE COLOR_CONV_OUT_RGB_FORMAT = OMX_COLOR_Format24bitRGB888;
 
 appPrivateType* appPriv;
-
-unsigned int nextBuffer = 0;
 
 /** used with video decoder */
 OMX_BUFFERHEADERTYPE *pInBuffer1, *pInBuffer2, *pOutBuffer1, *pOutBuffer2;
@@ -77,14 +75,9 @@ OMX_CALLBACKTYPE fbdev_sink_callbacks = { .EventHandler = fb_sinkEventHandler,
 OMX_U32 out_width = 0, new_out_width = 0;
 OMX_U32 out_height = 0, new_out_height = 0;
 
-FILE *fd;
-
-appPrivateType* appPriv;
-
+FILE *fd,*outfile;
 char *input_file, *output_file;
-
 int selectedType = 0;
-FILE *outfile;
 
 int flagIsOutputEspected;
 int flagDecodedOutputReceived;
@@ -875,12 +868,12 @@ int main(int argc, char** argv) {
   if(flagIsColorConvRequested == 1 && !flagSetupTunnel) {
     if(flagIsSinkRequested == 1 && !flagSetupTunnel) {
       DEBUG(DEB_LEV_PARAMS, "Video sink to loaded\n");
-      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pOutBufferColorConv1);
-      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pOutBufferColorConv1);
+      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pInBufferSink1);
+      err = OMX_FreeBuffer(appPriv->fbdev_sink_handle, 0, pInBufferSink2);
     }
     DEBUG(DEB_LEV_PARAMS, "Color conv to loaded\n");
-    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pOutBuffer1);
-    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pOutBuffer2);
+    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pInBufferColorConv1);
+    err = OMX_FreeBuffer(appPriv->colorconv_handle, 0, pInBufferColorConv2);
   
     err = OMX_FreeBuffer(appPriv->colorconv_handle, 1, pOutBufferColorConv1);
     err = OMX_FreeBuffer(appPriv->colorconv_handle, 1, pOutBufferColorConv2);

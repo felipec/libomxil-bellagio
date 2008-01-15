@@ -52,7 +52,7 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_vorbisdec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
   /** @param semaphore for avcodec access syncrhonization */\
   tsem_t* avCodecSyncSem; \
-	/** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
+  /** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/	\
   OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;	\
@@ -71,7 +71,23 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
   OMX_S32 isNewBuffer;	\
   /** @param audio_coding_type Field that indicate the supported audio format of audio decoder */ \
-  OMX_U32 audio_coding_type;   
+  OMX_U32 audio_coding_type;   \
+  /** @param oy sync and verify incoming physical bitstream */ \
+  ogg_sync_state oy; \
+  /** @param os take physical pages, weld into a logical stream of packets */ \
+  ogg_stream_state os;
+  /** @param og one Ogg bitstream page,  Vorbis packets are inside */ \
+  ogg_page og; \
+  /** @param op one raw packet of data for decode */ \
+  ogg_packet op; \
+  /** @param vi struct that stores all the static vorbis bitstream  settings */ \
+  vorbis_info vi;
+  /** @param vc struct that stores all the bitstream user comments */ \
+  vorbis_comment vc; \
+  /** @param vd central working state for the packet->PCM decoder */ \
+  vorbis_dsp_state vd; \
+  /** @param vb local working space for packet->PCM decode */ \
+  vorbis_block vb;
 ENDCLASS(omx_vorbisdec_component_PrivateType)
 
 /* Component private entry points declaration */

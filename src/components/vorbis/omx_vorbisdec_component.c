@@ -35,27 +35,8 @@
 
 #define MAX_COMPONENT_VORBISDEC 4
 /** Maximum Number of Audio Vorbis Component Instance*/
-OMX_U32 noVorbisDecInstance = 0;
-ogg_int16_t convbuffer[4096];
+static OMX_U32 noVorbisDecInstance = 0;
 
-/** global variable specifically for vorbis format */
-                                                                                                                          
-int convsize;
-ogg_sync_state   oy; /* sync and verify incoming physical bitstream */
-ogg_stream_state os; /* take physical pages, weld into a logical
-                          stream of packets */
-ogg_page         og; /* one Ogg bitstream page.  Vorbis packets are inside */
-ogg_packet       op; /* one raw packet of data for decode */
-                                                                                                                             
-vorbis_info      vi; /* struct that stores all the static vorbis bitstream
-                          settings */
-vorbis_comment   vc; /* struct that stores all the bitstream user comments */
-vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
-vorbis_block     vb; /* local working space for packet->PCM decode */
-                                                                                                                             
-char *vorbis_buffer;
-int  bytes;
-                                                                                                                             
 static int second_header_buffer_processed=0;
 
 
@@ -264,7 +245,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)	
   omx_vorbisdec_component_Private->isNewBuffer = 1;
 	
   /** initializing vorbis decoder parameters */
-  ogg_sync_init(&oy);
+  ogg_sync_init(&omx_vorbisdec_component_Private->oy);
   second_header_buffer_processed = 0;
                                                                                                                              
   return err;
@@ -281,12 +262,12 @@ OMX_ERRORTYPE omx_vorbisdec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp
 	
   /** reset te vorbis decoder related parameters */
   second_header_buffer_processed = 0;
-  ogg_stream_clear(&os);
-  vorbis_block_clear(&vb);
-  vorbis_dsp_clear(&vd);
-  vorbis_comment_clear(&vc);
-  vorbis_info_clear(&vi);
-  ogg_sync_clear(&oy);
+  ogg_stream_clear(&omx_vorbisdec_component_Private->os);
+  vorbis_block_clear(&omx_vorbisdec_component_Private->vb);
+  vorbis_dsp_clear(&omx_vorbisdec_component_Private->vd);
+  vorbis_comment_clear(&omx_vorbisdec_component_Private->vc);
+  vorbis_info_clear(&omx_vorbisdec_component_Private->vi);
+  ogg_sync_clear(&omx_vorbisdec_component_Private->oy);
                                                                                                                              
   return err;
 }
@@ -311,9 +292,12 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
   float  *mono;
   static OMX_S32 index=0;
   int eos=0;
+  char *vorbis_buffer;
+  int convsize=0;
+  ogg_int16_t convbuffer[4096];
 
  
-	DEBUG(DEB_LEV_FULL_SEQ, "input buf %x filled len : %d \n", (int)inputbuffer->pBuffer, (int)inputbuffer->nFilledLen);	
+  DEBUG(DEB_LEV_FULL_SEQ, "input buf %x filled len : %d \n", (int)inputbuffer->pBuffer, (int)inputbuffer->nFilledLen);	
   /** Fill up the current input buffer when a new buffer has arrived */
   if(omx_vorbisdec_component_Private->isNewBuffer) {
     omx_vorbisdec_component_Private->inputCurrBuffer = inputbuffer->pBuffer;
@@ -323,9 +307,9 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
     DEBUG(DEB_LEV_SIMPLE_SEQ, "new -- input buf %x filled len : %d \n", (int)inputbuffer->pBuffer, (int)inputbuffer->nFilledLen);	
 
     /** for each new input buffer --- copy buffer content into into ogg sync state structure data */
-    vorbis_buffer = ogg_sync_buffer(&oy, inputbuffer->nAllocLen);
+    vorbis_buffer = ogg_sync_buffer(&omx_vorbisdec_component_Private->oy, inputbuffer->nAllocLen);
     memcpy(vorbis_buffer, inputbuffer->pBuffer, inputbuffer->nFilledLen);
-    ogg_sync_wrote(&oy, inputbuffer->nFilledLen);
+    ogg_sync_wrote(&omx_vorbisdec_component_Private->oy, inputbuffer->nFilledLen);
     DEBUG(DEB_LEV_FULL_SEQ,"***** bytes read to buffer (of first header): %d \n",(int)inputbuffer->nFilledLen);
   }
   outputCurrBuffer = outputbuffer->pBuffer;
@@ -339,23 +323,23 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
     omx_vorbisdec_component_Private->isNewBuffer = 0;
     if(omx_vorbisdec_component_Private->isFirstBuffer) {
       omx_vorbisdec_component_Private->isFirstBuffer = 0;
-      if(ogg_sync_pageout(&oy, &og) != 1)	{
+      if(ogg_sync_pageout(&omx_vorbisdec_component_Private->oy, &omx_vorbisdec_component_Private->og) != 1)	{
         DEBUG(DEB_LEV_ERR, "this input stream is not a vorbis stream\n");
         exit(1);
       }	
-      ogg_stream_init(&os, ogg_page_serialno(&og));		
-      vorbis_info_init(&vi);
-      vorbis_comment_init(&vc);
+      ogg_stream_init(&omx_vorbisdec_component_Private->os, ogg_page_serialno(&omx_vorbisdec_component_Private->og));		
+      vorbis_info_init(&omx_vorbisdec_component_Private->vi);
+      vorbis_comment_init(&omx_vorbisdec_component_Private->vc);
 
-      if(ogg_stream_pagein(&os, &og) < 0)	{
+      if(ogg_stream_pagein(&omx_vorbisdec_component_Private->os, &omx_vorbisdec_component_Private->og) < 0)	{
         DEBUG(DEB_LEV_ERR, "Error reading first page of Ogg bitstream data.\n");
         exit(1);
       }
-      if(ogg_stream_packetout(&os, &op) != 1)	{
+      if(ogg_stream_packetout(&omx_vorbisdec_component_Private->os, &omx_vorbisdec_component_Private->op) != 1)	{
         DEBUG(DEB_LEV_ERR, "Error reading initial header packet.\n");
         exit(1);
       }
-      if(vorbis_synthesis_headerin(&vi, &vc, &op) < 0)	{
+      if(vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi, &omx_vorbisdec_component_Private->vc, &omx_vorbisdec_component_Private->op) < 0)	{
         DEBUG(DEB_LEV_ERR, "This Ogg bitstream does not contain Vorbis audio data\n");
         exit(1);
       }  
@@ -366,7 +350,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
     {
       while(index<2)
       {
-        int result=ogg_sync_pageout(&oy,&og);
+        int result=ogg_sync_pageout(&omx_vorbisdec_component_Private->oy,&omx_vorbisdec_component_Private->og);
         if(result==0) { //break; /* Need more data */
           omx_vorbisdec_component_Private->isNewBuffer = 1;
           second_header_buffer_processed = 1;	
@@ -377,9 +361,9 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
         catch it at the packet output phase */
         if(result==1)
         {
-          ogg_stream_pagein(&os,&og); /* we can ignore any errors here as they'll also become apparent at packetout */
+          ogg_stream_pagein(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->og); /* we can ignore any errors here as they'll also become apparent at packetout */
           while(index<2){
-            result=ogg_stream_packetout(&os,&op);
+            result=ogg_stream_packetout(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->op);
             if(result==0)break;
             if(result<0) {
               /* Uh oh; data at some point was corrupted or missing!
@@ -387,7 +371,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
               DEBUG(DEB_LEV_ERR,"Corrupt secondary header.  Exiting.\n");
               exit(1);
             }//end if
-            vorbis_synthesis_headerin(&vi,&vc,&op);
+            vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi,&omx_vorbisdec_component_Private->vc,&omx_vorbisdec_component_Private->op);
             index++;
           }//end while
         }//end if
@@ -410,20 +394,20 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
     /* Throw the comments plus a few lines about the bitstream we're decoding */
     {
       // ptr should be declared earlier//
-      char **ptr=vc.user_comments;
+      char **ptr=omx_vorbisdec_component_Private->vc.user_comments;
       while(*ptr){
         DEBUG(DEB_LEV_ERR,"%s\n",*ptr);
         ++ptr;
       }
-      DEBUG(DEB_LEV_ERR,"Bitstream is %d channel, %ldHz\n",vi.channels,vi.rate);
-      DEBUG(DEB_LEV_ERR,"Encoded by: %s\n\n",vc.vendor);
+      DEBUG(DEB_LEV_ERR,"Bitstream is %d channel, %ldHz\n",omx_vorbisdec_component_Private->vi.channels,omx_vorbisdec_component_Private->vi.rate);
+      DEBUG(DEB_LEV_ERR,"Encoded by: %s\n\n",omx_vorbisdec_component_Private->vc.vendor);
     }
 
-    convsize=inputbuffer->nFilledLen/vi.channels;
+    convsize=inputbuffer->nFilledLen/omx_vorbisdec_component_Private->vi.channels;
     /* OK, got and parsed all three headers. Initialize the Vorbis
     packet->PCM decoder. */
-    vorbis_synthesis_init(&vd,&vi); /* central decode state */
-    vorbis_block_init(&vd,&vb);/* local state for most of the decode
+    vorbis_synthesis_init(&omx_vorbisdec_component_Private->vd,&omx_vorbisdec_component_Private->vi); /* central decode state */
+    vorbis_block_init(&omx_vorbisdec_component_Private->vd,&omx_vorbisdec_component_Private->vb);/* local state for most of the decode
 			                         so multiple block decodes can
 			                         proceed in parallel.  We could init
 			                         multiple vorbis_block structures
@@ -433,8 +417,8 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
 
   if(omx_vorbisdec_component_Private->isNewBuffer)  {
     omx_vorbisdec_component_Private->isNewBuffer=0;
-    int result=ogg_sync_pageout(&oy,&og);
-    DEBUG(DEB_LEV_FULL_SEQ," --->  page (read in decoding) - header len :  %ld body len : %ld \n",og.header_len,og.body_len);
+    int result=ogg_sync_pageout(&omx_vorbisdec_component_Private->oy,&omx_vorbisdec_component_Private->og);
+    DEBUG(DEB_LEV_FULL_SEQ," --->  page (read in decoding) - header len :  %ld body len : %ld \n",omx_vorbisdec_component_Private->og.header_len,omx_vorbisdec_component_Private->og.body_len);
     if(result == 0)	{
       omx_vorbisdec_component_Private->isNewBuffer = 1;
       inputbuffer->nFilledLen = 0;
@@ -446,12 +430,12 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
       DEBUG(DEB_LEV_ERR,"Corrupt or missing data in bitstream; continuing...\n");
     }
     else {
-      ogg_stream_pagein(&os,&og); /* can safely ignore errors at */
+      ogg_stream_pagein(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->og); /* can safely ignore errors at */
     }
   }
   
-  result=ogg_stream_packetout(&os,&op);
-  DEBUG(DEB_LEV_FULL_SEQ," packet length (read in decoding a particular page): %ld \n",op.bytes);
+  result=ogg_stream_packetout(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->op);
+  DEBUG(DEB_LEV_FULL_SEQ," packet length (read in decoding a particular page): %ld \n",omx_vorbisdec_component_Private->op.bytes);
   if(result == 0)	{
     omx_vorbisdec_component_Private->isNewBuffer = 1;
     inputbuffer->nFilledLen = 0;
@@ -465,19 +449,19 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
   } else {
     /* we have a packet.  Decode it */
 
-    if(vorbis_synthesis(&vb,&op)==0) /* test for success! */
-    vorbis_synthesis_blockin(&vd,&vb);
+    if(vorbis_synthesis(&omx_vorbisdec_component_Private->vb,&omx_vorbisdec_component_Private->op)==0) /* test for success! */
+    vorbis_synthesis_blockin(&omx_vorbisdec_component_Private->vd,&omx_vorbisdec_component_Private->vb);
     /**pcm is a multichannel float vector.  In stereo, for
       example, pcm[0] is left, and pcm[1] is right.  samples is
       the size of each channel.  Convert the float values
       (-1.<=range<=1.) to whatever PCM format and write it out */
 
-    while((samples=vorbis_synthesis_pcmout(&vd,&pcm))>0)
+    while((samples=vorbis_synthesis_pcmout(&omx_vorbisdec_component_Private->vd,&pcm))>0)
     {
       bout=(samples<convsize?samples:convsize);
 
       /* convert floats to 16 bit signed ints (host order) and interleave */
-      for(i=0;i<vi.channels;i++)
+      for(i=0;i<omx_vorbisdec_component_Private->vi.channels;i++)
       {
         ogg_int16_t *ptr=convbuffer+i;
         mono=pcm[i];
@@ -500,20 +484,20 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
             clipflag=1;
           }
           *ptr=val;
-          ptr+=vi.channels;
+          ptr+=omx_vorbisdec_component_Private->vi.channels;
         }
       }
 
-      outputbuffer->nFilledLen=2*vi.channels*bout;
+      outputbuffer->nFilledLen=2*omx_vorbisdec_component_Private->vi.channels*bout;
       memcpy(outputCurrBuffer,(char *)convbuffer,outputbuffer->nFilledLen);
 
       if(clipflag) {
-        DEBUG(DEB_LEV_FULL_SEQ,"Clipping in frame %ld\n",(long)(vd.sequence));
+        DEBUG(DEB_LEV_FULL_SEQ,"Clipping in frame %ld\n",(long)(omx_vorbisdec_component_Private->vd.sequence));
       }
-      vorbis_synthesis_read(&vd,bout); /* tell libvorbis how many samples we actually consumed */
+      vorbis_synthesis_read(&omx_vorbisdec_component_Private->vd,bout); /* tell libvorbis how many samples we actually consumed */
     }
   }
-  if(ogg_page_eos(&og)) {
+  if(ogg_page_eos(&omx_vorbisdec_component_Private->og)) {
     DEBUG(DEB_LEV_FULL_SEQ, "In %s EOS Detected\n",__func__);
     eos=1;
   }

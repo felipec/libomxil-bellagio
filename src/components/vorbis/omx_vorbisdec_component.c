@@ -39,7 +39,6 @@ static OMX_U32 noVorbisDecInstance = 0;
 
 static int second_header_buffer_processed=0;
 
-
 /** The Constructor
   * @param cComponentName is the name of the component to be initialized
   */
@@ -247,6 +246,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)	
   /** initializing vorbis decoder parameters */
   ogg_sync_init(&omx_vorbisdec_component_Private->oy);
   second_header_buffer_processed = 0;
+  omx_vorbisdec_component_Private->convsize = 0;
                                                                                                                              
   return err;
 };
@@ -293,7 +293,6 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
   static OMX_S32 index=0;
   int eos=0;
   char *vorbis_buffer;
-  int convsize=0;
   ogg_int16_t convbuffer[4096];
 
  
@@ -403,7 +402,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
       DEBUG(DEB_LEV_ERR,"Encoded by: %s\n\n",omx_vorbisdec_component_Private->vc.vendor);
     }
 
-    convsize=inputbuffer->nFilledLen/omx_vorbisdec_component_Private->vi.channels;
+    omx_vorbisdec_component_Private->convsize=inputbuffer->nFilledLen/omx_vorbisdec_component_Private->vi.channels;
     /* OK, got and parsed all three headers. Initialize the Vorbis
     packet->PCM decoder. */
     vorbis_synthesis_init(&omx_vorbisdec_component_Private->vd,&omx_vorbisdec_component_Private->vi); /* central decode state */
@@ -458,7 +457,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
 
     while((samples=vorbis_synthesis_pcmout(&omx_vorbisdec_component_Private->vd,&pcm))>0)
     {
-      bout=(samples<convsize?samples:convsize);
+      bout=(samples<omx_vorbisdec_component_Private->convsize?samples:omx_vorbisdec_component_Private->convsize);
 
       /* convert floats to 16 bit signed ints (host order) and interleave */
       for(i=0;i<omx_vorbisdec_component_Private->vi.channels;i++)

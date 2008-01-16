@@ -87,7 +87,9 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param vd central working state for the packet->PCM decoder */ \
   vorbis_dsp_state vd; \
   /** @param vb local working space for packet->PCM decode */ \
-  vorbis_block vb;
+  vorbis_block vb; \
+  /** @param convsize conversion buffer size */ \
+  OMX_U32 convsize;
 ENDCLASS(omx_vorbisdec_component_PrivateType)
 
 /* Component private entry points declaration */

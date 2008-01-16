@@ -25,9 +25,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-06-21 18:19:21 +0530 (Thu, 21 Jun 2007) $
-	Revision $Rev: 243 $
-	Author $Author: gsent $
+	$Date$
+	Revision $Rev$
+	Author $Author$
 
 */
 
@@ -53,7 +53,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 
   if (stComponents == NULL) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-    return 1; // Return Number of Component/s
+    return 1; /* Return Number of Component */
   }
 
   stComponents[0]->componentVersion.s.nVersionMajor = 1; 

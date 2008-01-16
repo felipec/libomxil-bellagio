@@ -22,9 +22,9 @@
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
 	
-	$Date: 2007-10-11 15:20:22 +0530 (Thu, 11 Oct 2007) $
-	Revision $Rev: 331 $
-	Author $Author: pankaj_sen $
+	$Date$
+	Revision $Rev$
+	Author $Author$
 */
 
 #include <stdio.h>

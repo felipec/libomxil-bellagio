@@ -75,13 +75,13 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param oy sync and verify incoming physical bitstream */ \
   ogg_sync_state oy; \
   /** @param os take physical pages, weld into a logical stream of packets */ \
-  ogg_stream_state os;
+  ogg_stream_state os; \
   /** @param og one Ogg bitstream page,  Vorbis packets are inside */ \
   ogg_page og; \
   /** @param op one raw packet of data for decode */ \
   ogg_packet op; \
   /** @param vi struct that stores all the static vorbis bitstream  settings */ \
-  vorbis_info vi;
+  vorbis_info vi; \
   /** @param vc struct that stores all the bitstream user comments */ \
   vorbis_comment vc; \
   /** @param vd central working state for the packet->PCM decoder */ \

@@ -53,12 +53,6 @@ int buffer_in_size = BUFFER_IN_SIZE;
 int buffer_out_size = BUFFER_OUT_SIZE;
 static OMX_BOOL bEOS=OMX_FALSE;
 
-OMX_PARAM_PORTDEFINITIONTYPE paramPort,decparamPort;
-OMX_PARAM_COMPONENTROLETYPE paramRole;
-OMX_AUDIO_PARAM_MP3TYPE paramMp3;
-OMX_AUDIO_PARAM_VORBISTYPE paramOgg;
-OMX_AUDIO_PARAM_PCMMODETYPE paramAudioPCM;
-
 OMX_CALLBACKTYPE audiodeccallbacks = { 
   .EventHandler    = audiodecEventHandler,
   .EmptyBufferDone = audiodecEmptyBufferDone,
@@ -83,13 +77,9 @@ OMX_CALLBACKTYPE volumecallbacks = {
   .FillBufferDone  = volumeFillBufferDone
 };
 
-FILE *fd = 0;
-appPrivateType* appPriv;
-
+FILE *fd ,*outfile;
 char *input_file, *output_file;
-
 int selectedType = 0;
-FILE *outfile;
 
 static void setHeader(OMX_PTR header, OMX_U32 size) {
   OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));

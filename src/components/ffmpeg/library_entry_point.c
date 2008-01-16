@@ -34,6 +34,7 @@
 #include <st_static_component_loader.h>
 #include <omx_audiodec_component.h>
 #include <omx_videodec_component.h>
+#include <omx_videoenc_component.h>
 #include <omx_ffmpeg_colorconv_component.h>
 
 /** @brief The library entry point. It must have the same name for each
@@ -55,7 +56,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 
   if (stComponents == NULL) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-    return 3; // Return Number of Components - one for audio, two for video
+    return 4; // Return Number of Components - one for audio, two for video
   }
 
   /** component 1 - audio decoder */
@@ -165,6 +166,41 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[2]->name_specific[0], "OMX.st.video_colorconv.ffmpeg");
   strcpy(stComponents[2]->role_specific[0], "video_colorconv.ffmpeg"); 
 
+  /** component 4 - video encoder */
+  stComponents[3]->componentVersion.s.nVersionMajor = 1; 
+  stComponents[3]->componentVersion.s.nVersionMinor = 1; 
+  stComponents[3]->componentVersion.s.nRevision = 1;
+  stComponents[3]->componentVersion.s.nStep = 1;
+
+  stComponents[3]->name = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[3]->name == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+  strcpy(stComponents[3]->name, "OMX.st.video_encoder");
+  stComponents[3]->name_specific_length = 2; 
+  stComponents[3]->constructor = omx_videoenc_component_Constructor;	
+
+  stComponents[3]->name_specific = (char **)calloc(stComponents[1]->name_specific_length,sizeof(char *));	
+  stComponents[3]->role_specific = (char **)calloc(stComponents[1]->name_specific_length,sizeof(char *));	
+
+  for(i=0;i<stComponents[3]->name_specific_length;i++) {
+    stComponents[3]->name_specific[i] = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[3]->name_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+  for(i=0;i<stComponents[3]->name_specific_length;i++) {
+    stComponents[3]->role_specific[i] = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[3]->role_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+
+  strcpy(stComponents[3]->name_specific[0], "OMX.st.video_encoder.mpeg4");
+  strcpy(stComponents[3]->name_specific[1], "OMX.st.video_encoder.avc");
+  strcpy(stComponents[3]->role_specific[0], "video_encoder.mpeg4");
+  strcpy(stComponents[3]->role_specific[1], "video_encoder.avc");
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-  return 3; 
+  return 4; 
 }

@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-11-19 14:00:02 +0530 (Mon, 19 Nov 2007) $
-  Revision $Rev: 376 $
-  Author $Author: pankaj_sen $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #ifndef _OMX_VIDEOENC_COMPONENT_H_

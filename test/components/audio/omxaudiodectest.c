@@ -772,20 +772,6 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (!flagSetupTunnel) {
-    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec1);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
-			exit(1);
-    }
-    DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferAudioDec2);
-    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec2);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
-			exit(1);
-    }
-  }
-
   if (!flagSetupTunnel && flagPlaybackOn) {
     err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume1);
     if(err != OMX_ErrorNone) {
@@ -813,6 +799,20 @@ int main(int argc, char** argv) {
     err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec1);
     DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", (int)inBufferAudioDec2);
     err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec2);
+  }
+  /* Call FillThisBuffer now, to ensure that first two input buffers has already been sent to the component*/
+  if (!flagSetupTunnel) {
+    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec1);
+    if(err != OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
+			exit(1);
+    }
+    DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferAudioDec2);
+    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec2);
+    if(err != OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
+			exit(1);
+    }
   }
 
   DEBUG(DEFAULT_MESSAGES,"Waiting for  EOS = %d\n",appPriv->eofSem->semval);

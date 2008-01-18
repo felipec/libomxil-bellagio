@@ -714,12 +714,6 @@ int main(int argc, char** argv) {
   err = OMX_SendCommand(appPriv->videodechandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
   tsem_down(appPriv->decoderEventSem);
 
-  if (!flagSetupTunnel) {
-    err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer1);
-    err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer2);
-  }
-
-
   DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Before locking on condition and decoderMutex\n");
 
   data_read = fread(pInBuffer1->pBuffer, sizeof(char), buffer_in_size, fd);
@@ -743,6 +737,10 @@ int main(int argc, char** argv) {
     err = OMX_EmptyThisBuffer(appPriv->videodechandle, pInBuffer2);
   }
 
+  if (!flagSetupTunnel) {
+    err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer1);
+    err = OMX_FillThisBuffer(appPriv->videodechandle, pOutBuffer2);
+  }
   DEBUG(DEFAULT_MESSAGES,"Waiting for  EOS\n");
 
   /** in tunneled case, disable the video components ports and then set parameters 

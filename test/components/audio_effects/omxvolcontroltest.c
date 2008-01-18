@@ -253,11 +253,6 @@ int main(int argc, char** argv) {
   DEBUG(DEB_LEV_PARAMS, "Had buffers at:\n0x%08x\n0x%08x\n0x%08x\n0x%08x\n", 
                 (int)inBuffer1->pBuffer, (int)inBuffer2->pBuffer, (int)outBuffer1->pBuffer, (int)outBuffer2->pBuffer);
   DEBUG(DEB_LEV_PARAMS, "After switch to executing\n");
-  /** Schedule a couple of buffers to be filled on the output port
-    * The callback itself will re-schedule them.
-    */
-  err = OMX_FillThisBuffer(handle, outBuffer1);
-  err = OMX_FillThisBuffer(handle, outBuffer2);
 
   data_read1 = read(fd, inBuffer1->pBuffer, BUFFER_IN_SIZE);
   inBuffer1->nFilledLen = data_read1;
@@ -271,6 +266,12 @@ int main(int argc, char** argv) {
   err = OMX_EmptyThisBuffer(handle, inBuffer1);
   DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", (int)inBuffer2);
   err = OMX_EmptyThisBuffer(handle, inBuffer2);
+  
+  /** Schedule a couple of buffers to be filled on the output port
+    * The callback itself will re-schedule them.
+    */
+  err = OMX_FillThisBuffer(handle, outBuffer1);
+  err = OMX_FillThisBuffer(handle, outBuffer2);
 
   tsem_down(appPriv->eofSem);
 

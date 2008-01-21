@@ -65,7 +65,7 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
 	struct dirent *dp;
 	void *handle;
 	int i, num_of_comp;
-	int j;
+	unsigned int j;
 	FILE *omxregistryfp;
 	char *omxregistryfile;
 	char *buffer;

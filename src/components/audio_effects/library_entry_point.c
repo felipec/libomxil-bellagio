@@ -48,7 +48,7 @@
   * @return number of components contained in the library 
   */
 int omx_component_library_Setup(stLoaderComponentType **stComponents) {
-  int i;
+  unsigned int i;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
 
   if (stComponents == NULL) {

@@ -156,8 +156,8 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
  * This function deallocates the list of available components.
  */
 OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader) {
-  unsigned int i;
-  int j,err;
+  unsigned int i, j;
+  int err;
   stLoaderComponentType** templateList;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loader->loaderPrivate;
@@ -229,7 +229,8 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
   OMX_PTR pAppData,
   OMX_CALLBACKTYPE* pCallBacks) {
 
-  int i, j;
+  int i;
+  unsigned int j;
   int componentPosition = -1;
   OMX_ERRORTYPE eError = OMX_ErrorNone;
   stLoaderComponentType** templateList;
@@ -327,8 +328,8 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
   OMX_U32 nIndex) {
 
   stLoaderComponentType** templateList;
-  int i, j;
-  unsigned int index = 0;
+  int i;
+  unsigned int j, index = 0;
   int found = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	  
@@ -377,8 +378,9 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
   OMX_U8 **roles) {
 
   stLoaderComponentType** templateList;
-  int i, j,index;
-  int max_roles = *pNumRoles;
+  int i;
+  unsigned int j, index;
+  unsigned int max_roles = *pNumRoles;
   int found = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loader->loaderPrivate;
@@ -441,7 +443,8 @@ OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole (
   OMX_U8  **compNames) {
 
   stLoaderComponentType** templateList;
-  int i = 0,j = 0;
+  int i = 0;
+  unsigned int j = 0;
   int num_comp = 0;
   int max_entries = *pNumComps;
 

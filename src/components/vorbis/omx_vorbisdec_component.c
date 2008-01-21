@@ -48,7 +48,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
   OMX_ERRORTYPE err = OMX_ErrorNone;	
   omx_vorbisdec_component_PrivateType* omx_vorbisdec_component_Private;
   omx_base_audio_PortType *inPort,*outPort;
-  OMX_S32 i;
+  OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, allocating component\n", __func__);

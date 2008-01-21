@@ -809,8 +809,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     if(pBufferSupplier == NULL) {
       return OMX_ErrorBadParameter;
     }
-    if((pBufferSupplier->nPortIndex > omx_base_component_Private->sPortTypesParam.nPorts) || 
-      (pBufferSupplier->nPortIndex < 0)) {
+    if(pBufferSupplier->nPortIndex > omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
     err = omx_base_component_ParameterSanityCheck(hComponent, pBufferSupplier->nPortIndex, pBufferSupplier, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
@@ -980,13 +979,13 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     }		
     break;
   case OMX_CommandFlush:
-    if ((nParam != -1) && nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandFlush;
     break;
   case OMX_CommandPortDisable:
-    if ((nParam != -1) && nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandPortDisable;
@@ -999,7 +998,7 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     }
     break;
   case OMX_CommandPortEnable:
-    if ((nParam != -1) && nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandPortEnable;
@@ -1012,7 +1011,7 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     }
     break;
   case OMX_CommandMarkBuffer:
-    if ((nParam != -1) && nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandMarkBuffer;

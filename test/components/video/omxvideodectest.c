@@ -265,7 +265,7 @@ OMX_ERRORTYPE test_OMX_ComponentNameEnum() {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n", __func__);
-  name = malloc(128 * sizeof(char));
+  name = malloc(128);
   index = 0;
   while(1) {
     err = OMX_ComponentNameEnum (name, 128, index);
@@ -301,9 +301,9 @@ OMX_ERRORTYPE test_OMX_RoleEnum(OMX_STRING component_name) {
     DEBUG(DEB_LEV_ERR, "The Number or roles is 0.\nThe component selected is not correct for the purpose of this test.\nExiting...\n");		
     err = OMX_ErrorInvalidComponentName;
   }	else {
-    string_of_roles = (OMX_U8**)malloc(no_of_roles * sizeof(OMX_STRING));
+    string_of_roles = malloc(no_of_roles * sizeof(OMX_STRING));
     for (index = 0; index < no_of_roles; index++) {
-      *(string_of_roles + index) = (OMX_U8 *)malloc(no_of_roles * 128);
+      *(string_of_roles + index) = malloc(no_of_roles * 128);
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ, "...then buffers\n");
 
@@ -330,9 +330,9 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
   int index;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n", __func__);
-  string_of_comp_per_role = (OMX_U8**) malloc (10 * sizeof(OMX_STRING));
+  string_of_comp_per_role = malloc (10 * sizeof(OMX_STRING));
   for (index = 0; index < 10; index++) {
-    string_of_comp_per_role[index] = malloc(128 * sizeof(char));
+    string_of_comp_per_role[index] = malloc(128);
   }
 
   DEBUG(DEFAULT_MESSAGES, "Getting number of components per role for %s\n", role_name);
@@ -437,11 +437,11 @@ int main(int argc, char** argv) {
       } else {
         if (flagIsOutputEspected) {
           if(strstr(argv[argn_dec], ".yuv") == NULL && strstr(argv[argn_dec], ".rgb") == NULL) {
-            output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 5);
+            output_file = malloc(strlen(argv[argn_dec]) + 5);
             strcpy(output_file,argv[argn_dec]);
             strcat(output_file, ".yuv");
           } else {
-            output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
+            output_file = malloc(strlen(argv[argn_dec]) + 1);
             strcpy(output_file,argv[argn_dec]);
           }          
           flagIsOutputEspected = 0;
@@ -466,7 +466,7 @@ int main(int argc, char** argv) {
           }
           flagIsFormatRequested = 0;
         } else {
-          input_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
+          input_file = malloc(strlen(argv[argn_dec]) + 1);
           strcpy(input_file,argv[argn_dec]);
           flagInputReceived = 1;
         }
@@ -486,14 +486,14 @@ int main(int argc, char** argv) {
       if(flagIsColorConvRequested) {
         if(!flagIsSinkRequested) {
           DEBUG(DEB_LEV_ERR,"\n you did not enter any output file name and entered color converter option");
-          output_file = malloc( (strlen(input_file) - strlen(strstr(input_file,".")) + 8) * sizeof(char) + 1);                                                                  
+          output_file = malloc( (strlen(input_file) - strlen(strstr(input_file,".")) + 8) + 1);                                                                  
           strncpy(output_file,input_file, (strlen(input_file) - strlen(strstr(input_file,"."))) );
           strcat(output_file,"_app.rgb");
           DEBUG(DEB_LEV_ERR,"\n the output file name will be %s ", output_file);
         }
       } else {
         DEBUG(DEB_LEV_ERR,"\n you did not enter any output file name");
-        output_file = malloc( (strlen(input_file) - strlen(strstr(input_file,".")) + 8) * sizeof(char) + 1);                                                                  
+        output_file = malloc( (strlen(input_file) - strlen(strstr(input_file,".")) + 8) + 1);                                                                  
         strncpy(output_file,input_file, (strlen(input_file) - strlen(strstr(input_file,"."))) );
         strcat(output_file,"_app.yuv");
         DEBUG(DEB_LEV_ERR,"\n the decoded output file name will be %s ", output_file);
@@ -606,7 +606,7 @@ int main(int argc, char** argv) {
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
   
 
-  full_component_name = (OMX_STRING) malloc(sizeof(char*) * OMX_MAX_STRINGNAME_SIZE);
+  full_component_name = malloc(sizeof(char*) * OMX_MAX_STRINGNAME_SIZE);
   strcpy(full_component_name, COMPONENT_NAME_BASE);
   if(selectedType == MPEG4_TYPE_SEL) {
     strcpy(full_component_name + COMPONENT_NAME_BASE_LEN, ".mpeg4");
@@ -716,7 +716,7 @@ int main(int argc, char** argv) {
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Before locking on condition and decoderMutex\n");
 
-  data_read = fread(pInBuffer1->pBuffer, sizeof(char), buffer_in_size, fd);
+  data_read = fread(pInBuffer1->pBuffer, 1, buffer_in_size, fd);
   pInBuffer1->nFilledLen = data_read;
   pInBuffer1->nOffset = 0;
 
@@ -724,7 +724,7 @@ int main(int argc, char** argv) {
     * in tunneled case, it will be used afterwards
     */
   if(!flagSetupTunnel) {
-    data_read = fread(pInBuffer2->pBuffer, sizeof(char), buffer_in_size, fd);
+    data_read = fread(pInBuffer2->pBuffer, 1, buffer_in_size, fd);
     pInBuffer2->nFilledLen = data_read;
     pInBuffer2->nOffset = 0;
   }
@@ -824,7 +824,7 @@ int main(int argc, char** argv) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "in %s in tunneled case, after all components in executing state\n", __func__);
 
     /** activate 2nd input buffer now */
-   data_read = fread(pInBuffer2->pBuffer, sizeof(char), buffer_in_size, fd);
+   data_read = fread(pInBuffer2->pBuffer, 1, buffer_in_size, fd);
     pInBuffer2->nFilledLen = data_read;
     pInBuffer2->nOffset = 0;
     DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", (int)pInBuffer2->pBuffer);
@@ -1130,7 +1130,7 @@ OMX_ERRORTYPE colorconvFillBufferDone(
           DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
         }
       } else if((pBuffer->nFilledLen > 0) && (!flagSetupTunnel)) {
-          fwrite(pBuffer->pBuffer, sizeof(char),  pBuffer->nFilledLen, outfile);		
+          fwrite(pBuffer->pBuffer, 1,  pBuffer->nFilledLen, outfile);		
           pBuffer->nFilledLen = 0;
       }
       if(pBuffer->nFlags == OMX_BUFFERFLAG_EOS) {
@@ -1313,7 +1313,7 @@ OMX_ERRORTYPE videodecEmptyBufferDone(
   int data_read;
   DEBUG(DEB_LEV_FULL_SEQ, "Hi there, I am in the %s callback.\n", __func__);
 
-  data_read = fread(pBuffer->pBuffer, sizeof(char), buffer_in_size, fd);
+  data_read = fread(pBuffer->pBuffer, 1, buffer_in_size, fd);
   if (data_read <= 0) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In the %s no more input data available\n", __func__);
     pBuffer->nFlags = OMX_BUFFERFLAG_EOS;
@@ -1358,7 +1358,7 @@ OMX_ERRORTYPE videodecFillBufferDone(
           err = OMX_FillThisBuffer(hComponent, pBuffer);
         }
       } else if((pBuffer->nFilledLen > 0) && (!flagSetupTunnel)) {
-          fwrite(pBuffer->pBuffer, sizeof(char),  pBuffer->nFilledLen, outfile);		
+          fwrite(pBuffer->pBuffer, 1,  pBuffer->nFilledLen, outfile);		
           pBuffer->nFilledLen = 0;
       }
       if(pBuffer->nFlags == OMX_BUFFERFLAG_EOS) {

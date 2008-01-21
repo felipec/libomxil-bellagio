@@ -76,7 +76,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   }
 
   if(!omx_base_component_Private->messageQueue) {
-    omx_base_component_Private->messageQueue = (queue_t *)calloc(1,sizeof(queue_t));
+    omx_base_component_Private->messageQueue = calloc(1,sizeof(queue_t));
     queue_init(omx_base_component_Private->messageQueue);
   }
 
@@ -122,7 +122,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   openmaxStandComp->nVersion.s.nRevision = SPECREVISION;
   openmaxStandComp->nVersion.s.nStep = SPECSTEP;
 
-  omx_base_component_Private->name = (char* )calloc(1,OMX_MAX_STRINGNAME_SIZE);
+  omx_base_component_Private->name = calloc(1,OMX_MAX_STRINGNAME_SIZE);
   if (!omx_base_component_Private->name) {
     return OMX_ErrorInsufficientResources;
   }
@@ -966,8 +966,8 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
       /*Allocate Internal Buffer Storage and Buffer Allocation State flags*/
       for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
         pPort = omx_base_component_Private->ports[i];
-        pPort->bBufferStateAllocated=(BUFFER_STATUS_FLAG *)calloc(1,pPort->sPortParam.nBufferCountActual*sizeof(BUFFER_STATUS_FLAG *));
-        pPort->pInternalBufferStorage=(OMX_BUFFERHEADERTYPE **)calloc(1,pPort->sPortParam.nBufferCountActual*sizeof(OMX_BUFFERHEADERTYPE *));
+        pPort->bBufferStateAllocated=calloc(1,pPort->sPortParam.nBufferCountActual*sizeof(BUFFER_STATUS_FLAG *));
+        pPort->pInternalBufferStorage=calloc(1,pPort->sPortParam.nBufferCountActual*sizeof(OMX_BUFFERHEADERTYPE *));
         for(j=0; j < pPort->sPortParam.nBufferCountActual; j++)
           pPort->bBufferStateAllocated[j] = BUFFER_FREE;
       }

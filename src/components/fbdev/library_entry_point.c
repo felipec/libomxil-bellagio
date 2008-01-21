@@ -63,7 +63,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   stComponents[0]->componentVersion.s.nRevision = 1;
   stComponents[0]->componentVersion.s.nStep = 1;
 
-  stComponents[0]->name = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+  stComponents[0]->name = calloc(1, OMX_MAX_STRINGNAME_SIZE);
   if (stComponents[0]->name == NULL) {
     return OMX_ErrorInsufficientResources;
   }
@@ -71,17 +71,17 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   stComponents[0]->name_specific_length = 1; 
   stComponents[0]->constructor = omx_fbdev_sink_component_Constructor;	
 
-  stComponents[0]->name_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
-  stComponents[0]->role_specific = (char **)calloc(stComponents[0]->name_specific_length,sizeof(char *));	
+  stComponents[0]->name_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));	
+  stComponents[0]->role_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));	
 
   for(i=0;i<stComponents[0]->name_specific_length;i++) {
-    stComponents[0]->name_specific[i] = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    stComponents[0]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
     if (stComponents[0]->name_specific[i] == NULL) {
       return OMX_ErrorInsufficientResources;
     }
   }
   for(i=0;i<stComponents[0]->name_specific_length;i++) {
-    stComponents[0]->role_specific[i] = (char* )calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    stComponents[0]->role_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
     if (stComponents[0]->role_specific[i] == NULL) {
       return OMX_ErrorInsufficientResources;
     }

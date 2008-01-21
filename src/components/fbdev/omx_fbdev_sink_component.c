@@ -763,9 +763,9 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         org_dst_cpy_ptr = dest_cpy_ptr;
         for(j = 0; j < cpy_byte_width; j += cp_byte) {
           //extract source rgba components
-          r = (OMX_U8) *(src_cpy_ptr + 0);
-          g = (OMX_U8) *(src_cpy_ptr + 1);
-          b = (OMX_U8) *(src_cpy_ptr + 2);
+          r = *(src_cpy_ptr + 0);
+          g = *(src_cpy_ptr + 1);
+          b = *(src_cpy_ptr + 2);
 
           *(dest_cpy_ptr + 0) = b; 
           *(dest_cpy_ptr + 1) = g; 
@@ -788,9 +788,9 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         org_dst_cpy_ptr = dest_cpy_ptr;
         for(j = 0; j < cpy_byte_width; j += cp_byte) {
           //extract source rgba components
-          r = (OMX_U8) *(src_cpy_ptr + 0);
-          g = (OMX_U8) *(src_cpy_ptr + 1);
-          b = (OMX_U8) *(src_cpy_ptr + 2);
+          r = *(src_cpy_ptr + 0);
+          g = *(src_cpy_ptr + 1);
+          b = *(src_cpy_ptr + 2);
 
           *(dest_cpy_ptr + 0) = b; 
           *(dest_cpy_ptr + 1) = g; 
@@ -813,9 +813,9 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         org_dst_cpy_ptr = dest_cpy_ptr;
         for(j = 0; j < cpy_byte_width; j += cp_byte) {
           //extract source rgba components
-          r = (OMX_U8) *(src_cpy_ptr + 0);
-          g = (OMX_U8) *(src_cpy_ptr + 1);
-          b = (OMX_U8) *(src_cpy_ptr + 2);
+          r = *(src_cpy_ptr + 0);
+          g = *(src_cpy_ptr + 1);
+          b = *(src_cpy_ptr + 2);
           //assign to detination 
           *(dest_cpy_ptr + 0) = b; 
           *(dest_cpy_ptr + 1) = g; 
@@ -836,9 +836,9 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         org_dst_cpy_ptr = dest_cpy_ptr;
         for(j = 0; j < cpy_byte_width; j += cp_byte) {
           //extract source rgba components
-          r = (OMX_U8) *(src_cpy_ptr + 0);
-          g = (OMX_U8) *(src_cpy_ptr + 1);
-          b = (OMX_U8) *(src_cpy_ptr + 2);
+          r = *(src_cpy_ptr + 0);
+          g = *(src_cpy_ptr + 1);
+          b = *(src_cpy_ptr + 2);
           //assign to detination 
           *(dest_cpy_ptr + 0) = b; 
           *(dest_cpy_ptr + 1) = g; 
@@ -859,9 +859,9 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         org_dst_cpy_ptr = dest_cpy_ptr;
         for(j = 0; j < cpy_byte_width; j += cp_byte) {
           //extract source rgba components
-          b = (OMX_U8) *(src_cpy_ptr + 0);
-          g = (OMX_U8) *(src_cpy_ptr + 1);
-          r = (OMX_U8) *(src_cpy_ptr + 2);
+          b = *(src_cpy_ptr + 0);
+          g = *(src_cpy_ptr + 1);
+          r = *(src_cpy_ptr + 2);
           //assign to detination 
           *(dest_cpy_ptr + 0) = b; 
           *(dest_cpy_ptr + 1) = g; 

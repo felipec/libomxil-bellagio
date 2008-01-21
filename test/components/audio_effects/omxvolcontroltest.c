@@ -118,12 +118,12 @@ int main(int argc, char** argv) {
             gain = 100; 
           }
         } else if (flagIsOutputExpected) {
-          output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
+          output_file = malloc(strlen(argv[argn_dec]) + 1);
           strcpy(output_file,argv[argn_dec]);
           flagIsOutputExpected = 0;
           flagOutputReceived = 1;
         } else {
-          input_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
+          input_file = malloc(strlen(argv[argn_dec]) + 1);
           strcpy(input_file,argv[argn_dec]);
           flagInputReceived = 1;
         }

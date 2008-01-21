@@ -61,7 +61,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   stComponents[0]->componentVersion.s.nRevision = 1;
   stComponents[0]->componentVersion.s.nStep = 1;
 
-  stComponents[0]->name = (char* )calloc(1,OMX_MAX_STRINGNAME_SIZE);
+  stComponents[0]->name = calloc(1,OMX_MAX_STRINGNAME_SIZE);
   if (stComponents[0]->name == NULL) {
     return OMX_ErrorInsufficientResources;
   }

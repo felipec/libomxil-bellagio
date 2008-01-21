@@ -96,7 +96,7 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
     DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
     return ENOENT;
   }
-  libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2 * sizeof(char));
+  libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2);
 
   templateList = calloc(1,sizeof (stLoaderComponentType*));
   templateList[0] = NULL;
@@ -267,7 +267,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
   /* Build ST component from template and fill fields */
   templateList[componentPosition]->name_requested = strndup (cComponentName, OMX_MAX_STRINGNAME_SIZE);
 
-  openmaxStandComp = (OMX_COMPONENTTYPE*)calloc(1,sizeof(OMX_COMPONENTTYPE));
+  openmaxStandComp = calloc(1,sizeof(OMX_COMPONENTTYPE));
   if (!openmaxStandComp) {
     return OMX_ErrorInsufficientResources;
   }
@@ -276,7 +276,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
     if (eError == OMX_ErrorInsufficientResources) {
       *pHandle = openmaxStandComp;
       priv = (omx_base_component_PrivateType *) openmaxStandComp->pComponentPrivate;
-      priv->loader = (void *)loader;
+      priv->loader = loader;
       return OMX_ErrorInsufficientResources;
     }
     DEBUG(DEB_LEV_ERR, "Error during component construction\n");
@@ -286,7 +286,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
     return OMX_ErrorComponentNotFound;	
   }
   priv = (omx_base_component_PrivateType *) openmaxStandComp->pComponentPrivate;
-  priv->loader = (void *)loader;
+  priv->loader = loader;
  
   *pHandle = openmaxStandComp;
   ((OMX_COMPONENTTYPE*)*pHandle)->SetCallbacks(*pHandle, pCallBacks, pAppData);

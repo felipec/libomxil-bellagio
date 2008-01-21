@@ -65,7 +65,7 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
 
   // create ports, but only if the subclass hasn't done it
   if (!(*openmaxStandPort)) {
-    *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_base_PortType));
+    *openmaxStandPort = calloc(1,sizeof (omx_base_PortType));
   }
 
   if (!(*openmaxStandPort)) {

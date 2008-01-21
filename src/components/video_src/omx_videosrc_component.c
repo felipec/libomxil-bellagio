@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-11-26 15:51:32 +0530 (Mon, 26 Nov 2007) $
-  Revision $Rev: 384 $
-  Author $Author: pankaj_sen $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 
@@ -373,7 +373,7 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
     DEBUG(DEB_LEV_ERR,"failed to retrieve pointer to memory mapped area\n");
   }
 
-  omx_videosrc_component_Private->mmaps = (malloc (omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap)));
+  omx_videosrc_component_Private->mmaps = malloc(omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap));
 
   i = 0;
   // fill out the fields

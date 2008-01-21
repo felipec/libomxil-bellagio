@@ -55,7 +55,7 @@ OMX_ERRORTYPE base_video_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   omx_base_video_PortType *omx_base_video_Port;
 
   if (!(*openmaxStandPort)) {
-    *openmaxStandPort = (omx_base_PortType *)calloc(1,sizeof (omx_base_video_PortType));
+    *openmaxStandPort = calloc(1,sizeof (omx_base_video_PortType));
   }
 
   if (!(*openmaxStandPort)) {
@@ -74,7 +74,7 @@ OMX_ERRORTYPE base_video_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   omx_base_video_Port->sVideoParam.xFramerate = 15;
 
   omx_base_video_Port->sPortParam.eDomain = OMX_PortDomainVideo;
-  omx_base_video_Port->sPortParam.format.video.cMIMEType = (OMX_STRING)malloc(sizeof(char)*DEFAULT_MIME_STRING_LENGTH);
+  omx_base_video_Port->sPortParam.format.video.cMIMEType = malloc(DEFAULT_MIME_STRING_LENGTH);
   strcpy(omx_base_video_Port->sPortParam.format.video.cMIMEType, "raw/video");
   omx_base_video_Port->sPortParam.format.video.pNativeRender = 0;
   omx_base_video_Port->sPortParam.format.video.bFlagErrorConcealment = OMX_FALSE;

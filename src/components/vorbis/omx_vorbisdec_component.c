@@ -237,7 +237,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)	
   omx_vorbisdec_component_Private->inputCurrBuffer = NULL;
   omx_vorbisdec_component_Private->inputCurrLength = 0;
   nBufferSize = omx_vorbisdec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
-  omx_vorbisdec_component_Private->internalOutputBuffer = (OMX_U8 *) malloc(nBufferSize);
+  omx_vorbisdec_component_Private->internalOutputBuffer = malloc(nBufferSize);
   memset(omx_vorbisdec_component_Private->internalOutputBuffer, 0, nBufferSize);
   omx_vorbisdec_component_Private->isFirstBuffer = 1;
   omx_vorbisdec_component_Private->positionInOutBuf = 0;

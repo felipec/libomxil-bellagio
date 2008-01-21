@@ -117,7 +117,7 @@ OMX_ERRORTYPE test_OMX_ComponentNameEnum() {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n",__func__);
-  name = malloc(128 * sizeof(char));
+  name = malloc(128);
   index = 0;
   while(1) {
     err = OMX_ComponentNameEnum (name, 128, index);
@@ -199,7 +199,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
 
   string_of_comp_per_role = (OMX_U8**)malloc(no_of_comp_per_role * sizeof(OMX_STRING));
   for (index = 0; index<no_of_comp_per_role; index++) {
-    string_of_comp_per_role[index] = malloc(128 * sizeof(char));
+    string_of_comp_per_role[index] = malloc(128);
   }
 
   err = OMX_GetComponentsOfRole(role_name, &no_of_comp_per_role, string_of_comp_per_role);
@@ -342,12 +342,12 @@ int main(int argc, char** argv) {
             gain = 100; 
           }
         } else if (flagIsOutputExpected) {
-          output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
+          output_file = malloc(strlen(argv[argn_dec]) + 1);
           strcpy(output_file,argv[argn_dec]);
           flagIsOutputExpected = 0;
           flagOutputReceived = 1;
         } else {
-          input_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
+          input_file = malloc(strlen(argv[argn_dec]) + 1);
           strcpy(input_file,argv[argn_dec]);
           flagInputReceived = 1;
         }
@@ -460,7 +460,7 @@ int main(int argc, char** argv) {
   test_OpenClose(COMPONENT_NAME_BASE);
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
 
-  full_component_name = (OMX_STRING) malloc(sizeof(char*) * OMX_MAX_STRINGNAME_SIZE);
+  full_component_name = (OMX_STRING) malloc(OMX_MAX_STRINGNAME_SIZE);
   strcpy(full_component_name, COMPONENT_NAME_BASE);
   if(selectedType == MP3_TYPE_SEL) {
     strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".mp3");
@@ -529,7 +529,7 @@ int main(int argc, char** argv) {
 			exit(1);
     } else {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"FileName Param index : %x \n",eIndexParamFilename);
-      temp = (char *)malloc(25);
+      temp = malloc(25);
       OMX_GetParameter(appPriv->filereaderhandle,eIndexParamFilename,temp);
       err = OMX_SetParameter(appPriv->filereaderhandle,eIndexParamFilename,input_file);
       if(err != OMX_ErrorNone) {
@@ -787,11 +787,11 @@ int main(int argc, char** argv) {
   }
 
   if(!flagUsingFFMpeg && !flagIsMadUsingFileReader) {
-    data_read = fread(inBufferAudioDec1->pBuffer, sizeof(char), buffer_in_size, fd);
+    data_read = fread(inBufferAudioDec1->pBuffer, 1, buffer_in_size, fd);
     inBufferAudioDec1->nFilledLen = data_read;
     inBufferAudioDec1->nOffset = 0;
 
-    data_read = fread(inBufferAudioDec2->pBuffer, sizeof(char), buffer_in_size, fd);
+    data_read = fread(inBufferAudioDec2->pBuffer, 1, buffer_in_size, fd);
     inBufferAudioDec2->nFilledLen = data_read;
     inBufferAudioDec2->nOffset = 0;
 
@@ -1272,7 +1272,7 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
     }
   } else {
 
-    data_read = fread(pBuffer->pBuffer, sizeof(char), buffer_in_size, fd);
+    data_read = fread(pBuffer->pBuffer, 1, buffer_in_size, fd);
     pBuffer->nFilledLen = data_read;
     pBuffer->nOffset = 0;
 	  if (data_read <= 0) {

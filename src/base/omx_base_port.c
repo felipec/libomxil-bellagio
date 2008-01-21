@@ -364,7 +364,7 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
   OMX_PTR pAppPrivate,
   OMX_U32 nSizeBytes) {
 	
-  int i;
+  unsigned int i;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -443,7 +443,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
   OMX_U32 nSizeBytes,
   OMX_U8* pBuffer) {
 
-  int i;
+  unsigned int i;
   OMX_BUFFERHEADERTYPE* returnBufferHeader;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
@@ -524,7 +524,7 @@ OMX_ERRORTYPE base_port_FreeBuffer(
   OMX_U32 nPortIndex,
   OMX_BUFFERHEADERTYPE* pBuffer) {
 
-  int i;
+  unsigned int i;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -586,7 +586,7 @@ OMX_ERRORTYPE base_port_FreeBuffer(
 
 OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_U32 nSizeBytes)
 {
-  int i;
+  unsigned int i;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   OMX_U8* pBuffer=NULL;
@@ -656,7 +656,7 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
 
 OMX_ERRORTYPE base_port_FreeTunnelBuffer(omx_base_PortType *openmaxStandPort,OMX_U32 nPortIndex)
 {
-  int i;
+  unsigned int i;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   OMX_ERRORTYPE eError=OMX_ErrorNone;
@@ -738,7 +738,7 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   OMX_U32 portIndex;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
-  int i;
+  unsigned int i;
   OMX_BOOL foundBuffer = OMX_FALSE;
   portIndex = (openmaxStandPort->sPortParam.eDir == OMX_DirInput)?pBuffer->nInputPortIndex:pBuffer->nOutputPortIndex;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s portIndex %lu\n", __func__, portIndex);

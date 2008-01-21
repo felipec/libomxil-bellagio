@@ -156,7 +156,8 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
  * This function deallocates the list of available components.
  */
 OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader) {
-  int i,j,err;
+  unsigned int i;
+  int j,err;
   stLoaderComponentType** templateList;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	templateList = (stLoaderComponentType**)loader->loaderPrivate;
@@ -326,7 +327,8 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
   OMX_U32 nIndex) {
 
   stLoaderComponentType** templateList;
-  int i, j, index = 0;
+  int i, j;
+  unsigned int index = 0;
   int found = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 	  

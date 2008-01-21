@@ -38,7 +38,7 @@ static OMX_U32 noAlsasinkInstance=0;
 /** The Constructor 
  */
 OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;	
+  int err = OMX_ErrorNone;	
   omx_base_audio_PortType *pPort;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private;
   OMX_U32 i;
@@ -226,7 +226,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
 	OMX_IN  OMX_INDEXTYPE nParamIndex,
 	OMX_IN  OMX_PTR ComponentParameterStructure)
 {
-  OMX_ERRORTYPE err = OMX_ErrorNone;
+  int err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
   OMX_U32 portIndex;

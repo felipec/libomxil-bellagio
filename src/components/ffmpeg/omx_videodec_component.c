@@ -393,7 +393,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 
   OMX_S32 nOutputFilled = 0;
   OMX_U8* outputCurrBuffer;
-  OMX_U32 nLen = 0;
+  int nLen = 0;
   int internalOutputFilled=0;
   int nSize;
   struct SwsContext *imgConvertYuvCtx = NULL;

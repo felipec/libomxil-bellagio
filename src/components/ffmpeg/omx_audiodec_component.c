@@ -380,8 +380,7 @@ OMX_ERRORTYPE omx_audiodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
 void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer, OMX_BUFFERHEADERTYPE* pOutputBuffer) 
 {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
-  int output_length;
-  OMX_U32 len = 0;
+  int output_length, len;
 
   //DEBUG(DEB_LEV_ERR, "In %s\n",__func__);
 

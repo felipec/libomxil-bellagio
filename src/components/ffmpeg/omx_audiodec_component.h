@@ -53,21 +53,21 @@
 DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_audiodec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
   /** @param avCodec pointer to the ffpeg audio decoder */ \
-  AVCodec *avCodec;	\
+  AVCodec *avCodec;  \
   /** @param avCodecContext pointer to ffmpeg decoder context  */ \
-  AVCodecContext *avCodecContext;	\
+  AVCodecContext *avCodecContext;  \
   /** @param semaphore for avcodec access syncrhonization */\
   tsem_t* avCodecSyncSem; \
-  /** @param pAudioMp3 Referece to OMX_AUDIO_PARAM_MP3TYPE structure*/	\
-  OMX_AUDIO_PARAM_MP3TYPE pAudioMp3;	\
+  /** @param pAudioMp3 Referece to OMX_AUDIO_PARAM_MP3TYPE structure*/  \
+  OMX_AUDIO_PARAM_MP3TYPE pAudioMp3;  \
   /** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioAAC Reference to  OMX_AUDIO_PARAM_AACPROFILETYPE structure */ \
    OMX_AUDIO_PARAM_AACPROFILETYPE  pAudioAac;  \
-  /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/	\
-  OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;	\
+  /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/  \
+  OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;  \
   /** @param avcodecReady boolean flag that is true when the audio coded has been initialized */ \
-  OMX_BOOL avcodecReady;	\
+  OMX_BOOL avcodecReady;  \
   /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg decoder */ \
   OMX_U16 minBufferLength; \
   /** @param inputCurrBuffer Field that stores pointer of the current input buffer position */ \
@@ -81,7 +81,7 @@ DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param positionInOutBuf Field that used to calculate starting address of the next output frame to be written */ \
   OMX_S32 positionInOutBuf; \
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
-  OMX_S32 isNewBuffer;	\
+  OMX_S32 isNewBuffer;  \
   /** @param audio_coding_type Field that indicate the supported audio format of audio decoder */ \
   OMX_U32 audio_coding_type;   \
   /** @param extradata pointer to extradata*/ \
@@ -101,7 +101,7 @@ void omx_audiodec_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
   OMX_BUFFERHEADERTYPE* inputbuffer,
   OMX_BUFFERHEADERTYPE* outputbuffer);
-	
+  
 OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,
@@ -125,9 +125,9 @@ OMX_ERRORTYPE omx_audiodec_component_SetConfig(
   OMX_PTR pComponentConfigStructure);
 
 OMX_ERRORTYPE omx_audiodec_component_GetExtensionIndex(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_STRING cParameterName,
-	OMX_OUT OMX_INDEXTYPE* pIndexType);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_STRING cParameterName,
+  OMX_OUT OMX_INDEXTYPE* pIndexType);
 
 
 #endif

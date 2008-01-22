@@ -5,7 +5,7 @@
   software library.
 
   Originally developed by Peter Littlefield
-	Copyright (C) 2007  STMicroelectronics and Agere Systems
+  Copyright (C) 2007  STMicroelectronics and Agere Systems
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -48,8 +48,8 @@
 #define COLOR_CONV_FFMPEG_NAME "OMX.st.video_colorconv.ffmpeg"
 #define COLOR_CONV_FFMPEG_ROLE "video_colorconv.ffmpeg"
 
-#define MIN(a,b)	(((a) < (b)) ? (a) : (b))
-#define MAX(a,b)	(((a) > (b)) ? (a) : (b))
+#define MIN(a,b)  (((a) < (b)) ? (a) : (b))
+#define MAX(a,b)  (((a) > (b)) ? (a) : (b))
 
 /** ffmpeg color converter component port structure.
   */

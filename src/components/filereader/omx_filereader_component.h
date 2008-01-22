@@ -59,22 +59,18 @@ DERIVEDCLASS(omx_filereader_component_PrivateType, omx_base_source_PrivateType)
   AVFormatParameters *avformatparameters; \
   /** @param avinputformat is the ffmpeg audio format related settings */ \
   AVInputFormat *avinputformat; \
-  /** @param pkt is the ffmpeg packet structure for data delivery */\ 
+  /** @param pkt is the ffmpeg packet structure for data delivery */ \
   AVPacket pkt; \
-  /** @param isFirstBuffer is the int variable signifying first processed buffer */ \
-  OMX_U32 isFirstBuffer; \
-  /** @param isNewBuffer is the int variable signifying need of new buffer for processing*/ \
-  OMX_U32 isNewBuffer; \
   /** @param sInputFileName is the input filename provided by client */ \
   OMX_STRING sInputFileName; \
   /** @param audio_coding_type is the coding type determined by input file */ \
   OMX_U32 audio_coding_type; \
-  /** @param semaphore for avformat syncrhonization */\
+  /** @param semaphore for avformat syncrhonization */ \
   tsem_t* avformatSyncSem; \
   /** @param avformatReady boolean flag that is true when the audio format has been initialized */ \
-  OMX_BOOL avformatReady;	\
-  /** @param avformatReady boolean flag that is true when the audio format has been initialized */ \
-  OMX_BOOL bIsEOSSent;	
+  OMX_BOOL avformatReady;  \
+  /** @param bIsEOSSent boolean flag is true when EOS has sent */ \
+  OMX_BOOL bIsEOSSent;  
 ENDCLASS(omx_filereader_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -110,9 +106,9 @@ OMX_ERRORTYPE omx_filereader_component_GetConfig(
   OMX_IN  OMX_PTR pComponentConfigStructure);
 
 OMX_ERRORTYPE omx_filereader_component_GetExtensionIndex(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_STRING cParameterName,
-	OMX_OUT OMX_INDEXTYPE* pIndexType);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_STRING cParameterName,
+  OMX_OUT OMX_INDEXTYPE* pIndexType);
 
 #endif
 

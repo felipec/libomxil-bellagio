@@ -738,7 +738,6 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   unsigned int i;
-  OMX_BOOL foundBuffer = OMX_FALSE;
   portIndex = (openmaxStandPort->sPortParam.eDir == OMX_DirInput)?pBuffer->nInputPortIndex:pBuffer->nOutputPortIndex;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s portIndex %lu\n", __func__, portIndex);
 
@@ -765,17 +764,23 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
     return OMX_ErrorIncorrectStateOperation;
   }
 
-  if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
-    for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
-      if (pBuffer->pBuffer == openmaxStandPort->pInternalBufferStorage[i]->pBuffer) {
-    	  foundBuffer = OMX_TRUE;
-          break;
-      }
-    }
+  /* Temporarily disable this check for gst-openmax */
+#if 0
+  {
+	OMX_BOOL foundBuffer = OMX_FALSE;
+	if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
+	  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+		if (pBuffer->pBuffer == openmaxStandPort->pInternalBufferStorage[i]->pBuffer) {
+			foundBuffer = OMX_TRUE;
+			break;
+		}
+	  }
+	}
+	if (!foundBuffer) {
+	  return OMX_ErrorBadParameter;
+	}
   }
-  if (!foundBuffer) {
-    return OMX_ErrorBadParameter;
-  }
+#endif
 
   if ((err = checkHeader(pBuffer, sizeof(OMX_BUFFERHEADERTYPE))) != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "In %s: received wrong buffer header on input port\n", __func__);

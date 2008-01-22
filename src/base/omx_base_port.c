@@ -561,7 +561,6 @@ OMX_ERRORTYPE base_port_FreeBuffer(
         }
       } else if (openmaxStandPort->bBufferStateAllocated[i] & BUFFER_ASSIGNED) {
         free(pBuffer);
-        pBuffer=NULL;
       }
       if(openmaxStandPort->bBufferStateAllocated[i] & HEADER_ALLOCATED) {
         free(openmaxStandPort->pInternalBufferStorage[i]);
@@ -766,10 +765,11 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
     return OMX_ErrorIncorrectStateOperation;
   }
 
-  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
-    if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
+  if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
+    for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
       if (pBuffer->pBuffer == openmaxStandPort->pInternalBufferStorage[i]->pBuffer) {
     	  foundBuffer = OMX_TRUE;
+          break;
       }
     }
   }

@@ -979,7 +979,7 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     }		
     break;
   case OMX_CommandFlush:
-    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts && nParam != OMX_ALL) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandFlush;
@@ -1011,7 +1011,7 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     }
     break;
   case OMX_CommandMarkBuffer:
-    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts && nParam != OMX_ALL) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandMarkBuffer;

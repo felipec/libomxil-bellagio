@@ -21,6 +21,10 @@ VIDEO
 - OMX video color converter component converting from decoded output .yuv file to produce .rgb file.
 - OMX video sink component which uses the frame buffer to display the color converter component output .rgb file.
 - OMX video capture component which captures video frame using a video camera and stores into a file or display using video sink.
+PARSER
+- OMX 3gp parser component. Parses input file/stream for audio and video output, which is then fed to audio and video decoder component for decoding.
+
+N.B. The 3gp parser can support Mpeg4,H264 video and Mp4,Aac audio. FFMpeg can't encode (Warning, using MS style audio codec tag, the file may be unplayable!) vorbis audio for a 3gp container and so also not decodable. Because of this vorbis decoding support has not been included in 3gp parser 
 
 The following simple test application is provided:
 
@@ -28,6 +32,7 @@ test/components/audio/omxaudiodectest
 test/components/audio_effects/omxvolcontroltest
 test/components/video/omxvideodectest
 test/components/video/omxvideocapnplay
+test/components/parser/omxparsertest
 
 
 Check the distribution build:
@@ -134,6 +139,21 @@ Usage: omxvideocapnplay -o outputfile [-t] [-c] [-h] [-f input_fmt] [-s]
 
 N.B : The input picture resolution can be maximum 640x480 for decoding and displaying
 
+Usage: omxparsertest -o outfileVideo.yuv outfileAudio.pcm  [-t]  [-h] [-d] input_filename.3gp
+
+       -o outfileVideo.yuv outfileAudio.pcm: 
+                   If this option is specified, the output is written to user specified outfiles
+                   N.B : This option is not needed if you use the sink component
+
+       -h: Displays this help
+
+       -d: Uses the video and alsa sink component to display the video and play the audio output 
+       input_filename is the user specified input file name
+
+       -t: Tunneling option - if this option is selected then by default the color converter, 
+           video sink, volume control and alsa sink components are selected even if these options 
+           are not specified - the components are tunneled between themselves
+
 
 FRAME BUFFER SUPPORT 
 --------------------
@@ -153,6 +173,22 @@ Save the file, restart the machine, type the fbset -i command and you can see th
 
 The users having in their machine, framebuffer of different configuration, are also request to change the configuration as mentioned above.
 
+EXAMPLE COMMANDS FOR AUDIO APPLICATION
+--------------------------------------
+
+1. omxaudiodectest reference_stream.mp3
+2. omxaudiodectest -t reference_stream.mp3
+3. omxaudiodectest -m reference_stream.mp3
+4. omxaudiodectest -m -t reference_stream.mp3
+5. omxaudiodectest -m -f reference_stream.mp3
+6. omxaudiodectest -m -f -t reference_stream.mp3
+
+7. omxaudiodectest reference_stream.ogg
+8. omxaudiodectest -s reference_stream.ogg
+9. omxaudiodectest -s -t reference_stream.ogg
+
+10. omxaudiodectest  reference_stream.aac
+11. omxaudiodectest -t reference_stream.aac
 
 EXAMPLE COMMANDS FOR VIDEO APPLICATION
 --------------------------------------
@@ -165,6 +201,12 @@ EXAMPLE COMMANDS FOR VIDEO APPLICATION
 6) omxvideodectest -t input_cif.264
 7) omxvideodectest -t -f OMX_COLOR_Format16bitRGB565 temp_qcif.m4v
 
+
+EXAMPLE COMMANDS FOR PARSER APPLICATION
+--------------------------------------
+1. omxparsertest -o outfileVideo.yuv outfileAudio.pcm  reference_stream.3gp
+2. omxparsertest -d reference_stream.3gp
+3. omxparsertest -t reference_stream.3gp
 
 HOW TO ADD A NEW COMPONENT
 --------------------------
@@ -202,5 +244,5 @@ FC4 2.6.11-1.1369_fc4 (with ffmpeg-0.4.9-0.3.20051207, libmad 0.15.1b, libvorbis
 FC6 2.6.20-1.2933.fc6 (with ffmpeg 0.4.9-0.37.20070503, libmad 0.15.1b, libvorbis 1.1.2-1)
 UBUNTU 2.6.17-11-generic
 
-Last modified: Oct 22, 2007.
+Last modified: Jan 22, 2008.
 

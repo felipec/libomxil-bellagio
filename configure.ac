@@ -29,6 +29,7 @@ AC_CONFIG_FILES([
     src/components/fbdev/Makefile
     src/components/audio_effects/Makefile
     src/components/video_src/Makefile
+    src/components/parser3gp/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile
@@ -36,6 +37,7 @@ AC_CONFIG_FILES([
     test/components/audio/Makefile
     test/components/video/Makefile
     test/components/audio_effects/Makefile
+    test/components/parser/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #

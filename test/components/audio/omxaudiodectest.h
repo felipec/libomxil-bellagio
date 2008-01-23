@@ -59,7 +59,7 @@ typedef struct appPrivateType{
 }appPrivateType;
 
 #define BUFFER_IN_SIZE 4096
-#define BUFFER_OUT_SIZE 8192
+#define BUFFER_OUT_SIZE 2*8192
 
 /** Specification version*/
 #define VERSIONMAJOR    1

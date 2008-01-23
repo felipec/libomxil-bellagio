@@ -53,7 +53,7 @@ typedef struct appPrivateType{
   OMX_HANDLETYPE fbdev_sink_handle;
 }appPrivateType;
 
-#define BUFFER_IN_SIZE 8192 
+#define BUFFER_IN_SIZE 2*8192 
 
 /** Specification version*/
 #define VERSIONMAJOR    1

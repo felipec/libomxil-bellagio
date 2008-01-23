@@ -754,7 +754,7 @@ int main(int argc, char** argv) {
     tsem_down(appPriv->decoderEventSem);
     /** disable the ports */
     if(flagIsColorConvRequested) {
-      err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandPortDisable, -1, NULL);
+      err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandPortDisable, OMX_ALL, NULL);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"color conv input port disable failed\n");
 			  exit(1);

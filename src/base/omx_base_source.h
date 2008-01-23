@@ -43,6 +43,10 @@
  */
 #define OMX_BASE_SOURCE_OUTPUTPORT_INDEX 0
 
+/** OMX_BASE_SPLITTER_OUTPUTPORT_INDEX_1 is the index of any output port for the derived components
+ */
+#define OMX_BASE_SOURCE_OUTPUTPORT_INDEX_1 1
+
 /** OMX_BASE_SOURCE_ALLPORT_INDEX as the standard specifies, the -1 value for port index is used to point to all the ports
  */
 #define OMX_BASE_SOURCE_ALLPORT_INDEX -1
@@ -69,6 +73,14 @@ OMX_ERRORTYPE omx_base_source_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
  * is available on the given port.
  */
 void* omx_base_source_BufferMgmtFunction(void* param);
+
+/** This is the central function for buffer processing of a two port source component.
+  * It is executed in a separate thread, is synchronized with 
+  * semaphores at each port, those are released each time a new buffer
+  * is available on the given port.
+  */
+
+void* omx_base_source_twoport_BufferMgmtFunction (void* param);
 
 #endif
 

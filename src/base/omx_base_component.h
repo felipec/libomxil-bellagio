@@ -39,7 +39,7 @@
 /** Default size of the internal input buffer */
 #define DEFAULT_IN_BUFFER_SIZE  4 * 1024
 /** Default size of the internal output buffer */
-#define DEFAULT_OUT_BUFFER_SIZE 8 * 1024
+#define DEFAULT_OUT_BUFFER_SIZE 16 * 1024
 /** Default MIME string length */
 #define DEFAULT_MIME_STRING_LENGTH 128
 
@@ -60,7 +60,9 @@ typedef struct OMX_VENDOR_EXTRADATATYPE  {
 typedef enum OMX_INDEXVENDORTYPE {	
   /** only one index for file reader component input file */ 
   OMX_IndexVendorFileReadInputFilename = 0xFF000001,
-  OMX_IndexVendorExtraData = 0xFF000002
+  OMX_IndexVendorParser3gpInputFilename = 0xFF000002,
+  OMX_IndexVendorVideoExtraData = 0xFF000003,
+  OMX_IndexVendorAudioExtraData = 0xFF000004,
 } OMX_INDEXVENDORTYPE;
 
 /** This enum defines the transition states of the Component*/

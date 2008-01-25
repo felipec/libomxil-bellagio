@@ -16,6 +16,7 @@ AUDIO
 - OMX audio decoder based on vorbis that supports the OGG audio format
 - OMX audio volume control
 - OMX audio file reader for ffmpeg components
+- OMX audio mixer components
 VIDEO
 - OMX video decoder decoding input mpeg4 or h264 format file (in h264 format, there is no interlacing support) to produce  output .yuv file.
 - OMX video color converter component converting from decoded output .yuv file to produce .rgb file.
@@ -33,6 +34,7 @@ test/components/audio_effects/omxvolcontroltest
 test/components/video/omxvideodectest
 test/components/video/omxvideocapnplay
 test/components/parser/omxparsertest
+test/components/audio_effects/omxaudiomixertest
 
 
 Check the distribution build:
@@ -63,7 +65,7 @@ other options of the omxregister application are:
 Now, run the tests:
 
 
-AUDIO DECODER AND SINK COMPONENT USAGE
+AUDIO DECODER , MIXER AND SINK COMPONENT USAGE
 -------------------------------------
 Usage: omxaudiodectest [-o outfile] [-stmdgh] filename
 
@@ -77,29 +79,47 @@ Usage: omxaudiodectest [-o outfile] [-stmdgh] filename
        -g: Gain of the audio sink[0...100]
        -h: Displays this help
 
+Usage: omxvolcontroltest [-o outfile] [-g gain] filename
+
+       -o outfile: If this option is specified, the output stream is written to outfile
+                   otherwise redirected to std output
+       -g: Gain of pcm data [0...100]
+       -h: Displays this help
+
+Usage: omxaudiomixertest [-o outfile] [-gi gain] -t -r 44100 -n 2 filename1 filename2
+
+       -o outfile: If this option is specified, the output stream is written to outfile
+                   otherwise redirected to std output; Can't be used with -t
+       -gi       : Gain of stream i[0..3] data [0...100]
+       -t        : The audio mixer is tunneled with the alsa sink; Can't be used with -o
+       -r 44100  : Sample Rate [Default 44100]
+       -n 2      : Number of channel [Default 2]
+
+       -h        : Displays this help
+
 VIDEO DECODER, COLOR CONVERTER, SINK AND CAPTURE COMPONENT USAGE
 -------------------------------------------------------
 
 Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filename
 
  -o outfile: If this option is specified, the output is written to user specified outfile
-	     Else, the output is written in the same directory of input file
-		the file name looks like input_filename_app.yuv/rgb depending on input option
-	     If the color conv option (-c) is specified then outfile will be .rgb file
-	     Else outfile will be in .yuv format
- 	     N.B : This option is not needed if you use the sink component
+             Else, the output is written in the same directory of input file
+             the file name looks like input_filename_app.yuv/rgb depending on input option
+             If the color conv option (-c) is specified then outfile will be .rgb file
+             Else outfile will be in .yuv format
+             N.B : This option is not needed if you use the sink component
 
  -c : Color conv option - input file is decoded and color converted in outfile(.rgb file)
  -h: Displays this help
  -f : input format specification in case of color conv comp usage
       The available input formats are -
-	- OMX_COLOR_Format24bitRGB888  (default format)
-	- OMX_COLOR_Format24bitBGR888
-	- OMX_COLOR_Format32bitBGRA8888
-	- OMX_COLOR_Format32bitARGB8888
-	- OMX_COLOR_Format16bitARGB1555
-	- OMX_COLOR_Format16bitRGB565
-	- OMX_COLOR_Format16bitBGR565
+      - OMX_COLOR_Format24bitRGB888  (default format)
+      - OMX_COLOR_Format24bitBGR888
+      - OMX_COLOR_Format32bitBGRA8888
+      - OMX_COLOR_Format32bitARGB8888
+      - OMX_COLOR_Format16bitARGB1555
+      - OMX_COLOR_Format16bitRGB565
+      - OMX_COLOR_Format16bitBGR565
 
  -s: Uses the video sink component to display the output of the color converter(.rgb file)
 
@@ -189,6 +209,11 @@ EXAMPLE COMMANDS FOR AUDIO APPLICATION
 
 10. omxaudiodectest  reference_stream.aac
 11. omxaudiodectest -t reference_stream.aac
+
+12. omxvolcontroltest -o outfile.pcm -g 70 infile.pcm
+
+13. omxaudiomixertest -o outfile.pcm -g0 70 g1 80 -r 44100 -n 2 filename1.pcm filename2.pcm
+14. omxaudiomixertest -t -g0 70 g1 80 -r 44100 -n 2 filename1.pcm filename2.pcm
 
 EXAMPLE COMMANDS FOR VIDEO APPLICATION
 --------------------------------------

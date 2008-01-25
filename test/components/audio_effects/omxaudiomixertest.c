@@ -165,6 +165,7 @@ int main(int argc, char** argv) {
             DEBUG(DEFAULT_MESSAGES, "Gain of stream %i should be between [0..100]\n",i);
             gain[i] = 100; 
           }
+          i = 0;
         } else if (flagIsOutputExpected) {
           output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
           strcpy(output_file,argv[argn_dec]);
@@ -433,6 +434,7 @@ int main(int argc, char** argv) {
     }
   }
 
+  i=0;
   /*Port Disable option available in case of direct play out only*/
   if(!flagOutputReceived) {
     DEBUG(DEFAULT_MESSAGES, "\nIf you want to disabled port enter port number[0..1]: else Enter 'q' \n\n");
@@ -452,7 +454,7 @@ int main(int argc, char** argv) {
           isPortDisabled[i] = OMX_TRUE;
           err = OMX_SendCommand(appPriv->handle, OMX_CommandPortDisable, i, NULL);
           while(iBufferDropped[i]!=2) {
-            sleep(1);
+            usleep(10000);
           }
 
           for(j=0;j<BUFFER_COUNT_ACTUAL;j++) {
@@ -486,6 +488,7 @@ int main(int argc, char** argv) {
         DEBUG(DEFAULT_MESSAGES,"Port to remain disable\n");
         break;
       } else if(toupper(c) == 'Y') {
+        DEBUG(DEFAULT_MESSAGES,"Re-Enabling Port %i\n",i);
         err = OMX_SendCommand(appPriv->handle, OMX_CommandPortEnable, i, NULL);
       
         /*Buffer 0..1 for Port 0 and 2..3 for Port 1*/

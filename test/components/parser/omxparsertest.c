@@ -1,5 +1,5 @@
 /**
-  @file test/components/testvideo/omxparsevideodectest.c
+  @file test/components/parser/omxparsertest.c
 
   Test application that uses five OpenMAX components, a parser3gp, an audio decoder,
   a video deocder, an alsa sink and a video sink. The application reads a 3gp stream

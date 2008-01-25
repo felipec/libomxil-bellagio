@@ -1,8 +1,8 @@
 /**
   @file src/components/ffmpeg/omx_videoenc_component.h
   
-  This component implements mpeg4 and avc video encoder. 
-  The MPEG4 and avc Video encoder is based on ffmpeg software library.
+  This component implements mpeg4 video encoder. 
+  The MPEG4 Video encoder is based on ffmpeg software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -47,9 +47,7 @@
 
 #define VIDEO_ENC_BASE_NAME "OMX.st.video_encoder"
 #define VIDEO_ENC_MPEG4_NAME "OMX.st.video_encoder.mpeg4"
-#define VIDEO_ENC_H264_NAME "OMX.st.video_encoder.avc"
 #define VIDEO_ENC_MPEG4_ROLE "video_encoder.mpeg4"
-#define VIDEO_ENC_H264_ROLE "video_encoder.avc"
 
 /** Video Encoder component private structure.
   */
@@ -65,9 +63,6 @@ DERIVEDCLASS(omx_videoenc_component_PrivateType, omx_base_filter_PrivateType)
   tsem_t* avCodecSyncSem; \
   /** @param pVideoMpeg4 Referece to OMX_VIDEO_PARAM_MPEG4TYPE structure*/	\
   OMX_VIDEO_PARAM_MPEG4TYPE pVideoMpeg4;	\
-  /** @param pVideoAvc Reference to OMX_VIDEO_PARAM_AVCTYPE structure */ \
-  OMX_VIDEO_PARAM_AVCTYPE pVideoAvc;	\
-  /** @param avcodecReady boolean flag that is true when the video coded has been initialized */ \
   OMX_BOOL avcodecReady;	\
   /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg encoder */ \
   OMX_U16 minBufferLength; \

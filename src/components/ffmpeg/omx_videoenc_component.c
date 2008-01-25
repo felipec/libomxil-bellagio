@@ -1,8 +1,8 @@
 /**
   @file src/components/ffmpeg/omx_videoenc_component.c
   
-  This component implements mpeg4 and avc video encoder. 
-  The MPEG4 and avc Video encoder is based on ffmpeg software library.
+  This component implements mpeg4 video encoder. 
+  The MPEG4 Video encoder is based on ffmpeg software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -108,8 +108,6 @@ OMX_ERRORTYPE omx_videoenc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   /** now it's time to know the video coding type of the component */
   if(!strcmp(cComponentName, VIDEO_ENC_MPEG4_NAME)) { 
     omx_videoenc_component_Private->video_encoding_type = OMX_VIDEO_CodingMPEG4;
-  } else if(!strcmp(cComponentName, VIDEO_ENC_H264_NAME)) { 
-    omx_videoenc_component_Private->video_encoding_type = OMX_VIDEO_CodingAVC;
   } else if (!strcmp(cComponentName, VIDEO_ENC_BASE_NAME)) {
     omx_videoenc_component_Private->video_encoding_type = OMX_VIDEO_CodingUnused;
   } else {
@@ -132,8 +130,6 @@ OMX_ERRORTYPE omx_videoenc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   if(omx_videoenc_component_Private->video_encoding_type == OMX_VIDEO_CodingMPEG4) {
     omx_videoenc_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingMPEG4;
-  } else {
-    omx_videoenc_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
   }
 
   /** general configuration irrespective of any video formats
@@ -206,11 +202,8 @@ OMX_ERRORTYPE omx_videoenc_component_ffmpegLibInit(omx_videoenc_component_Privat
     case OMX_VIDEO_CodingMPEG4 :
       target_coencID = CODEC_ID_MPEG4;
       break;
-    case OMX_VIDEO_CodingAVC : 
-      target_coencID = CODEC_ID_H264;
-      break;
     default :
-      DEBUG(DEB_LEV_ERR, "\n coenc other than mpeg4 and avc(h264) is not supported -- coenc not found\n");
+      DEBUG(DEB_LEV_ERR, "\n coenc other than mpeg4 is not supported -- coenc not found\n");
       return OMX_ErrorComponentNotFound;
   }
 
@@ -293,40 +286,6 @@ void SetInternalVideoEncParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
     omx_videoenc_component_Private->pVideoMpeg4.nHeaderExtension = 0;
     omx_videoenc_component_Private->pVideoMpeg4.bReversibleVLC = OMX_FALSE;
 
-  } else if (omx_videoenc_component_Private->video_encoding_type == OMX_VIDEO_CodingAVC) {
-    strcpy(outPort->sPortParam.format.video.cMIMEType,"video/avc(h264)");
-    outPort->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
-    outPort->sVideoParam.eCompressionFormat = OMX_VIDEO_CodingAVC;
-
-    setHeader(&omx_videoenc_component_Private->pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
-    omx_videoenc_component_Private->pVideoAvc.nPortIndex = 1;
-    omx_videoenc_component_Private->pVideoAvc.nSliceHeaderSpacing = 0;
-    omx_videoenc_component_Private->pVideoAvc.bUseHadamard = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoAvc.nRefFrames = 2;
-    omx_videoenc_component_Private->pVideoAvc.nPFrames = 0;
-    omx_videoenc_component_Private->pVideoAvc.nBFrames = 0;
-    omx_videoenc_component_Private->pVideoAvc.bUseHadamard = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoAvc.nRefFrames = 2;
-    omx_videoenc_component_Private->pVideoAvc.eProfile = OMX_VIDEO_AVCProfileBaseline;
-    omx_videoenc_component_Private->pVideoAvc.eLevel = OMX_VIDEO_AVCLevel1;
-    omx_videoenc_component_Private->pVideoAvc.nAllowedPictureTypes = 0;
-    omx_videoenc_component_Private->pVideoAvc.bFrameMBsOnly = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoAvc.nRefIdx10ActiveMinus1 = 0;
-    omx_videoenc_component_Private->pVideoAvc.nRefIdx11ActiveMinus1 = 0;
-    omx_videoenc_component_Private->pVideoAvc.bEnableUEP = OMX_FALSE;  
-    omx_videoenc_component_Private->pVideoAvc.bEnableFMO = OMX_FALSE;  
-    omx_videoenc_component_Private->pVideoAvc.bEnableASO = OMX_FALSE;  
-    omx_videoenc_component_Private->pVideoAvc.bEnableRS = OMX_FALSE;   
-
-    omx_videoenc_component_Private->pVideoAvc.bMBAFF = OMX_FALSE;               
-    omx_videoenc_component_Private->pVideoAvc.bEntropyCodingCABAC = OMX_FALSE;  
-    omx_videoenc_component_Private->pVideoAvc.bWeightedPPrediction = OMX_FALSE; 
-    omx_videoenc_component_Private->pVideoAvc.nWeightedBipredicitonMode = 0; 
-    omx_videoenc_component_Private->pVideoAvc.bconstIpred = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoAvc.bDirect8x8Inference = OMX_FALSE;  
-    omx_videoenc_component_Private->pVideoAvc.bDirectSpatialTemporal = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoAvc.nCabacInitIdc = 0;
-    omx_videoenc_component_Private->pVideoAvc.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterDisable;
 
   }
 }
@@ -518,31 +477,12 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
         }
         break;
       }
-    case OMX_IndexParamVideoAvc:
-      {
-        OMX_VIDEO_PARAM_AVCTYPE *pVideoAvc;
-        pVideoAvc = ComponentParameterStructure;
-        portIndex = pVideoAvc->nPortIndex;
-        eError = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
-        if(eError!=OMX_ErrorNone) { 
-          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError); 
-          break;
-        } 
-        if (pVideoAvc->nPortIndex == 1) {
-          memcpy(&omx_videoenc_component_Private->pVideoAvc, pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
-        } else {
-          return OMX_ErrorBadPortIndex;
-        }
-        break;
-      }
     case OMX_IndexParamStandardComponentRole:
       {
         OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
         pComponentRole = ComponentParameterStructure;
         if (!strcmp((char *)pComponentRole->cRole, VIDEO_ENC_MPEG4_ROLE)) {
           omx_videoenc_component_Private->video_encoding_type = OMX_VIDEO_CodingMPEG4;
-        } else if (!strcmp((char *)pComponentRole->cRole, VIDEO_ENC_H264_ROLE)) {
-          omx_videoenc_component_Private->video_encoding_type = OMX_VIDEO_CodingAVC;
         } else {
           return OMX_ErrorBadParameter;
         }
@@ -622,19 +562,6 @@ OMX_ERRORTYPE omx_videoenc_component_GetParameter(
         memcpy(pVideoMpeg4, &omx_videoenc_component_Private->pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));
         break;
       }
-    case OMX_IndexParamVideoAvc:
-      {
-        OMX_VIDEO_PARAM_AVCTYPE * pVideoAvc; 
-        pVideoAvc = ComponentParameterStructure;
-        if (pVideoAvc->nPortIndex != 1) {
-          return OMX_ErrorBadPortIndex;
-        }
-        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_AVCTYPE))) != OMX_ErrorNone) { 
-          break;
-        }
-        memcpy(pVideoAvc, &omx_videoenc_component_Private->pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
-        break;
-      }
     case OMX_IndexParamStandardComponentRole:
       {
         OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
@@ -644,8 +571,6 @@ OMX_ERRORTYPE omx_videoenc_component_GetParameter(
         }
         if (omx_videoenc_component_Private->video_encoding_type == OMX_VIDEO_CodingMPEG4) {
           strcpy((char *)pComponentRole->cRole, VIDEO_ENC_MPEG4_ROLE);
-        } else if (omx_videoenc_component_Private->video_encoding_type == OMX_VIDEO_CodingAVC) {
-          strcpy((char *)pComponentRole->cRole, VIDEO_ENC_H264_ROLE);
         } else {
           strcpy((char *)pComponentRole->cRole,"\0");
         }
@@ -697,8 +622,6 @@ OMX_ERRORTYPE omx_videoenc_component_ComponentRoleEnum(
 
   if (nIndex == 0) {
     strcpy((char *)cRole, VIDEO_ENC_MPEG4_ROLE);
-  } else if (nIndex == 1) {
-    strcpy((char *)cRole, VIDEO_ENC_H264_ROLE);
   }	else {
     return OMX_ErrorUnsupportedIndex;
   }

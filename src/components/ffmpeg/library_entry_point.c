@@ -177,7 +177,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     return OMX_ErrorInsufficientResources;
   }
   strcpy(stComponents[3]->name, "OMX.st.video_encoder");
-  stComponents[3]->name_specific_length = 2; 
+  stComponents[3]->name_specific_length = 1; 
   stComponents[3]->constructor = omx_videoenc_component_Constructor;	
 
   stComponents[3]->name_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));	
@@ -197,9 +197,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   }
 
   strcpy(stComponents[3]->name_specific[0], "OMX.st.video_encoder.mpeg4");
-  strcpy(stComponents[3]->name_specific[1], "OMX.st.video_encoder.avc");
   strcpy(stComponents[3]->role_specific[0], "video_encoder.mpeg4");
-  strcpy(stComponents[3]->role_specific[1], "video_encoder.avc");
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
   return 4; 

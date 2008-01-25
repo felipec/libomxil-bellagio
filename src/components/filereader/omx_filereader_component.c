@@ -526,12 +526,14 @@ OMX_ERRORTYPE omx_filereader_component_GetConfig(
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
 
   switch (nIndex) {
+#if 0
     case OMX_IndexVendorAudioExtraData:
       sExtraData.nPortIndex = 0;
       sExtraData.nDataSize  = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
       sExtraData.pData      = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
       memcpy(pComponentConfigStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
       break;
+#endif
     default: // delegate to superclass
       return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
@@ -546,9 +548,11 @@ OMX_ERRORTYPE omx_filereader_component_GetExtensionIndex(
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
   if(strcmp(cParameterName,"OMX.ST.index.param.filereader.inputfilename") == 0) {
-    *pIndexType = OMX_IndexVendorFileReadInputFilename;  
+    *pIndexType = OMX_IndexVendorFileReadInputFilename;
+#if 0
   } else if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
-    *pIndexType = OMX_IndexVendorAudioExtraData;  
+    *pIndexType = OMX_IndexVendorAudioExtraData;
+#endif
   } else {
     return OMX_ErrorBadParameter;
   }

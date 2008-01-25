@@ -780,6 +780,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetConfig(
   DEBUG(DEB_LEV_SIMPLE_SEQ, "   Getting configuration %i\n", nIndex);
   /* Check which structure we are being fed and fill its header */
   switch (nIndex) {
+#if 0
     case OMX_IndexVendorAudioExtraData :  
       pExtradata = (OMX_VENDOR_EXTRADATATYPE*)pComponentConfigStructure;
       if (pExtradata->nPortIndex <= 1) {
@@ -797,7 +798,8 @@ OMX_ERRORTYPE omx_audiodec_component_SetConfig(
       } else {
           return OMX_ErrorBadPortIndex;
       }
-      break;    
+      break;
+#endif
         
     default: // delegate to superclass
       return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
@@ -812,11 +814,16 @@ OMX_ERRORTYPE omx_audiodec_component_GetExtensionIndex(
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
+#if 0
   if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
     *pIndexType = OMX_IndexVendorAudioExtraData;  
   } else {
     return OMX_ErrorBadParameter;
   }
+#else
+  return OMX_ErrorBadParameter;
+#endif
+
   return OMX_ErrorNone;  
 }
 

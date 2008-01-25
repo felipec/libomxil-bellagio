@@ -382,6 +382,9 @@ OMX_ERRORTYPE omx_videodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
 static inline void UpdateFrameSize(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_base_video_PortType *outPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
+  omx_base_video_PortType *inPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+  outPort->sPortParam.format.video.nFrameWidth = inPort->sPortParam.format.video.nFrameWidth;
+  outPort->sPortParam.format.video.nFrameHeight = inPort->sPortParam.format.video.nFrameHeight;
   switch(outPort->sVideoParam.eColorFormat) {
     case OMX_COLOR_FormatYUV420Planar:
       if(outPort->sPortParam.format.video.nFrameWidth && outPort->sPortParam.format.video.nFrameHeight) {
@@ -401,7 +404,6 @@ static inline void UpdateFrameSize(OMX_COMPONENTTYPE *openmaxStandComp) {
 void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer, OMX_BUFFERHEADERTYPE* pOutputBuffer) {
 
   omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_base_video_PortType *outPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   AVPicture pic;
 
   OMX_S32 nOutputFilled = 0;
@@ -441,31 +443,34 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       DEBUG(DEB_LEV_ERR, "----> A general error or simply frame not decoded?\n");
     }
 
-    if((outPort->sPortParam.format.video.nFrameWidth != omx_videodec_component_Private->avCodecContext->width) ||
-        (outPort->sPortParam.format.video.nFrameHeight != omx_videodec_component_Private->avCodecContext->height)) {
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "---->Sending Port Settings Change Event in video decoder\n");
+    {
+      omx_base_video_PortType *inPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
+      if((inPort->sPortParam.format.video.nFrameWidth != omx_videodec_component_Private->avCodecContext->width) ||
+         (inPort->sPortParam.format.video.nFrameHeight != omx_videodec_component_Private->avCodecContext->height)) {
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "---->Sending Port Settings Change Event in video decoder\n");
 
-      switch(omx_videodec_component_Private->video_coding_type) {
-        case OMX_VIDEO_CodingMPEG4 :
-        case OMX_VIDEO_CodingAVC :
-          outPort->sPortParam.format.video.nFrameWidth = omx_videodec_component_Private->avCodecContext->width;
-          outPort->sPortParam.format.video.nFrameHeight = omx_videodec_component_Private->avCodecContext->height;
-          break;
-        default :
-          DEBUG(DEB_LEV_ERR, "Video format other than mpeg4 & avc not supported\nCodec not found\n");
-          break;           
+        switch(omx_videodec_component_Private->video_coding_type) {
+          case OMX_VIDEO_CodingMPEG4 :
+          case OMX_VIDEO_CodingAVC :
+            inPort->sPortParam.format.video.nFrameWidth = omx_videodec_component_Private->avCodecContext->width;
+            inPort->sPortParam.format.video.nFrameHeight = omx_videodec_component_Private->avCodecContext->height;
+            break;
+          default :
+            DEBUG(DEB_LEV_ERR, "Video format other than mpeg4 & avc not supported\nCodec not found\n");
+            break;           
+        }
+
+        UpdateFrameSize (openmaxStandComp);
+
+        /** Send Port Settings changed call back */
+        (*(omx_videodec_component_Private->callbacks->EventHandler))
+          (openmaxStandComp,
+           omx_videodec_component_Private->callbackData,
+           OMX_EventPortSettingsChanged, // The command was completed 
+           nLen,  //to adjust the file pointer to resume the correct decode process
+           0, // This is the input port index 
+           NULL);
       }
-
-      UpdateFrameSize (openmaxStandComp);
-
-      /** Send Port Settings changed call back */
-      (*(omx_videodec_component_Private->callbacks->EventHandler))
-        (openmaxStandComp,
-        omx_videodec_component_Private->callbackData,
-        OMX_EventPortSettingsChanged, // The command was completed 
-        nLen,  //to adjust the file pointer to resume the correct decode process
-        1, // This is the output port index 
-        NULL);
     }
 
     if ( nLen >= 0 && internalOutputFilled) {

@@ -22,6 +22,7 @@ VIDEO
 - OMX video color converter component converting from decoded output .yuv file to produce .rgb file.
 - OMX video sink component which uses the frame buffer to display the color converter component output .rgb file.
 - OMX video capture component which captures video frame using a video camera and stores into a file or display using video sink.
+- OMX video encoder encoding input YUV format file or video captured using camera component in mpeg4 video format to produce  output .m4v file.
 PARSER
 - OMX 3gp parser component. Parses input file/stream for audio and video output, which is then fed to audio and video decoder component for decoding.
 
@@ -33,6 +34,7 @@ test/components/audio/omxaudiodectest
 test/components/audio_effects/omxvolcontroltest
 test/components/video/omxvideodectest
 test/components/video/omxvideocapnplay
+test/components/video/omxvideoenctest
 test/components/parser/omxparsertest
 test/components/audio_effects/omxaudiomixertest
 
@@ -174,6 +176,23 @@ Usage: omxparsertest -o outfileVideo.yuv outfileAudio.pcm  [-t]  [-h] [-d] input
            video sink, volume control and alsa sink components are selected even if these options 
            are not specified - the components are tunneled between themselves
 
+Usage: omxvideoenctest -o outfile [-W 320] [-H 240] [-t] [-C] [-h] [-f input_fmt] input_filename
+
+       -i infile : Input yuv file name
+       -o outfile: If this option is specified, the output is written to user specified outfile
+                   Else, the output is written in the same directory of input file
+                     the file name looks like input_filename_app.m4v depending on input option
+
+       -h: Displays this help
+
+       -f : output codec format 
+            The available output formats are - 
+              - m4v 
+       -W width
+       -H Height
+       -C use camera as input source
+       -r frame per second
+       -t use tunnel between video source and encoder
 
 FRAME BUFFER SUPPORT 
 --------------------
@@ -225,6 +244,8 @@ EXAMPLE COMMANDS FOR VIDEO APPLICATION
 5) omxvideodectest -o out.yuv temp_qcif.m4v
 6) omxvideodectest -t input_cif.264
 7) omxvideodectest -t -f OMX_COLOR_Format16bitRGB565 temp_qcif.m4v
+
+8) omxvideoenctest -o outfile.m4v [-W 320] [-H 240] [-t] [-C] [-h] [-f input_fmt] input_filename.yuv
 
 
 EXAMPLE COMMANDS FOR PARSER APPLICATION

@@ -1,0 +1,60 @@
+.\" Process this file with
+.\" groff -man -Tascii omxregister.1
+.\"
+.TH OMXREGISTER 1 "December 2007" Bellagio "OpenMAX Bellagio"
+.SH NAME
+omxregister \- register
+.SM OpenMAX
+components
+.SH SYNOPSIS
+.B omxregister [-v] [-h] [
+.I componentspath
+.B ]
+.SH DESCRIPTION
+Before using any
+.SM OpenMAX
+component, they
+.B must
+be registered with the command
+.B omxregister\.
+
+That will create a registry file
+.I .omxregistry
+in the
+.B $HOME
+directory with all the components found by default in
+.I @libdir@/omxcomponents.
+.SH OPTIONS
+.IP -v
+Display a verbose output, listing all the components registered.
+.IP -h
+Display help.
+.SH FILES
+.I $HOME/.omxregistry
+.RS
+The
+.SM OpenMAX
+component registry file.
+.RE
+.IP componentspath
+Location of the
+.SM OpenMAX
+components (by default
+.I @libdir@/omxcomponents
+).
+.SH ENVIRONMENT
+.IP HOME
+.RS
+Location of the home directory where registry is stored.
+.RE
+.SH AUTHORS
+Bhattacharyya Sourya,
+Melpignano Diego,
+Niemimuukko Ukri,
+Sen Pankaj,
+Siorpaes David
+and Urlini Giulio.
+.SH "SEE ALSO"
+.\" .BR xyzzy (1)
+
+Man page written to conform with Debian by Marc-Andre Lureau.

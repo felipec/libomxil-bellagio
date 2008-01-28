@@ -17,6 +17,8 @@ AC_CONFIG_FILES([
     Makefile
     footer_SF.html
     libomxil-B.pc
+    doc/omxregister.1
+    doc/Makefile
     include/Makefile
     src/Makefile
     src/base/Makefile

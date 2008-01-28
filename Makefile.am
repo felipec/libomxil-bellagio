@@ -1,4 +1,4 @@
-SUBDIRS = src include test m4
+SUBDIRS = src include test m4 doc
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -11,7 +11,7 @@ docdir = $(pkgdatadir)/doc/omxil
 doc_DATA = README \
    ChangeLog \
    TODO
-	
+
 uninstall-local:
 	rm -f ~/.omxregistry
 	rm -rf $(libdir)/omxilcomponents/

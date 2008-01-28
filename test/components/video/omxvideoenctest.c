@@ -228,7 +228,7 @@ int find_encoder(char* searchname) {
 /** help display */
 void display_help() {
   printf("\n");
-  printf("Usage: omxvideoenctest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filename\n");
+  printf("Usage: omxvideoenctest -o outfile [-W 320] [-H 240] [-t] [-C] [-h] [-f input_fmt] input_filename\n");
   printf("\n");
   printf("       -i infile : Input yuv file name\n");
   printf("       -o outfile: If this option is specified, the output is written to user specified outfile\n");
@@ -244,6 +244,7 @@ void display_help() {
   printf("       -H Height\n");
   printf("       -C use camera as input source\n");
   printf("       -r frame per second\n");
+  printf("       -t use tunnel between video source and encoder\n");
   printf("\n");
   exit(1);
 }

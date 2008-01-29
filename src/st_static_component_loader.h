@@ -86,7 +86,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
  */
 OMX_ERRORTYPE BOSA_ST_DestroyComponent(
     BOSA_COMPONENTLOADER *loader,
-	OMX_HANDLETYPE hComponent);
+    OMX_HANDLETYPE hComponent);
 
 /** @brief This function search for the index from 0 to end of the list
  * 

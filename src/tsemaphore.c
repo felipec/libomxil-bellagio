@@ -61,7 +61,7 @@ void tsem_deinit(tsem_t* tsem) {
 void tsem_down(tsem_t* tsem) {
   pthread_mutex_lock(&tsem->mutex);
   while (tsem->semval == 0) {
-	  pthread_cond_wait(&tsem->condition, &tsem->mutex);
+    pthread_cond_wait(&tsem->condition, &tsem->mutex);
   }
   tsem->semval--;
   pthread_mutex_unlock(&tsem->mutex);

@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-11-19 14:00:02 +0530 (Mon, 19 Nov 2007) $
-  Revision $Rev: 376 $
-  Author $Author: pankaj_sen $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 
@@ -60,9 +60,9 @@ DERIVEDCLASS(omx_videosrc_component_PrivateType, omx_base_source_PrivateType)
   /** @param semaphore for video syncrhonization */\
   tsem_t* videoSyncSem; \
   /** @param videoReady boolean flag that is true when the video format has been initialized */ \
-  OMX_BOOL videoReady;	\
+  OMX_BOOL videoReady;  \
   /** @param bIsEOSSent boolean flag that is true when EOS event is sent to the client */ \
-  OMX_BOOL bIsEOSSent;	\
+  OMX_BOOL bIsEOSSent;  \
   /** @param deviceHandle handle to the video capture device */ \
   OMX_S32 deviceHandle; \
   /** @param capability capability of the video capture device */ \

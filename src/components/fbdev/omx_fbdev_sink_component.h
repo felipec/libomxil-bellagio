@@ -5,7 +5,7 @@
   data to a linux framebuffer device.
 
   Originally developed by Peter Littlefield
-	Copyright (C) 2007  STMicroelectronics and Agere Systems
+  Copyright (C) 2007  STMicroelectronics and Agere Systems
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -47,8 +47,8 @@
 #include <omx_base_sink.h>
 #include <linux/fb.h>
 
-/**	Filename of devnode for framebuffer device
-  *	Should somehow be passed from client
+/**  Filename of devnode for framebuffer device
+  *  Should somehow be passed from client
   */
 #define FBDEV_FILENAME  "/dev/fb0" 
 

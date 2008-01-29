@@ -41,7 +41,7 @@ static OMX_U32 noViderSrcInstance=0;
  */
 OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
  
-  OMX_ERRORTYPE err = OMX_ErrorNone;	
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_base_video_PortType *pPort;
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private;
   OMX_U32 i;
@@ -61,7 +61,7 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   
   err = omx_base_source_Constructor(openmaxStandComp, cComponentName);
   
-  /** Allocate Ports and call port constructor. */	
+  /** Allocate Ports and call port constructor. */  
   if (omx_videosrc_component_Private->sPortTypesParam.nPorts && !omx_videosrc_component_Private->ports) {
     omx_videosrc_component_Private->ports = calloc(omx_videosrc_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
     if (!omx_videosrc_component_Private->ports) {
@@ -530,16 +530,16 @@ OMX_ERRORTYPE omx_videosrc_component_GetParameter(
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
   OMX_ERRORTYPE err = OMX_ErrorNone;
-  OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;	
+  OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;  
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_base_video_PortType *pPort = (omx_base_video_PortType *) omx_videosrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];	
+  omx_base_video_PortType *pPort = (omx_base_video_PortType *) omx_videosrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];  
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Getting parameter %08x\n",__func__, nParamIndex);
-	
+  
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamVideoInit:
@@ -547,7 +547,7 @@ OMX_ERRORTYPE omx_videosrc_component_GetParameter(
       break;
     }
     memcpy(ComponentParameterStructure, &omx_videosrc_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
-    break;		
+    break;    
   case OMX_IndexParamVideoPortFormat:
     pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
@@ -558,7 +558,7 @@ OMX_ERRORTYPE omx_videosrc_component_GetParameter(
     } else {
       return OMX_ErrorBadPortIndex;
     }
-    break;	
+    break;  
   case OMX_IndexVendorFileReadInputFilename : 
     strcpy((char *)ComponentParameterStructure, "still no filename");
     break;
@@ -582,7 +582,7 @@ OMX_ERRORTYPE omx_videosrc_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
   err = omx_base_component_MessageHandler(openmaxStandComp,message);
 
   if (message->messageType == OMX_CommandStateSet && err == OMX_ErrorNone){ 
-    if ((message->messageParam == OMX_StateExecuting) && (oldState == OMX_StateIdle)) {		
+    if ((message->messageParam == OMX_StateExecuting) && (oldState == OMX_StateIdle)) {    
       err = omx_videosrc_component_Init(openmaxStandComp);
       if(err!=OMX_ErrorNone) { 
         DEBUG(DEB_LEV_ERR, "In %s Video Source Init Failed Error=%x\n",__func__,err); 

@@ -5,7 +5,7 @@
   data to a linux framebuffer device.
 
   Originally developed by Peter Littlefield
-	Copyright (C) 2007  STMicroelectronics and Agere Systems
+  Copyright (C) 2007  STMicroelectronics and Agere Systems
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -55,7 +55,7 @@ long GetTime() {
   * @param cComponentName is the name of the constructed component
   */
 OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;	
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_fbdev_sink_component_PortType *pPort;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private;
   OMX_U32 i;
@@ -74,11 +74,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   omx_fbdev_sink_component_Private->ports = NULL;
   
   /** we could create our own port structures here
-    * fixme maybe the base class could use a "port factory" function pointer?	
+    * fixme maybe the base class could use a "port factory" function pointer?  
     */
   err = omx_base_sink_Constructor(openmaxStandComp, cComponentName);
   
-  /** Allocate Ports and call port constructor. */	
+  /** Allocate Ports and call port constructor. */  
   if (omx_fbdev_sink_component_Private->sPortTypesParam.nPorts && !omx_fbdev_sink_component_Private->ports) {
     omx_fbdev_sink_component_Private->ports = calloc(omx_fbdev_sink_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
     if (!omx_fbdev_sink_component_Private->ports) {
@@ -104,9 +104,9 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   pPort->sPortParam.format.video.xFramerate = 25;
   pPort->sPortParam.format.video.eColorFormat = OMX_COLOR_Format24bitRGB888;
 
-  //	Figure out stride, slice height, min buffer size
+  //  Figure out stride, slice height, min buffer size
   pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sPortParam.format.video.eColorFormat);
-  pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+  pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;  //  No support for slices yet
   pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
 
   pPort->sVideoParam.eColorFormat = OMX_COLOR_Format24bitRGB888;
@@ -115,24 +115,24 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   DEBUG(DEB_LEV_PARAMS, "In %s, bSize=%d stride=%d\n", __func__,(int)pPort->sPortParam.nBufferSize,(int)pPort->sPortParam.format.video.nStride);
   
   /** Set configs */
-  setHeader(&pPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));	
+  setHeader(&pPort->omxConfigCrop, sizeof(OMX_CONFIG_RECTTYPE));  
   pPort->omxConfigCrop.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
   pPort->omxConfigCrop.nLeft = pPort->omxConfigCrop.nTop = 0;
   pPort->omxConfigCrop.nWidth = pPort->omxConfigCrop.nHeight = 0;
 
-  setHeader(&pPort->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));	
+  setHeader(&pPort->omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));  
   pPort->omxConfigRotate.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  pPort->omxConfigRotate.nRotation = 0;	//Default: No rotation (0 degrees)
+  pPort->omxConfigRotate.nRotation = 0;  //Default: No rotation (0 degrees)
 
-  setHeader(&pPort->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));	
+  setHeader(&pPort->omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));  
   pPort->omxConfigMirror.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  pPort->omxConfigMirror.eMirror = OMX_MirrorNone;	//Default: No mirroring
+  pPort->omxConfigMirror.eMirror = OMX_MirrorNone;  //Default: No mirroring
 
-  setHeader(&pPort->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));	
+  setHeader(&pPort->omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));  
   pPort->omxConfigScale.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
-  pPort->omxConfigScale.xWidth = pPort->omxConfigScale.xHeight = 0x10000;	//Default: No scaling (scale factor = 1)
+  pPort->omxConfigScale.xWidth = pPort->omxConfigScale.xHeight = 0x10000;  //Default: No scaling (scale factor = 1)
 
-  setHeader(&pPort->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));	
+  setHeader(&pPort->omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));  
   pPort->omxConfigOutputPosition.nPortIndex = OMX_BASE_SINK_INPUTPORT_INDEX;
   pPort->omxConfigOutputPosition.nX = pPort->omxConfigOutputPosition.nY = 0; //Default: No shift in output position (0,0)
 
@@ -228,7 +228,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
         , omx_fbdev_sink_component_Private->vscr_info.bits_per_pixel           /* guess what                   */
         , omx_fbdev_sink_component_Private->vscr_info.grayscale                /* != 0 Graylevels instead of colors */
         , omx_fbdev_sink_component_Private->vscr_info.nonstd                   /* != 0 Non standard pixel format */
-        , omx_fbdev_sink_component_Private->vscr_info.height                  /* height of picture in mm    */
+        , omx_fbdev_sink_component_Private->vscr_info.height                   /* height of picture in mm    */
         , omx_fbdev_sink_component_Private->vscr_info.width);
 
   DEBUG(DEB_LEV_PARAMS, "Red Off=%u len=%u,Green off=%u,len=%u,blue off=%u len=%u,trans off=%u,len=%u\n",
@@ -282,7 +282,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCom
   return OMX_ErrorNone;
 }
 
-/**	This function takes two inputs - 
+/**  This function takes two inputs - 
   * @param width is the input picture width
   * @param omx_pxlfmt is the input openmax standard pixel format
   * It calculates the byte per pixel needed to display the picture with the input omx_pxlfmt
@@ -305,7 +305,7 @@ OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt) {
     case OMX_COLOR_Format8bitRGB332:
     case OMX_COLOR_FormatRawBayer8bit:
     case OMX_COLOR_FormatRawBayer8bitcompressed:
-      bpp = 8;	
+      bpp = 8;  
       break;
     case OMX_COLOR_FormatRawBayer10bit:
       bpp = 10;
@@ -363,7 +363,7 @@ OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt) {
 }
 
 
-/**	Returns the OpenMAX color format type corresponding to an fbdev fb_var_screeninfo structure 
+/**  Returns the OpenMAX color format type corresponding to an fbdev fb_var_screeninfo structure 
   * @param vscr_info contains the frame buffer display settings
   * We extract the rgba configuration of the frame buffer from this structure and thereby 
   * apply the appropriate openmax standard color format equivalent to this configuration
@@ -485,7 +485,7 @@ OMX_COLOR_FORMATTYPE find_omx_pxlfmt(struct fb_var_screeninfo *vscr_info) {
 }
 
 
-/**	This function copies source inmage to destination image of required dimension and color formats 
+/**  This function copies source inmage to destination image of required dimension and color formats 
   * @param src_ptr is the source image strting pointer
   * @param src_stride is the source image stride (src_width * byte_per_pixel)
   * @param src_width is source image width & src_height is source image height
@@ -502,66 +502,66 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
                   OMX_S32 src_offset_x, OMX_S32 src_offset_y,
                   OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height, 
                   OMX_S32 dest_offset_x, OMX_S32 dest_offset_y, 
-                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat,OMX_COLOR_FORMATTYPE fbpxlfmt) {	
+                  OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat,OMX_COLOR_FORMATTYPE fbpxlfmt) {  
 
   OMX_U32 i,j;
   OMX_U32 cp_byte; //equal to source image byte per pixel value
   OMX_U8 r,g,b,a;
   OMX_U8* org_src_cpy_ptr;
   OMX_U8* org_dst_cpy_ptr;
-  /**	CAUTION: We don't do any checking of boundaries! (FIXME - see omx_ffmpeg_colorconv_component_BufferMgmtCallback)
+  /**  CAUTION: We don't do any checking of boundaries! (FIXME - see omx_ffmpeg_colorconv_component_BufferMgmtCallback)
     * Input frame is planar, not interleaved
     * Feel free to add more formats if implementing them
     */
-  if (colorformat == OMX_COLOR_FormatYUV411Planar ||		
+  if (colorformat == OMX_COLOR_FormatYUV411Planar ||    
       colorformat == OMX_COLOR_FormatYUV411PackedPlanar || 
       colorformat == OMX_COLOR_FormatYUV420Planar ||
       colorformat == OMX_COLOR_FormatYUV420PackedPlanar ||
       colorformat == OMX_COLOR_FormatYUV422Planar ||
       colorformat == OMX_COLOR_FormatYUV422PackedPlanar ) {
 
-    OMX_U32 src_luma_width;			//	Width (in columns) of the source Y plane
-    OMX_U32 src_luma_height;		//	Height (in rows) of source Y plane
-    OMX_S32 src_luma_stride;		//	Stride in bytes of each source Y row
-    OMX_U32 src_luma_offset_x;		//	Horizontal byte offset
-    OMX_U32 src_luma_offset_y;		//	Vertical offset in rows from top of plane
-    OMX_U32 src_luma_offset;		//	Total byte offset to rectangle
+    OMX_U32 src_luma_width;      //  Width (in columns) of the source Y plane
+    OMX_U32 src_luma_height;     //  Height (in rows) of source Y plane
+    OMX_S32 src_luma_stride;     //  Stride in bytes of each source Y row
+    OMX_U32 src_luma_offset_x;   //  Horizontal byte offset
+    OMX_U32 src_luma_offset_y;   //  Vertical offset in rows from top of plane
+    OMX_U32 src_luma_offset;     //  Total byte offset to rectangle
 
-    OMX_U32 src_chroma_width;		//	Width (in columns) of source chroma planes
-    OMX_U32 src_chroma_height;		//	Height (in rows) of source chroma planes
-    OMX_S32 src_chroma_stride;		//	Stride in bytes of each source chroma row
-    OMX_U32 src_chroma_offset_x;	//	Horizontal byte offset
-    OMX_U32 src_chroma_offset_y;	//	Vertical offset in rows from top of plane
-    OMX_U32 src_chroma_offset;		//	Bytes to crop rectangle from start of chroma plane
+    OMX_U32 src_chroma_width;    //  Width (in columns) of source chroma planes
+    OMX_U32 src_chroma_height;   //  Height (in rows) of source chroma planes
+    OMX_S32 src_chroma_stride;   //  Stride in bytes of each source chroma row
+    OMX_U32 src_chroma_offset_x; //  Horizontal byte offset
+    OMX_U32 src_chroma_offset_y; //  Vertical offset in rows from top of plane
+    OMX_U32 src_chroma_offset;   //  Bytes to crop rectangle from start of chroma plane
 
-    OMX_U32 dest_luma_width;		//	Width (in columns) of the destination Y plane
-    OMX_U32 dest_luma_height;		//	Height (in rows) of destination Y plane
-    OMX_S32 dest_luma_stride;		//	Stride in bytes of each destination Y row
-    OMX_U32 dest_luma_offset_x;		//	Horizontal byte offset
-    OMX_U32 dest_luma_offset_y;		//	Vertical offset in rows from top of plane
-    OMX_U32 dest_luma_offset;		//	Bytes to crop rectangle from start of Y plane
+    OMX_U32 dest_luma_width;     //  Width (in columns) of the destination Y plane
+    OMX_U32 dest_luma_height;    //  Height (in rows) of destination Y plane
+    OMX_S32 dest_luma_stride;    //  Stride in bytes of each destination Y row
+    OMX_U32 dest_luma_offset_x;  //  Horizontal byte offset
+    OMX_U32 dest_luma_offset_y;  //  Vertical offset in rows from top of plane
+    OMX_U32 dest_luma_offset;    //  Bytes to crop rectangle from start of Y plane
 
-    OMX_U32 dest_chroma_width;		//	Width (in columns) of destination chroma planes
-    OMX_U32 dest_chroma_height;		//	Height (in rows) of destination chroma planes
-    OMX_S32 dest_chroma_stride;		//	Stride in bytes of each destination chroma row
-    OMX_U32 dest_chroma_offset_x;	//	Horizontal byte offset
-    OMX_U32 dest_chroma_offset_y;	//	Vertical offset in rows from top of plane
-    OMX_U32 dest_chroma_offset;		//	Bytes to crop rectangle from start of chroma plane
+    OMX_U32 dest_chroma_width;   //  Width (in columns) of destination chroma planes
+    OMX_U32 dest_chroma_height;  //  Height (in rows) of destination chroma planes
+    OMX_S32 dest_chroma_stride;  //  Stride in bytes of each destination chroma row
+    OMX_U32 dest_chroma_offset_x;//  Horizontal byte offset
+    OMX_U32 dest_chroma_offset_y;//  Vertical offset in rows from top of plane
+    OMX_U32 dest_chroma_offset;  //  Bytes to crop rectangle from start of chroma plane
 
-    OMX_U32 luma_crop_width;		//	Width in bytes of a luma row in the crop rectangle
-    OMX_U32 luma_crop_height;		//	Number of luma rows in the crop rectangle
-    OMX_U32 chroma_crop_width;		//	Width in bytes of a chroma row in the crop rectangle
-    OMX_U32 chroma_crop_height;		//	Number of chroma rows in crop rectangle
+    OMX_U32 luma_crop_width;     //  Width in bytes of a luma row in the crop rectangle
+    OMX_U32 luma_crop_height;    //  Number of luma rows in the crop rectangle
+    OMX_U32 chroma_crop_width;   //  Width in bytes of a chroma row in the crop rectangle
+    OMX_U32 chroma_crop_height;  //  Number of chroma rows in crop rectangle
 
     switch (colorformat) {
-      /**	Watch out for odd or non-multiple-of-4 (4:1:1) luma resolutions (I don't check)	*/
-      /**	Planar vs. PackedPlanar will have to be handled differently if/when slicing is implemented */
-      case OMX_COLOR_FormatYUV411Planar:		
+      /**  Watch out for odd or non-multiple-of-4 (4:1:1) luma resolutions (I don't check)  */
+      /**  Planar vs. PackedPlanar will have to be handled differently if/when slicing is implemented */
+      case OMX_COLOR_FormatYUV411Planar:    
       case OMX_COLOR_FormatYUV411PackedPlanar:
-        /**	OpenMAX IL spec says chroma channels are subsampled by 4x horizontally AND vertically in YUV 4:1:1.
-          *	Conventional wisdom (wiki) tells us that it is only subsampled horizontally.
-          *		Following OpenMAX spec anyway.	Technically I guess this would be YUV 4:1:0.	
-          */				
+        /**  OpenMAX IL spec says chroma channels are subsampled by 4x horizontally AND vertically in YUV 4:1:1.
+          *  Conventional wisdom (wiki) tells us that it is only subsampled horizontally.
+          *    Following OpenMAX spec anyway.  Technically I guess this would be YUV 4:1:0.  
+          */        
         src_luma_width = src_width;
         src_luma_height = src_height;
         src_luma_stride = (OMX_S32) src_luma_width;
@@ -590,10 +590,10 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         luma_crop_height = cpy_height;
         chroma_crop_width = luma_crop_width  >> 2; 
         chroma_crop_height = luma_crop_height;
-        break;	
+        break;  
 
-      /**	Planar vs. PackedPlanar will have to be handled differently if/when slicing is implemented */
-      case OMX_COLOR_FormatYUV420Planar:		
+      /**  Planar vs. PackedPlanar will have to be handled differently if/when slicing is implemented */
+      case OMX_COLOR_FormatYUV420Planar:    
       case OMX_COLOR_FormatYUV420PackedPlanar:
         src_luma_width = src_width;
         src_luma_height = src_height;
@@ -624,8 +624,8 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         chroma_crop_width = luma_crop_width >> 1;
         chroma_crop_height = luma_crop_height >> 1;
         break;
-      /**	Planar vs. PackedPlanar will have to be handled differently if/when slicing is implemented */
-      case OMX_COLOR_FormatYUV422Planar:		
+      /**  Planar vs. PackedPlanar will have to be handled differently if/when slicing is implemented */
+      case OMX_COLOR_FormatYUV422Planar:    
       case OMX_COLOR_FormatYUV422PackedPlanar:
         src_luma_width = src_width;
         src_luma_height = src_height;
@@ -661,16 +661,16 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         return;
     }
 
-    /**	Pointers to the start of each plane to make things easier */
+    /**  Pointers to the start of each plane to make things easier */
     OMX_U8* Y_input_ptr = src_ptr;
     OMX_U8* U_input_ptr = Y_input_ptr + ((OMX_U32) abs(src_luma_stride) * src_luma_height);
     OMX_U8* V_input_ptr = U_input_ptr + ((OMX_U32) abs(src_chroma_stride) * src_chroma_height);
 
-    /**	Figure out total offsets */
+    /**  Figure out total offsets */
     src_luma_offset = (src_luma_offset_y * (OMX_U32) abs(src_luma_stride)) + src_luma_offset_x;
     src_chroma_offset = (src_chroma_offset_y * (OMX_U32) abs(src_chroma_stride)) + src_chroma_offset_x;
 
-    /**	If input stride is negative, reverse source row order */
+    /**  If input stride is negative, reverse source row order */
     if (src_stride < 0) {
       src_luma_offset += ((OMX_U32) abs(src_luma_stride)) * (src_luma_height - 1);
       src_chroma_offset += ((OMX_U32) abs(src_chroma_stride)) * (src_chroma_height - 1);
@@ -680,25 +680,25 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
       }
 
       if (src_chroma_stride > 0) {
-        src_chroma_stride *= -1;	
+        src_chroma_stride *= -1;  
       }
     }
 
-    /**	Pointers to use with memcpy */
-    OMX_U8* src_Y_ptr = Y_input_ptr + src_luma_offset;		
+    /**  Pointers to use with memcpy */
+    OMX_U8* src_Y_ptr = Y_input_ptr + src_luma_offset;    
     OMX_U8* src_U_ptr = U_input_ptr + src_chroma_offset;
-    OMX_U8*	src_V_ptr = V_input_ptr + src_chroma_offset;
+    OMX_U8*  src_V_ptr = V_input_ptr + src_chroma_offset;
 
-    /**	Pointers to destination planes to make things easier */
+    /**  Pointers to destination planes to make things easier */
     OMX_U8* Y_output_ptr = dest_ptr;
     OMX_U8* U_output_ptr = Y_output_ptr + ((OMX_U32) abs(dest_luma_stride) * dest_luma_height);
-    OMX_U8* V_output_ptr = U_output_ptr + ((OMX_U32) abs(dest_chroma_stride) * dest_chroma_height);	
+    OMX_U8* V_output_ptr = U_output_ptr + ((OMX_U32) abs(dest_chroma_stride) * dest_chroma_height);  
 
-    /**	Figure out total offsets */
+    /**  Figure out total offsets */
     dest_luma_offset = (dest_luma_offset_y * (OMX_U32) abs(dest_luma_stride)) + dest_luma_offset_x;
     dest_chroma_offset = (dest_chroma_offset_y * (OMX_U32) abs(dest_chroma_stride)) + dest_chroma_offset_x;
 
-    /**	If output stride is negative, reverse destination row order */
+    /**  If output stride is negative, reverse destination row order */
     if (dest_stride < 0) {
       dest_luma_offset += ((OMX_U32) abs(dest_luma_stride)) * (dest_luma_height - 1);
       dest_chroma_offset += ((OMX_U32) abs(dest_chroma_stride)) * (dest_chroma_height - 1);
@@ -706,41 +706,41 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
         dest_luma_stride *= -1;
       }
       if (dest_chroma_stride > 0) {
-        dest_chroma_stride *= -1;	
+        dest_chroma_stride *= -1;  
       }
     }
 
-    /**	Pointers to use with memcpy */
-    OMX_U8* dest_Y_ptr = Y_output_ptr + dest_luma_offset;		
+    /**  Pointers to use with memcpy */
+    OMX_U8* dest_Y_ptr = Y_output_ptr + dest_luma_offset;    
     OMX_U8* dest_U_ptr = U_output_ptr + dest_chroma_offset;
-    OMX_U8*	dest_V_ptr = V_output_ptr + dest_chroma_offset;
+    OMX_U8*  dest_V_ptr = V_output_ptr + dest_chroma_offset;
 
-    //	Y
+    //  Y
     for (i = 0; i < luma_crop_height; ++i, src_Y_ptr += src_luma_stride, dest_Y_ptr += dest_luma_stride) {
-      memcpy(dest_Y_ptr, src_Y_ptr, luma_crop_width);	//	Copy Y rows into in_buffer
+      memcpy(dest_Y_ptr, src_Y_ptr, luma_crop_width);    //  Copy Y rows into in_buffer
     }
-    //	U
+    //  U
     for (i = 0; i < chroma_crop_height; ++i, src_U_ptr += src_chroma_stride, dest_U_ptr += dest_chroma_stride) {
-      memcpy(dest_U_ptr, src_U_ptr, chroma_crop_width);	//	Copy U rows into in_buffer
+      memcpy(dest_U_ptr, src_U_ptr, chroma_crop_width);  //  Copy U rows into in_buffer
     }
-    //	V
+    //  V
     for (i = 0; i < chroma_crop_height; ++i, src_V_ptr += src_chroma_stride, dest_V_ptr += dest_chroma_stride) {
-      memcpy(dest_V_ptr, src_V_ptr, chroma_crop_width);	//	Copy V rows into in_buffer
+      memcpy(dest_V_ptr, src_V_ptr, chroma_crop_width);  //  Copy V rows into in_buffer
     }
-  } else {	
+  } else {  
 
-    OMX_U32 cpy_byte_width = calcStride((OMX_U32) abs(cpy_width), colorformat);	//	Bytes width to copy
+    OMX_U32 cpy_byte_width = calcStride((OMX_U32) abs(cpy_width), colorformat);  //  Bytes width to copy
     OMX_U32 src_byte_offset_x = calcStride((OMX_U32) abs(src_offset_x), colorformat);
     OMX_U32 dest_byte_offset_x = calcStride((OMX_U32) abs(dest_offset_x), colorformat);
     OMX_U32 src_byte_offset_y = src_offset_y * (OMX_U32) abs(src_stride);
     OMX_U32 dest_byte_offset_y = dest_offset_y * (OMX_U32) abs(dest_stride);
 
-    if (src_stride < 0)	{
-      //	If input stride is negative, start from bottom
+    if (src_stride < 0)  {
+      //  If input stride is negative, start from bottom
       src_byte_offset_y += cpy_height * (OMX_U32) abs(src_stride);
-    }	
+    }  
     if (dest_stride < 0) {
-      //	If output stride is negative, start from bottom
+      //  If output stride is negative, start from bottom
       dest_byte_offset_y += cpy_height * (OMX_U32) abs(dest_stride);
     }
 
@@ -877,7 +877,7 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
     } else if(fbpxlfmt == OMX_COLOR_Format32bitARGB8888 && (colorformat == OMX_COLOR_Format32bitBGRA8888 || colorformat == OMX_COLOR_Format32bitARGB8888)) {
       for (i = 0; i < cpy_height; ++i, src_cpy_ptr += src_stride, dest_cpy_ptr += dest_stride ) { 
         // same color format - so no extraction - only simple memcpy
-        memcpy(dest_cpy_ptr, src_cpy_ptr, cpy_byte_width);	//	Copy rows
+        memcpy(dest_cpy_ptr, src_cpy_ptr, cpy_byte_width);  //  Copy rows
       }
     } else if(fbpxlfmt == OMX_COLOR_Format32bitARGB8888 && colorformat == OMX_COLOR_Format16bitARGB1555) { 
       cp_byte = 2;
@@ -959,20 +959,20 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   long timediff=0;
 
   OMX_COLOR_FORMATTYPE input_colorformat = pPort->sVideoParam.eColorFormat;
-  OMX_S32 input_cpy_width = (OMX_S32) pPort->omxConfigCrop.nWidth;			//	Width (in columns) of the crop rectangle
-  OMX_U32 input_cpy_height = pPort->omxConfigCrop.nHeight;					//	Height (in rows) of the crop rectangle
+  OMX_S32 input_cpy_width = (OMX_S32) pPort->omxConfigCrop.nWidth;      //  Width (in columns) of the crop rectangle
+  OMX_U32 input_cpy_height = pPort->omxConfigCrop.nHeight;          //  Height (in rows) of the crop rectangle
 
   OMX_U8* input_src_ptr = (OMX_U8*) (pInputBuffer->pBuffer);
-  OMX_S32 input_src_stride = pPort->sPortParam.format.video.nStride;			//	Negative means bottom-to-top (think Windows bmp)
+  OMX_S32 input_src_stride = pPort->sPortParam.format.video.nStride;      //  Negative means bottom-to-top (think Windows bmp)
   OMX_U32 input_src_width = pPort->sPortParam.format.video.nFrameWidth;
   OMX_U32 input_src_height = pPort->sPortParam.format.video.nSliceHeight;
 
-  /**	FIXME: Configuration values should be clamped to prevent memory trampling and potential segfaults.
-    *	It might be best to store clamped AND unclamped values on a per-port basis so that OMX_GetConfig 
-    *	can still return the unclamped ones.
+  /**  FIXME: Configuration values should be clamped to prevent memory trampling and potential segfaults.
+    *  It might be best to store clamped AND unclamped values on a per-port basis so that OMX_GetConfig 
+    *  can still return the unclamped ones.
     */
-  OMX_S32 input_src_offset_x = pPort->omxConfigCrop.nLeft;		//	Offset (in columns) to left side of crop rectangle
-  OMX_S32 input_src_offset_y = pPort->omxConfigCrop.nTop;		//	Offset (in rows) from top of the image to crop rectangle
+  OMX_S32 input_src_offset_x = pPort->omxConfigCrop.nLeft;    //  Offset (in columns) to left side of crop rectangle
+  OMX_S32 input_src_offset_y = pPort->omxConfigCrop.nTop;    //  Offset (in rows) from top of the image to crop rectangle
 
   OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr + (omx_fbdev_sink_component_Private->fbstride * HEIGHT_OFFSET); 
   //OMX_U8* input_dest_ptr = (OMX_U8*) omx_fbdev_sink_component_Private->scr_ptr; 
@@ -1000,8 +1000,8 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
     old_time = GetTime();
   }
 
-  /**	Copy image data into in_buffer */
-  omx_img_copy(	input_src_ptr, input_src_stride, input_src_width, input_src_height, 
+  /**  Copy image data into in_buffer */
+  omx_img_copy(  input_src_ptr, input_src_stride, input_src_width, input_src_height, 
                 input_src_offset_x, input_src_offset_y,
                 input_dest_ptr, input_dest_stride, input_dest_width, input_dest_height, 
                 input_dest_offset_x, input_dest_offset_y,
@@ -1060,7 +1060,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
       if (portIndex == 0) {
         pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
         if (omxConfigRotate->nRotation != 0) {
-          //	Rotation not supported (yet)
+          //  Rotation not supported (yet)
           return OMX_ErrorUnsupportedSetting;
         }
         pPort->omxConfigRotate.nRotation = omxConfigRotate->nRotation;
@@ -1075,8 +1075,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
         break;
       }
       if (portIndex == 0) {
-        if (omxConfigMirror->eMirror == OMX_MirrorBoth || omxConfigMirror->eMirror == OMX_MirrorHorizontal)	{
-          //	Horizontal mirroring not yet supported
+        if (omxConfigMirror->eMirror == OMX_MirrorBoth || omxConfigMirror->eMirror == OMX_MirrorHorizontal)  {
+          //  Horizontal mirroring not yet supported
           return OMX_ErrorUnsupportedSetting;
         }
         pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
@@ -1093,7 +1093,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
       }
       if (portIndex == 0) {
         if (omxConfigScale->xWidth != 0x10000 || omxConfigScale->xHeight != 0x10000)  {
-          //	Scaling not yet supported
+          //  Scaling not yet supported
           return OMX_ErrorUnsupportedSetting;
         }
         pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[portIndex];
@@ -1154,7 +1154,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       } else {
         return OMX_ErrorBadPortIndex;
       }
-    break;		
+    break;    
     case OMX_IndexConfigCommonRotate:
       omxConfigRotate = (OMX_CONFIG_ROTATIONTYPE*)pComponentConfigStructure;
       setHeader(omxConfigRotate, sizeof(OMX_CONFIG_ROTATIONTYPE));
@@ -1164,7 +1164,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       } else {
         return OMX_ErrorBadPortIndex;
       }
-      break;		
+      break;    
     case OMX_IndexConfigCommonMirror:
       omxConfigMirror = (OMX_CONFIG_MIRRORTYPE*)pComponentConfigStructure;
       setHeader(omxConfigMirror, sizeof(OMX_CONFIG_MIRRORTYPE));
@@ -1174,7 +1174,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       } else {
         return OMX_ErrorBadPortIndex;
       }
-      break;			
+      break;      
     case OMX_IndexConfigCommonScale:
       omxConfigScale = (OMX_CONFIG_SCALEFACTORTYPE*)pComponentConfigStructure;
       setHeader(omxConfigScale, sizeof(OMX_CONFIG_SCALEFACTORTYPE));
@@ -1184,7 +1184,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       } else {
         return OMX_ErrorBadPortIndex;
       }
-      break;		
+      break;    
     case OMX_IndexConfigCommonOutputPosition:
       omxConfigOutputPosition = (OMX_CONFIG_POINTTYPE*)pComponentConfigStructure;
       setHeader(omxConfigOutputPosition, sizeof(OMX_CONFIG_POINTTYPE));
@@ -1194,7 +1194,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
       } else {
         return OMX_ErrorBadPortIndex;
       }
-      break;		
+      break;    
     default: // delegate to superclass
       return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
@@ -1237,7 +1237,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       }
       pPort->sPortParam.nBufferCountActual = pPortDef->nBufferCountActual;
 
-      //	Copy stuff from OMX_VIDEO_PORTDEFINITIONTYPE structure
+      //  Copy stuff from OMX_VIDEO_PORTDEFINITIONTYPE structure
       if(pPortDef->format.video.cMIMEType != NULL) {
         strcpy(pPort->sPortParam.format.video.cMIMEType , pPortDef->format.video.cMIMEType);
       }
@@ -1245,11 +1245,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       pPort->sPortParam.format.video.nFrameHeight = pPortDef->format.video.nFrameHeight;
       pPort->sPortParam.format.video.nBitrate = pPortDef->format.video.nBitrate;
       pPort->sPortParam.format.video.xFramerate = pPortDef->format.video.xFramerate;
-      pPort->sPortParam.format.video.bFlagErrorConcealment = pPortDef->format.video.bFlagErrorConcealment;	
+      pPort->sPortParam.format.video.bFlagErrorConcealment = pPortDef->format.video.bFlagErrorConcealment;  
 
-      //	Figure out stride, slice height, min buffer size
+      //  Figure out stride, slice height, min buffer size
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
-      pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+      pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;  //  No support for slices yet
       // Read-only field by spec
 
       pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
@@ -1258,7 +1258,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       break;
 
     case OMX_IndexParamVideoPortFormat:
-      //	FIXME: How do we handle the nIndex member?
+      //  FIXME: How do we handle the nIndex member?
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
       portIndex = pVideoPortFormat->nPortIndex;
       err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
@@ -1270,8 +1270,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       if(portIndex != 0) {
         return OMX_ErrorBadPortIndex;
       }
-      if (pVideoPortFormat->eCompressionFormat != OMX_VIDEO_CodingUnused)	{
-        //	No compression allowed
+      if (pVideoPortFormat->eCompressionFormat != OMX_VIDEO_CodingUnused)  {
+        //  No compression allowed
         return OMX_ErrorUnsupportedSetting;
       }
 
@@ -1281,9 +1281,9 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       pPort->sVideoParam.xFramerate = pVideoPortFormat->xFramerate;
       pPort->sVideoParam.eCompressionFormat = pVideoPortFormat->eCompressionFormat;
       pPort->sVideoParam.eColorFormat = pVideoPortFormat->eColorFormat;
-      //	Figure out stride, slice height, min buffer size
+      //  Figure out stride, slice height, min buffer size
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
-      pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;	//	No support for slices yet
+      pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;  //  No support for slices yet
       break;
     default: /*Call the base component function*/
       return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -1297,11 +1297,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
-  OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;	
+  OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;  
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_fbdev_sink_component_PortType *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];	
+  omx_fbdev_sink_component_PortType *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];  
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -1313,7 +1313,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
         break;
       }
       memcpy(ComponentParameterStructure, &omx_fbdev_sink_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
-      break;		
+      break;    
     case OMX_IndexParamVideoPortFormat:
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
       if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
@@ -1324,7 +1324,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
       } else {
         return OMX_ErrorBadPortIndex;
       }
-      break;	
+      break;  
     default: /*Call the base component function*/
       return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }

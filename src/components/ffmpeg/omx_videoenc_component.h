@@ -54,22 +54,22 @@
 DERIVEDCLASS(omx_videoenc_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_videoenc_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
   /** @param avCodec pointer to the ffpeg video encoder */ \
-  AVCodec *avCodec;	\
+  AVCodec *avCodec;  \
   /** @param avCodecContext pointer to ffmpeg encoder context  */ \
-  AVCodecContext *avCodecContext;	\
+  AVCodecContext *avCodecContext;  \
   /** @param picture pointer to ffmpeg AVFrame  */ \
   AVFrame *picture; \
   /** @param semaphore for avcodec access syncrhonization */\
   tsem_t* avCodecSyncSem; \
-  /** @param pVideoMpeg4 Referece to OMX_VIDEO_PARAM_MPEG4TYPE structure*/	\
-  OMX_VIDEO_PARAM_MPEG4TYPE pVideoMpeg4;	\
-  OMX_BOOL avcodecReady;	\
+  /** @param pVideoMpeg4 Referece to OMX_VIDEO_PARAM_MPEG4TYPE structure*/  \
+  OMX_VIDEO_PARAM_MPEG4TYPE pVideoMpeg4;  \
+  OMX_BOOL avcodecReady;  \
   /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg encoder */ \
   OMX_U16 minBufferLength; \
   /** @param isFirstBuffer Field that the buffer is the first buffer */ \
   OMX_S32 isFirstBuffer;\
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
-  OMX_S32 isNewBuffer;	\
+  OMX_S32 isNewBuffer;  \
   /** @param video_encoding_type Field that indicate the supported video format of video encoder */ \
   OMX_U32 video_encoding_type;   \
   /** @param eOutFramePixFmt Field that indicate output frame pixel format */ \

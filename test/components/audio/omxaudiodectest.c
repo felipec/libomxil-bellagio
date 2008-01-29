@@ -102,7 +102,7 @@ void display_help() {
   printf("       -t: The audio decoder is tunneled with the alsa sink\n");
   printf("       -m: For mp3 decoding use the mad library. Can't be used with -s or .ogg file\n");
   printf("       -d: If no output is specified, and no playback is specified,\n");
-  printf("       	   this flag activated the print of the stream directly on std out\n");
+  printf("            this flag activated the print of the stream directly on std out\n");
   printf("       -f: Use filereader with mad\n");
   printf("       -g: Gain of the audio sink[0...100]\n");
   printf("       -h: Displays this help\n");
@@ -117,10 +117,10 @@ OMX_ERRORTYPE test_OMX_ComponentNameEnum() {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n",__func__);
-  name = malloc(128);
+  name = malloc(OMX_MAX_STRINGNAME_SIZE);
   index = 0;
   while(1) {
-    err = OMX_ComponentNameEnum (name, 128, index);
+    err = OMX_ComponentNameEnum (name, OMX_MAX_STRINGNAME_SIZE, index);
     if ((name != NULL) && (err == OMX_ErrorNone)) {
       DEBUG(DEFAULT_MESSAGES, "component %i is %s\n",index, name);
     } else break;
@@ -150,12 +150,12 @@ OMX_ERRORTYPE test_OMX_RoleEnum(OMX_STRING component_name) {
   DEBUG(DEFAULT_MESSAGES, "The number of roles for the component %s is: %i\n", component_name, (int)no_of_roles);
 
   if(no_of_roles == 0) {
-    DEBUG(DEB_LEV_ERR, "The Number or roles is 0.\nThe component selected is not correct for the purpose of this test.\nExiting...\n");		
+    DEBUG(DEB_LEV_ERR, "The Number or roles is 0.\nThe component selected is not correct for the purpose of this test.\nExiting...\n");    
     err = OMX_ErrorInvalidComponentName;
-  }	else {
+  }  else {
     string_of_roles = (OMX_U8**)malloc(no_of_roles * sizeof(OMX_STRING));
     for (index = 0; index<no_of_roles; index++) {
-      *(string_of_roles + index) = (OMX_U8 *)malloc(no_of_roles*128);
+      *(string_of_roles + index) = (OMX_U8 *)malloc(no_of_roles*OMX_MAX_STRINGNAME_SIZE);
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ, "...then buffers\n");
 
@@ -199,7 +199,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
 
   string_of_comp_per_role = (OMX_U8**)malloc(no_of_comp_per_role * sizeof(OMX_STRING));
   for (index = 0; index<no_of_comp_per_role; index++) {
-    string_of_comp_per_role[index] = malloc(128);
+    string_of_comp_per_role[index] = malloc(OMX_MAX_STRINGNAME_SIZE);
   }
 
   err = OMX_GetComponentsOfRole(role_name, &no_of_comp_per_role, string_of_comp_per_role);
@@ -213,7 +213,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
       }
     }
 
-    if(string_of_comp_per_role)	{
+    if(string_of_comp_per_role)  {
       free(string_of_comp_per_role);
       string_of_comp_per_role = NULL;
     }
@@ -231,7 +231,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
     }
   }
 
-  if(string_of_comp_per_role)	{
+  if(string_of_comp_per_role)  {
     free(string_of_comp_per_role);
     string_of_comp_per_role = NULL;
   }
@@ -379,7 +379,7 @@ int main(int argc, char** argv) {
         DEBUG(DEFAULT_MESSAGES, " %s\n", output_file);
       }
     }
-	}
+  }
   index = 0;
   while(*(input_file+index) != '\0') {
     index++;
@@ -410,7 +410,7 @@ int main(int argc, char** argv) {
     DEBUG(DEB_LEV_ERR, "The input audio format is not supported - exiting\n");
     exit(1);
   }
-	
+  
 
   if (flagOutputReceived) {
     outfile = fopen(output_file,"wb");
@@ -485,13 +485,13 @@ int main(int argc, char** argv) {
       exit(1);
     }  
   }
-	
+  
   /** getting the handle of audio decoder */
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Getting Audio %s Decoder Handle\n",full_component_name);
   err = OMX_GetHandle(&appPriv->audiodechandle, full_component_name, NULL /*appPriv */, &audiodeccallbacks);
   if(err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "Audio Decoder Component Not Found\n");
-		exit(1);
+    exit(1);
   } 
   DEBUG(DEFAULT_MESSAGES, "Component %s opened\n", full_component_name);
   if (flagPlaybackOn) {
@@ -526,7 +526,7 @@ int main(int argc, char** argv) {
     err = OMX_GetExtensionIndex(appPriv->filereaderhandle,"OMX.ST.index.param.filereader.inputfilename",&eIndexParamFilename);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
-			exit(1);
+      exit(1);
     } else {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"FileName Param index : %x \n",eIndexParamFilename);
       temp = malloc(25);
@@ -560,7 +560,7 @@ int main(int argc, char** argv) {
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Set up Tunnel Completed\n");
   }
-	
+  
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
     /** now set the filereader component to idle and executing state */
     OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
@@ -605,7 +605,7 @@ int main(int argc, char** argv) {
       exit(1);
     }
   }
-	if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
+  if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
     /*Wait for File reader state change to */
     tsem_down(appPriv->filereaderEventSem);
     DEBUG(DEFAULT_MESSAGES,"File reader idle state \n");
@@ -623,7 +623,7 @@ int main(int argc, char** argv) {
     err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"file reader state executing failed\n");
-			exit(1);
+      exit(1);
     }
     /*Wait for File reader state change to executing*/
     tsem_down(appPriv->filereaderEventSem);
@@ -741,7 +741,7 @@ int main(int argc, char** argv) {
     err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"volume state executing failed\n");
-			exit(1);
+      exit(1);
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ,"waiting for  volume state executing\n");
     tsem_down(appPriv->volumeEventSem);
@@ -750,25 +750,25 @@ int main(int argc, char** argv) {
     err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"audio sink state executing failed\n");
-			exit(1);
+      exit(1);
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ,"waiting for  audio sink state executing\n");
     tsem_down(appPriv->sinkEventSem);
     DEBUG(DEB_LEV_SIMPLE_SEQ, "audio sink state executing successful\n");
   }
-	
+  
   DEBUG(DEB_LEV_SIMPLE_SEQ,"All Component state changed to Executing\n");
   if (!flagSetupTunnel && (flagUsingFFMpeg || flagIsMadUsingFileReader)) {
     err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead1);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer File Reader\n", __func__,err);
-			exit(1);
+      exit(1);
     }
     DEBUG(DEB_LEV_PARAMS, "Fill reader second buffer %x\n", (int)outBufferFileRead1);
     err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead2);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer File Reader\n", __func__,err);
-			exit(1);
+      exit(1);
     }
   }
 
@@ -776,13 +776,13 @@ int main(int argc, char** argv) {
     err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume1);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
-			exit(1);
+      exit(1);
     }
     DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferVolume2);
     err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume2);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
-			exit(1);
+      exit(1);
     }
   }
 
@@ -805,13 +805,13 @@ int main(int argc, char** argv) {
     err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec1);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
-			exit(1);
+      exit(1);
     }
     DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferAudioDec2);
     err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec2);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
-			exit(1);
+      exit(1);
     }
   }
 
@@ -829,7 +829,7 @@ int main(int argc, char** argv) {
   if (flagPlaybackOn) {
     err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
     err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-  }	
+  }  
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
     tsem_down(appPriv->filereaderEventSem);
     DEBUG(DEFAULT_MESSAGES,"File reader idle state \n");
@@ -949,7 +949,7 @@ int main(int argc, char** argv) {
   free(temp);
 
   return 0;
-}	
+}  
 
 /* Callbacks implementation */
 
@@ -999,32 +999,32 @@ OMX_ERRORTYPE filereaderEventHandler(
     } else {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Received Event Event=%d Data1=%d,Data2=%d\n",__func__,eEvent,(int)Data1,(int)Data2);
     }
-  }else if(eEvent == OMX_EventPortSettingsChanged) {
+  } else if(eEvent == OMX_EventPortSettingsChanged) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Setting Changed event\n");
     if(flagUsingFFMpeg) {
       err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.config.extradata",&eIndexExtraData);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
-			  exit(1);
+        exit(1);
       } else {
         pExtraData = malloc(extradata_size);
         err = OMX_GetConfig(appPriv->filereaderhandle, eIndexExtraData, pExtraData);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"\n file reader Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
-				  exit(1);
+          exit(1);
         }
         DEBUG(DEB_LEV_SIMPLE_SEQ,"Setting ExtraData\n");
         err = OMX_SetConfig(appPriv->audiodechandle, eIndexExtraData, pExtraData);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"\n audio decoder Set Config Failed error=%08x\n",err);
-				  exit(1);
+          exit(1);
         }
         free(pExtraData);
       }
     }
     /*Signal Port Setting Changed*/
     tsem_up(appPriv->filereaderEventSem);
-  }else if(eEvent == OMX_EventPortFormatDetected) {
+  } else if(eEvent == OMX_EventPortFormatDetected) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Port Format Detected %x\n", __func__,(int)Data1);
   } else if(eEvent == OMX_EventBufferFlag) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
@@ -1035,7 +1035,7 @@ OMX_ERRORTYPE filereaderEventHandler(
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)Data2);
   }
-	return OMX_ErrorNone;
+  return OMX_ErrorNone;
 }
 
 OMX_ERRORTYPE filereaderFillBufferDone(
@@ -1062,11 +1062,10 @@ OMX_ERRORTYPE filereaderFillBufferDone(
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Calling Empty This Buffer\n", __func__,(int)pBuffer->nFlags);
         bEOS=OMX_TRUE;
       }
-    }
-    else {
+    } else {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Empty This Buffer\n", __func__,(int)pBuffer->nFlags);
     }
-  }	else {
+  } else {
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
   return OMX_ErrorNone;
@@ -1109,8 +1108,7 @@ OMX_ERRORTYPE audiodecEventHandler(
         break;
       }
       tsem_up(appPriv->decoderEventSem);
-    }
-    else if (Data1 == OMX_CommandPortEnable){
+    } else if (Data1 == OMX_CommandPortEnable){
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Received Port Enable  Event\n",__func__);
       tsem_up(appPriv->decoderEventSem);
     } else if (Data1 == OMX_CommandPortDisable){
@@ -1134,7 +1132,7 @@ OMX_ERRORTYPE audiodecEventHandler(
         err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 0, NULL);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"alsa sink port disable failed\n");
-			    exit(1);
+          exit(1);
         }
 
         err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink1);
@@ -1152,7 +1150,7 @@ OMX_ERRORTYPE audiodecEventHandler(
         err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortEnable, 0, NULL);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"alsa sink port disable failed\n");
-			    exit(1);
+          exit(1);
         }
 
         err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink1, 0, NULL, buffer_out_size, outBufferVolume1->pBuffer);
@@ -1176,14 +1174,14 @@ OMX_ERRORTYPE audiodecEventHandler(
         err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandPortDisable, 1, NULL);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"Volume Component port disable failed\n");
-			    exit(1);
+          exit(1);
         }
 
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Port Disabling\n", __func__);
         err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 0, NULL);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"alas sink port disable failed\n");
-			    exit(1);
+          exit(1);
         }
 
         /*Wait for Ports Disable Events*/
@@ -1204,7 +1202,7 @@ OMX_ERRORTYPE audiodecEventHandler(
         err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortEnable, 0, NULL);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR,"audio sink port enable failed\n");
-			    exit(1);
+          exit(1);
         }
 
         /*Wait for Ports Enable Events*/
@@ -1255,8 +1253,7 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
         }
-      }
-      else {
+      } else {
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Fill This Buffer\n", __func__,(int)pBuffer->nFlags);
         iBufferDropped++;
         if(iBufferDropped==2) {
@@ -1275,24 +1272,24 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
     data_read = fread(pBuffer->pBuffer, 1, buffer_in_size, fd);
     pBuffer->nFilledLen = data_read;
     pBuffer->nOffset = 0;
-	  if (data_read <= 0) {
-		  DEBUG(DEB_LEV_SIMPLE_SEQ, "In the %s no more input data available\n", __func__);
+    if (data_read <= 0) {
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In the %s no more input data available\n", __func__);
       iBufferDropped++;
       if(iBufferDropped>=2) {
-		    tsem_up(appPriv->eofSem);
+        tsem_up(appPriv->eofSem);
         return OMX_ErrorNone;
       }
       pBuffer->nFilledLen=0;
       pBuffer->nFlags = OMX_BUFFERFLAG_EOS;
       bEOS=OMX_TRUE;
       err = OMX_EmptyThisBuffer(hComponent, pBuffer);
-		  return OMX_ErrorNone;
-	  }
-	  pBuffer->nFilledLen = data_read;
-	  if(!bEOS) {
-	    DEBUG(DEB_LEV_FULL_SEQ, "Empty buffer %x\n", (int)pBuffer);
-	    err = OMX_EmptyThisBuffer(hComponent, pBuffer);
-    }else {
+      return OMX_ErrorNone;
+    }
+    pBuffer->nFilledLen = data_read;
+    if(!bEOS) {
+      DEBUG(DEB_LEV_FULL_SEQ, "Empty buffer %x\n", (int)pBuffer);
+      err = OMX_EmptyThisBuffer(hComponent, pBuffer);
+    } else {
       DEBUG(DEB_LEV_FULL_SEQ, "In %s Dropping Empty This buffer to Audio Dec\n", __func__);
     }
   }
@@ -1344,7 +1341,7 @@ OMX_ERRORTYPE audiodecFillBufferDone(
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling EmptyThisBuffer\n", __func__,err);
       }
     }
-  }	else {
+  } else {
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
   return OMX_ErrorNone;
@@ -1425,8 +1422,7 @@ OMX_ERRORTYPE volumeEmptyBufferDone(
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
       }
-    }
-    else {
+    } else {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Fill This Buffer\n", __func__,(int)pBuffer->nFlags);
       iBufferDropped++;
       if(iBufferDropped==2) {
@@ -1497,7 +1493,7 @@ OMX_ERRORTYPE volumeFillBufferDone(
       }
 
     }
-  }	else {
+  } else {
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
   return OMX_ErrorNone;

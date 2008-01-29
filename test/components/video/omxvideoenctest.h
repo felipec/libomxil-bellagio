@@ -1,9 +1,9 @@
 /**
   @file test/components/video/omxvideoenctest.h
-	
+  
   Test application that uses a OpenMAX component, a generic video encoder. 
   The application receives an video stream (.yuv) encode in Mpeg4 Video format(.m4v).
-	
+  
   Copyright (C) 2008  STMicroelectronics and Nokia
 
   This library is free software; you can redistribute it and/or modify it under
@@ -19,7 +19,7 @@
   You should have received a copy of the GNU Lesser General Public License
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-	
+  
   $Date$
   Revision $Rev$
   Author $Author$

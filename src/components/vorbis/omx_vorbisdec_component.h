@@ -54,8 +54,8 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   tsem_t* avCodecSyncSem; \
   /** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
-  /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/	\
-  OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;	\
+  /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/  \
+  OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;  \
   /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg decoder */ \
   OMX_U16 minBufferLength; \
   /** @param inputCurrBuffer Field that stores pointer of the current input buffer position */ \
@@ -69,7 +69,7 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param positionInOutBuf Field that used to calculate starting address of the next output frame to be written */ \
   OMX_S32 positionInOutBuf; \
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \
-  OMX_S32 isNewBuffer;	\
+  OMX_S32 isNewBuffer;  \
   /** @param audio_coding_type Field that indicate the supported audio format of audio decoder */ \
   OMX_U32 audio_coding_type;   \
   /** @param oy sync and verify incoming physical bitstream */ \
@@ -98,21 +98,21 @@ OMX_ERRORTYPE omx_vorbisdec_component_Destructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_vorbisdec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_vorbisdec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp);
 OMX_ERRORTYPE omx_vorbis_decoder_MessageHandler(OMX_COMPONENTTYPE*,internalRequestMessageType*);
-	
+  
 void omx_vorbisdec_component_BufferMgmtCallbackVorbis(
-	OMX_COMPONENTTYPE *openmaxStandComp,
-	OMX_BUFFERHEADERTYPE* inputbuffer,
-	OMX_BUFFERHEADERTYPE* outputbuffer);
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  OMX_BUFFERHEADERTYPE* inputbuffer,
+  OMX_BUFFERHEADERTYPE* outputbuffer);
 
 OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_INOUT OMX_PTR ComponentParameterStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nParamIndex,
+  OMX_INOUT OMX_PTR ComponentParameterStructure);
 
 OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_IN  OMX_PTR ComponentParameterStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nParamIndex,
+  OMX_IN  OMX_PTR ComponentParameterStructure);
 
 void omx_vorbisdec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp);
 

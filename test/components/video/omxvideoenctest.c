@@ -34,15 +34,17 @@
 #define BASE_ROLE "video_encoder.mpeg4"
 #define COMPONENT_NAME_BASE_LEN 20
 
-OMX_CALLBACKTYPE videoenccallbacks = { .EventHandler = videoencEventHandler,
+OMX_CALLBACKTYPE videoenccallbacks = { 
+    .EventHandler = videoencEventHandler,
     .EmptyBufferDone = videoencEmptyBufferDone,
     .FillBufferDone = videoencFillBufferDone
-    };
+  };
 
-OMX_CALLBACKTYPE videosrccallbacks = { .EventHandler = videosrcEventHandler,
+OMX_CALLBACKTYPE videosrccallbacks = { 
+    .EventHandler = videosrcEventHandler,
     .EmptyBufferDone = NULL,
     .FillBufferDone = videosrcFillBufferDone
-    };
+  };
 
 /** global variables */
 appPrivateType* appPriv;
@@ -86,10 +88,10 @@ OMX_ERRORTYPE test_OMX_ComponentNameEnum() {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n", __func__);
-  name = malloc(128 * sizeof(char));
+  name = malloc(OMX_MAX_STRINGNAME_SIZE);
   index = 0;
   while(1) {
-    err = OMX_ComponentNameEnum (name, 128, index);
+    err = OMX_ComponentNameEnum (name, OMX_MAX_STRINGNAME_SIZE, index);
     if ((name != NULL) && (err == OMX_ErrorNone)) {
       DEBUG(DEFAULT_MESSAGES, "component %i is %s\n", index, name);
     } else break;
@@ -124,7 +126,7 @@ OMX_ERRORTYPE test_OMX_RoleEnum(OMX_STRING component_name) {
   }  else {
     string_of_roles = (OMX_U8**)malloc(no_of_roles * sizeof(OMX_STRING));
     for (index = 0; index < no_of_roles; index++) {
-      *(string_of_roles + index) = (OMX_U8 *)malloc(no_of_roles * 128);
+      *(string_of_roles + index) = (OMX_U8 *)malloc(no_of_roles * OMX_MAX_STRINGNAME_SIZE);
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ, "...then buffers\n");
 
@@ -153,7 +155,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n", __func__);
   string_of_comp_per_role = (OMX_U8**) malloc (10 * sizeof(OMX_STRING));
   for (index = 0; index < 10; index++) {
-    string_of_comp_per_role[index] = malloc(128 * sizeof(char));
+    string_of_comp_per_role[index] = malloc(OMX_MAX_STRINGNAME_SIZE);
   }
 
   DEBUG(DEFAULT_MESSAGES, "Getting number of components per role for %s\n", role_name);
@@ -228,7 +230,7 @@ int find_encoder(char* searchname) {
 /** help display */
 void display_help() {
   printf("\n");
-  printf("Usage: omxvideoenctest -o outfile [-W 320] [-H 240] [-t] [-C] [-h] [-f input_fmt] input_filename\n");
+  printf("Usage: omxvideoenctest -o outfile [-W 320] [-H 240] [-t] [-C] [-h] [-f input_fmt] -i input_filename\n");
   printf("\n");
   printf("       -i infile : Input yuv file name\n");
   printf("       -o outfile: If this option is specified, the output is written to user specified outfile\n");
@@ -249,8 +251,8 @@ void display_help() {
   exit(1);
 }
 
-int flagIsOutputEspected;
-int flagIsInputEspected;
+int flagIsOutputExpected;
+int flagIsInputExpected;
 int flagOutputReceived;
 int flagInputReceived;
 int flagIsFormatRequested;
@@ -302,8 +304,8 @@ int main(int argc, char** argv) {
   if(argc < 2){
     display_help();
   } else {
-    flagIsInputEspected = 0;
-    flagIsOutputEspected = 0;
+    flagIsInputExpected = 0;
+    flagIsOutputExpected = 0;
     flagOutputReceived = 0;
     flagInputReceived = 0;
     flagIsFormatRequested = 0;
@@ -315,7 +317,7 @@ int main(int argc, char** argv) {
     argn_dec = 1;
     while (argn_dec < argc) {
       if (*(argv[argn_dec]) == '-') {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           display_help();
         }
         switch (*(argv[argn_dec] + 1)) {
@@ -323,10 +325,10 @@ int main(int argc, char** argv) {
             display_help();
             break;
           case 'i':
-            flagIsInputEspected = 1;
+            flagIsInputExpected = 1;
             break;
           case 'o':
-            flagIsOutputEspected = 1;
+            flagIsOutputExpected = 1;
             break;
           case 'f' :
             flagIsFormatRequested = 1;
@@ -350,20 +352,21 @@ int main(int argc, char** argv) {
             display_help();
         }
       } else {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           if(strstr(argv[argn_dec], ".m4v") == NULL) {
-            //output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 5);
-            //strcpy(output_file,argv[argn_dec]);
-            //strcat(output_file, ".m4v");
-            output_file = malloc(strlen(input_file) - strlen(strstr(input_file,".")) + 6);
-            strncpy(output_file,input_file, (strlen(input_file) - strlen(strstr(input_file,"."))) );
+            int k=0;
+            if(strstr(argv[argn_dec],".")) {
+              k = strlen(strstr(argv[argn_dec],"."));
+            }
+            output_file = malloc(strlen(argv[argn_dec]) - k + 6);
+            strncpy(output_file,argv[argn_dec], (strlen(argv[argn_dec]) - k));
             strcat(output_file,".m4v");
             DEBUG(DEFAULT_MESSAGES, "New output File %s \n", output_file);
           } else {
             output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
             strcpy(output_file,argv[argn_dec]);
           }          
-          flagIsOutputEspected = 0;
+          flagIsOutputExpected = 0;
           flagOutputReceived = 1;
         } else if(flagIsFormatRequested) {
           if(strstr(argv[argn_dec], "m4v") != NULL) {
@@ -378,10 +381,10 @@ int main(int argc, char** argv) {
         } else if(flagIsHeight) {
           in_height = atoi(argv[argn_dec]);
           flagIsHeight = 0; 
-        } else if(flagIsInputEspected){
+        } else if(flagIsInputExpected){
           input_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
           strcpy(input_file,argv[argn_dec]);
-          flagIsInputEspected = 0;
+          flagIsInputExpected = 0;
           flagInputReceived = 1;
         } else if(flagIsFPS) {
           frame_rate = atoi(argv[argn_dec]);

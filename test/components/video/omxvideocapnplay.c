@@ -237,10 +237,10 @@ OMX_ERRORTYPE test_OMX_ComponentNameEnum() {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n", __func__);
-  name = malloc(128);
+  name = malloc(OMX_MAX_STRINGNAME_SIZE);
   index = 0;
   while(1) {
-    err = OMX_ComponentNameEnum (name, 128, index);
+    err = OMX_ComponentNameEnum (name, OMX_MAX_STRINGNAME_SIZE, index);
     if ((name != NULL) && (err == OMX_ErrorNone)) {
       DEBUG(DEFAULT_MESSAGES, "component %i is %s\n", index, name);
     } else break;
@@ -275,7 +275,7 @@ OMX_ERRORTYPE test_OMX_RoleEnum(OMX_STRING component_name) {
   }	else {
     string_of_roles = malloc(no_of_roles * sizeof(OMX_STRING));
     for (index = 0; index < no_of_roles; index++) {
-      *(string_of_roles + index) = malloc(no_of_roles * 128);
+      *(string_of_roles + index) = malloc(no_of_roles * OMX_MAX_STRINGNAME_SIZE);
     }
     DEBUG(DEB_LEV_SIMPLE_SEQ, "...then buffers\n");
 
@@ -304,7 +304,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n", __func__);
   string_of_comp_per_role = malloc (10 * sizeof(OMX_STRING));
   for (index = 0; index < 10; index++) {
-    string_of_comp_per_role[index] = malloc(128);
+    string_of_comp_per_role[index] = malloc(OMX_MAX_STRINGNAME_SIZE);
   }
 
   DEBUG(DEFAULT_MESSAGES, "Getting number of components per role for %s\n", role_name);

@@ -82,7 +82,9 @@ DERIVEDCLASS(omx_maddec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param temporary_buffer temporary buffer used for audio decoding */ \
   OMX_BUFFERHEADERTYPE *temporary_buffer; \
   /** @param need_mad_stream boolean indicate whether new mad stream required */ \
-  OMX_U32 need_mad_stream;
+  OMX_U32 need_mad_stream; \
+  /** @param temporary buffer */ \
+  OMX_U8* temp_input_buffer;
 ENDCLASS(omx_maddec_component_PrivateType)
 
 //-------------------------------------------------------------------------------------------------------------------

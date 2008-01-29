@@ -37,18 +37,12 @@
 /** Maximum Number of Audio Mad Decoder Component Instance*/
 #define MAX_COMPONENT_MADDEC 4
 
-/** a counter of existing instances of mad decoder */
-static OMX_U32 noMadDecInstance = 0;
-
 /** This is used when the temporary buffer takes data of this length specified
   from input buffer before its processing */
 #define TEMP_BUF_COPY_SPACE 1024
 
 /** This is the temporary buffer size used for last portion of input buffer storage */
 #define TEMP_BUFFER_SIZE DEFAULT_IN_BUFFER_SIZE * 2
-
-/** global variable declaration */
-static unsigned char *temp_input_buffer = NULL;
 
 /** this function initializates the mad framework, and opens an mad decoder of type specified by IL client */ 
 OMX_ERRORTYPE omx_maddec_component_madLibInit(omx_maddec_component_PrivateType* omx_maddec_component_Private) {
@@ -194,13 +188,7 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   omx_maddec_component_Private->synth = malloc (sizeof(struct mad_synth));
   omx_maddec_component_Private->frame = malloc (sizeof(struct mad_frame));
 
-  /** increamenting component counter and checking against max allowed components */
-  noMadDecInstance++;
-
-  if(noMadDecInstance > MAX_COMPONENT_MADDEC)  {
-    return OMX_ErrorInsufficientResources;
-  }
-  return err;  
+  return err;
 }
 
 /** this function sets some inetrnal parameters to the input port depending upon the input audio format */
@@ -267,8 +255,6 @@ OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
 
   omx_base_filter_Destructor(openmaxStandComp);
 
-  noMadDecInstance--;
-
   return OMX_ErrorNone;
 
 }
@@ -284,7 +270,7 @@ OMX_ERRORTYPE omx_maddec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)  {
   omx_maddec_component_Private->temporary_buffer->pBuffer = malloc(DEFAULT_IN_BUFFER_SIZE*2);
   memset(omx_maddec_component_Private->temporary_buffer->pBuffer, 0, DEFAULT_IN_BUFFER_SIZE*2);
 
-  temp_input_buffer = omx_maddec_component_Private->temporary_buffer->pBuffer;
+  omx_maddec_component_Private->temp_input_buffer = omx_maddec_component_Private->temporary_buffer->pBuffer;
   omx_maddec_component_Private->temporary_buffer->nFilledLen=0;
   omx_maddec_component_Private->temporary_buffer->nOffset=0;
 
@@ -306,8 +292,7 @@ OMX_ERRORTYPE omx_maddec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
   }
 
   /*Restore temporary input buffer pointer*/
-  omx_maddec_component_Private->temporary_buffer->pBuffer = temp_input_buffer;
-  temp_input_buffer = NULL;
+  omx_maddec_component_Private->temporary_buffer->pBuffer = omx_maddec_component_Private->temp_input_buffer;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Freeing Temporary Buffer\n");
   /* freeing temporary memory allocation */
   if(omx_maddec_component_Private->temporary_buffer->pBuffer) {
@@ -384,8 +369,8 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
 
     if(omx_maddec_component_Private->need_mad_stream == 1) {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s memmove temp buf len=%d\n", __func__,(int)omx_maddec_component_Private->temporary_buffer->nFilledLen);
-      memmove (temp_input_buffer, omx_maddec_component_Private->temporary_buffer->pBuffer, omx_maddec_component_Private->temporary_buffer->nFilledLen);
-      omx_maddec_component_Private->temporary_buffer->pBuffer = temp_input_buffer;
+      memmove (omx_maddec_component_Private->temp_input_buffer, omx_maddec_component_Private->temporary_buffer->pBuffer, omx_maddec_component_Private->temporary_buffer->nFilledLen);
+      omx_maddec_component_Private->temporary_buffer->pBuffer = omx_maddec_component_Private->temp_input_buffer;
       omx_maddec_component_Private->need_mad_stream = 0;
       memcpy(omx_maddec_component_Private->temporary_buffer->pBuffer+omx_maddec_component_Private->temporary_buffer->nFilledLen, inputbuffer->pBuffer + inputbuffer->nOffset, tocopy);
       omx_maddec_component_Private->temporary_buffer->nFilledLen += tocopy;

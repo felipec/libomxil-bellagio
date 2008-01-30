@@ -47,11 +47,11 @@ DERIVEDCLASS(omx_alsasink_component_PrivateType, omx_base_sink_PrivateType)
 #define omx_alsasink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS \
   /** @param sPCMModeParam Audio PCM specific OpenMAX parameter */ \
   OMX_AUDIO_PARAM_PCMMODETYPE sPCMModeParam; \
-   /** @param AudioPCMConfigured boolean flag to check if the audio has been configured */	\
-  char AudioPCMConfigured;	\
-  /** @param playback_handle ALSA specif handle for audio player */	\
-  snd_pcm_t* playback_handle;	\
-  /** @param hw_params ALSA specif hardware parameters */	\
+   /** @param AudioPCMConfigured boolean flag to check if the audio has been configured */  \
+  char AudioPCMConfigured;  \
+  /** @param playback_handle ALSA specif handle for audio player */  \
+  snd_pcm_t* playback_handle;  \
+  /** @param hw_params ALSA specif hardware parameters */  \
   snd_pcm_hw_params_t* hw_params;
 ENDCLASS(omx_alsasink_component_PrivateType)
 
@@ -60,17 +60,17 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 void omx_alsasink_component_BufferMgmtCallback(
-	OMX_COMPONENTTYPE *openmaxStandComp,
-	OMX_BUFFERHEADERTYPE* inputbuffer);
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  OMX_BUFFERHEADERTYPE* inputbuffer);
 
 OMX_ERRORTYPE omx_alsasink_component_GetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_INOUT OMX_PTR ComponentParameterStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nParamIndex,
+  OMX_INOUT OMX_PTR ComponentParameterStructure);
 
 OMX_ERRORTYPE omx_alsasink_component_SetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_IN  OMX_PTR ComponentParameterStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nParamIndex,
+  OMX_IN  OMX_PTR ComponentParameterStructure);
 
 #endif

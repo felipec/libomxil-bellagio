@@ -33,6 +33,9 @@
 #ifndef __OMX_BASE_PORT_H__
 #define __OMX_BASE_PORT_H__
 
+#define TUNNEL_USE_BUFFER_RETRY 20
+#define TUNNEL_USE_BUFFER_RETRY_USLEEP_TIME 50000
+
 /**
  * Port Specific Macro's
  */

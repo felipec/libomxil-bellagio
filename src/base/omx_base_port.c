@@ -35,9 +35,6 @@
 #include "omx_base_component.h"
 #include "omx_base_port.h"
 
-#define TUNNEL_USE_BUFFER_RETRY 20
-#define TUNNEL_USE_BUFFER_RETRY_USLEEP_TIME 50000
-
 /** The default value for the number of needed buffers for each port. */
 #define DEFAULT_NUMBER_BUFFERS_PER_PORT 2
 /** The default value for the minimum number of needed buffers for each port. */

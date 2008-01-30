@@ -35,6 +35,7 @@
 
 /** Maximum Number of Video Source Instance*/
 static OMX_U32 noViderSrcInstance=0;
+
 #define DEFAULT_FILENAME_LENGTH 256
 
 /** The Constructor 
@@ -76,6 +77,10 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   }
 
   base_video_port_Constructor(openmaxStandComp, &omx_videosrc_component_Private->ports[0], 0, OMX_FALSE);
+  omx_videosrc_component_Private->ports[0]->Port_AllocateBuffer = videosrc_port_AllocateBuffer;
+  omx_videosrc_component_Private->ports[0]->Port_FreeBuffer = videosrc_port_FreeBuffer;
+  omx_videosrc_component_Private->ports[0]->Port_AllocateTunnelBuffer = videosrc_port_AllocateTunnelBuffer;
+  omx_videosrc_component_Private->ports[0]->Port_FreeTunnelBuffer = videosrc_port_FreeTunnelBuffer;
 
   pPort = (omx_base_video_PortType *) omx_videosrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
   
@@ -116,6 +121,7 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   omx_videosrc_component_Private->mmaps = NULL;
   omx_videosrc_component_Private->memoryMap = NULL;
+  omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_FALSE;
 
   /* Test if Camera Attached */
   omx_videosrc_component_Private->deviceHandle = open(VIDEO_DEV_NAME, O_RDWR);
@@ -125,7 +131,34 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     return OMX_ErrorHardware;
   } 
 
-  
+  if ((omx_videosrc_component_Private->capability.type & VID_TYPE_SCALES) != 0)
+  {       // supports the ability to scale captured images
+    
+    omx_videosrc_component_Private->captureWindow.x = 0;
+    omx_videosrc_component_Private->captureWindow.y = 0;
+    omx_videosrc_component_Private->captureWindow.width = pPort->sPortParam.format.video.nFrameWidth;
+    omx_videosrc_component_Private->captureWindow.height = pPort->sPortParam.format.video.nFrameHeight;
+    omx_videosrc_component_Private->captureWindow.chromakey = -1;
+    omx_videosrc_component_Private->captureWindow.flags = 0;
+    omx_videosrc_component_Private->captureWindow.clips = 0;
+    omx_videosrc_component_Private->captureWindow.clipcount = 0;
+    if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSWIN, &omx_videosrc_component_Private->captureWindow) == -1)
+    {       // could not set window values for capture
+      DEBUG(DEB_LEV_ERR,"could not set window values for capture\n");
+    }
+  }
+  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCGMBUF, &omx_videosrc_component_Private->memoryBuffer) == -1)
+  { // failed to retrieve information about capture memory space
+    DEBUG(DEB_LEV_ERR,"failed to retrieve information about capture memory space\n");
+  }
+ 
+  // obtain memory mapped area
+  omx_videosrc_component_Private->memoryMap = mmap (0, omx_videosrc_component_Private->memoryBuffer.size, PROT_READ | PROT_WRITE, MAP_SHARED, omx_videosrc_component_Private->deviceHandle, 0);
+  if (omx_videosrc_component_Private->memoryMap == NULL)
+  { // failed to retrieve pointer to memory mapped area
+    DEBUG(DEB_LEV_ERR,"failed to retrieve pointer to memory mapped area\n");
+  }
+
   return err;
 }
 
@@ -352,11 +385,6 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
     } 
   }
 
-  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCGMBUF, &omx_videosrc_component_Private->memoryBuffer) == -1)
-  { // failed to retrieve information about capture memory space
-    DEBUG(DEB_LEV_ERR,"failed to retrieve information about capture memory space\n");
-  }
-  
   /**
     The pointer memoryMap and the offsets within memoryBuffer.offsets combine to give us the address of each buffered frame. For example:
     Buffered Frame 0 is located at:  memoryMap + memoryBuffer.offsets[0]
@@ -366,14 +394,7 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
     The number of buffered frames is stored in memoryBuffer.frames.
    */
  
-  // obtain memory mapped area
-  omx_videosrc_component_Private->memoryMap = mmap (0, omx_videosrc_component_Private->memoryBuffer.size, PROT_READ | PROT_WRITE, MAP_SHARED, omx_videosrc_component_Private->deviceHandle, 0);
-  if (omx_videosrc_component_Private->memoryMap == NULL)
-  { // failed to retrieve pointer to memory mapped area
-    DEBUG(DEB_LEV_ERR,"failed to retrieve pointer to memory mapped area\n");
-  }
-
-  omx_videosrc_component_Private->mmaps = malloc(omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap));
+  omx_videosrc_component_Private->mmaps = (malloc (omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap)));
 
   i = 0;
   // fill out the fields
@@ -385,7 +406,7 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
     omx_videosrc_component_Private->mmaps[i].format = omx_videosrc_component_Private->imageProperties.palette;
     ++ i;
   }
-
+  
   /** initialization for buff mgmt callback function */
   omx_videosrc_component_Private->bIsEOSSent = OMX_FALSE;
   omx_videosrc_component_Private->iFrameIndex = 0 ;
@@ -410,14 +431,6 @@ OMX_ERRORTYPE omx_videosrc_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_videosrc_component_Private->videoReady = OMX_FALSE;
   tsem_reset(omx_videosrc_component_Private->videoSyncSem);
 
-  /* free the video_mmap structures */
-  free (omx_videosrc_component_Private->mmaps);
-  omx_videosrc_component_Private->mmaps = NULL;
-
-  /* unmap the capture memory */
-  munmap (omx_videosrc_component_Private->memoryMap, omx_videosrc_component_Private->memoryBuffer.size);
-  omx_videosrc_component_Private->memoryMap = NULL;
-
   return OMX_ErrorNone;
 }
 
@@ -440,7 +453,6 @@ void omx_videosrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
     }
   }
 
-  pOutputBuffer->nFilledLen = 0;
   pOutputBuffer->nOffset = 0;
 
   //Capturing using MMIO.
@@ -451,12 +463,16 @@ void omx_videosrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   // wait for the currently indexed frame to complete capture
   if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSYNC, &omx_videosrc_component_Private->iFrameIndex) == -1)
   {       // sync request failed
+    pOutputBuffer->nFilledLen = 0;
     DEBUG(DEB_LEV_ERR,"sync request failed\n");
     return;
   }
 
   DEBUG(DEB_LEV_FULL_SEQ,"%d-%d\n",(int)omx_videosrc_component_Private->iFrameIndex,(int)omx_videosrc_component_Private->memoryBuffer.frames);
-  memcpy(pOutputBuffer->pBuffer,omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[omx_videosrc_component_Private->iFrameIndex],omx_videosrc_component_Private->iFrameSize);
+  if(omx_videosrc_component_Private->bOutBufferMemoryMapped == OMX_FALSE) { // In case OMX_UseBuffer copy frame to buffer metadata
+    DEBUG(DEB_LEV_ERR,"In %s copy frame to metadata\n",__func__);
+    memcpy(pOutputBuffer->pBuffer,omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[omx_videosrc_component_Private->iFrameIndex],omx_videosrc_component_Private->iFrameSize);
+  }
   pOutputBuffer->nFilledLen = omx_videosrc_component_Private->iFrameSize;
 
   omx_videosrc_component_Private->iFrameIndex++;
@@ -597,5 +613,286 @@ OMX_ERRORTYPE omx_videosrc_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
   return err;
 }
 
+OMX_ERRORTYPE videosrc_port_AllocateBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_BUFFERHEADERTYPE** pBuffer,
+  OMX_U32 nPortIndex,
+  OMX_PTR pAppPrivate,
+  OMX_U32 nSizeBytes) {
+  
+  int i;
+  OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
+  omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
+  omx_videosrc_component_PrivateType* omx_videosrc_component_Private = (omx_videosrc_component_PrivateType*)omx_base_component_Private;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
+  if (nPortIndex != openmaxStandPort->sPortParam.nPortIndex) {
+    return OMX_ErrorBadPortIndex;
+  }
+  if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    return OMX_ErrorBadPortIndex;
+  }
 
+  if (omx_base_component_Private->transientState != OMX_TransStateLoadedToIdle) {
+    if (!openmaxStandPort->bIsTransientToEnabled) {
+      DEBUG(DEB_LEV_ERR, "In %s: The port is not allowed to receive buffers\n", __func__);
+      return OMX_ErrorIncorrectStateTransition;
+    }
+  }
+
+  if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
+    DEBUG(DEB_LEV_ERR, "In %s: Requested Buffer Size %lu is less than Minimum Buffer Size %lu\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
+    return OMX_ErrorIncorrectStateTransition;
+  }
+  
+  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+    if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
+      openmaxStandPort->pInternalBufferStorage[i] = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
+      if (!openmaxStandPort->pInternalBufferStorage[i]) {
+        return OMX_ErrorInsufficientResources;
+      }
+      setHeader(openmaxStandPort->pInternalBufferStorage[i], sizeof(OMX_BUFFERHEADERTYPE));
+      /* Map the buffer with the device's memory area*/
+      if(i > omx_videosrc_component_Private->memoryBuffer.frames) {
+        DEBUG(DEB_LEV_ERR, "In %s returning error i=%d, nframe=%d\n", __func__,i,omx_videosrc_component_Private->memoryBuffer.frames);
+        return OMX_ErrorInsufficientResources;
+      }
+      omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_TRUE;
+      openmaxStandPort->pInternalBufferStorage[i]->pBuffer = (OMX_U8*)(omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[i]);
+      openmaxStandPort->pInternalBufferStorage[i]->nAllocLen = (int)nSizeBytes;
+      openmaxStandPort->pInternalBufferStorage[i]->pPlatformPrivate = openmaxStandPort;
+      openmaxStandPort->pInternalBufferStorage[i]->pAppPrivate = pAppPrivate;
+      *pBuffer = openmaxStandPort->pInternalBufferStorage[i];
+      openmaxStandPort->bBufferStateAllocated[i] = BUFFER_ALLOCATED;
+      openmaxStandPort->bBufferStateAllocated[i] |= HEADER_ALLOCATED;
+      if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
+        openmaxStandPort->pInternalBufferStorage[i]->nInputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
+      } else {
+        openmaxStandPort->pInternalBufferStorage[i]->nOutputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
+      }
+      openmaxStandPort->nNumAssignedBuffers++;
+      DEBUG(DEB_LEV_PARAMS, "openmaxStandPort->nNumAssignedBuffers %i\n", (int)openmaxStandPort->nNumAssignedBuffers);
+
+      if (openmaxStandPort->sPortParam.nBufferCountActual == openmaxStandPort->nNumAssignedBuffers) {
+        openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
+        openmaxStandPort->bIsFullOfBuffers = OMX_TRUE;
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s nPortIndex=%d\n",__func__,(int)nPortIndex);
+        tsem_up(openmaxStandPort->pAllocSem);
+      }
+      return OMX_ErrorNone;
+    }
+  }
+  DEBUG(DEB_LEV_ERR, "In %s Error: no available buffers\n",__func__);
+  return OMX_ErrorInsufficientResources;
+}
+OMX_ERRORTYPE videosrc_port_FreeBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_U32 nPortIndex,
+  OMX_BUFFERHEADERTYPE* pBuffer) {
+
+  int i;
+  OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
+  omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
+  omx_videosrc_component_PrivateType* omx_videosrc_component_Private = (omx_videosrc_component_PrivateType*)omx_base_component_Private;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+
+  if (nPortIndex != openmaxStandPort->sPortParam.nPortIndex) {
+    return OMX_ErrorBadPortIndex;
+  }
+  if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    return OMX_ErrorBadPortIndex;
+  }
+
+  if (omx_base_component_Private->transientState != OMX_TransStateIdleToLoaded) {
+    if (!openmaxStandPort->bIsTransientToDisabled) {
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s: The port is not allowed to free the buffers\n", __func__);
+      (*(omx_base_component_Private->callbacks->EventHandler))
+        (omxComponent,
+        omx_base_component_Private->callbackData,
+        OMX_EventError, /* The command was completed */
+        OMX_ErrorPortUnpopulated, /* The commands was a OMX_CommandStateSet */
+        nPortIndex, /* The state has been changed in message->messageParam2 */
+        NULL);
+    }
+  }
+  
+  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+    if (openmaxStandPort->bBufferStateAllocated[i] & (BUFFER_ASSIGNED | BUFFER_ALLOCATED)) {
+
+      openmaxStandPort->bIsFullOfBuffers = OMX_FALSE;
+      if (openmaxStandPort->bBufferStateAllocated[i] & BUFFER_ALLOCATED) {
+        if(openmaxStandPort->pInternalBufferStorage[i]->pBuffer){
+          DEBUG(DEB_LEV_PARAMS, "In %s freeing %i pBuffer=%x\n",__func__, (int)i, (int)openmaxStandPort->pInternalBufferStorage[i]->pBuffer);
+          //free(openmaxStandPort->pInternalBufferStorage[i]->pBuffer);
+          openmaxStandPort->pInternalBufferStorage[i]->pBuffer=NULL;
+          omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_FALSE;
+        }
+      } else if (openmaxStandPort->bBufferStateAllocated[i] & BUFFER_ASSIGNED) {
+        free(pBuffer);
+        pBuffer=NULL;
+      }
+      if(openmaxStandPort->bBufferStateAllocated[i] & HEADER_ALLOCATED) {
+        free(openmaxStandPort->pInternalBufferStorage[i]);
+        openmaxStandPort->pInternalBufferStorage[i]=NULL;
+      }
+
+      openmaxStandPort->bBufferStateAllocated[i] = BUFFER_FREE;
+
+      openmaxStandPort->nNumAssignedBuffers--;
+      DEBUG(DEB_LEV_PARAMS, "openmaxStandPort->nNumAssignedBuffers %i\n", (int)openmaxStandPort->nNumAssignedBuffers);
+
+      if (openmaxStandPort->nNumAssignedBuffers == 0) {
+        openmaxStandPort->sPortParam.bPopulated = OMX_FALSE;
+        openmaxStandPort->bIsEmptyOfBuffers = OMX_TRUE;
+        tsem_up(openmaxStandPort->pAllocSem);
+      }
+      return OMX_ErrorNone;
+    }
+  }
+  return OMX_ErrorInsufficientResources;
+}
+
+OMX_ERRORTYPE videosrc_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_U32 nSizeBytes)
+{
+  int i;
+  OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
+  omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
+  omx_videosrc_component_PrivateType* omx_videosrc_component_Private = (omx_videosrc_component_PrivateType*)omx_base_component_Private;
+  OMX_U8* pBuffer=NULL;
+  OMX_ERRORTYPE eError=OMX_ErrorNone;
+  OMX_U32 numRetry=0;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+
+  if (nPortIndex != openmaxStandPort->sPortParam.nPortIndex) {
+    DEBUG(DEB_LEV_ERR, "In %s: Bad Port Index\n", __func__);
+    return OMX_ErrorBadPortIndex;
+  }
+  if (! PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    DEBUG(DEB_LEV_ERR, "In %s: Port is not tunneled Flag=%x\n", __func__, (int)openmaxStandPort->nTunnelFlags);
+    return OMX_ErrorBadPortIndex;
+  }
+
+  if (omx_base_component_Private->transientState != OMX_TransStateLoadedToIdle) {
+    if (!openmaxStandPort->bIsTransientToEnabled) {
+      DEBUG(DEB_LEV_ERR, "In %s: The port is not allowed to receive buffers\n", __func__);
+      return OMX_ErrorIncorrectStateTransition;
+    }
+  }
+  
+  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+    if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
+      /* Map the buffer with the device's memory area*/
+      if(i > omx_videosrc_component_Private->memoryBuffer.frames) {
+        DEBUG(DEB_LEV_ERR, "In %s returning error i=%d, nframe=%d\n", __func__,i,omx_videosrc_component_Private->memoryBuffer.frames);
+        return OMX_ErrorInsufficientResources;
+      }
+      omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_TRUE;
+      pBuffer = (OMX_U8*)(omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[i]);
+
+      /*Retry more than once, if the tunneled component is not in Loaded->Idle State*/
+      while(numRetry <TUNNEL_USE_BUFFER_RETRY) {
+        eError=OMX_UseBuffer(openmaxStandPort->hTunneledComponent,&openmaxStandPort->pInternalBufferStorage[i],
+                             openmaxStandPort->nTunneledPort,NULL,nSizeBytes,pBuffer); 
+        if(eError!=OMX_ErrorNone) {
+          DEBUG(DEB_LEV_FULL_SEQ,"Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d\n",
+          i,omx_base_component_Private->name,(int)numRetry);
+
+          if((eError ==  OMX_ErrorIncorrectStateTransition) && numRetry<TUNNEL_USE_BUFFER_RETRY) {
+            DEBUG(DEB_LEV_FULL_SEQ,"Waiting for next try %i \n",(int)numRetry);
+            usleep(TUNNEL_USE_BUFFER_RETRY_USLEEP_TIME);
+            numRetry++;
+            continue;
+          }
+          return eError;
+        }
+        else {
+          break;
+        }
+      }
+      openmaxStandPort->bBufferStateAllocated[i] = BUFFER_ALLOCATED;
+      openmaxStandPort->nNumAssignedBuffers++;
+      DEBUG(DEB_LEV_PARAMS, "openmaxStandPort->nNumAssignedBuffers %i\n", (int)openmaxStandPort->nNumAssignedBuffers);
+
+      if (openmaxStandPort->sPortParam.nBufferCountActual == openmaxStandPort->nNumAssignedBuffers) {
+        openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
+        openmaxStandPort->bIsFullOfBuffers = OMX_TRUE;
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s nPortIndex=%d\n",__func__, (int)nPortIndex);
+      }
+      queue(openmaxStandPort->pBufferQueue, openmaxStandPort->pInternalBufferStorage[i]);
+    }
+  }
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s Allocated all buffers\n",__func__);
+  return OMX_ErrorNone;
+}
+
+OMX_ERRORTYPE videosrc_port_FreeTunnelBuffer(omx_base_PortType *openmaxStandPort,OMX_U32 nPortIndex)
+{
+  int i;
+  OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
+  omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
+  omx_videosrc_component_PrivateType* omx_videosrc_component_Private = (omx_videosrc_component_PrivateType*)omx_base_component_Private;
+  OMX_ERRORTYPE eError=OMX_ErrorNone;
+  OMX_U32 numRetry=0;
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+
+  if (nPortIndex != openmaxStandPort->sPortParam.nPortIndex) {
+    DEBUG(DEB_LEV_ERR, "In %s: Bad Port Index\n", __func__);
+    return OMX_ErrorBadPortIndex;
+  }
+  if (! PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    DEBUG(DEB_LEV_ERR, "In %s: Port is not tunneled\n", __func__);
+    return OMX_ErrorBadPortIndex;
+  }
+
+  if (omx_base_component_Private->transientState != OMX_TransStateIdleToLoaded) {
+    if (!openmaxStandPort->bIsTransientToDisabled) {
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s: The port is not allowed to free the buffers\n", __func__);
+      (*(omx_base_component_Private->callbacks->EventHandler))
+        (omxComponent,
+        omx_base_component_Private->callbackData,
+        OMX_EventError, /* The command was completed */
+        OMX_ErrorPortUnpopulated, /* The commands was a OMX_CommandStateSet */
+        nPortIndex, /* The state has been changed in message->messageParam2 */
+        NULL);
+    }
+  }
+
+  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+    if (openmaxStandPort->bBufferStateAllocated[i] & (BUFFER_ASSIGNED | BUFFER_ALLOCATED)) {
+
+      openmaxStandPort->bIsFullOfBuffers = OMX_FALSE;
+      if (openmaxStandPort->bBufferStateAllocated[i] & BUFFER_ALLOCATED) {
+        openmaxStandPort->pInternalBufferStorage[i]->pBuffer = NULL;
+        omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_FALSE;
+      }
+      /*Retry more than once, if the tunneled component is not in Idle->Loaded State*/
+      while(numRetry <TUNNEL_USE_BUFFER_RETRY) {
+        eError=OMX_FreeBuffer(openmaxStandPort->hTunneledComponent,openmaxStandPort->nTunneledPort,openmaxStandPort->pInternalBufferStorage[i]);
+        if(eError!=OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR,"Tunneled Component Couldn't free buffer %i \n",i);
+          if((eError ==  OMX_ErrorIncorrectStateTransition) && numRetry<TUNNEL_USE_BUFFER_RETRY) {
+            DEBUG(DEB_LEV_ERR,"Waiting for next try %i \n",(int)numRetry);
+            usleep(TUNNEL_USE_BUFFER_RETRY_USLEEP_TIME);
+            numRetry++;
+            continue;
+          }
+          return eError;
+        } else {
+          break;
+        }
+      }
+      openmaxStandPort->bBufferStateAllocated[i] = BUFFER_FREE;
+
+      openmaxStandPort->nNumAssignedBuffers--;
+      DEBUG(DEB_LEV_PARAMS, "openmaxStandPort->nNumAssignedBuffers %i\n", (int)openmaxStandPort->nNumAssignedBuffers);
+
+      if (openmaxStandPort->nNumAssignedBuffers == 0) {
+        openmaxStandPort->sPortParam.bPopulated = OMX_FALSE;
+        openmaxStandPort->bIsEmptyOfBuffers = OMX_TRUE;
+        //tsem_up(openmaxStandPort->pAllocSem);
+      }
+    }
+  }
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s Qelem=%d BSem=%d\n", __func__,openmaxStandPort->pBufferQueue->nelem,openmaxStandPort->pBufferSem->semval);
+  return OMX_ErrorNone;
+}

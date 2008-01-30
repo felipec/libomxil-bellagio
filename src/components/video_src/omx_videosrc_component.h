@@ -80,7 +80,9 @@ DERIVEDCLASS(omx_videosrc_component_PrivateType, omx_base_source_PrivateType)
   /** @param iFrameIndex Frame Index */ \
   OMX_U32 iFrameIndex; \
   /** @param iFrameSize output frame size */ \
-  OMX_U32 iFrameSize;
+  OMX_U32 iFrameSize; \
+  /** @param bOutBufferMemoryMapped boolean flag. True,if output buffer is memory mapped to avoid memcopy*/ \
+  OMX_BOOL bOutBufferMemoryMapped;
 ENDCLASS(omx_videosrc_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -103,6 +105,27 @@ OMX_ERRORTYPE omx_videosrc_component_SetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
+
+OMX_ERRORTYPE videosrc_port_AllocateBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_BUFFERHEADERTYPE** pBuffer,
+  OMX_U32 nPortIndex,
+  OMX_PTR pAppPrivate,
+  OMX_U32 nSizeBytes);
+
+OMX_ERRORTYPE videosrc_port_FreeBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_U32 nPortIndex,
+  OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE videosrc_port_AllocateTunnelBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_IN OMX_U32 nPortIndex,
+  OMX_IN OMX_U32 nSizeBytes);
+
+OMX_ERRORTYPE videosrc_port_FreeTunnelBuffer(
+  omx_base_PortType *openmaxStandPort,
+  OMX_U32 nPortIndex);
 
 #endif
 

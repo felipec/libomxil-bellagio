@@ -114,14 +114,14 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     return OMX_ErrorHardware;
   }
   else
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got playback handle at %08x %08X in %i\n", (int)omx_alsasink_component_Private->playback_handle, (int)&omx_alsasink_component_Private->playback_handle, getpid());
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got playback handle at %p %p in %i\n", omx_alsasink_component_Private->playback_handle, &omx_alsasink_component_Private->playback_handle, getpid());
 
   if (snd_pcm_hw_params_malloc(&omx_alsasink_component_Private->hw_params) < 0) {
     DEBUG(DEB_LEV_ERR, "%s: failed allocating input pPort hw parameters\n", __func__);
     return OMX_ErrorHardware;
   }
   else
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got hw parameters at %08x\n", (int)omx_alsasink_component_Private->hw_params);
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "Got hw parameters at %p\n", omx_alsasink_component_Private->hw_params);
 
   if ((err = snd_pcm_hw_params_any (omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params)) < 0) {
     DEBUG(DEB_LEV_ERR, "cannot initialize hardware parameter structure (%s)\n",  snd_strerror (err));
@@ -254,7 +254,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   * e.g.: changing a previously configured sampling rate does not have
   * any effect if we are not calling this each time.
   */
-  err = snd_pcm_hw_params_any (omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params);
+  err = snd_pcm_hw_params_any (playback_handle, hw_params);
 
   switch(nParamIndex) {
   case OMX_IndexParamAudioPortFormat:
@@ -298,24 +298,25 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
       }
 
       if(sPCMModeParam->bInterleaved == OMX_TRUE){
-        if ((err = snd_pcm_hw_params_set_access(omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+        if ((err = snd_pcm_hw_params_set_access(playback_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
           DEBUG(DEB_LEV_ERR, "cannot set access type intrleaved (%s)\n", snd_strerror (err));
           return OMX_ErrorHardware;
         }
       }
       else{
-        if ((err = snd_pcm_hw_params_set_access(omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params, SND_PCM_ACCESS_RW_NONINTERLEAVED)) < 0) {
+        if ((err = snd_pcm_hw_params_set_access(playback_handle, hw_params, SND_PCM_ACCESS_RW_NONINTERLEAVED)) < 0) {
           DEBUG(DEB_LEV_ERR, "cannot set access type non interleaved (%s)\n", snd_strerror (err));
           return OMX_ErrorHardware;
         }
       }
       rate = sPCMModeParam->nSamplingRate;
-      if ((err = snd_pcm_hw_params_set_rate_near(omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params, &rate, 0)) < 0) {
+      if ((err = snd_pcm_hw_params_set_rate_near(playback_handle, hw_params, &rate, 0)) < 0) {
         DEBUG(DEB_LEV_ERR, "cannot set sample rate (%s)\n", snd_strerror (err));
         return OMX_ErrorHardware;
       }
       else{
-        DEBUG(DEB_LEV_PARAMS, "Set correctly sampling rate to %i\n", (int)omx_alsasink_component_Private->sPCMModeParam.nSamplingRate);
+        sPCMModeParam->nSamplingRate = rate;
+        DEBUG(DEB_LEV_PARAMS, "Set correctly sampling rate to %lu\n", sPCMModeParam->nSamplingRate);
       }
 
       if(sPCMModeParam->ePCMMode == OMX_AUDIO_PCMModeLinear){
@@ -388,7 +389,7 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
         }
 
         if(snd_pcm_format != SND_PCM_FORMAT_UNKNOWN){
-          if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+          if ((err = snd_pcm_hw_params_set_format(playback_handle, hw_params, snd_pcm_format)) < 0) {
             DEBUG(DEB_LEV_ERR, "cannot set sample format (%s)\n",  snd_strerror (err));
             return OMX_ErrorHardware;
           }
@@ -416,12 +417,12 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
       }
       /** Configure and prepare the ALSA handle */
       DEBUG(DEB_LEV_SIMPLE_SEQ, "Configuring the PCM interface\n");
-      if ((err = snd_pcm_hw_params (omx_alsasink_component_Private->playback_handle, omx_alsasink_component_Private->hw_params)) < 0) {
+      if ((err = snd_pcm_hw_params (playback_handle, hw_params)) < 0) {
         DEBUG(DEB_LEV_ERR, "cannot set parameters (%s)\n",  snd_strerror (err));
         return OMX_ErrorHardware;
       }
 
-      if ((err = snd_pcm_prepare (omx_alsasink_component_Private->playback_handle)) < 0) {
+      if ((err = snd_pcm_prepare (playback_handle)) < 0) {
         DEBUG(DEB_LEV_ERR, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
         return OMX_ErrorHardware;
       }

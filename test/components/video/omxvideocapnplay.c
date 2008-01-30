@@ -1,10 +1,10 @@
 /**
   @file test/components/video/omxvideocapnplay.c
-	
+  
   Test application that uses a OpenMAX component, a generic video source. 
   The application receives an video stream (.m4v or .264) decoded by a multiple format source component.
   The decoded output is seen by a yuv viewer.
-	
+  
   Copyright (C) 2007  STMicroelectronics and Nokia
 
   This library is free software; you can redistribute it and/or modify it under
@@ -21,7 +21,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-	
+  
   $Date$
   Revision $Rev$
   Author $Author$
@@ -40,13 +40,13 @@ OMX_CALLBACKTYPE videosrccallbacks = { .EventHandler = videosrcEventHandler,
     };
 
 OMX_CALLBACKTYPE colorconv_callbacks = { .EventHandler = colorconvEventHandler,
-	  .EmptyBufferDone = colorconvEmptyBufferDone,
-	  .FillBufferDone = colorconvFillBufferDone
+    .EmptyBufferDone = colorconvEmptyBufferDone,
+    .FillBufferDone = colorconvFillBufferDone
     };
 
 OMX_CALLBACKTYPE fbdev_sink_callbacks = { .EventHandler = fb_sinkEventHandler,
-	  .EmptyBufferDone = fb_sinkEmptyBufferDone,
-	  .FillBufferDone = NULL
+    .EmptyBufferDone = fb_sinkEmptyBufferDone,
+    .FillBufferDone = NULL
     };
 
 
@@ -75,7 +75,7 @@ OMX_U32 out_height = 144;
 char *output_file;
 FILE *outfile;
 
-int flagIsOutputEspected;
+int flagIsOutputExpected;
 int flagDecodedOutputReceived;
 int flagIsColorConvRequested;
 int flagIsSinkRequested;
@@ -153,10 +153,10 @@ int setPortParameters() {
       */
     omxVideoParam.nPortIndex = 0;
     setHeader(&omxVideoParam, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-    err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);		 
-    omxVideoParam.eColorFormat = OMX_COLOR_FormatYUV420Planar;	
+    err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);     
+    omxVideoParam.eColorFormat = OMX_COLOR_FormatYUV420Planar;  
     err = OMX_SetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);
-    if(err==OMX_ErrorBadParameter) {	
+    if(err==OMX_ErrorBadParameter) {  
       DEBUG(DEB_LEV_ERR,"\n bad parameter of input color format - exiting\n");
       exit(1);
     }
@@ -165,7 +165,7 @@ int setPortParameters() {
     err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);
     omxVideoParam.eColorFormat = COLOR_CONV_OUT_RGB_FORMAT;
     err = OMX_SetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);
-    if(err==OMX_ErrorBadParameter) {	
+    if(err==OMX_ErrorBadParameter) {  
       DEBUG(DEB_LEV_ERR,"\n bad parameter of output color format setting- exiting\n");
       exit(1);
     }
@@ -177,7 +177,7 @@ int setPortParameters() {
       err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
       omx_colorconvPortDefinition.nPortIndex = 0; //sink input port index
       err = OMX_SetParameter(appPriv->fbdev_sink_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
-      if(err != OMX_ErrorNone) {	
+      if(err != OMX_ErrorNone) {  
         DEBUG(DEB_LEV_ERR,"\n error in setting the inputport param of the sink component- exiting\n");
         exit(1);
       }
@@ -185,7 +185,7 @@ int setPortParameters() {
       err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);
       omxVideoParam.nPortIndex = 0; //sink input port index
       err = OMX_SetParameter(appPriv->fbdev_sink_handle, OMX_IndexParamVideoPortFormat, &omxVideoParam);
-      if(err != OMX_ErrorNone) {	
+      if(err != OMX_ErrorNone) {  
         DEBUG(DEB_LEV_ERR,"\n error in setting the input video param of the sink component- exiting\n");
         exit(1);
       }
@@ -270,9 +270,9 @@ OMX_ERRORTYPE test_OMX_RoleEnum(OMX_STRING component_name) {
   DEBUG(DEFAULT_MESSAGES, "The number of roles for the component %s is: %i\n", component_name, (int)no_of_roles);
 
   if(no_of_roles == 0) {
-    DEBUG(DEB_LEV_ERR, "The Number or roles is 0.\nThe component selected is not correct for the purpose of this test.\nExiting...\n");		
+    DEBUG(DEB_LEV_ERR, "The Number or roles is 0.\nThe component selected is not correct for the purpose of this test.\nExiting...\n");    
     err = OMX_ErrorInvalidComponentName;
-  }	else {
+  }  else {
     string_of_roles = malloc(no_of_roles * sizeof(OMX_STRING));
     for (index = 0; index < no_of_roles; index++) {
       *(string_of_roles + index) = malloc(no_of_roles * OMX_MAX_STRINGNAME_SIZE);
@@ -335,7 +335,7 @@ OMX_ERRORTYPE test_OMX_ComponentEnumByRole(OMX_STRING role_name) {
     }
   }
 
-  if(string_of_comp_per_role)	{
+  if(string_of_comp_per_role)  {
     free(string_of_comp_per_role);
     string_of_comp_per_role = NULL;
   }
@@ -368,7 +368,7 @@ int main(int argc, char** argv) {
   if(argc < 2){
     display_help();
   } else {
-    flagIsOutputEspected = 0;
+    flagIsOutputExpected = 0;
     flagDecodedOutputReceived = 0;
     flagIsColorConvRequested = 0;
     flagSetupTunnel = 0;
@@ -378,7 +378,7 @@ int main(int argc, char** argv) {
     argn_dec = 1;
     while (argn_dec < argc) {
       if (*(argv[argn_dec]) == '-') {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           display_help();
         }
         switch (*(argv[argn_dec] + 1)) {
@@ -394,7 +394,7 @@ int main(int argc, char** argv) {
             flagIsSinkRequested = 1;
             break;
           case 'o':
-            flagIsOutputEspected = 1;
+            flagIsOutputExpected = 1;
             break;
           case 'c':
             flagIsColorConvRequested = 1;
@@ -412,7 +412,7 @@ int main(int argc, char** argv) {
             display_help();
         }
       } else {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           if(strstr(argv[argn_dec], ".yuv") == NULL && strstr(argv[argn_dec], ".rgb") == NULL) {
             output_file = malloc(strlen(argv[argn_dec]) + 5);
             strcpy(output_file,argv[argn_dec]);
@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
             output_file = malloc(strlen(argv[argn_dec]) + 1);
             strcpy(output_file,argv[argn_dec]);
           }          
-          flagIsOutputEspected = 0;
+          flagIsOutputExpected = 0;
           flagDecodedOutputReceived = 1;
         } else if(flagIsFormatRequested) {
           if(strstr(argv[argn_dec], "OMX_COLOR_Format24bitRGB888") != NULL) {
@@ -452,17 +452,24 @@ int main(int argc, char** argv) {
       argn_dec++;
     }
 
+    /** if color converter component is not selected then sink component will not work, even if specified */
+    if(!flagIsColorConvRequested && flagIsSinkRequested) {
+      DEBUG(DEB_LEV_ERR, "You requested for sink - not producing any output file\n");
+      flagIsColorConvRequested = 1;
+      flagDecodedOutputReceived = 0;
+    }
+
     /** output file name check */
     //case 1 - user did not specify any output file
-    if(!flagIsOutputEspected && !flagDecodedOutputReceived) {
+    if(!flagIsOutputExpected && !flagDecodedOutputReceived && !flagIsSinkRequested) {
       DEBUG(DEB_LEV_ERR,"\n you did not enter any output file name");
       output_file = malloc(20);
-      if(flagIsColorConvRequested && !flagIsSinkRequested) {
+      if(flagIsColorConvRequested) {
         strcpy(output_file,"output.rgb");
       } else {
         strcpy(output_file,"output.yuv");
       }
-      DEBUG(DEB_LEV_ERR,"\n the decoded output file name will be %s ", output_file);
+      DEBUG(DEB_LEV_ERR,"\n the decoded output file name will be %s \n", output_file);
     } else if(flagDecodedOutputReceived) {
       if(flagIsSinkRequested || flagSetupTunnel) {
         flagDecodedOutputReceived = 0;
@@ -479,12 +486,6 @@ int main(int argc, char** argv) {
           DEBUG(DEB_LEV_ERR,"\n color conv option is not selected - so the output file is %s \n", output_file);
         }
       }
-    }
-
-    /** if color converter component is not selected then sink component will not work, even if specified */
-    if(!flagIsColorConvRequested && flagIsSinkRequested) {
-      DEBUG(DEB_LEV_ERR, "\n you are not using color converter component -  so sink component will not be used\n");
-      flagIsSinkRequested = 0;
     }
 
     if(flagIsSinkRequested) {
@@ -504,13 +505,13 @@ int main(int argc, char** argv) {
   }
 
   /* Initialize application private data */
-  appPriv = malloc(sizeof(appPrivateType));	
+  appPriv = malloc(sizeof(appPrivateType));  
   appPriv->sourceEventSem = malloc(sizeof(tsem_t));
   if(flagIsColorConvRequested == 1) {
     if(flagIsSinkRequested == 1) {
       appPriv->fbdevSinkEventSem = malloc(sizeof(tsem_t));
     }
- 	  appPriv->colorconvEventSem = malloc(sizeof(tsem_t));
+     appPriv->colorconvEventSem = malloc(sizeof(tsem_t));
   }
   appPriv->eofSem = malloc(sizeof(tsem_t));
   tsem_init(appPriv->sourceEventSem, 0);
@@ -518,7 +519,7 @@ int main(int argc, char** argv) {
     if(flagIsSinkRequested == 1) {
       tsem_init(appPriv->fbdevSinkEventSem, 0);
     }
- 	  tsem_init(appPriv->colorconvEventSem, 0);
+     tsem_init(appPriv->colorconvEventSem, 0);
   } 
   tsem_init(appPriv->eofSem, 0);
   
@@ -831,6 +832,9 @@ int main(int argc, char** argv) {
   if(!flagIsSinkRequested) {
     fclose(outfile);
   }
+  if(output_file) {
+    free(output_file);
+  }
 
   return 0;
 }
@@ -870,7 +874,7 @@ OMX_ERRORTYPE fb_sinkEventHandler(
           break;
       }
       tsem_up(appPriv->fbdevSinkEventSem);
-    }		  
+    }      
     else if (OMX_CommandPortEnable || OMX_CommandPortDisable) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Received Port Enable/Disable Event\n",__func__);
       tsem_up(appPriv->fbdevSinkEventSem);
@@ -1010,7 +1014,7 @@ OMX_ERRORTYPE colorconvEmptyBufferDone(
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
   return OMX_ErrorNone;
-}	
+}  
 
 
 OMX_ERRORTYPE colorconvFillBufferDone(
@@ -1037,7 +1041,7 @@ OMX_ERRORTYPE colorconvFillBufferDone(
           DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
         }
       } else if((pBuffer->nFilledLen > 0) && (!flagSetupTunnel)) {
-          fwrite(pBuffer->pBuffer, 1,  pBuffer->nFilledLen, outfile);		
+          fwrite(pBuffer->pBuffer, 1,  pBuffer->nFilledLen, outfile);    
           pBuffer->nFilledLen = 0;
       }
       if(pBuffer->nFlags == OMX_BUFFERFLAG_EOS) {
@@ -1053,7 +1057,7 @@ OMX_ERRORTYPE colorconvFillBufferDone(
   } else {
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
-  return OMX_ErrorNone;	
+  return OMX_ErrorNone;  
 }
 
 /** Callbacks implementation of the video source component*/
@@ -1090,7 +1094,7 @@ OMX_ERRORTYPE videosrcEventHandler(
         case OMX_StateWaitForResources:
           DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
           break;
-      }		
+      }    
       tsem_up(appPriv->sourceEventSem);
     }
     else if (OMX_CommandPortEnable || OMX_CommandPortDisable) {
@@ -1141,7 +1145,7 @@ OMX_ERRORTYPE videosrcFillBufferDone(
           err = OMX_FillThisBuffer(hComponent, pBuffer);
         }
       } else if((pBuffer->nFilledLen > 0) && (!flagSetupTunnel)) {
-          fwrite(pBuffer->pBuffer, 1,  pBuffer->nFilledLen, outfile);		
+          fwrite(pBuffer->pBuffer, 1,  pBuffer->nFilledLen, outfile);    
           pBuffer->nFilledLen = 0;
       }
       if(pBuffer->nFlags == OMX_BUFFERFLAG_EOS) {
@@ -1157,7 +1161,7 @@ OMX_ERRORTYPE videosrcFillBufferDone(
   } else {
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
-  return OMX_ErrorNone;	
+  return OMX_ErrorNone;  
 }
 
 

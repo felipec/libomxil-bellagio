@@ -1,30 +1,30 @@
 /**
   @file test/components/video/omxvideocapnplay.h
-	
+  
   Test application that uses a OpenMAX component, a generic video decoder. 
   The application receives an video stream (.m4v or .264) decoded by a multiple format decoder component.
   The decoded output is seen by a yuv viewer.
-	
-	Copyright (C) 2007  STMicroelectronics and Nokia
+  
+  Copyright (C) 2007  STMicroelectronics and Nokia
 
-	This library is free software; you can redistribute it and/or modify it under
-	the terms of the GNU Lesser General Public License as published by the Free
-	Software Foundation; either version 2.1 of the License, or (at your option)
-	any later version.
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
 
-	This library is distributed in the hope that it will be useful, but WITHOUT
-	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-	details.
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
 
-	You should have received a copy of the GNU Lesser General Public License
-	along with this library; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin St, Fifth Floor, Boston, MA
-	02110-1301  USA
-	
-	$Date$
-	Revision $Rev$
-	Author $Author$
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+  
+  $Date$
+  Revision $Rev$
+  Author $Author$
 */
 
 #include <stdio.h>
@@ -77,43 +77,43 @@ OMX_ERRORTYPE videosrcFillBufferDone(
 
 /** callback prototypes for color converter */
 OMX_ERRORTYPE colorconvEventHandler(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_EVENTTYPE eEvent,
-	OMX_OUT OMX_U32 Data1,
-	OMX_OUT OMX_U32 Data2,
-	OMX_OUT OMX_PTR pEventData);
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_EVENTTYPE eEvent,
+  OMX_OUT OMX_U32 Data1,
+  OMX_OUT OMX_U32 Data2,
+  OMX_OUT OMX_PTR pEventData);
 
 OMX_ERRORTYPE colorconvEmptyBufferDone(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
 OMX_ERRORTYPE colorconvFillBufferDone(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
 /** callback prototypes for sink */
 OMX_ERRORTYPE fb_sinkEventHandler(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_EVENTTYPE eEvent,
-	OMX_OUT OMX_U32 Data1,
-	OMX_OUT OMX_U32 Data2,
-	OMX_OUT OMX_PTR pEventData);
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_EVENTTYPE eEvent,
+  OMX_OUT OMX_U32 Data1,
+  OMX_OUT OMX_U32 Data2,
+  OMX_OUT OMX_PTR pEventData);
 
 OMX_ERRORTYPE fb_sinkEmptyBufferDone(
-	OMX_OUT OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_PTR pAppData,
-	OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
 /** function prototype declaration */
 
 /** display general help  */
 void display_help();
 
-/**	Try to determine resolution based on filename */
+/**  Try to determine resolution based on filename */
 int find_resolution(char* searchname);
 
 /** this function sets the color converter and video sink port characteristics 

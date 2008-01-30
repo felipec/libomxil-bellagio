@@ -505,9 +505,7 @@ OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size) {
     return OMX_ErrorBadParameter;
   }
   if(ver->s.nVersionMajor != SPECVERSIONMAJOR ||
-    ver->s.nVersionMinor != SPECVERSIONMINOR ||
-    ver->s.nRevision != SPECREVISION ||
-    ver->s.nStep != SPECSTEP) {
+    ver->s.nVersionMinor != SPECVERSIONMINOR) {
     DEBUG(DEB_LEV_ERR, "The version does not match\n");
     return OMX_ErrorVersionMismatch;
   }

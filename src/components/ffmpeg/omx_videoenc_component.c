@@ -342,7 +342,7 @@ void omx_videoenc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 
   OMX_S32 nOutputFilled = 0;
   OMX_U8* outputCurrBuffer;
-  OMX_U32 nLen = 0;
+  OMX_S32 nLen = 0;
   int size;
 
   size= inPort->sPortParam.format.video.nFrameWidth*inPort->sPortParam.format.video.nFrameHeight;

@@ -87,26 +87,26 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--enable-fbvideosink],
         [whether to enable the fbdev video sink])],
-    [with_fbdev_videosink=true],
-    [with_fbdev_videosink=false])
+    [with_fbdev_videosink=yes],
+    [with_fbdev_videosink=no])
 
-#Check whether alsa sink component has been requested
+#Check whether ALSA components have been requested
 AC_ARG_ENABLE(
-    [alsasink],
+    [alsa],
     [AC_HELP_STRING(
-        [--disable-alsasink],
-        [whether to disable the alsa sink])],
-    [with_alsasink=false],
-    [with_alsasink=true]) dnl default
+        [--disable-alsa],
+        [whether to disable the alsa])],
+    [with_alsa=no],
+    [with_alsa=yes]) dnl default
 
 #Enable the installation of all the header files
 AC_ARG_ENABLE(
-    [install_extra],
+    [component_devel],
     [AC_HELP_STRING(
-        [--enable-install-extra],
-        [whether to install component extra header files])],
-    [install_extra=yes],
-    [install_extra=no]) dnl default
+        [--enable-component-devel],
+        [whether to install base component header files])],
+    [component_devel=yes],
+    [component_devel=no])
 
 #Check whether video src/camera component has been requested
 AC_ARG_ENABLE(
@@ -114,8 +114,17 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--enable-videosrc],
         [whether to enable the video src/camera])],
-    [with_videosrc=true],
-    [with_videosrc=false])
+    [with_videosrc=yes],
+    [with_videosrc=no])
+
+#Check whether to disable all components
+AC_ARG_ENABLE(
+    [components],
+    [AC_HELP_STRING(
+        [--disable-components],
+        [whether to disable all the components])],
+    [with_components=no],
+    [with_components=yes])
 
 ################################################################################
 # Check for programs                                                           #
@@ -146,8 +155,12 @@ ACX_PTHREAD([
 # Check for libdl
 AC_SEARCH_LIBS([dlopen], [dl], [], [AC_MSG_ERROR([libdl is required])])
 
-# Check if Alsa sound library is present
-AC_CHECK_LIB(asound, snd_pcm_plugin_init, [with_alsalibrary=true], [with_alsalibrary=false])
+if test "x$with_components" = "xno"; then
+	with_alsa=no
+	with_vorbis=no
+	with_mad=no
+	with_ffmpeg=no
+fi
 
 ################################################################################
 # Check for header files                                                       #
@@ -156,12 +169,14 @@ AC_CHECK_LIB(asound, snd_pcm_plugin_init, [with_alsalibrary=true], [with_alsalib
 # Check if Video Frame buffer header file is present
 AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=true], [with_framebuffer=false])
 
-# Check if Alsa sound library is present
-AC_CHECK_HEADER([alsa/asoundlib.h], [], [with_alsalibrary=false])
-
 ################################################################################
 # Check for pkg-config modules                                                 #
 ################################################################################
+
+# Check for vorbis component dependencies
+if test "x$with_alsa" = "xyes"; then
+	PKG_CHECK_MODULES([ALSA], [alsa], [with_alsa=yes], [with_alsa=no])
+fi
 
 # Check for vorbis component dependencies
 if test "x$with_vorbis" = "xyes"; then
@@ -237,16 +252,20 @@ fi
 ################################################################################
 
 AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK],
-	       [test x$with_fbdev_videosink = xtrue && test x$with_framebuffer = xtrue])
+	       [test x$with_fbdev_videosink = xyes && test x$with_framebuffer = xyes])
 AM_CONDITIONAL([WITH_ALSASINK],
-	       [test x$with_alsasink = xtrue && test x$with_alsalibrary = xtrue])
-AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test ! "x$with_ffmpeg" = "xno"])
-AM_CONDITIONAL([WITH_MADCOMPONENTS], [test ! "x$with_mad" = "xno"])
-AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test ! "x$with_vorbis" = "xno"])
-AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test ! "x$with_audioeffects" = "xno"])
-
-AM_CONDITIONAL([INSTALL_EXTRA_HEADERS], [test ! "x$install_extra" = "xno"])
-
-AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xtrue])
+	       [test x$with_alsa = xyes ])
+AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS],
+	       [test x$with_ffmpeg = xyes])
+AM_CONDITIONAL([WITH_MADCOMPONENTS],
+	       [test x$with_mad = xyes])
+AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
+	       [test x$with_vorbis = xyes])
+AM_CONDITIONAL([WITH_AUDIOEFFECTS],
+	       [test x$with_audioeffects = xyes])
+AM_CONDITIONAL([INSTALL_BASE_HEADERS],
+	       [test x$with_component_devel = xyes])
+AM_CONDITIONAL([WITH_VIDEOSRC],
+	       [test x$with_videosrc = xyes])
 
 AC_OUTPUT

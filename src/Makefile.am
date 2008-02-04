@@ -19,7 +19,7 @@ libomxil_la_SOURCES = st_static_component_loader.c \
 libomxil_la_CFLAGS = -I$(top_srcdir)/include  -I$(srcdir)/base
 libomxil_la_LIBADD = base/libomxbase.la
 
-if INSTALL_EXTRA_HEADERS
+if INSTALL_BASE_HEADERS
 
 includeextradir = $(includedir)/bellagio
 

@@ -180,8 +180,8 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   stComponents[3]->name_specific_length = 1; 
   stComponents[3]->constructor = omx_videoenc_component_Constructor;  
 
-  stComponents[3]->name_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
-  stComponents[3]->role_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
+  stComponents[3]->name_specific = calloc(stComponents[3]->name_specific_length,sizeof(char *));  
+  stComponents[3]->role_specific = calloc(stComponents[3]->name_specific_length,sizeof(char *));  
 
   for(i=0;i<stComponents[3]->name_specific_length;i++) {
     stComponents[3]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);

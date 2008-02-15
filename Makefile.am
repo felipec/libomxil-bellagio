@@ -12,6 +12,9 @@ doc_DATA = README \
    ChangeLog \
    TODO
 
+docs:
+	doxygen Doxyfile
+
 uninstall-local:
 	rm -f ~/.omxregistry
 	rm -rf $(libdir)/omxilcomponents/

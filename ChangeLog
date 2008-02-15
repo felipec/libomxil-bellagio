@@ -1,4 +1,12 @@
-Changes in 0.3.3:
+Changes in 0.3.4:
+added several components: 
+ - audio source based on alsa
+ - audiomixer: simpel mixer with constant rate
+ - 3gp audio/video parser based on ffmpeg
+ - video source based on Video4Linux
+Added new domain specific base ports
+ 
+Difference 0.3.2 -> 0.3.3:
 - Added AAC format to the audio decoder based on ffmpeg
 - The all makefile system has been updated
   - It is possible to compile from a different directory

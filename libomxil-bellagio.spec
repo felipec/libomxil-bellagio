@@ -3,7 +3,7 @@ Version: 0.3.4
 Release: 0
 License: GNU LGPL
 Group: System Environment/Libraries
-Source: libomxil-B-0.3.4.tar.gz
+Source: libomxil-bellagio-0.3.4.tar.gz
 Summary: OpenMAX Integration Layer 1.1.1 library and components.
 Vendor: STMicroelectronics
 

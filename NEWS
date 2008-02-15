@@ -1,14 +1,8 @@
-The OpenMAX IL Bellagio package ver. 0.3.3 has been released. 
+The OpenMAX IL Bellagio package ver. 0.3.4 has been released. 
 The main additions to this delivery are:
-
-- The OpenMAX headers have been updated to version 1.1.1
-- Added simple UseEGLImage in video color converter
-- The automake system has been updated
-- The component loader interface has been updated:
-  - function DestroyComponent has been added
-  - The loader functions have a new parameter for the self reference
-- A new audio format has been added. Now the audio decoder
-  component is capable to decode the AAC audio streams. 
-- Added optional installation of Bellagio internal header files for new 
-  components development outside Bellagio source tree. 
-  The configure option is --enable-install-devel
+New several components: 
+ - audio source based on alsa
+ - audiomixer: simpel mixer with constant rate
+ - 3gp audio/video parser based on ffmpeg
+ - video source based on Video4Linux
+Added new domain specific base ports

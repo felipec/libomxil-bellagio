@@ -1,5 +1,5 @@
 Bellagio OpenMAX Integration Layer 1.1.1 project
-Release 0.3.3
+Release 0.3.4
 
 This is an opensource implementation of the OpenMAX Integration Layer (IL) API ver. 1.1.1,
 specified by the Khronos group (see http://www.khronos.org/openmax).
@@ -8,6 +8,7 @@ This package includes the libomxil shared library together with the following Op
 components (built as separate shared objects and loaded at runtime):
 AUDIO
 - OMX alsa sink component
+- OMX alsa source component
 - OMX audio decoder based on ffmpeg/vorbis libraries that supports the following audio formats:
   - MP3
   - OGG
@@ -28,7 +29,7 @@ PARSER
 
 N.B. The 3gp parser can support Mpeg4,H264 video and Mp4,Aac audio. FFMpeg can't encode (Warning, using MS style audio codec tag, the file may be unplayable!) vorbis audio for a 3gp container and so also not decodable. Because of this vorbis decoding support has not been included in 3gp parser 
 
-The following simple test application is provided:
+The following simple test applications are provided:
 
 test/components/audio/omxaudiodectest
 test/components/audio_effects/omxvolcontroltest
@@ -47,6 +48,11 @@ make
 make install
 make check
 
+If the pkg-config check fails, verify that the env variable PKG_CONFIG_PATH is set, and it points to 
+the diectory(ies) containing the .pc files describing the package to be verified.
+Usally it can be set as (for a bash):
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/:/usr/lib/pkgconfig/
+ 
 Before attempting to run any test, the OMX components *must* be registered
 with the command:
 
@@ -281,14 +287,13 @@ autoreconf -i
 -Check correct building of your tests with:
  make check
 -To build RPM:
- make dist
+ make distlibomxil-bellagio-0.3.4.tar.gz
  cp libomxil-B-0.3.3.tar.gz /usr/src/redhat/SOURCES/
- rpmbuild -ba libomxil-B.spec
+ rpmbuild -ba libomxil-bellagio.spec
 
 This version has been tested on:
-FC4 2.6.11-1.1369_fc4 (with ffmpeg-0.4.9-0.3.20051207, libmad 0.15.1b, libvorbis 1.1.0-2)
 FC6 2.6.20-1.2933.fc6 (with ffmpeg 0.4.9-0.37.20070503, libmad 0.15.1b, libvorbis 1.1.2-1)
 UBUNTU 2.6.17-11-generic
 
-Last modified: Jan 22, 2008.
+Last modified: Feb 15, 2008.
 

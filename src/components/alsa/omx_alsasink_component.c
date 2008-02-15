@@ -30,9 +30,10 @@
 #include <omx_base_audio_port.h>
 #include <omx_alsasink_component.h>
 
+/** Maximum Number of AlsaSink Instance*/
 #define MAX_COMPONENT_ALSASINK 1
 
-/** Maximum Number of AlsaSink Instance*/
+/** Number of AlsaSink Instance*/
 static OMX_U32 noAlsasinkInstance=0;
 
 /** The Constructor 

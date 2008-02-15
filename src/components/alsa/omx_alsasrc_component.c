@@ -20,7 +20,7 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2008-02-11 09:34:14 +0100 (Mon, 11 Feb 2008) $
+  $Date: 2008-02-11 14:04:14 +0530 (Mon, 11 Feb 2008) $
   Revision $Rev: 1296 $
   Author $Author: pankaj_sen $
 
@@ -30,9 +30,10 @@
 #include <omx_base_audio_port.h>
 #include <omx_alsasrc_component.h>
 
+/** Maximum Number of AlsaSrc Instance*/
 #define MAX_COMPONENT_ALSASRC 1
 
-/** Maximum Number of AlsaSink Instance*/
+/** Number of AlsaSrc Instance*/
 static OMX_U32 noAlsasrcInstance=0;
 
 /** The Constructor 

@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2008-02-13 16:34:49 +0100 (Wed, 13 Feb 2008) $
-  Revision $Rev: 1304 $
-  Author $Author: giulio_urlini $
+  $Date: 2007-11-19 14:00:02 +0530 (Mon, 19 Nov 2007) $
+  Revision $Rev: 376 $
+  Author $Author: pankaj_sen $
 
 */
 
@@ -36,9 +36,6 @@
 #include <pthread.h>
 #include <omx_base_source.h>
 #include <alsa/asoundlib.h>
-
-/** Maximum number of base_component component instances */
-#define MAX_NUM_OF_alsasrc_component_INSTANCES 1
 
 /** Alsasrcport component private structure.
  * see the define above

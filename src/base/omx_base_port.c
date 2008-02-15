@@ -734,7 +734,9 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   OMX_U32 portIndex;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
+#if NO_GST_OMX_PATCH
   unsigned int i;
+#endif
   portIndex = (openmaxStandPort->sPortParam.eDir == OMX_DirInput)?pBuffer->nInputPortIndex:pBuffer->nOutputPortIndex;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s portIndex %lu\n", __func__, portIndex);
 
@@ -762,7 +764,7 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   }
 
   /* Temporarily disable this check for gst-openmax */
-#if 0
+#if NO_GST_OMX_PATCH
   {
 	OMX_BOOL foundBuffer = OMX_FALSE;
 	if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {

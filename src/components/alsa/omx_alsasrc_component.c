@@ -20,9 +20,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2008-02-11 14:04:14 +0530 (Mon, 11 Feb 2008) $
-  Revision $Rev: 1296 $
-  Author $Author: pankaj_sen $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 

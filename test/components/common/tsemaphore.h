@@ -21,9 +21,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2007-05-22 16:48:41 +0200 (Tue, 22 May 2007) $
-  Revision $Rev: 239 $
-  Author $Author: gsent $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 

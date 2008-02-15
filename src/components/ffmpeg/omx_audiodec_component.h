@@ -63,7 +63,7 @@ DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
   /** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioAAC Reference to  OMX_AUDIO_PARAM_AACPROFILETYPE structure */ \
-   OMX_AUDIO_PARAM_AACPROFILETYPE  pAudioAac;  \
+  OMX_AUDIO_PARAM_AACPROFILETYPE  pAudioAac;  \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/  \
   OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;  \
   /** @param avcodecReady boolean flag that is true when the audio coded has been initialized */ \

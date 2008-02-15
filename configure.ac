@@ -1,4 +1,4 @@
-AC_INIT([OpenMAX Bellagio], [0.3.3], [], [libomxil-B])
+AC_INIT([OpenMAX Bellagio], [0.3.4], [], [libomxil-bellagio])
 AM_INIT_AUTOMAKE
 
 # Prerequisite autoconf version
@@ -16,7 +16,7 @@ AC_CONFIG_FILES([
     Doxyfile
     Makefile
     footer_SF.html
-    libomxil-B.pc
+    libomxil-bellagio.pc
     doc/omxregister.1
     doc/Makefile
     include/Makefile
@@ -45,14 +45,14 @@ AC_CONFIG_FILES([
 # Define the extra arguments the user can pass to the configure script         #
 ################################################################################
 
-# Check whether FFmpeg components have been requested
+# Check whether ffmpeg components have been requested
 AC_ARG_ENABLE(
     [ffmpegcomponents],
     [AC_HELP_STRING(
         [--disable-ffmpegcomponents],
         [whether to disable ffmpeg components compilation])],
-    [with_ffmpeg=no],
-    [with_ffmpeg=yes]) dnl default
+    [with_ffmpeg=$enableval],
+    [with_ffmpeg=yes])
 
 # Check whether mad components have been requested
 AC_ARG_ENABLE(
@@ -60,8 +60,8 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-madcomponents],
         [whether to disable mad components compilation])],
-    [with_mad=no],
-    [with_mad=yes]) dnl default
+    [with_mad=$enableval],
+    [with_mad=yes])
 
 # Check whether vorbis components have been requested
 AC_ARG_ENABLE(
@@ -69,8 +69,8 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-vorbiscomponents],
         [whether to disable vorbis components compilation])],
-    [with_vorbis=no],
-    [with_vorbis=yes]) dnl default
+    [with_vorbis=$enableval],
+    [with_vorbis=yes])
 
 # Check whether volume component has been requested
 AC_ARG_ENABLE(
@@ -78,8 +78,8 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-audioeffects],
         [whether to disable the audio effects components compilation])],
-    [with_audioeffects=no],
-    [with_audioeffects=yes]) dnl default
+    [with_audioeffects=$enableval],
+    [with_audioeffects=yes])
 
 #Check whether fbdev_videosink component has been requested
 AC_ARG_ENABLE(
@@ -87,7 +87,7 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--enable-fbvideosink],
         [whether to enable the fbdev video sink])],
-    [with_fbdev_videosink=yes],
+    [with_fbdev_videosink=$enableval],
     [with_fbdev_videosink=no])
 
 #Check whether ALSA components have been requested
@@ -95,9 +95,9 @@ AC_ARG_ENABLE(
     [alsa],
     [AC_HELP_STRING(
         [--disable-alsa],
-        [whether to disable the alsa])],
-    [with_alsa=no],
-    [with_alsa=yes]) dnl default
+        [whether to disable the alsa components])],
+    [with_alsa=$enableval],
+    [with_alsa=yes])
 
 #Enable the installation of all the header files
 AC_ARG_ENABLE(
@@ -105,7 +105,7 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--enable-component-devel],
         [whether to install base component header files])],
-    [component_devel=yes],
+    [component_devel=$enableval],
     [component_devel=no])
 
 #Check whether video src/camera component has been requested
@@ -114,7 +114,7 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--enable-videosrc],
         [whether to enable the video src/camera])],
-    [with_videosrc=yes],
+    [with_videosrc=$enableval],
     [with_videosrc=no])
 
 #Check whether to disable all components
@@ -123,7 +123,7 @@ AC_ARG_ENABLE(
     [AC_HELP_STRING(
         [--disable-components],
         [whether to disable all the components])],
-    [with_components=no],
+    [with_components=$enableval],
     [with_components=yes])
 
 ################################################################################
@@ -167,7 +167,7 @@ fi
 ################################################################################
 
 # Check if Video Frame buffer header file is present
-AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=true], [with_framebuffer=false])
+AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=yes], [with_framebuffer=no])
 
 ################################################################################
 # Check for pkg-config modules                                                 #
@@ -251,21 +251,13 @@ fi
 # Conditionals and file output                                                 #
 ################################################################################
 
-AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK],
-	       [test x$with_fbdev_videosink = xyes && test x$with_framebuffer = xyes])
-AM_CONDITIONAL([WITH_ALSASINK],
-	       [test x$with_alsa = xyes ])
-AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS],
-	       [test x$with_ffmpeg = xyes])
-AM_CONDITIONAL([WITH_MADCOMPONENTS],
-	       [test x$with_mad = xyes])
-AM_CONDITIONAL([WITH_VORBISCOMPONENTS],
-	       [test x$with_vorbis = xyes])
-AM_CONDITIONAL([WITH_AUDIOEFFECTS],
-	       [test x$with_audioeffects = xyes])
-AM_CONDITIONAL([INSTALL_BASE_HEADERS],
-	       [test x$with_component_devel = xyes])
-AM_CONDITIONAL([WITH_VIDEOSRC],
-	       [test x$with_videosrc = xyes])
+AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xyes && test x$with_framebuffer = xyes])
+AM_CONDITIONAL([WITH_ALSA], [test x$with_alsa = xyes])
+AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test x$with_ffmpeg = xyes])
+AM_CONDITIONAL([WITH_MADCOMPONENTS], [test x$with_mad = xyes])
+AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test x$with_vorbis = xyes])
+AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xyes])
+AM_CONDITIONAL([INSTALL_BASE_HEADERS], [test x$with_component_devel = xyes])
+AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xyes])
 
 AC_OUTPUT

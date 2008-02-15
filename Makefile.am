@@ -2,10 +2,10 @@ SUBDIRS = src include test m4 doc
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = libomxil-B.spec Doxyfile footer_SF.html
+EXTRA_DIST = libomxil-bellagio.spec Doxyfile footer_SF.html
 
 pkgconfigdir        = $(libdir)/pkgconfig
-pkgconfig_DATA      = libomxil-B.pc
+pkgconfig_DATA      = libomxil-bellagio.pc
 
 docdir = $(pkgdatadir)/doc/omxil
 doc_DATA = README \

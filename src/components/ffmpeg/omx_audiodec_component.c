@@ -268,8 +268,7 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
 
   pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingPCM;
   
-  if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) 
-  {
+  if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
     strcpy(omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/mpeg");
     omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
 
@@ -289,10 +288,7 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
 
     pPort->sAudioParam.nIndex = OMX_IndexParamAudioMp3;
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingMP3;
-  } 
-
-  else if(omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS)
-  {
+  } else if(omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingVORBIS) {
     strcpy(omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/vorbis");
     omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingVORBIS;
                                                                                                                              
@@ -309,9 +305,7 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     pPort->sAudioParam.nIndex = OMX_IndexParamAudioVorbis;
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingVORBIS;
 
-  }
-  else if(omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingAAC) 
-  {
+  } else if(omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingAAC) {
     strcpy(omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/aac");
     omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingAAC;
                                                                                                                              
@@ -329,10 +323,9 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     pPort->sAudioParam.nIndex = OMX_IndexParamAudioAac;
     pPort->sAudioParam.eEncoding = OMX_AUDIO_CodingAAC;
 
-  }
-  else
+  } else {
     return;
-
+	}
 }
 
 /** The Initialization function 

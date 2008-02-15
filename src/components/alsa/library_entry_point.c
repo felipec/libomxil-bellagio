@@ -33,6 +33,7 @@
 
 #include <st_static_component_loader.h>
 #include <omx_alsasink_component.h>
+#include <omx_alsasrc_component.h>
 
 /** The library entry point. It must have the same name for each
  * library fo the components loaded by th ST static component loader.
@@ -52,8 +53,9 @@
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
   if (stComponents == NULL) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-    return 1; // Return Number of Component/s
+    return 2; // Return Number of Component/s
   }
+
   stComponents[0]->componentVersion.s.nVersionMajor = 1; 
   stComponents[0]->componentVersion.s.nVersionMinor = 1; 
   stComponents[0]->componentVersion.s.nRevision = 1;
@@ -86,6 +88,38 @@
   strcpy(stComponents[0]->name_specific[0], "OMX.st.alsa.alsasink");
   strcpy(stComponents[0]->role_specific[0], "alsa.alsasink");
   
+  stComponents[1]->componentVersion.s.nVersionMajor = 1; 
+  stComponents[1]->componentVersion.s.nVersionMinor = 1; 
+  stComponents[1]->componentVersion.s.nRevision = 1;
+  stComponents[1]->componentVersion.s.nStep = 1;
+
+  stComponents[1]->name = calloc(1,OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[1]->name == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+  strcpy(stComponents[1]->name, "OMX.st.alsa.alsasrc");
+  stComponents[1]->name_specific_length = 1;
+  stComponents[1]->constructor = omx_alsasrc_component_Constructor;  
+
+  stComponents[1]->name_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
+  stComponents[1]->role_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
+
+  for(i=0;i<stComponents[1]->name_specific_length;i++) {
+    stComponents[1]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[1]->name_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+  for(i=0;i<stComponents[1]->name_specific_length;i++) {
+    stComponents[1]->role_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[1]->role_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+
+  strcpy(stComponents[1]->name_specific[0], "OMX.st.alsa.alsasrc");
+  strcpy(stComponents[1]->role_specific[0], "alsa.alsasrc");
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-  return 1;
+  return 2;
 }

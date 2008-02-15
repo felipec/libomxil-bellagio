@@ -12,7 +12,7 @@ if WITH_MADCOMPONENTS
     MAYBE_MAD = mad
 endif 
 
-if WITH_ALSASINK
+if WITH_ALSA
     MAYBE_ALSA = alsa
 endif 
 

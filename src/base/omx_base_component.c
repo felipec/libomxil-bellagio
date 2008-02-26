@@ -40,7 +40,7 @@ extern "C" {
 #include <OMX_Core.h>
 #include <OMX_Component.h>
 
-#include "st_static_component_loader.h"
+#include "omxcore.h"
 #include "omx_base_component.h"
 
 #include "tsemaphore.h"

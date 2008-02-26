@@ -31,7 +31,7 @@
 #include <omxcore.h>
 #include <OMX_Core.h>
 #include <OMX_Component.h>
-//#include "st_static_component_loader.h"
+
 #include "omx_base_component.h"
 #include "omx_base_audio_port.h"
 

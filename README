@@ -287,13 +287,13 @@ autoreconf -i
 -Check correct building of your tests with:
  make check
 -To build RPM:
- make distlibomxil-bellagio-0.3.4.tar.gz
- cp libomxil-B-0.3.3.tar.gz /usr/src/redhat/SOURCES/
- rpmbuild -ba libomxil-bellagio.spec
+ make dist libomxil-bellagio-0.3.4.tar.gz
+sudo cp libomxil-bellagio-0.3.4.tar.gz /usr/src/redhat/SOURCES/
+sudo rpmbuild -ba libomxil-bellagio.spec
 
 This version has been tested on:
 FC6 2.6.20-1.2933.fc6 (with ffmpeg 0.4.9-0.37.20070503, libmad 0.15.1b, libvorbis 1.1.2-1)
 UBUNTU 2.6.17-11-generic
 
-Last modified: Feb 15, 2008.
+Last modified: Feb 27, 2008.
 

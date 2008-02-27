@@ -1,3 +1,4 @@
+
 Name: libomxil-bellagio
 Version: 0.3.4
 Release: 0
@@ -53,6 +54,11 @@ make install
 /usr/local/lib/omxilcomponents/libomxalsa.so
 /usr/local/lib/omxilcomponents/libomxalsa.so.0
 /usr/local/lib/omxilcomponents/libomxalsa.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxaudio_effects.a
+/usr/local/lib/omxilcomponents/libomxaudio_effects.la
+/usr/local/lib/omxilcomponents/libomxaudio_effects.so
+/usr/local/lib/omxilcomponents/libomxaudio_effects.so.0
+/usr/local/lib/omxilcomponents/libomxaudio_effects.so.0.0.0
 /usr/local/lib/omxilcomponents/libomxffmpeg.a
 /usr/local/lib/omxilcomponents/libomxffmpeg.la
 /usr/local/lib/omxilcomponents/libomxffmpeg.so
@@ -68,11 +74,11 @@ make install
 /usr/local/lib/omxilcomponents/libomxmad.so
 /usr/local/lib/omxilcomponents/libomxmad.so.0
 /usr/local/lib/omxilcomponents/libomxmad.so.0.0.0
-/usr/local/lib/omxilcomponents/libomxvolcontrol.a
-/usr/local/lib/omxilcomponents/libomxvolcontrol.la
-/usr/local/lib/omxilcomponents/libomxvolcontrol.so
-/usr/local/lib/omxilcomponents/libomxvolcontrol.so.0
-/usr/local/lib/omxilcomponents/libomxvolcontrol.so.0.0.0
+/usr/local/lib/omxilcomponents/libomxparser3gp.a
+/usr/local/lib/omxilcomponents/libomxparser3gp.la
+/usr/local/lib/omxilcomponents/libomxparser3gp.so
+/usr/local/lib/omxilcomponents/libomxparser3gp.so.0
+/usr/local/lib/omxilcomponents/libomxparser3gp.so.0.0.0
 /usr/local/lib/omxilcomponents/libomxvorbis.a
 /usr/local/lib/omxilcomponents/libomxvorbis.la
 /usr/local/lib/omxilcomponents/libomxvorbis.so
@@ -80,6 +86,8 @@ make install
 /usr/local/lib/omxilcomponents/libomxvorbis.so.0.0.0
 
 %changelog
+* Wed Feb 27 2008 Giulio Urlini
+- changed the library list. 
 * Fri Oct 19 2007 Giulio Urlini
 - removed fbdev from file list. It is experimental, 
   and not installed on any platform
@@ -95,4 +103,3 @@ make install
 - Fixed some minor issues in build process
 * Mon Feb 6 2006 Giulio Urlini
 - First build attempt
-

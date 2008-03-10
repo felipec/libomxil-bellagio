@@ -756,10 +756,10 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
     DEBUG(DEB_LEV_ERR, "In %s: we are not in executing/paused/idle state, but in %d\n", __func__, omx_base_component_Private->state);
     return OMX_ErrorIncorrectStateOperation;
   }
-  if (!PORT_IS_ENABLED(openmaxStandPort) || PORT_IS_BEING_DISABLED(openmaxStandPort) ||
+  if (!PORT_IS_ENABLED(openmaxStandPort) || (PORT_IS_BEING_DISABLED(openmaxStandPort) && !PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) ||
       (omx_base_component_Private->transientState == OMX_TransStateExecutingToIdle && 
       (PORT_IS_TUNNELED(openmaxStandPort) && !PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)))) {
-    DEBUG(DEB_LEV_FULL_SEQ, "In %s: Port %d is disabled\n", __func__, (int)portIndex);
+    DEBUG(DEB_LEV_ERR, "In %s: Port %d is disabled comp = %s \n", __func__, (int)portIndex,omx_base_component_Private->name);
     return OMX_ErrorIncorrectStateOperation;
   }
 
@@ -787,7 +787,7 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   }
 	
   /* And notify the buffer management thread we have a fresh new buffer to manage */
-  if(!openmaxStandPort->bIsPortFlushed){
+  if(!PORT_IS_BEING_FLUSHED(openmaxStandPort) && !(PORT_IS_BEING_DISABLED(openmaxStandPort) && PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort))){
     queue(openmaxStandPort->pBufferQueue, pBuffer);
     tsem_up(openmaxStandPort->pBufferSem);
     DEBUG(DEB_LEV_PARAMS, "In %s Signalling bMgmtSem Port Index=%d\n",__func__, (int)portIndex);
@@ -822,7 +822,7 @@ OMX_ERRORTYPE base_port_ReturnBufferFunction(omx_base_PortType* openmaxStandPort
       pBuffer->nInputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
       eError = ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->FillThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
       if(eError != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_FULL_SEQ, "In %s eError %08x in FillThis Buffer from Component %s Non-Supplier\n", 
+        DEBUG(DEB_LEV_ERR, "In %s eError %08x in FillThis Buffer from Component %s Non-Supplier\n", 
         __func__, eError,omx_base_component_Private->name);
       }
     } else {
@@ -830,13 +830,13 @@ OMX_ERRORTYPE base_port_ReturnBufferFunction(omx_base_PortType* openmaxStandPort
       pBuffer->nOutputPortIndex = openmaxStandPort->sPortParam.nPortIndex;
       eError = ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->EmptyThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
       if(eError != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_FULL_SEQ, "In %s eError %08x in EmptyThis Buffer from Component %s Non-Supplier\n", 
+        DEBUG(DEB_LEV_ERR, "In %s eError %08x in EmptyThis Buffer from Component %s Non-Supplier\n", 
         __func__, eError,omx_base_component_Private->name);
       }
     }
   }	
   else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort) && 
-            (openmaxStandPort->bIsPortFlushed==OMX_FALSE)) {
+            !PORT_IS_BEING_FLUSHED(openmaxStandPort)) {
     if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
       eError = ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->FillThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
       if(eError != OMX_ErrorNone) {

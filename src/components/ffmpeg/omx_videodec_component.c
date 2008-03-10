@@ -861,7 +861,7 @@ OMX_ERRORTYPE omx_videodec_component_GetExtensionIndex(
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
-  if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
+  if(strcmp(cParameterName,"OMX.ST.index.config.videoextradata") == 0) {
     *pIndexType = OMX_IndexVendorVideoExtraData;
   } else {
     return OMX_ErrorBadParameter;

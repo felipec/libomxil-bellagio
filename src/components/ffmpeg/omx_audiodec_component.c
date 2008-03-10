@@ -805,7 +805,7 @@ OMX_ERRORTYPE omx_audiodec_component_GetExtensionIndex(
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
-  if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
+  if(strcmp(cParameterName,"OMX.ST.index.config.audioextradata") == 0) {
     *pIndexType = OMX_IndexVendorAudioExtraData;  
   } else {
     return OMX_ErrorBadParameter;

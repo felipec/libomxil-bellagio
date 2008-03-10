@@ -1002,7 +1002,7 @@ OMX_ERRORTYPE filereaderEventHandler(
   } else if(eEvent == OMX_EventPortSettingsChanged) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Setting Changed event\n");
     if(flagUsingFFMpeg) {
-      err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.config.extradata",&eIndexExtraData);
+      err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.config.audioextradata",&eIndexExtraData);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
         exit(1);

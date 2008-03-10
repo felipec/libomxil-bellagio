@@ -547,7 +547,7 @@ OMX_ERRORTYPE omx_filereader_component_GetExtensionIndex(
 
   if(strcmp(cParameterName,"OMX.ST.index.param.filereader.inputfilename") == 0) {
     *pIndexType = OMX_IndexVendorFileReadInputFilename;  
-  } else if(strcmp(cParameterName,"OMX.ST.index.config.extradata") == 0) {
+  } else if(strcmp(cParameterName,"OMX.ST.index.config.audioextradata") == 0) {
     *pIndexType = OMX_IndexVendorAudioExtraData;  
   } else {
     return OMX_ErrorBadParameter;

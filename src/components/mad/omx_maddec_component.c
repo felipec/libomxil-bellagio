@@ -37,6 +37,10 @@
 /** Maximum Number of Audio Mad Decoder Component Instance*/
 #define MAX_COMPONENT_MADDEC 4
 
+/** Number of Mad Component Instance*/
+static OMX_U32 noMadDecInstance=0;
+
+
 /** This is used when the temporary buffer takes data of this length specified
   from input buffer before its processing */
 #define TEMP_BUF_COPY_SPACE 1024
@@ -183,6 +187,11 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   openmaxStandComp->SetParameter = omx_maddec_component_SetParameter;
   openmaxStandComp->GetParameter = omx_maddec_component_GetParameter;
 
+  noMadDecInstance++;
+
+  if(noMadDecInstance>MAX_COMPONENT_MADDEC)
+    return OMX_ErrorInsufficientResources;
+
   /** initialising mad structures */
   omx_maddec_component_Private->stream = malloc (sizeof(struct mad_stream));
   omx_maddec_component_Private->synth = malloc (sizeof(struct mad_synth));
@@ -232,14 +241,20 @@ OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
     free(omx_maddec_component_Private->madDecSyncSem);
     omx_maddec_component_Private->madDecSyncSem = NULL;
   }
-
+  
   /** freeing mad decoder structures */
-  free(omx_maddec_component_Private->stream);
-  omx_maddec_component_Private->stream = NULL;
-  free(omx_maddec_component_Private->synth);
-  omx_maddec_component_Private->synth = NULL;
-  free(omx_maddec_component_Private->frame);
-  omx_maddec_component_Private->frame = NULL;
+  if(omx_maddec_component_Private->stream != NULL) {
+    free(omx_maddec_component_Private->stream);
+    omx_maddec_component_Private->stream = NULL;
+  }
+  if(omx_maddec_component_Private->synth != NULL) {
+    free(omx_maddec_component_Private->synth);
+    omx_maddec_component_Private->synth = NULL;
+  }
+  if(omx_maddec_component_Private->frame != NULL) {
+    free(omx_maddec_component_Private->frame);
+    omx_maddec_component_Private->frame = NULL;
+  }
 
   /* frees port/s */
   if (omx_maddec_component_Private->ports) {
@@ -254,6 +269,8 @@ OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of mad decoder component is called\n");
 
   omx_base_filter_Destructor(openmaxStandComp);
+
+  noMadDecInstance--;
 
   return OMX_ErrorNone;
 

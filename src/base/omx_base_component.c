@@ -445,6 +445,20 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     case OMX_StatePause:
       omx_base_component_Private->state=OMX_StateExecuting;
+
+      /* Tunneled Supplier Ports were enabled in paused state. So signal buffer managment thread*/
+      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
+        pPort=omx_base_component_Private->ports[i];
+        DEBUG(DEB_LEV_PARAMS, "In %s: state transition Paused 2 Executing, nelem=%d,semval=%d,Buf Count Actual=%d\n", __func__,
+          pPort->pBufferQueue->nelem,pPort->pBufferSem->semval,(int)pPort->sPortParam.nBufferCountActual);
+        if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort) && 
+          (pPort->pBufferQueue->nelem == (pPort->pBufferSem->semval + pPort->sPortParam.nBufferCountActual))) {
+          for(j=0; j < pPort->sPortParam.nBufferCountActual;j++) {
+            tsem_up(pPort->pBufferSem);
+            tsem_up(omx_base_component_Private->bMgmtSem);
+          }
+        }
+      }
       /*Signal buffer management thread if waiting at paused state*/
       tsem_signal(omx_base_component_Private->bStateSem);
       break;

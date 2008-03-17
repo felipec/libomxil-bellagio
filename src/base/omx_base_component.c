@@ -768,22 +768,24 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxcomponent->pComponentPrivate;
   OMX_PARAM_BUFFERSUPPLIERTYPE *pBufferSupplier;
   omx_base_PortType *pPort;
+  OMX_PORT_PARAM_TYPE *pPortParam;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   DEBUG(DEB_LEV_PARAMS, "Setting parameter %i\n", nParamIndex);
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
-  /*Buffer Supplier case has been handled in that case*/
-  if (omx_base_component_Private->state != OMX_StateLoaded && omx_base_component_Private->state != OMX_StateWaitForResources 
-    && (nParamIndex!=OMX_IndexParamCompBufferSupplier) && (nParamIndex!=OMX_IndexParamPortDefinition)) {
-    return OMX_ErrorIncorrectStateOperation;
-  }
+ 
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
   case OMX_IndexParamVideoInit:
   case OMX_IndexParamImageInit:
   case OMX_IndexParamOtherInit:
+    pPortParam  = (OMX_PORT_PARAM_TYPE* ) ComponentParameterStructure;
+    if (omx_base_component_Private->state != OMX_StateLoaded && 
+      omx_base_component_Private->state != OMX_StateWaitForResources) {
+      return OMX_ErrorIncorrectStateOperation;
+    }
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
@@ -798,15 +800,39 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     } 
     {
       OMX_PARAM_PORTDEFINITIONTYPE *pPortParam;
+      OMX_U32 j,old_nBufferCountActual=0;;
       pPortParam = &omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam;
+      old_nBufferCountActual = pPortParam->nBufferCountActual;
       pPortParam->nBufferCountActual = pPortDef->nBufferCountActual;
       memcpy(&pPortParam->format.video, &pPortDef->format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
       memcpy(&pPortParam->format.audio, &pPortDef->format.audio, sizeof(OMX_AUDIO_PORTDEFINITIONTYPE));
       memcpy(&pPortParam->format.image, &pPortDef->format.image, sizeof(OMX_IMAGE_PORTDEFINITIONTYPE));
       memcpy(&pPortParam->format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
+
+      /*If component state Idle/Pause/Executing and re-alloc the following private variables */
+      if ((omx_base_component_Private->state == OMX_StateIdle || 
+        omx_base_component_Private->state == OMX_StatePause  || 
+        omx_base_component_Private->state == OMX_StateExecuting) && 
+        (pPortParam->nBufferCountActual > old_nBufferCountActual)) {
+
+        pPort = omx_base_component_Private->ports[pPortDef->nPortIndex];
+        if(pPort->bBufferStateAllocated) {
+          pPort->bBufferStateAllocated = realloc(pPort->bBufferStateAllocated,pPort->sPortParam.nBufferCountActual*sizeof(BUFFER_STATUS_FLAG *));
+          for(j=0; j < pPort->sPortParam.nBufferCountActual; j++) {
+            pPort->bBufferStateAllocated[j] = BUFFER_FREE;
+          }
+        }
+        if(pPort->pInternalBufferStorage) {
+          pPort->pInternalBufferStorage = realloc(pPort->pInternalBufferStorage,pPort->sPortParam.nBufferCountActual*sizeof(OMX_BUFFERHEADERTYPE *));
+        }
+      }
     }
     break;
   case OMX_IndexParamPriorityMgmt:
+    if (omx_base_component_Private->state != OMX_StateLoaded && 
+      omx_base_component_Private->state != OMX_StateWaitForResources) {
+      return OMX_ErrorIncorrectStateOperation;
+    }
     pPrioMgmt = (OMX_PRIORITYMGMTTYPE*)ComponentParameterStructure;
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PRIORITYMGMTTYPE))) != OMX_ErrorNone) { 
       break;

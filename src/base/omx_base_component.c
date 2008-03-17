@@ -800,8 +800,11 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     } 
     {
       OMX_PARAM_PORTDEFINITIONTYPE *pPortParam;
-      OMX_U32 j,old_nBufferCountActual=0;;
+      OMX_U32 j,old_nBufferCountActual=0;
       pPortParam = &omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam;
+      if( pPortDef->nBufferCountActual < pPortParam->nBufferCountMin) {
+        return OMX_ErrorBadParameter;
+      }
       old_nBufferCountActual = pPortParam->nBufferCountActual;
       pPortParam->nBufferCountActual = pPortDef->nBufferCountActual;
       memcpy(&pPortParam->format.video, &pPortDef->format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));

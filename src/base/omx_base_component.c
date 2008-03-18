@@ -805,13 +805,41 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
       if( pPortDef->nBufferCountActual < pPortParam->nBufferCountMin) {
         return OMX_ErrorBadParameter;
       }
-      old_nBufferCountActual = pPortParam->nBufferCountActual;
+      old_nBufferCountActual         = pPortParam->nBufferCountActual;
       pPortParam->nBufferCountActual = pPortDef->nBufferCountActual;
-      memcpy(&pPortParam->format.video, &pPortDef->format.video, sizeof(OMX_VIDEO_PORTDEFINITIONTYPE));
-      memcpy(&pPortParam->format.audio, &pPortDef->format.audio, sizeof(OMX_AUDIO_PORTDEFINITIONTYPE));
-      memcpy(&pPortParam->format.image, &pPortDef->format.image, sizeof(OMX_IMAGE_PORTDEFINITIONTYPE));
-      memcpy(&pPortParam->format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
 
+      switch(pPortDef->eDomain) {
+      case OMX_PortDomainAudio:
+        memcpy(&pPortParam->format.audio, &pPortDef->format.audio, sizeof(OMX_AUDIO_PORTDEFINITIONTYPE));
+        break;
+      case OMX_PortDomainVideo:
+        pPortParam->format.video.pNativeRender          = pPortDef->format.video.pNativeRender;
+        pPortParam->format.video.nFrameWidth            = pPortDef->format.video.nFrameWidth;
+        pPortParam->format.video.nFrameHeight           = pPortDef->format.video.nFrameHeight;
+        pPortParam->format.video.nStride                = pPortDef->format.video.nStride;
+        pPortParam->format.video.xFramerate             = pPortDef->format.video.xFramerate;
+        pPortParam->format.video.bFlagErrorConcealment  = pPortDef->format.video.bFlagErrorConcealment;
+        pPortParam->format.video.eCompressionFormat     = pPortDef->format.video.eCompressionFormat;
+        pPortParam->format.video.eColorFormat           = pPortDef->format.video.eColorFormat;
+        pPortParam->format.video.pNativeWindow          = pPortDef->format.video.pNativeWindow;
+        break;
+      case OMX_PortDomainImage:
+        pPortParam->format.image.nFrameWidth            = pPortDef->format.image.nFrameWidth;
+        pPortParam->format.image.nFrameHeight           = pPortDef->format.image.nFrameHeight;
+        pPortParam->format.image.nStride                = pPortDef->format.image.nStride;
+        pPortParam->format.image.bFlagErrorConcealment  = pPortDef->format.image.bFlagErrorConcealment;
+        pPortParam->format.image.eCompressionFormat     = pPortDef->format.image.eCompressionFormat;
+        pPortParam->format.image.eColorFormat           = pPortDef->format.image.eColorFormat;
+        pPortParam->format.image.pNativeWindow          = pPortDef->format.image.pNativeWindow;
+        break;
+      case OMX_PortDomainOther:
+        memcpy(&pPortParam->format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
+        break;
+      default:
+        return OMX_ErrorBadParameter;
+        break;
+      }
+      
       /*If component state Idle/Pause/Executing and re-alloc the following private variables */
       if ((omx_base_component_Private->state == OMX_StateIdle || 
         omx_base_component_Private->state == OMX_StatePause  || 

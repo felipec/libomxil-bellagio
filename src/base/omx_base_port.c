@@ -634,6 +634,12 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
           break;
         }
       }
+      if(eError!=OMX_ErrorNone) {
+        free(pBuffer);
+        pBuffer = NULL;
+        DEBUG(DEB_LEV_ERR,"In %s Tunneled Component Couldn't Use Buffer %x \n",__func__,(int)eError);
+        return eError;
+      }
       openmaxStandPort->bBufferStateAllocated[i] = BUFFER_ALLOCATED;
       openmaxStandPort->nNumAssignedBuffers++;
       DEBUG(DEB_LEV_PARAMS, "openmaxStandPort->nNumAssignedBuffers %i\n", (int)openmaxStandPort->nNumAssignedBuffers);

@@ -287,7 +287,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
           DEBUG(DEB_LEV_FULL_SEQ, "In %s nPortIndex=%d pAllocSem Semval=%x\n", __func__,(int)i,(int)pPort->pAllocSem->semval);
 
           /*If ports are enabled then wait till all buffers are freed*/
-          if(pPort->sPortParam.bEnabled == OMX_TRUE) {
+          if(PORT_IS_ENABLED(pPort)) {
             tsem_down(pPort->pAllocSem);
           }
         }
@@ -346,14 +346,16 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
         pPort = omx_base_component_Private->ports[i];
         if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
-          /** Allocate here the buffers needed for the tunneling */
-          err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize);
-          if(err!=OMX_ErrorNone) { 
-            DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
-            return err; 
-          } 
+          if(PORT_IS_ENABLED(pPort)) {
+            /** Allocate here the buffers needed for the tunneling */
+            err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize);
+            if(err!=OMX_ErrorNone) { 
+              DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
+              return err; 
+            } 
+          }
         } else {
-          if(pPort->sPortParam.bEnabled == OMX_TRUE) {
+          if(PORT_IS_ENABLED(pPort)) {
             DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. port enabled %i,  port populated %i\n", 
               __func__, pPort->sPortParam.bEnabled,pPort->sPortParam.bPopulated);
             tsem_down(pPort->pAllocSem);
@@ -561,7 +563,7 @@ OMX_ERRORTYPE omx_base_component_ParameterSanityCheck(OMX_IN  OMX_HANDLETYPE hCo
   pPort = omx_base_component_Private->ports[nPortIndex];
 
   if (omx_base_component_Private->state != OMX_StateLoaded && omx_base_component_Private->state != OMX_StateWaitForResources) {
-    if (pPort->sPortParam.bEnabled == OMX_TRUE) {
+    if(PORT_IS_ENABLED(pPort)) {
       DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_base_component_Private->state,__LINE__);
       return OMX_ErrorIncorrectStateOperation;
     }

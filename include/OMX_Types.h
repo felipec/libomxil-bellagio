@@ -38,37 +38,29 @@ extern "C" {
 /** The OMX_API and OMX_APIENTRY are platform specific definitions used
  *  to declare OMX function prototypes.  They are modified to meet the
  *  requirements for a particular platform */
-#ifdef _WIN32
+#ifdef __SYMBIAN32__   
 #   ifdef __OMX_EXPORTS
 #       define OMX_API __declspec(dllexport)
 #   else
-#       define OMX_API __declspec(dllimport)
+#       ifdef _WIN32
+#           define OMX_API __declspec(dllexport) 
+#       else
+#           define OMX_API __declspec(dllimport)
+#       endif
 #   endif
 #else
-#   ifdef __OMX_EXPORTS
-#       define OMX_API
+#   ifdef _WIN32
+#      ifdef __OMX_EXPORTS
+#          define OMX_API __declspec(dllexport)
+#      else
+#          define OMX_API __declspec(dllimport)
+#      endif
 #   else
-#       define OMX_API extern
-#   endif
-#endif
-
-#ifdef __SYMBIAN32__
-#   ifdef __OMX_EXPORTS
-#       define OMX_API EXPORT_C
-#   else
-#       define OMX_API IMPORT_C
-#   endif
-#elif defined(_WIN32)
-#   ifdef __OMX_EXPORTS
-#       define OMX_API __declspec(dllexport)
-#   else
-#       define OMX_API __declspec(dllimport)
-#   endif
-#else
-#   ifdef __OMX_EXPORTS
-#       define OMX_API
-#   else
-#       define OMX_API extern
+#      ifdef __OMX_EXPORTS
+#          define OMX_API
+#      else
+#          define OMX_API extern
+#      endif
 #   endif
 #endif
 

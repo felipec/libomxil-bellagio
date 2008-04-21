@@ -579,7 +579,8 @@ typedef enum OMX_VIDEO_MPEG4PROFILETYPE {
     OMX_VIDEO_MPEG4ProfileCoreScalable     = 0x800,      
     OMX_VIDEO_MPEG4ProfileAdvancedCoding   = 0x1000,    
     OMX_VIDEO_MPEG4ProfileAdvancedCore     = 0x2000,      
-    OMX_VIDEO_MPEG4ProfileAdvancedScalable = 0x4000,  
+    OMX_VIDEO_MPEG4ProfileAdvancedScalable = 0x4000,
+    OMX_VIDEO_MPEG4ProfileAdvancedSimple   = 0x8000,
     OMX_VIDEO_MPEG4ProfileMax              = 0x7FFFFFFF  
 } OMX_VIDEO_MPEG4PROFILETYPE;
 

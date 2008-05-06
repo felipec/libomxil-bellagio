@@ -1,1 +1,1 @@
-SUBDIRS = common audio video audio_effects parser
+SUBDIRS = common audio video audio_effects parser camera

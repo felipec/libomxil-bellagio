@@ -33,6 +33,7 @@ AC_CONFIG_FILES([
     src/components/audio_effects/Makefile
     src/components/video_src/Makefile
     src/components/parser3gp/Makefile
+    src/components/camera/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile
@@ -41,6 +42,7 @@ AC_CONFIG_FILES([
     test/components/video/Makefile
     test/components/audio_effects/Makefile
     test/components/parser/Makefile
+    test/components/camera/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #
@@ -167,6 +169,9 @@ fi
 # Check for header files                                                       #
 ################################################################################
 
+# Check if V4L header file is present
+AC_CHECK_HEADER([linux/videodev2.h], [with_v4l2device=true], [with_v4l2device=false])
+
 # Check if Video Frame buffer header file is present
 AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=yes], [with_framebuffer=no])
 
@@ -251,7 +256,7 @@ fi
 ################################################################################
 # Conditionals and file output                                                 #
 ################################################################################
-
+AM_CONDITIONAL([WITH_V4L2_VIDEOSOURCE], [test x$with_v4l2device = xtrue])
 AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xyes && test x$with_framebuffer = xyes])
 AM_CONDITIONAL([WITH_ALSA], [test x$with_alsa = xyes])
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test x$with_ffmpeg = xyes])

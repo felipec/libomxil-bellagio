@@ -190,7 +190,7 @@ static int makedir (const char *newdir)
 {
   char *buffer = strdup(newdir);
   char *p;
-  int  len = strlen(buffer);
+  int  err, len = strlen(buffer);
 
   if (len <= 0) {
     free(buffer);
@@ -199,7 +199,9 @@ static int makedir (const char *newdir)
   if (buffer[len-1] == '/') {
     buffer[len-1] = '\0';
   }
-  if (mkdir(buffer, 0755) == 0) {
+
+	err = mkdir(buffer, 0755);
+	if (err == 0 || (( err == -1) && (errno == EEXIST))) {
 		free(buffer);
 		return 0;
 	}

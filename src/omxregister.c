@@ -173,6 +173,8 @@ static void usage(const char *app) {
       "Usage: %s [-v] [-h] [componentspath]...\n"
       "This programs scans for a given list of directory searching for any OpenMAX\n"
       "component compatible with the ST static component loader.\n"
+			"The registry is saved under %s. (can be changed via OMX_BELLAGIO_REGISTRY\n"
+			"environment variable)\n"
       "\n"
       "The following options are supported:\n"
       "\n"
@@ -183,7 +185,7 @@ static void usage(const char *app) {
       "         If this parameter is omitted, the components are searched in the\n"
       "         default %s directory\n"
       "\n",
-			app, OMXILCOMPONENTSPATH);
+			app, registryGetFilename(), OMXILCOMPONENTSPATH);
 }
 
 static int makedir (const char *newdir)

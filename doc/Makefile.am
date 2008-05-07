@@ -1,1 +1,1 @@
-man_MANS = omxregister.1
+man_MANS = omxregister-bellagio.1

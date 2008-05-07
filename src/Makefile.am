@@ -2,9 +2,9 @@
 # First base, then core, finally components
 SUBDIRS = base . components
 
-bin_PROGRAMS = omxregister
-omxregister_SOURCES = omxregister.c common.c common.h
-omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
+bin_PROGRAMS = omxregister-bellagio
+omxregister_bellagio_SOURCES = omxregister.c common.c common.h
+omxregister_bellagio_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
      -I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libomxil.la

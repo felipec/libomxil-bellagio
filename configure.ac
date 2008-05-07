@@ -18,7 +18,7 @@ AC_CONFIG_FILES([
     footer_SF.html
     libomxil-bellagio.pc
     libomxil-bellagio.spec
-    doc/omxregister.1
+    doc/omxregister-bellagio.1
     doc/Makefile
     include/Makefile
     src/Makefile

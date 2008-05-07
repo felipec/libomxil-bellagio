@@ -35,7 +35,7 @@ make
 %files
 %defattr(-,root,root)
 %doc ChangeLog README TODO
-/usr/local/bin/omxregister
+%{_bindir}/omxregister-bellagio
 %{_includedir}/OMX_Audio.h
 %{_includedir}/OMX_Component.h
 %{_includedir}/OMX_ContentPipe.h

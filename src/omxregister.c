@@ -1,18 +1,18 @@
 /**
 	@file src/omxregister.c
-	
+
 	Register OpenMAX components. This application registers the installed OpenMAX
 	components and stores the list in the file:
 	$HOME/.omxregistry
-	
+
 	It must be run before using components.
 	The components are searched in the default directory:
 	OMXILCOMPONENTSPATH
 	If the components are installed in a different location, specify:
-	
+
 	omxregister installation_path
-	
-  Copyright (C) 2007  STMicroelectronics and Nokia
+
+  Copyright (C) 2007, 2008  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -53,8 +53,8 @@ static const char arrow[] =  " ==> ";
 static const char registry_filename[] = "/.omxregistry";
 
 /** @brief Creates a list of components on a registry file
- * 
- * This function 
+ *
+ * This function
  *  - reads for the given directory any library contained
  *  - check if the library belong to OpenMAX ST static component loader
  *    (it must contain the function omx_component_library_Setup for the initialization)
@@ -99,13 +99,13 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
     closedir(dirp);
 		return err;
 	}
-	
+
 	while((dp = readdir(dirp)) != NULL) {
     int len = strlen(dp->d_name);
 
 		if(len >= 3){
 
-      
+
       if(strncmp(dp->d_name+len-3, ".so", 3) == 0){
         char lib_absolute_path[strlen(componentspath) + len + 1];
 
@@ -125,7 +125,7 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
 						stComponents[i] = malloc(sizeof(stLoaderComponentType));
 					}
 					fptr(stComponents);
-					
+
 					fwrite(lib_absolute_path, 1, strlen(lib_absolute_path), omxregistryfp);
 					fwrite("\n", 1, 1, omxregistryfp);
 
@@ -136,7 +136,7 @@ static int buildComponentsList(char *componentspath, int *ncomponents, int *nrol
 								stComponents[i]->componentVersion.s.nVersionMajor,
 								stComponents[i]->componentVersion.s.nVersionMinor,
 								stComponents[i]->componentVersion.s.nRevision,
-								stComponents[i]->componentVersion.s.nStep, 
+								stComponents[i]->componentVersion.s.nStep,
 								lib_absolute_path);
 						if (verbose)
               printf("Component %s registered\n", stComponents[i]->name);
@@ -206,7 +206,7 @@ void usage() {
 }
 
 /** @brief execution of registration function
- * 
+ *
  * This register by default searches for openmax libraries in OMXILCOMPONENTSPATH
  * If specified it can search in a different directory
  */
@@ -214,8 +214,8 @@ int main(int argc, char *argv[]) {
 	char *componentspath = OMXILCOMPONENTSPATH;
 	int ncomponents,nroles;
 	int err;
-  	int verbose=0;
-	
+	int verbose=0;
+
 	for(err = 1; err < argc; err++) {
 		if(*(argv[err]) == '-') {
 			if (*(argv[err]+1) == 'v') {

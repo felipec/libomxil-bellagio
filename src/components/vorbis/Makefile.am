@@ -1,4 +1,4 @@
-omxvorbisdir = $(libdir)/omxilcomponents
+omxvorbisdir = $(plugindir)
 
 omxvorbis_LTLIBRARIES = libomxvorbis.la
 

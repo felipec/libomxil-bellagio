@@ -1,4 +1,4 @@
-omxfilereaderdir = $(libdir)/omxilcomponents
+omxfilereaderdir = $(plugindir)
 
 omxfilereader_LTLIBRARIES = libomxfilereader.la
 

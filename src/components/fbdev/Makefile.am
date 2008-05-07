@@ -1,4 +1,4 @@
-omxfbdevdir = $(libdir)/omxilcomponents
+omxfbdevdir = $(plugindir)
 
 omxfbdev_LTLIBRARIES = libomxfbdev.la
 

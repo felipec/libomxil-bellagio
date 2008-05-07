@@ -1,4 +1,4 @@
-omxvideosrcdir = $(libdir)/omxilcomponents
+omxvideosrcdir = $(plugindir)
 
 omxvideosrc_LTLIBRARIES = libomxvideosrc.la
 

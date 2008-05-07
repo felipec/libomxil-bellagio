@@ -4,7 +4,7 @@ SUBDIRS = base . components
 
 bin_PROGRAMS = omxregister
 omxregister_SOURCES = omxregister.c
-omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(libdir)/omxilcomponents/\" \
+omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
      -I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libomxil.la

@@ -169,6 +169,8 @@ fi
 PLUGIN_LDFLAGS="-module -avoid-version -no-undefined -as-needed"
 AC_SUBST(PLUGIN_LDFLAGS)
 
+AX_SET_PLUGINDIR
+
 ################################################################################
 # Check for header files                                                       #
 ################################################################################

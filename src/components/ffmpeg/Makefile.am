@@ -1,4 +1,4 @@
-omxffmpegdir = $(libdir)/omxilcomponents
+omxffmpegdir = $(plugindir)
 
 omxffmpeg_LTLIBRARIES = libomxffmpeg.la
 

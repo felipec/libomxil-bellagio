@@ -1,4 +1,4 @@
-omxalsadir = $(libdir)/omxilcomponents
+omxalsadir = $(plugindir)
 omxalsa_LTLIBRARIES = libomxalsa.la
 libomxalsa_la_SOURCES = omx_alsasink_component.c \
                         library_entry_point.c \

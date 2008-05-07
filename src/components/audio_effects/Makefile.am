@@ -1,4 +1,4 @@
-omxaudio_effectsdir = $(libdir)/omxilcomponents
+omxaudio_effectsdir = $(plugindir)
 
 omxaudio_effects_LTLIBRARIES = libomxaudio_effects.la
 

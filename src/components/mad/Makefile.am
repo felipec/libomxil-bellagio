@@ -1,4 +1,4 @@
-omxmaddir = $(libdir)/omxilcomponents
+omxmaddir = $(plugindir)
 
 omxmad_LTLIBRARIES = libomxmad.la
 

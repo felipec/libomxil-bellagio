@@ -1,4 +1,4 @@
-omxparser3gpdir = $(libdir)/omxilcomponents
+omxparser3gpdir = $(plugindir)
 
 omxparser3gp_LTLIBRARIES = libomxparser3gp.la
 

@@ -23,7 +23,7 @@ That will create a registry file
 in the
 .B $HOME
 directory with all the components found by default in
-.I @libdir@/omxcomponents.
+.I @plugindir@
 .SH OPTIONS
 .IP -v
 Display a verbose output, listing all the components registered.
@@ -40,7 +40,7 @@ component registry file.
 Location of the
 .SM OpenMAX
 components (by default
-.I @libdir@/omxcomponents
+.I @plugindir@
 ).
 .SH ENVIRONMENT
 .IP HOME

@@ -165,6 +165,10 @@ if test "x$with_components" = "xno"; then
 	with_ffmpeg=no
 fi
 
+# Define components default ldflags (man ld)
+PLUGIN_LDFLAGS="-module -avoid-version -no-undefined -as-needed"
+AC_SUBST(PLUGIN_LDFLAGS)
+
 ################################################################################
 # Check for header files                                                       #
 ################################################################################

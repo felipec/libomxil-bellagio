@@ -12,4 +12,5 @@ libomxfilereader_la_CFLAGS = $(FFMPEG_CFLAGS) \
                              -I$(top_srcdir)/include \
                              -I$(top_srcdir)/src \
                              -I$(top_srcdir)/src/base
+libomxfilereader_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 

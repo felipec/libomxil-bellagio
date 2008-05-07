@@ -3,7 +3,7 @@
 
   ST specific component loader for local components.
 
-  Copyright (C) 2007  STMicroelectronics and Nokia
+  Copyright (C) 2007, 2008  STMicroelectronics and Nokia
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -35,11 +35,12 @@
 #include <strings.h>
 #include <errno.h>
 
+#include "common.h"
 #include "st_static_component_loader.h"
 #include "omx_base_component.h"
 
 /** This pointer holds and handle allocate by this loader and requested by
- * some application. If the IL client does not de-allocate it calling 
+ * some application. If the IL client does not de-allocate it calling
  * explicitely the FreeHandle function, any pending handle is release at the
  * end, when the global function OMX_Deinit is called. This list takes track of
  * any handle
@@ -49,8 +50,8 @@ void *handleLibList[100];
  */
 OMX_U32 numLib=0;
 
-/** @brief The initialization of the ST specific component loader. 
- * 
+/** @brief The initialization of the ST specific component loader.
+ *
  * This function allocates memory for the component loader and initialize other function pointer
  */
 void st_static_InitComponentLoader() {
@@ -64,16 +65,15 @@ void st_static_InitComponentLoader() {
 }
 
 /** @brief the ST static loader contructor
- * 
+ *
  * This function creates the ST static component loader, and creates
  * the list of available components, based on a registry file
- * created by a separate appication. It is called omxregister, 
+ * created by a separate appication. It is called omxregister,
  * and must be called before the use of this loader
  */
 OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   FILE* omxregistryfp;
   char* line = NULL;
-  char omxregistryfile[200];
   char *libname;
   int num_of_comp=0;
   int read;
@@ -87,13 +87,10 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   int listindex;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  memset(omxregistryfile, 0, sizeof(omxregistryfile));
-  strcat(omxregistryfile, getenv("HOME"));
-  strcat(omxregistryfile, "/.omxregistry");
 
-  omxregistryfp = fopen(omxregistryfile, "r");
+  omxregistryfp = fopen(registryGetFilename(), "r");
   if (omxregistryfp == NULL){
-    DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", omxregistryfile);
+    DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", registryGetFilename());
     return ENOENT;
   }
   libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2);
@@ -151,8 +148,8 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   return OMX_ErrorNone;
 }
 
-/** @brief The destructor of the ST specific component loader. 
- * 
+/** @brief The destructor of the ST specific component loader.
+ *
  * This function deallocates the list of available components.
  */
 OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader) {
@@ -216,7 +213,7 @@ OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader) {
 }
 
 /** @brief creator of the requested openmax component
- * 
+ *
  * This function searches for the requested component in the internal list.
  * If the copmponent is found, its constructor is called,
  * and the standard callback are assigned.
@@ -236,7 +233,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
   stLoaderComponentType** templateList;
   OMX_COMPONENTTYPE *openmaxStandComp;
   omx_base_component_PrivateType * priv;
-  
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   templateList = (stLoaderComponentType**)loader->loaderPrivate;
   i = 0;
@@ -285,11 +282,11 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
     openmaxStandComp->ComponentDeInit(openmaxStandComp);
     free(openmaxStandComp);
     openmaxStandComp = NULL;
-    return OMX_ErrorComponentNotFound;  
+    return OMX_ErrorComponentNotFound;
   }
   priv = (omx_base_component_PrivateType *) openmaxStandComp->pComponentPrivate;
   priv->loader = loader;
- 
+
   *pHandle = openmaxStandComp;
   ((OMX_COMPONENTTYPE*)*pHandle)->SetCallbacks(*pHandle, pCallBacks, pAppData);
   DEBUG(DEB_LEV_FULL_SEQ, "Template %s found returning from OMX_GetHandle\n", cComponentName);
@@ -317,10 +314,10 @@ OMX_ERRORTYPE BOSA_ST_DestroyComponent(
 }
 
 /** @brief This function search for the index from 0 to end of the list
- * 
+ *
  * This function searches in the list of ST static components and enumerates
  * both the class names and the role specific components.
- */ 
+ */
 OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
   BOSA_COMPONENTLOADER *loader,
   OMX_STRING cComponentName,
@@ -332,7 +329,7 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
   unsigned int j, index = 0;
   int found = 0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-    
+
   templateList = (stLoaderComponentType**)loader->loaderPrivate;
   i = 0;
   while(templateList[i]) {
@@ -365,13 +362,13 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
   return OMX_ErrorNone;
 }
 
-/** @brief The specific version of OMX_GetRolesOfComponent 
- * 
- * This function replicates exactly the behavior of the 
+/** @brief The specific version of OMX_GetRolesOfComponent
+ *
+ * This function replicates exactly the behavior of the
  * standard OMX_GetRolesOfComponent function for the ST static
- * component loader 
+ * component loader
  */
-OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent( 
+OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
   BOSA_COMPONENTLOADER *loader,
   OMX_STRING compName,
   OMX_U32 *pNumRoles,
@@ -430,13 +427,13 @@ OMX_ERRORTYPE BOSA_ST_GetRolesOfComponent(
   return OMX_ErrorNone;
 }
 
-/** @brief The specific version of OMX_GetComponentsOfRole 
- * 
- * This function replicates exactly the behavior of the 
+/** @brief The specific version of OMX_GetComponentsOfRole
+ *
+ * This function replicates exactly the behavior of the
  * standard OMX_GetComponentsOfRole function for the ST static
- * component loader 
+ * component loader
  */
-OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole ( 
+OMX_ERRORTYPE BOSA_ST_GetComponentsOfRole (
   BOSA_COMPONENTLOADER *loader,
   OMX_STRING role,
   OMX_U32 *pNumComps,

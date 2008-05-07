@@ -46,10 +46,10 @@ make
 %{_includedir}/OMX_Other.h
 %{_includedir}/OMX_Types.h
 %{_includedir}/OMX_Video.h
-%{_libdir}/libomxil.a
-%{_libdir}/libomxil.la
-%{_libdir}/libomxil.so.0
-%{_libdir}/libomxil.so.0.0.0
+%{_libdir}/libomxil-bellagio.a
+%{_libdir}/libomxil-bellagio.la
+%{_libdir}/libomxil-bellagio.so.0
+%{_libdir}/libomxil-bellagio.so.0.0.0
 %{_libdir}/bellagio/libomxalsa.so
 %{_libdir}/bellagio/libomxaudio_effects.so
 %{_libdir}/bellagio/libomxffmpeg.so

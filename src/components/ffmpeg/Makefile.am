@@ -12,7 +12,7 @@ libomxffmpeg_la_SOURCES = omx_audiodec_component.c \
                           omx_videoenc_component.h \
                           omx_ffmpeg_colorconv_component.h
 
-libomxffmpeg_la_LIBADD = $(top_builddir)/src/libomxil.la $(FFMPEG_LIBS)
+libomxffmpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la $(FFMPEG_LIBS)
 libomxffmpeg_la_CFLAGS = $(FFMPEG_CFLAGS) \
                          -I$(top_srcdir)/include \
                          -I$(top_srcdir)/src \

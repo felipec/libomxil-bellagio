@@ -8,6 +8,6 @@ pluginsdir=@plugindir@
 Name: libomxil
 Description: OpenMAX Integration Layer library
 Version: @VERSION@
-Libs: -L${libdir} -lomxil
+Libs: -L${libdir} -lomxil-bellagio
 Cflags: -I${includedir} -I${includedir}/bellagio
 

@@ -7,8 +7,8 @@ omxregister_bellagio_SOURCES = omxregister.c common.c common.h
 omxregister_bellagio_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
      -I$(top_srcdir)/include
 
-lib_LTLIBRARIES = libomxil.la
-libomxil_la_SOURCES = st_static_component_loader.c \
+lib_LTLIBRARIES = libomxil-bellagio.la
+libomxil_bellagio_la_SOURCES = st_static_component_loader.c \
                       omxcore.c omxcore.h \
                       omx_comp_debug_levels.h \
                       tsemaphore.c tsemaphore.h \
@@ -17,8 +17,8 @@ libomxil_la_SOURCES = st_static_component_loader.c \
                       st_static_component_loader.h \
                       common.c common.h
 
-libomxil_la_CFLAGS = -I$(top_srcdir)/include  -I$(srcdir)/base
-libomxil_la_LIBADD = base/libomxbase.la
+libomxil_bellagio_la_CFLAGS = -I$(top_srcdir)/include  -I$(srcdir)/base
+libomxil_bellagio_la_LIBADD = base/libomxbase.la
 
 if INSTALL_BASE_HEADERS
 

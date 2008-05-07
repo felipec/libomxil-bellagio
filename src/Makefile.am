@@ -3,7 +3,7 @@
 SUBDIRS = base . components
 
 bin_PROGRAMS = omxregister
-omxregister_SOURCES = omxregister.c
+omxregister_SOURCES = omxregister.c common.c common.h
 omxregister_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
      -I$(top_srcdir)/include
 

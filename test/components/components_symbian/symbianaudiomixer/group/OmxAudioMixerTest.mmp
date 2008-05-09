@@ -1,0 +1,68 @@
+/**	
+	Copyright (C) 2008  Nokia
+
+	This library is free software; you can redistribute it and/or modify it under
+	the terms of the GNU Lesser General Public License as published by the Free
+	Software Foundation; either version 2.1 of the License, or (at your option)
+	any later version.
+
+	This library is distributed in the hope that it will be useful, but WITHOUT
+	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+	details.
+
+	You should have received a copy of the GNU Lesser General Public License
+	along with this library; if not, write to the Free Software Foundation, Inc.,
+	51 Franklin St, Fifth Floor, Boston, MA
+	02110-1301  USA
+*/
+
+TARGET          omxaudiomixertest.exe
+TARGETTYPE      EXE
+UID             0x100039CE 0xF010019F
+
+CAPABILITY      NONE
+
+VENDORID        0
+EPOCHEAPSIZE      500000 10000000
+EPOCSTACKSIZE     0x8000
+
+MACRO           SYMBIAN
+
+SOURCEPATH      ..\src
+SOURCE          omxaudiomixertest.c
+
+SOURCEPATH      ..\..\..\..\..\src
+SOURCE          tsemaphore.c
+
+USERINCLUDE     ..\inc
+
+SYSTEMINCLUDE   \epoc32\include 
+SYSTEMINCLUDE   \epoc32\include\ecom
+SYSTEMINCLUDE   \epoc32\include\stdapis
+SYSTEMINCLUDE   \epoc32\include\stdapis\sys
+SYSTEMINCLUDE   ..\..\..\..\..\include
+SYSTEMINCLUDE   ..\..\..\..\..\src
+SYSTEMINCLUDE   ..\..\..\common
+
+SOURCEPATH        ..\data
+
+START RESOURCE    omxaudiomixertest_reg.rss
+#ifdef WINSCW
+TARGETPATH 	  \private\10003a3f\apps
+#else
+TARGETPATH 	  \private\10003a3f\import\apps
+#endif
+END //RESOURCE
+
+LIBRARY         euser.lib
+LIBRARY         ecom.lib
+
+// from mobile runtime
+LIBRARY         libpthread.lib
+LIBRARY         libc.lib
+LIBRARY         libomxil.lib
+
+STATICLIBRARY         libcrt0.lib
+
+

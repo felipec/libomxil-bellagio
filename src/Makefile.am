@@ -9,7 +9,7 @@ omxregister_bellagio_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
 
 lib_LTLIBRARIES = libomxil-bellagio.la
 libomxil_bellagio_la_SOURCES = st_static_component_loader.c \
-                      omxcore.c omxcore.h \
+                      omxcore.c omx_create_loaders_linux.c omxcore.h \
                       omx_comp_debug_levels.h \
                       tsemaphore.c tsemaphore.h \
                       queue.c queue.h \

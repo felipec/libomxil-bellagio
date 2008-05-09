@@ -1,0 +1,77 @@
+/**
+  @file group/libomxil.mmp
+    
+  Copyright (C) 2008 Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+*/
+
+TARGET          libomxil.dll
+
+TARGETTYPE      dll
+
+EPOCALLOWDLLDATA
+
+UID             0x1000008d 0xF01F8655
+
+CAPABILITY      NONE
+VENDORID           0
+
+// for mobile run time
+MACRO           SYMBIAN
+
+// for OpenMAX exports
+MACRO           __OMX_EXPORTS
+
+SOURCEPATH      ..\src
+SOURCE		    omxcore.c
+SOURCE		    queue.c
+SOURCE		    tsemaphore.c
+
+SOURCEPATH      ..\src\loaders\loaders_symbian\src
+SOURCE          BellagioOpenMaxLoader.cpp
+
+SOURCEPATH      ..\src\loaders\loaders_symbian\src
+SOURCE          omx_create_loaders_symbian.cpp
+
+SOURCEPATH      ..\src\base
+SOURCE		    omx_base_port.c
+SOURCE		    omx_base_filter.c
+SOURCE		    omx_base_sink.c
+SOURCE		    omx_base_component.c
+
+USERINCLUDE   ..\src
+USERINCLUDE   ..\src\loaders\loaders_symbian\inc
+
+SYSTEMINCLUDE   ..\include
+SYSTEMINCLUDE   ..\src
+SYSTEMINCLUDE   ..\src\base
+SYSTEMINCLUDE   \epoc32\include 
+SYSTEMINCLUDE   \epoc32\include\ecom
+SYSTEMINCLUDE   \epoc32\include\stdapis
+SYSTEMINCLUDE   \epoc32\include\stdapis\sys
+
+LIBRARY         euser.lib
+LIBRARY         ecom.lib
+LIBRARY         charconv.lib
+
+// from mobile runtime
+LIBRARY         libpthread.lib
+LIBRARY         libc.lib
+
+EXPORTUNFROZEN
+
+// End of File

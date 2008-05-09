@@ -34,6 +34,7 @@
 #include <dirent.h>
 #include <strings.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "common.h"
 #include "st_static_component_loader.h"
@@ -55,13 +56,17 @@ OMX_U32 numLib=0;
  * This function allocates memory for the component loader and initialize other function pointer
  */
 void st_static_InitComponentLoader() {
-  st_static_loader.BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;
-  st_static_loader.BOSA_DeInitComponentLoader = &BOSA_ST_DeInitComponentLoader;
-  st_static_loader.BOSA_CreateComponent = &BOSA_ST_CreateComponent;
-  st_static_loader.BOSA_DestroyComponent = &BOSA_ST_DestroyComponent;
-  st_static_loader.BOSA_ComponentNameEnum = &BOSA_ST_ComponentNameEnum;
-  st_static_loader.BOSA_GetRolesOfComponent = &BOSA_ST_GetRolesOfComponent;
-  st_static_loader.BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
+
+  st_static_loader = (BOSA_COMPONENTLOADER *) calloc(1, sizeof(BOSA_COMPONENTLOADER));
+  assert(st_static_loader);
+
+  st_static_loader->BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;
+  st_static_loader->BOSA_DeInitComponentLoader = &BOSA_ST_DeInitComponentLoader;
+  st_static_loader->BOSA_CreateComponent = &BOSA_ST_CreateComponent;
+  st_static_loader->BOSA_DestroyComponent = &BOSA_ST_DestroyComponent;
+  st_static_loader->BOSA_ComponentNameEnum = &BOSA_ST_ComponentNameEnum;
+  st_static_loader->BOSA_GetRolesOfComponent = &BOSA_ST_GetRolesOfComponent;
+  st_static_loader->BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
 }
 
 /** @brief the ST static loader contructor

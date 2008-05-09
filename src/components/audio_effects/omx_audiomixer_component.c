@@ -205,12 +205,14 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetConfig(
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
   omx_audio_mixer_component_PortType * pPort;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
 
   switch (nIndex) {
     case OMX_IndexConfigAudioVolume : 
       pVolume = (OMX_AUDIO_CONFIG_VOLUMETYPE*) pComponentConfigStructure;
       if(pVolume->sVolume.nValue > 100) {
-        return OMX_ErrorBadParameter;
+        err =  OMX_ErrorBadParameter;
+        break;
       }
       
       if (pVolume->nPortIndex <= omx_audio_mixer_component_Private->sPortTypesParam.nPorts) {
@@ -218,13 +220,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetConfig(
         DEBUG(DEB_LEV_SIMPLE_SEQ, "Port %i Gain=%d\n",(int)pVolume->nPortIndex,(int)pVolume->sVolume.nValue);
         memcpy(&pPort->sVolume, pVolume, sizeof(OMX_AUDIO_CONFIG_VOLUMETYPE));
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
-      return OMX_ErrorNone;
+      break;
     default: // delegate to superclass
-      return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
+      err = omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_audio_mixer_component_GetConfig(
@@ -235,7 +237,8 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetConfig(
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
   omx_audio_mixer_component_PortType * pPort;
-  
+  OMX_ERRORTYPE err = OMX_ErrorNone;
+
   switch (nIndex) {
     case OMX_IndexConfigAudioVolume : 
       pVolume = (OMX_AUDIO_CONFIG_VOLUMETYPE*) pComponentConfigStructure;
@@ -243,13 +246,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetConfig(
         pPort= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pVolume->nPortIndex];
         memcpy(pVolume,&pPort->sVolume,sizeof(OMX_AUDIO_CONFIG_VOLUMETYPE));
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
-      return OMX_ErrorNone;
+      break;
     default :
-      return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
+      err = omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_audio_mixer_component_SetParameter(
@@ -283,13 +286,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetParameter(
         port= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[portIndex];
         memcpy(&port->sAudioParam, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
       break;  
     default:
-      return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+      err = omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
@@ -324,7 +327,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
         port= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pAudioPortFormat->nPortIndex];
         memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
       break;    
     case OMX_IndexParamAudioPcm:
@@ -337,13 +340,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
         port= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pAudioPcmMode->nPortIndex];
         memcpy(pAudioPcmMode, &port->pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE)); 
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
       break;
     default:
-      return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+      err = omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** This is the central function for component processing,overridden for audio mixer. It

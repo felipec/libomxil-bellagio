@@ -44,7 +44,7 @@ static OMX_U32 noVolumeCompInstance = 0;
 OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_volume_component_PrivateType* omx_volume_component_Private;
-  omx_base_audio_PortType *inPort, *outPort;
+  /* omx_base_audio_PortType *inPort, *outPort;*/
   OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
@@ -84,8 +84,10 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
   omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
 
+  /*
   inPort = (omx_base_audio_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
   outPort = (omx_base_audio_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
+  */
 
   omx_volume_component_Private->gain = GAIN_VALUE; //100.0f; // default gain
   omx_volume_component_Private->destructor = omx_volume_component_Destructor;
@@ -156,19 +158,23 @@ OMX_ERRORTYPE omx_volume_component_SetConfig(
   OMX_AUDIO_CONFIG_VOLUMETYPE* pVolume;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_volume_component_PrivateType* omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
 
   switch (nIndex) {
     case OMX_IndexConfigAudioVolume : 
       pVolume = (OMX_AUDIO_CONFIG_VOLUMETYPE*) pComponentConfigStructure;
       if(pVolume->sVolume.nValue > 100) {
-        return OMX_ErrorBadParameter;
+        err = OMX_ErrorBadParameter;
+        break;
       }
       omx_volume_component_Private->gain = pVolume->sVolume.nValue;
-      return OMX_ErrorNone;
+      err = OMX_ErrorNone;
+      break;
     default: // delegate to superclass
-      return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
+      err = omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
-  return OMX_ErrorNone;
+
+  return err;
 }
 
 OMX_ERRORTYPE omx_volume_component_GetConfig(
@@ -178,7 +184,8 @@ OMX_ERRORTYPE omx_volume_component_GetConfig(
   OMX_AUDIO_CONFIG_VOLUMETYPE* pVolume;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_volume_component_PrivateType* omx_volume_component_Private = openmaxStandComp->pComponentPrivate;
-  
+  OMX_ERRORTYPE err = OMX_ErrorNone;
+
   switch (nIndex) {
     case OMX_IndexConfigAudioVolume : 
       pVolume = (OMX_AUDIO_CONFIG_VOLUMETYPE*) pComponentConfigStructure;
@@ -187,11 +194,12 @@ OMX_ERRORTYPE omx_volume_component_GetConfig(
       pVolume->sVolume.nMin = 0;
       pVolume->sVolume.nMax = 100;
       pVolume->bLinear = OMX_TRUE;
-      return OMX_ErrorNone;
+      err = OMX_ErrorNone;
+      break;
     default :
-      return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
+      err = omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_volume_component_SetParameter(
@@ -225,13 +233,13 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
         port= (omx_base_audio_PortType *)omx_volume_component_Private->ports[portIndex];
         memcpy(&port->sAudioParam, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
       break;  
     default:
-      return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+      err = omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 OMX_ERRORTYPE omx_volume_component_GetParameter(
@@ -266,7 +274,7 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
         port= (omx_base_audio_PortType *)omx_volume_component_Private->ports[pAudioPortFormat->nPortIndex];
         memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
-        return OMX_ErrorBadPortIndex;
+        err = OMX_ErrorBadPortIndex;
       }
     break;    
     case OMX_IndexParamAudioPcm:
@@ -287,7 +295,7 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
       pAudioPcmMode->ePCMMode = OMX_AUDIO_PCMModeLinear;
       break;
     default:
-      return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
+      err = omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
-  return OMX_ErrorNone;
+  return err;
 }

@@ -1,0 +1,62 @@
+/**
+  @file group/bld.inf
+    
+  Copyright (C) 2008 Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+*/
+
+PRJ_PLATFORMS 
+
+DEFAULT
+
+PRJ_EXPORTS
+
+PRJ_MMPFILES
+
+// the components
+
+// symbian output stream sink
+..\src\components\components_symbian\outputstream\group\BellagioOpenMaxOutputStream.mmp
+
+// st volume component
+..\src\components\components_symbian\volume\group\BellagioOpenMaxVolume.mmp
+
+// st mixer component
+..\src\components\components_symbian\audiomixer\group\BellagioOpenMaxAudioMixer.mmp
+
+// the loaders
+
+// symbian loader for st type components
+..\src\loaders\loaders_symbian\symbianecomloader\group\BellagioOpenMaxSymbianLoader.mmp
+
+// the core
+libomxil.mmp
+
+PRJ_TESTEXPORTS
+
+// Project files for test programs
+
+PRJ_TESTMMPFILES
+
+// symbian output stream sink test
+..\test\components\components_symbian\symbianoutputstream\group\OmxSymbianOutputStreamTest.mmp
+
+// symbian audio mixer test
+..\test\components\components_symbian\symbianaudiomixer\group\OmxAudioMixerTest.mmp
+
+// symbian component enumeration test
+..\test\components\components_symbian\symbiancompnameenum\group\OmxCompNameEnumTest.mmp

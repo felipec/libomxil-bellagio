@@ -179,7 +179,7 @@ OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
     omx_base_component_Private->messageQueue=NULL;
   }
   
-  err=pthread_join(omx_base_component_Private->messageHandlerThread,NULL);
+  err=(OMX_ERRORTYPE)pthread_join(omx_base_component_Private->messageHandlerThread,NULL);
   if(err!=0) {
     DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
   }
@@ -266,8 +266,8 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       omx_base_component_Private->state = OMX_StateLoaded;
       break;
     case OMX_StateLoaded:
-      return OMX_ErrorSameState;
-     break;
+      err = OMX_ErrorSameState;
+      break;
     case OMX_StateIdle:
       for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
         pPort = omx_base_component_Private->ports[i];
@@ -313,31 +313,31 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
       return OMX_ErrorIncorrectStateTransition;
     }
-    return OMX_ErrorNone;
+    return err;
   }
 
   if(destinationState == OMX_StateWaitForResources){
     switch(omx_base_component_Private->state){
     case OMX_StateInvalid:
-      return OMX_ErrorInvalidState;
+      err = OMX_ErrorInvalidState;
       break;
     case OMX_StateLoaded:
       omx_base_component_Private->state = OMX_StateWaitForResources;
       break;
     case OMX_StateWaitForResources:
-      return OMX_ErrorSameState;
+      err = OMX_ErrorSameState;
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
       return OMX_ErrorIncorrectStateTransition;
     }
-    return OMX_ErrorNone;
+    return err;
   }
 
   if(destinationState == OMX_StateIdle){
     switch(omx_base_component_Private->state){
     case OMX_StateInvalid:
-      return OMX_ErrorInvalidState;
+      err = OMX_ErrorInvalidState;
       break;
     case OMX_StateWaitForResources:
       omx_base_component_Private->state = OMX_StateIdle;
@@ -378,7 +378,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       }	
       break;
     case OMX_StateIdle:
-      return OMX_ErrorSameState;
+      err = OMX_ErrorSameState;
       break;
     case OMX_StateExecuting:
       /*Flush Ports*/
@@ -398,19 +398,19 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
-      return OMX_ErrorIncorrectStateTransition;
+      err = OMX_ErrorIncorrectStateTransition;
       break;
     }
-    return OMX_ErrorNone;
+    return err;
   }
 
   if(destinationState == OMX_StatePause) {
   switch(omx_base_component_Private->state) {
     case OMX_StateInvalid:
-      return OMX_ErrorInvalidState;
+      err = OMX_ErrorInvalidState;
       break;
     case OMX_StatePause:
-      return OMX_ErrorSameState;
+      err = OMX_ErrorSameState;
       break;
     case OMX_StateExecuting:
     case OMX_StateIdle:
@@ -418,16 +418,16 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
-      return OMX_ErrorIncorrectStateTransition;
+      err = OMX_ErrorIncorrectStateTransition;
       break;
     }
-    return OMX_ErrorNone;
+    return err;
   }
 
   if(destinationState == OMX_StateExecuting) {
     switch(omx_base_component_Private->state) {
     case OMX_StateInvalid:
-      return OMX_ErrorInvalidState;
+      err = OMX_ErrorInvalidState;
       break;
     case OMX_StateIdle:
       omx_base_component_Private->state=OMX_StateExecuting;
@@ -443,7 +443,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
         }
       }
       omx_base_component_Private->transientState = OMX_TransStateInvalid;
-      return OMX_ErrorNone;
+      err = OMX_ErrorNone;
       break;
     case OMX_StatePause:
       omx_base_component_Private->state=OMX_StateExecuting;
@@ -465,27 +465,27 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       tsem_signal(omx_base_component_Private->bStateSem);
       break;
     case OMX_StateExecuting:
-      return OMX_ErrorSameState;
+      err = OMX_ErrorSameState;
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
-      return OMX_ErrorIncorrectStateTransition;
+      err = OMX_ErrorIncorrectStateTransition;
       break;
     }
-    return OMX_ErrorNone;
+    return err;
   }
 
   if(destinationState == OMX_StateInvalid) {
     switch(omx_base_component_Private->state) {
     case OMX_StateInvalid:
-      return OMX_ErrorInvalidState;
+      err = OMX_ErrorInvalidState;
       break;
     default:
       omx_base_component_Private->state = OMX_StateInvalid;
       /*Signal Buffer Management Thread to Exit*/
       tsem_up(omx_base_component_Private->bMgmtSem);
       if(omx_base_component_Private->bufferMgmtThread){
-        pthread_cancel(omx_base_component_Private->bufferMgmtThread);
+        pthread_detach(omx_base_component_Private->bufferMgmtThread);
         pthread_join(omx_base_component_Private->bufferMgmtThread,NULL);
         if(err!=0) {
           DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
@@ -493,7 +493,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       }
       break;
     }
-    return OMX_ErrorInvalidState;
+    return err;
   }
   return OMX_ErrorNone;
 }
@@ -515,7 +515,7 @@ OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size) {
     DEBUG(DEB_LEV_ERR, "In %s the header is null\n",__func__);
     return OMX_ErrorBadParameter;
   }
-  ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
+  ver = (OMX_VERSIONTYPE*)((char*)header + sizeof(OMX_U32));
   if(*((OMX_U32*)header) != size) {
     DEBUG(DEB_LEV_ERR, "In %s the header has a wrong size %i should be %i\n",__func__,(int)*((OMX_U32*)header),(int)size);
     return OMX_ErrorBadParameter;
@@ -536,7 +536,7 @@ OMX_ERRORTYPE checkHeader(OMX_PTR header, OMX_U32 size) {
  * a call to sizeof of the structure type 
  */
 void setHeader(OMX_PTR header, OMX_U32 size) {
-  OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
+  OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)((char*)header + sizeof(OMX_U32));
   *((OMX_U32*)header) = size;
 
   ver->s.nVersionMajor = SPECVERSIONMAJOR;
@@ -744,10 +744,10 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
     }
 		break;
   default:
-    return OMX_ErrorUnsupportedIndex;
+    err = OMX_ErrorUnsupportedIndex;
     break;
   }
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** @brief part of the standard openmax function
@@ -770,7 +770,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxcomponent->pComponentPrivate;
   OMX_PARAM_BUFFERSUPPLIERTYPE *pBufferSupplier;
   omx_base_PortType *pPort;
-  OMX_PORT_PARAM_TYPE *pPortParam;
+  /* OMX_PORT_PARAM_TYPE *pPortParam; */
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   DEBUG(DEB_LEV_PARAMS, "Setting parameter %i\n", nParamIndex);
@@ -783,7 +783,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
   case OMX_IndexParamVideoInit:
   case OMX_IndexParamImageInit:
   case OMX_IndexParamOtherInit:
-    pPortParam  = (OMX_PORT_PARAM_TYPE* ) ComponentParameterStructure;
+    /* pPortParam  = (OMX_PORT_PARAM_TYPE* ) ComponentParameterStructure;*/
     if (omx_base_component_Private->state != OMX_StateLoaded && 
       omx_base_component_Private->state != OMX_StateWaitForResources) {
       return OMX_ErrorIncorrectStateOperation;
@@ -791,7 +791,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
-    return OMX_ErrorUndefined;
+    err = OMX_ErrorUndefined;
     break;	
   case OMX_IndexParamPortDefinition: 
     pPortDef  = (OMX_PARAM_PORTDEFINITIONTYPE*) ComponentParameterStructure;
@@ -838,7 +838,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
         memcpy(&pPortParam->format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
         break;
       default:
-        return OMX_ErrorBadParameter;
+        err = OMX_ErrorBadParameter;
         break;
       }
       
@@ -937,7 +937,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     DEBUG(DEB_LEV_PARAMS, "In %s port %d Tunnel flag=%x \n", __func__,(int)pBufferSupplier->nPortIndex, (int)pPort->nTunnelFlags);
     break;
   default:
-    return OMX_ErrorUnsupportedIndex;
+    err = OMX_ErrorUnsupportedIndex;
     break;
   }
   return err;
@@ -1016,6 +1016,7 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
   tsem_t* messageSem;
   OMX_U32 i,j;
   omx_base_PortType *pPort;
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
   messageQueue = omx_base_component_Private->messageQueue;
@@ -1088,15 +1089,19 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     message->messageType = OMX_CommandMarkBuffer;
     break;
   default:
-    return OMX_ErrorUnsupportedIndex;
+    err = OMX_ErrorUnsupportedIndex;
     break;
   }
-  queue(messageQueue, message);
-  tsem_up(messageSem);
+
+  if (err == OMX_ErrorNone)
+  {
+    queue(messageQueue, message);
+    tsem_up(messageSem);
+  }
 
   DEBUG(DEB_LEV_FULL_SEQ, "In %s messageSem up param=%d\n", __func__,message->messageParam);
 
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** @brief Component's message handler thread function

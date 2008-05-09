@@ -55,10 +55,10 @@
 
 OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput) {
 	
-  omx_base_component_PrivateType* omx_base_component_Private;
+  /* omx_base_component_PrivateType* omx_base_component_Private; */
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate;
+  /* omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate; */
 
   // create ports, but only if the subclass hasn't done it
   if (!(*openmaxStandPort)) {

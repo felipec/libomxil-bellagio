@@ -1,0 +1,85 @@
+/**
+  @file src/components/components_symbian/outputstream/group/BellagioOpenMaxOutputStream.mmp
+    
+  Copyright (C) 2008 Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+*/
+
+TARGET          bellagioopenmaxoutputstream.dll
+TARGETTYPE      PLUGIN
+
+EPOCALLOWDLLDATA
+
+UID             0x10009D8D 0xF01F0013
+
+CAPABILITY      NONE
+VENDORID        0
+
+MACRO           SYMBIAN
+
+SOURCEPATH      ..\src
+SOURCE          BellagioOpenMaxOutputStreamImplFactory.cpp
+SOURCE          BellagioOpenMaxOutputStream.cpp
+SOURCE          omx_symbian_output_stream.cpp
+SOURCE          omx_symbian_output_stream_wrapper.cpp
+SOURCE          omx_symbianoutputstreamsink_component.c
+
+SOURCEPATH      ..\..\src
+SOURCE          BellagioOpenMaxComponent.cpp
+
+SOURCEPATH      ..\..\..\..\base
+SOURCE          omx_base_component.c
+SOURCE          omx_base_port.c
+SOURCE          omx_base_sink.c
+
+SOURCEPATH      ..\..\..\..
+SOURCE          queue.c
+SOURCE          tsemaphore.c
+
+USERINCLUDE     .
+USERINCLUDE     ..\inc
+USERINCLUDE     ..\..\inc
+USERINCLUDE     ..\..\..\..
+
+SYSTEMINCLUDE   \epoc32\include 
+SYSTEMINCLUDE   \epoc32\include\ecom
+SYSTEMINCLUDE   \epoc32\include\stdapis
+SYSTEMINCLUDE   \epoc32\include\stdapis\sys
+SYSTEMINCLUDE   \epoc32\include\mmf\plugin
+SYSTEMINCLUDE   ..\..\..\..\..\include
+SYSTEMINCLUDE   ..\..\..\..\..\src
+SYSTEMINCLUDE   ..\..\..\..\base
+
+START RESOURCE components\components_symbian\outputstream\data\F01F0013.rss 
+#ifdef SYMBIAN_SECURE_ECOM
+TARGET          BellagioOpenMaxOutputStream.rsc
+#endif
+END
+
+LIBRARY         euser.lib
+LIBRARY         ecom.lib
+
+// from mobile runtime
+LIBRARY         libpthread.lib
+LIBRARY         libc.lib
+
+LIBRARY         mediaclientaudiostream.lib
+
+
+
+
+

@@ -1,0 +1,39 @@
+;	
+;	Copyright (C) 2008  Nokia
+;
+;	This library is free software; you can redistribute it and/or modify it under
+;	the terms of the GNU Lesser General Public License as published by the Free
+;	Software Foundation; either version 2.1 of the License, or (at your option)
+;	any later version.
+;
+;	This library is distributed in the hope that it will be useful, but WITHOUT
+;	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+;	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+;	details.
+;
+;	You should have received a copy of the GNU Lesser General Public License
+;	along with this library; if not, write to the Free Software Foundation, Inc.,
+;	51 Franklin St, Fifth Floor, Boston, MA
+;	02110-1301  USA
+;
+;   Installation file for OmxAudioMixerTest.exe
+;
+;
+;Languages
+&EN
+;
+; UID is the dll's UID
+#{"OmxAudioMixerTest"},(0xF010019F),0,9,0
+;
+;Localised Vendor name
+%{"Vendor-EN"}
+;
+;Supports Series 60 v 3.0
+[0x101F7961], 0, 0, 0, {"Series60ProductID"}
+;
+; one dll to install
+"Epoc32\release\armv5\urel\OmxAudioMixerTest.exe"         -"!:\sys\bin\OmxAudioMixerTest.exe"
+"epoc32\data\z\private\10003a3f\import\apps\omxaudiomixertest_reg.rsc"  -"!:\private\10003a3f\import\apps\omxaudiomixertest_reg.rsc"
+; test file
+"libomxil\trunk\test\components\components_symbian\symbianaudiomixer\data\spede_44k.raw"            -"!:\spede_44k.raw"
+"libomxil\trunk\test\components\components_symbian\symbianaudiomixer\data\vesku_44k.raw"            -"!:\vesku_44k.raw"

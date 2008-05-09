@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <search.h>
 
 #include "queue.h"
 #include "omx_comp_debug_levels.h"

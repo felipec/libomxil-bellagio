@@ -1,0 +1,47 @@
+/**   
+  Copyright (C) 2008 Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+*/
+
+#include "RegistryInfoV2.rh"
+#include "BellagioOpenMaxLoaderUid.hrh"
+#include "BellagioOpenMaxSymbianLoaderImplUid.hrh"
+
+RESOURCE REGISTRY_INFO theInfo
+	{
+    resource_format_version = RESOURCE_FORMAT_VERSION_2;
+	dll_uid = KDllUidBellagioOpenMaxSymbianLoaderImpl; 
+	interfaces = 
+		{
+		INTERFACE_INFO
+			{
+			interface_uid = KUidBellagioOpenMaxLoader;   
+			implementations = 
+				{
+				IMPLEMENTATION_INFO
+					{
+					implementation_uid = KImplUidBellagioOpenMaxSymbianLoader;  // 0xF01F0034
+                              version_no = 1;
+                              display_name = "OMX.nokia.symbian.loader";
+                              default_data = 	// The mime types supported by the plugin
+					" video/mpeg||video/H263-2000; profile=*;level=?0||video/*video||";
+					opaque_data = "";
+                              }
+				};
+			}
+		};
+	}

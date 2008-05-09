@@ -1,0 +1,28 @@
+/**
+  @file src/components/components_symbian/BellagioOpenMaxComponent.hrh
+    
+  Copyright (C) 2008 Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+*/
+
+#ifndef __BELLAGIO_OPENMAX_COMPONENT_UID_HRH__
+#define __BELLAGIO_OPENMAX_COMPONENT_UID_HRH__
+
+// Interface Implementation UID
+#define KUidBellagioOpenMaxComponent	0xF01F0010   // Interface UID for Bellagio OpenMax components
+
+#endif // __BELLAGIO_OPENMAX_COMPONENT_UID_HRH__

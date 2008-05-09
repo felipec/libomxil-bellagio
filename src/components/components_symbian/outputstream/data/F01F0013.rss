@@ -1,0 +1,46 @@
+/**
+  Copyright (C) 2008 Nokia
+
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
+
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+*/
+
+#include "RegistryInfoV2.rh"
+#include "BellagioOpenMaxComponentUid.hrh"
+#include "BellagioOpenMaxOutputStreamImplUid.hrh"
+
+RESOURCE REGISTRY_INFO theInfo
+    {
+    resource_format_version = RESOURCE_FORMAT_VERSION_2;
+    dll_uid = KDllUidBellagioOpenMaxOutputStreamImpl; 
+    interfaces = 
+        {
+        INTERFACE_INFO
+            {
+            interface_uid = KUidBellagioOpenMaxComponent;   
+            implementations = 
+                {
+                IMPLEMENTATION_INFO
+                    {
+                    implementation_uid = KImplUidBellagioOpenMaxOutputStream;  // 0xF01F0014
+                              version_no = 1;
+                              display_name = "OMX.nokia.outputstream.component";
+                              default_data = "";	// The roles supported by the plugin					
+                              opaque_data = "0";	// The number of roles supported by the plugin
+                              }
+                };
+            }
+        };
+    }

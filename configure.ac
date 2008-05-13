@@ -102,15 +102,6 @@ AC_ARG_ENABLE(
     [with_alsa=$enableval],
     [with_alsa=yes])
 
-#Enable the installation of all the header files
-AC_ARG_ENABLE(
-    [component_devel],
-    [AC_HELP_STRING(
-        [--enable-component-devel],
-        [whether to install base component header files])],
-    [component_devel=$enableval],
-    [component_devel=no])
-
 #Check whether video src/camera component has been requested
 AC_ARG_ENABLE(
     [videosrc],
@@ -269,7 +260,6 @@ AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test x$with_ffmpeg = xyes])
 AM_CONDITIONAL([WITH_MADCOMPONENTS], [test x$with_mad = xyes])
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test x$with_vorbis = xyes])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xyes])
-AM_CONDITIONAL([INSTALL_BASE_HEADERS], [test x$with_component_devel = xyes])
 AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xyes])
 
 AC_OUTPUT

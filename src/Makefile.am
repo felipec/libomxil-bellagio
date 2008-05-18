@@ -30,6 +30,8 @@ include_extra_HEADERS = $(srcdir)/omxcore.h \
 			$(srcdir)/omx_comp_debug_levels.h \
 			$(srcdir)/base/omx_base_component.h \
 			$(srcdir)/base/omx_base_port.h \
+			$(srcdir)/base/omx_base_audio_port.h \
+			$(srcdir)/base/omx_base_video_port.h \
 			$(srcdir)/base/omx_base_filter.h \
 			$(srcdir)/base/omx_base_sink.h \
 			$(srcdir)/base/omx_base_source.h \

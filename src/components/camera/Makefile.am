@@ -7,4 +7,4 @@ noinst_HEADERS = omx_camera_source_component.h
 libomxcamera_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la
 libomxcamera_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 
-INCLUDES = -I../../../include/ -I../../ -I./ -I../../base/
+INCLUDES = -I$(top_srcdir)/include/ -I$(top_srcdir)/src -I$(srcdir) -I$(top_srcdir)/src/base/

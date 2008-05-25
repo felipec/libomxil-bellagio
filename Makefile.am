@@ -7,7 +7,7 @@ EXTRA_DIST = libomxil-bellagio.spec Doxyfile footer_SF.html
 pkgconfigdir        = $(libdir)/pkgconfig
 pkgconfig_DATA      = libomxil-bellagio.pc
 
-docdir = $(pkgdatadir)/doc/omxil
+docdir = $(DESTDIR)$(prefix)/share/doc/@PACKAGE@
 doc_DATA = README \
    ChangeLog \
    TODO

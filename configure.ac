@@ -154,6 +154,9 @@ if test "x$with_components" = "xno"; then
 	with_vorbis=no
 	with_mad=no
 	with_ffmpeg=no
+	with_fbdev_videosink=no
+	with_audioeffects=no
+	with_videosrc=no
 fi
 
 # Define components default ldflags (man ld)
@@ -167,10 +170,14 @@ AX_SET_PLUGINDIR
 ################################################################################
 
 # Check if V4L header file is present
-AC_CHECK_HEADER([linux/videodev2.h], [with_v4l2device=true], [with_v4l2device=false])
+if test "x$with_videosrc" = "xyes"; then
+	AC_CHECK_HEADER([linux/videodev2.h], [with_videosrc=yes], [with_videosrc=no])
+fi
 
 # Check if Video Frame buffer header file is present
-AC_CHECK_HEADER([linux/fb.h], [with_framebuffer=yes], [with_framebuffer=no])
+if test "x$with_fbdev_videosink" = "xyes"; then
+	AC_CHECK_HEADER([linux/fb.h], [with_fbdev_videosink=yes], [with_fbdev_videosink=no])
+fi
 
 ################################################################################
 # Check for pkg-config modules                                                 #
@@ -253,8 +260,8 @@ fi
 ################################################################################
 # Conditionals and file output                                                 #
 ################################################################################
-AM_CONDITIONAL([WITH_V4L2_VIDEOSOURCE], [test x$with_v4l2device = xtrue])
-AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xyes && test x$with_framebuffer = xyes])
+AM_CONDITIONAL([WITH_V4L2_VIDEOSOURCE], [test x$with_videosrc = xyes])
+AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xyes])
 AM_CONDITIONAL([WITH_ALSA], [test x$with_alsa = xyes])
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test x$with_ffmpeg = xyes])
 AM_CONDITIONAL([WITH_MADCOMPONENTS], [test x$with_mad = xyes])

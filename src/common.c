@@ -46,7 +46,7 @@ char* registryGetFilename(void) {
 
   buffer=getenv("OMX_BELLAGIO_REGISTRY");
   if(buffer!=NULL&&*buffer!='\0') {
-    omxregistryfile = buffer;
+    omxregistryfile = strdup(buffer);
     return omxregistryfile;
   }
 

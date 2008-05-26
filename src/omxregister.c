@@ -195,11 +195,15 @@ static void usage(const char *app) {
 
 static int makedir (const char *newdir)
 {
-  char *buffer = strdup(newdir);
+  char *buffer;
   char *p;
-  int  err, len = strlen(buffer);
+  int err;
+  size_t len;
 
-  if (len <= 0) {
+  buffer = strdup(newdir);
+  len = strlen(buffer);
+
+  if (len == 0) {
     free(buffer);
     return 1;
   }

@@ -48,11 +48,11 @@
 /** The static field initialized is equal to 0 if the core is not initialized. 
  * It is equal to 1 whern the OMX_Init has been called
  */
-int initialized=0;
+static int initialized;
 
 /** The int bosa_loaders contains the number of loaders available in the system.
  */
-int bosa_loaders = 0;
+static int bosa_loaders;
 
 /** The pointer to the loaders list. This list contains the all the different component loaders 
  * present in the system or added by the IL Client with the BOSA_AddComponentLoader function.

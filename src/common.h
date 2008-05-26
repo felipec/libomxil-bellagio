@@ -29,6 +29,6 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-const char* registryGetFilename(void);
+char *registryGetFilename(void);
 
 #endif

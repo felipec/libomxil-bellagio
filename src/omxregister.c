@@ -169,6 +169,9 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 }
 
 static void usage(const char *app) {
+	char *registry_filename;
+	registry_filename = registryGetFilename();
+
 	printf(
       "Usage: %s [-v] [-h] [componentspath]...\n"
       "This programs scans for a given list of directory searching for any OpenMAX\n"
@@ -185,7 +188,9 @@ static void usage(const char *app) {
       "         If this parameter is omitted, the components are searched in the\n"
       "         default %s directory\n"
       "\n",
-			app, registryGetFilename(), OMXILCOMPONENTSPATH);
+			app, registry_filename, OMXILCOMPONENTSPATH);
+
+  free(registry_filename);
 }
 
 static int makedir (const char *newdir)
@@ -238,6 +243,7 @@ int main(int argc, char *argv[]) {
 	int err, i;
 	int verbose=0;
 	FILE *omxregistryfp;
+	char *registry_filename;
 	char *dir,*dirp;
 
 	for(i = 1; i < argc; i++) {
@@ -252,8 +258,10 @@ int main(int argc, char *argv[]) {
 		}
   }
 
+	registry_filename = registryGetFilename();
+
 	/* make sure the registry directory exists */
-	dir = strdup(registryGetFilename());
+	dir = strdup(registry_filename);
 	if (dir == NULL)
 		exit(EXIT_FAILURE);
 	dirp = strrchr(dir, '/');
@@ -266,11 +274,13 @@ int main(int argc, char *argv[]) {
 	}
 	free (dir);
 
-	omxregistryfp = fopen(registryGetFilename(), "w");
+	omxregistryfp = fopen(registry_filename, "w");
 	if (omxregistryfp == NULL){
-		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file %s\n", registryGetFilename());
+		DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file %s\n", registry_filename);
 		exit(EXIT_FAILURE);
 	}
+
+	free(registry_filename);
 
 	for(i = 1, found = 0; i < argc; i++) {
 		if(*(argv[i]) == '-') {

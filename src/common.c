@@ -37,16 +37,12 @@
 #define REGISTRY_DIR PACKAGE
 #define DATA_HOME_DIR ".local/share"
 
-static char *omxregistryfile = NULL;
-
 /** @brief Get registry filename
  *
  */
-const char* registryGetFilename(void) {
+char* registryGetFilename(void) {
+  char *omxregistryfile = NULL;
   char *buffer;
-
-  if (omxregistryfile!=NULL)
-    return omxregistryfile;
 
   buffer=getenv("OMX_BELLAGIO_REGISTRY");
   if(buffer!=NULL&&*buffer!='\0') {

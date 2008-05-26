@@ -90,14 +90,17 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   int i;
   int index;
   int listindex;
+  char *registry_filename;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
-  omxregistryfp = fopen(registryGetFilename(), "r");
+  registry_filename = registryGetFilename();
+  omxregistryfp = fopen(registry_filename, "r");
   if (omxregistryfp == NULL){
-    DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", registryGetFilename());
+    DEBUG(DEB_LEV_ERR, "Cannot open OpenMAX registry file%s\n", registry_filename);
     return ENOENT;
   }
+  free(registry_filename);
   libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2);
 
   templateList = calloc(1,sizeof (stLoaderComponentType*));

@@ -503,7 +503,7 @@ int main(int argc, char** argv) {
     DEBUG(DEFAULT_MESSAGES, "Getting Handle for Component %s\n", AUDIO_EFFECT);
     err = OMX_GetHandle(&appPriv->volumehandle, AUDIO_EFFECT, NULL , &volumecallbacks);
     if(err != OMX_ErrorNone){
-      DEBUG(DEB_LEV_ERR, "No sink found. Exiting...\n");
+      DEBUG(DEB_LEV_ERR, "No Volume Component found. Exiting...\n");
       exit(1);
     }
 

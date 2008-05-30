@@ -160,7 +160,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
           pOutputBuffer->pMarkData);
       } else if(pOutputBuffer->hMarkTargetComponent != NULL) {
         /*If this is not the target component then pass the mark*/
-				DEBUG(DEB_LEV_FULL_SEQ, "Can't Pass Mark. This is a Source!!\n");
+        DEBUG(DEB_LEV_FULL_SEQ, "Can't Pass Mark. This is a Source!!\n");
       }
 
       if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer->nFilledLen == 0) {

@@ -17,4 +17,4 @@ docs:
 
 uninstall-local:
 	rm -f ~/.omxregistry
-	rm -rf $(libdir)/omxilcomponents/
+	rm -rf $(libdir)/bellagio/

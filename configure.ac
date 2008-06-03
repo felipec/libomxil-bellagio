@@ -13,11 +13,11 @@ AC_CONFIG_SRCDIR([include/OMX_Core.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_FILES([
-    Doxyfile
     Makefile
-    footer_SF.html
     libomxil-bellagio.pc
     libomxil-bellagio.spec
+    doc/Doxyfile
+    doc/footer_SF.html
     doc/omxregister-bellagio.1
     doc/Makefile
     include/Makefile
@@ -130,6 +130,13 @@ AM_PROG_CC_C_O
 
 # Check for libtool
 AM_PROG_LIBTOOL
+
+# Check for doxygen
+AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, true, false)
+AM_CONDITIONAL(HAVE_DOXYGEN,$HAVE_DOXYGEN)
+if test $HAVE_DOXYGEN = "false"; then
+             AC_MSG_WARN([*** doxygen not found, docs will not be built])
+fi
 
 ################################################################################
 # Check for libraries                                                          #

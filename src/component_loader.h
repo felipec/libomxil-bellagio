@@ -1,7 +1,7 @@
 /**
   @file src/component_loader.h
   
-  OpenMax Component loader APIs. This header file specifies the entry point
+  OpenMAX Component loader APIs. This header file specifies the entry point
   that a component loader must provide.
     
   Copyright (C) 2007  STMicroelectronics and Nokia

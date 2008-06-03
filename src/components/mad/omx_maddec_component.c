@@ -1,7 +1,7 @@
 /**
   @file src/components/mad/omx_maddec_component.c
 
-  This component implements and mp3 decoder based on mad
+  This component implements an MP3 decoder based on mad
   software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
@@ -208,7 +208,7 @@ void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandC
 
   omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
 
-  /** setting port & private fields according to mp3 audio format values */
+  /** setting port & private fields according to MP3 audio format values */
   strcpy(omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/mpeg");
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
 
@@ -351,9 +351,9 @@ static inline int scale_int (mad_fixed_t sample) {
   return (int) (sample << 3);
 }
 
-/** This function is the buffer management callback function for mp3 decoding
+/** This function is the buffer management callback function for MP3 decoding
   * is used to process the input buffer and provide one output buffer 
-  * @param inputbuffer is the input buffer containing the input mp3 content
+  * @param inputbuffer is the input buffer containing the input MP3 content
   * @param outputbuffer is the output buffer on which the output pcm content will be written
   */
 void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer) {
@@ -507,7 +507,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
       omx_maddec_component_Private->pAudioPcmMode.nSamplingRate = omx_maddec_component_Private->frame->header.samplerate;
       break;
     default :
-      DEBUG(DEB_LEV_ERR, "Audio format other than mp3 not supported\nCodec not found\n");
+      DEBUG(DEB_LEV_ERR, "Audio formats other than MP3 not supported\nCodec not found\n");
       break;                       
     }
 

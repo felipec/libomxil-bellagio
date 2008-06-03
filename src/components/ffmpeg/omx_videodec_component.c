@@ -1,8 +1,8 @@
 /**
   @file src/components/ffmpeg/omx_videodec_component.c
   
-  This component implements mpeg4 and avc video decoder. 
-  The MPEG4 and avc Video decoder is based on ffmpeg software library.
+  This component implements H.264 / MPEG-4 AVC video decoder. 
+  The H.264 / MPEG-4 AVC Video decoder is based on the FFmpeg software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -204,7 +204,7 @@ OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 }
 
 
-/** It initializates the ffmpeg framework, and opens an ffmpeg videodecoder of type specified by IL client 
+/** It initializates the FFmpeg framework, and opens an FFmpeg videodecoder of type specified by IL client 
   */ 
 OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_PrivateType* omx_videodec_component_Private) {
 
@@ -212,7 +212,7 @@ OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_Privat
   avcodec_init();
   av_register_all();
 
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "FFMpeg Library/codec iniited\n");
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "FFmpeg library/codec initialized\n");
 
   switch(omx_videodec_component_Private->video_coding_type) {
     case OMX_VIDEO_CodingMPEG4 :
@@ -222,20 +222,20 @@ OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_Privat
       target_codecID = CODEC_ID_H264;
       break;
     default :
-      DEBUG(DEB_LEV_ERR, "\n codec other than mpeg4 and avc(h264) is not supported -- codec not found\n");
+      DEBUG(DEB_LEV_ERR, "\n codecs other than H.264 / MPEG-4 AVC are not supported -- codec not found\n");
       return OMX_ErrorComponentNotFound;
   }
 
   /** Find the  decoder corresponding to the video type specified by IL client*/
   omx_videodec_component_Private->avCodec = avcodec_find_decoder(target_codecID);
   if (omx_videodec_component_Private->avCodec == NULL) {
-    DEBUG(DEB_LEV_ERR, "Codec Not found\n");
+    DEBUG(DEB_LEV_ERR, "Codec not found\n");
     return OMX_ErrorInsufficientResources;
   }
 
   omx_videodec_component_Private->avCodecContext = avcodec_alloc_context();
 
-  /** necessary flags for mpeg4 or h264 stream */
+  /** necessary flags for MPEG-4 or H.264 stream */
   omx_videodec_component_Private->avFrame = avcodec_alloc_frame();
   if(omx_videodec_component_Private->extradata_size >0) {
     omx_videodec_component_Private->avCodecContext->extradata = omx_videodec_component_Private->extradata;
@@ -456,7 +456,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
             inPort->sPortParam.format.video.nFrameHeight = omx_videodec_component_Private->avCodecContext->height;
             break;
           default :
-            DEBUG(DEB_LEV_ERR, "Video format other than mpeg4 & avc not supported\nCodec not found\n");
+            DEBUG(DEB_LEV_ERR, "Video formats other than MPEG-4 AVC not supported\nCodec not found\n");
             break;           
         }
 

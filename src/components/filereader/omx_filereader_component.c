@@ -1,7 +1,7 @@
 /**
   @file src/components/filereader/omx_filereader_component.c
 
-  OpenMax file reader component. This component is an file reader that detects the input
+  OpenMAX file reader component. This component is an file reader that detects the input
   file format so that client calls the appropriate decoder.
 
   Copyright (C) 2007  STMicroelectronics and Nokia

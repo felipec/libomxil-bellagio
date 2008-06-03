@@ -1,8 +1,8 @@
 /**
   @file src/components/audio_effects/omx_audio_mixer_component.c
 
-  OpenMax audio mixer control component. This component implements a mixer that 
-  mixes multiple audio PCM stream and produce a single output stream
+  OpenMAX audio mixer control component. This component implements a mixer that 
+  mixes multiple audio PCM streams and produces a single output stream.
 
   Copyright (C) 2008  STMicroelectronics and Nokia
 
@@ -35,7 +35,7 @@
 #define OMX_AUDIO_MIXER_INPUTPORT_INDEX_1    1
 #define OMX_AUDIO_MIXER_OUTPUTPORT_INDEX     2
 
-/* gain value */
+/* Gain value */
 #define GAIN_VALUE 100.0f
 
 /* Max allowable audio_mixer component instance */

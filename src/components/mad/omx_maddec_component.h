@@ -1,7 +1,7 @@
 /**
   @file src/components/mad/omx_maddec_component.h
 
-  This component implements and mp3 decoder based on mad
+  This component implements an MP3 decoder based on mad
   software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia

@@ -523,13 +523,13 @@ int main(int argc, char** argv) {
   } 
   tsem_init(appPriv->eofSem, 0);
   
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "Init the Omx core\n");
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Init the OMX core\n");
   err = OMX_Init();
   if (err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "The OpenMAX core can not be initialized. Exiting...\n");
     exit(1);
   } else {
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "Omx core is initialized \n");
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX core is initialized \n");
   }
   
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");

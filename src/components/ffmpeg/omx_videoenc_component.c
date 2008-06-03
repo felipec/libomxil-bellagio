@@ -1,8 +1,8 @@
 /**
   @file src/components/ffmpeg/omx_videoenc_component.c
   
-  This component implements mpeg4 video encoder. 
-  The MPEG4 Video encoder is based on ffmpeg software library.
+  This component implements MPEG-4 video encoder. 
+  The MPEG-4 Video encoder is based on FFmpeg software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -186,7 +186,7 @@ OMX_ERRORTYPE omx_videoenc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 }
 
 
-/** It initializates the ffmpeg framework, and opens an ffmpeg videoencoder of type specified by IL client 
+/** It initializates the FFmpeg framework, and opens an FFmpeg videoencoder of type specified by IL client 
   */ 
 OMX_ERRORTYPE omx_videoenc_component_ffmpegLibInit(omx_videoenc_component_PrivateType* omx_videoenc_component_Private) {
 
@@ -195,21 +195,21 @@ OMX_ERRORTYPE omx_videoenc_component_ffmpegLibInit(omx_videoenc_component_Privat
   avcodec_init();
   av_register_all();
 
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "FFMpeg Library/coenc iniited\n");
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "FFmpeg library/encoder initialized\n");
 
   switch(omx_videoenc_component_Private->video_encoding_type) {
     case OMX_VIDEO_CodingMPEG4 :
       target_coencID = CODEC_ID_MPEG4;
       break;
     default :
-      DEBUG(DEB_LEV_ERR, "\n coenc other than mpeg4 is not supported -- coenc not found\n");
+      DEBUG(DEB_LEV_ERR, "\n encoders other than MPEG-4 are not supported -- encoder not found\n");
       return OMX_ErrorComponentNotFound;
   }
 
   /** Find the  encoder corresponding to the video type specified by IL client*/
   omx_videoenc_component_Private->avCodec = avcodec_find_encoder(target_coencID);
   if (omx_videoenc_component_Private->avCodec == NULL) {
-    DEBUG(DEB_LEV_ERR, "Coenc Not found\n");
+    DEBUG(DEB_LEV_ERR, "Encoder Not found\n");
     return OMX_ErrorInsufficientResources;
   }
 
@@ -229,7 +229,7 @@ OMX_ERRORTYPE omx_videoenc_component_ffmpegLibInit(omx_videoenc_component_Privat
   omx_videoenc_component_Private->avCodecContext->pix_fmt = PIX_FMT_YUV420P;
 
   if (avcodec_open(omx_videoenc_component_Private->avCodecContext, omx_videoenc_component_Private->avCodec) < 0) {
-    DEBUG(DEB_LEV_ERR, "Could not open coenc\n");
+    DEBUG(DEB_LEV_ERR, "Could not open encoder\n");
     return OMX_ErrorInsufficientResources;
   }
   tsem_up(omx_videoenc_component_Private->avCodecSyncSem);

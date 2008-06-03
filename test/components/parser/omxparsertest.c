@@ -5,7 +5,7 @@
   a video deocder, an alsa sink and a video sink. The application reads a 3gp stream
   from a file, parses the audio and video content to the respective audio and video decoders.
   And sends the decoded data to respective audio and video sink components. Only components
-  based on ffmpeg library are supported.
+  based on the FFmpeg library are supported.
   The video formats supported are:
     MPEG4 (ffmpeg)
     H264  (ffmpeg)

@@ -121,7 +121,7 @@ CLASS(omx_base_PortType)
   OMX_PARAM_PORTDEFINITIONTYPE sPortParam; /**< @param sPortParam General OpenMAX port parameter */\
   OMX_BUFFERHEADERTYPE **pInternalBufferStorage; /**< This array contains the reference to all the buffers hadled by this port and already registered*/\
   BUFFER_STATUS_FLAG *bBufferStateAllocated; /**< @param bBufferStateAllocated The State of the Buffer whether assigned or allocated */\
-  OMX_COMPONENTTYPE *standCompContainer;/**< The openmax compoennt reference that contains this port */\
+  OMX_COMPONENTTYPE *standCompContainer;/**< The OpenMAX component reference that contains this port */\
   OMX_BOOL bIsTransientToEnabled;/**< It indicates that the port is going from disabled to enabled */ \
   OMX_BOOL bIsTransientToDisabled;/**< It indicates that the port is going from enabled to disabled */ \
   OMX_BOOL bIsFullOfBuffers; /**< It indicates if the port has all the buffers needed */ \
@@ -143,7 +143,7 @@ CLASS(omx_base_PortType)
 ENDCLASS(omx_base_PortType)
 
 /** 
- * @brief the base contructor for the generic openmax ST port
+ * @brief The base contructor for the generic OpenMAX ST port
  * 
  * This function is executed by the component that uses a port.
  * The parameter contains the info about the component.
@@ -156,7 +156,7 @@ ENDCLASS(omx_base_PortType)
  */
 OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput);
 
-/** @brief the base destructor for the generic openmax ST port
+/** @brief The base destructor for the generic OpenMAX ST port
  * 
  * This function is executed by the component that uses a port.
  * The parameter contains the info about the component.
@@ -185,7 +185,7 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort);
  */
 OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort);
 
-/** @brief the entry point for sending buffers to the port
+/** @brief The entry point for sending buffers to the port
  * 
  * This function can be called by the EmptyThisBuffer or FillThisBuffer. It depends on
  * the nature of the port, that can be an input or output port.

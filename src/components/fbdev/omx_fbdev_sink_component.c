@@ -1,8 +1,8 @@
 /**
   @file src/components/fbdev/omx_fbdev_sink_component.h
   
-  OpenMax FBDEV sink component. This component is a video sink that copies
-  data to a linux framebuffer device.
+  OpenMAX FBDEV sink component. This component is a video sink that copies
+  data to a Linux framebuffer device.
 
   Originally developed by Peter Littlefield
   Copyright (C) 2007  STMicroelectronics and Agere Systems
@@ -366,7 +366,7 @@ OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt) {
 /**  Returns the OpenMAX color format type corresponding to an fbdev fb_var_screeninfo structure 
   * @param vscr_info contains the frame buffer display settings
   * We extract the rgba configuration of the frame buffer from this structure and thereby 
-  * apply the appropriate openmax standard color format equivalent to this configuration
+  * apply the appropriate OpenMAX standard color format equivalent to this configuration
   * the r,g,b,a content length is needed to get the bit per pixel values
   * r,g,b,a content offsets determine their respective positions
   */
@@ -485,7 +485,7 @@ OMX_COLOR_FORMATTYPE find_omx_pxlfmt(struct fb_var_screeninfo *vscr_info) {
 }
 
 
-/**  This function copies source inmage to destination image of required dimension and color formats 
+/**  This function copies source image to destination image of required dimension and color formats 
   * @param src_ptr is the source image strting pointer
   * @param src_stride is the source image stride (src_width * byte_per_pixel)
   * @param src_width is source image width & src_height is source image height

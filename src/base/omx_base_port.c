@@ -40,7 +40,7 @@
 /** The default value for the minimum number of needed buffers for each port. */
 #define DEFAULT_MIN_NUMBER_BUFFERS_PER_PORT 2
 /** 
-  * @brief the base contructor for the generic openmax ST port
+  * @brief The base contructor for the generic OpenMAX ST port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the component.

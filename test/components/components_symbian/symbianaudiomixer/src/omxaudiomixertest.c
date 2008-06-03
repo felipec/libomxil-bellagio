@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  /*Set sample rate and channel no to alsa sink if specified*/
+  /*Set sample rate and channel no to ALSA sink if specified*/
   if(srate && nchannel && flagPlaybackOn) {
     DEBUG(DEFAULT_MESSAGES, "Sample Rate=%d,NChannel=%d\n",(int)srate,(int)nchannel);
     sPcmModeType.nPortIndex=0;

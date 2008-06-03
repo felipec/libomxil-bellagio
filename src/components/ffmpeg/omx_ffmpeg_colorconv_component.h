@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_ffmpeg_colorconv_component.h
 
-  This component implements a color converter using the ffmpeg
+  This component implements a color converter using the FFmpeg
   software library.
 
   Originally developed by Peter Littlefield
@@ -51,7 +51,7 @@
 #define MIN(a,b)  (((a) < (b)) ? (a) : (b))
 #define MAX(a,b)  (((a) > (b)) ? (a) : (b))
 
-/** ffmpeg color converter component port structure.
+/** FFmpeg color converter component port structure.
   */
 DERIVEDCLASS(omx_ffmpeg_colorconv_component_PortType, omx_base_video_PortType)
 #define omx_ffmpeg_colorconv_component_PortType_FIELDS omx_base_video_PortType_FIELDS \
@@ -65,7 +65,7 @@ DERIVEDCLASS(omx_ffmpeg_colorconv_component_PortType, omx_base_video_PortType)
   OMX_CONFIG_SCALEFACTORTYPE omxConfigScale; \
   /** @param omxConfigOutputPosition Top-Left offset from intermediate buffer to output buffer */ \
   OMX_CONFIG_POINTTYPE omxConfigOutputPosition; \
-  /** @param ffmpeg_pixelformat The ffmpeg enum for pixel format */ \
+  /** @param ffmpeg_pixelformat The FFmpeg enum for pixel format */ \
   enum PixelFormat ffmpeg_pxlfmt;
 ENDCLASS(omx_ffmpeg_colorconv_component_PortType)
 
@@ -77,9 +77,9 @@ DERIVEDCLASS(omx_ffmpeg_colorconv_component_PrivateType, omx_base_filter_Private
   unsigned char *in_buffer; \
   /** @param conv_buffer Buffer to hold converted data */ \
   unsigned char *conv_buffer; \
-  /** @param in_frame The ffmpeg AVFrame structure for the input buffer */ \
+  /** @param in_frame The FFmpeg AVFrame structure for the input buffer */ \
   AVFrame *in_frame; \
-  /** @param conv_frame the ffmpeg AVFrame structure for the conversion output */ \
+  /** @param conv_frame the FFmpeg AVFrame structure for the conversion output */ \
   AVFrame *conv_frame; \
   /** @param in_alloc_size Allocated size of the input buffer */ \
   unsigned int in_alloc_size; \

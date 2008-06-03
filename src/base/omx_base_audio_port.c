@@ -36,7 +36,7 @@
 #include "omx_base_audio_port.h"
 
 /** 
-  * @brief the base contructor for the generic openmax ST Audio port
+  * @brief The base contructor for the generic OpenMAX ST Audio port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the component.
@@ -87,7 +87,7 @@ OMX_ERRORTYPE base_audio_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
 }
 
 /** 
-  * @brief the base audio port destructor for the generic openmax ST Audio port
+  * @brief The base audio port destructor for the generic OpenMAX ST Audio port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the port.

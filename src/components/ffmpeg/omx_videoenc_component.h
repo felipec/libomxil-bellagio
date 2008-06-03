@@ -1,8 +1,8 @@
 /**
   @file src/components/ffmpeg/omx_videoenc_component.h
   
-  This component implements mpeg4 video encoder. 
-  The MPEG4 Video encoder is based on ffmpeg software library.
+  This component implements an MPEG-4 video encoder. 
+  The MPEG-4 Video encoder is based on the FFmpeg software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -53,18 +53,18 @@
   */
 DERIVEDCLASS(omx_videoenc_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_videoenc_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
-  /** @param avCodec pointer to the ffpeg video encoder */ \
+  /** @param avCodec pointer to the FFmpeg video encoder */ \
   AVCodec *avCodec;  \
-  /** @param avCodecContext pointer to ffmpeg encoder context  */ \
+  /** @param avCodecContext pointer to FFmpeg encoder context  */ \
   AVCodecContext *avCodecContext;  \
-  /** @param picture pointer to ffmpeg AVFrame  */ \
+  /** @param picture pointer to FFmpeg AVFrame  */ \
   AVFrame *picture; \
   /** @param semaphore for avcodec access syncrhonization */\
   tsem_t* avCodecSyncSem; \
   /** @param pVideoMpeg4 Referece to OMX_VIDEO_PARAM_MPEG4TYPE structure*/  \
   OMX_VIDEO_PARAM_MPEG4TYPE pVideoMpeg4;  \
   OMX_BOOL avcodecReady;  \
-  /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg encoder */ \
+  /** @param minBufferLength Field that stores the minimun allowed size for FFmpeg encoder */ \
   OMX_U16 minBufferLength; \
   /** @param isFirstBuffer Field that the buffer is the first buffer */ \
   OMX_S32 isFirstBuffer;\

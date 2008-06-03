@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_ffmpeg_colorconv_component.c
 
-  This component implements a color converter using the ffmpeg
+  This component implements a color converter using the FFmpeg
   software library.
 
   Originally developed by Peter Littlefield
@@ -42,10 +42,10 @@ static OMX_U32 noVideoColorConvInstance = 0;
 #define DEFAULT_VIDEO_INPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*3/2
 
 
-/**  Figure out equivalent ffmpeg PixelFormat based on OMX_COLOR_FORMATTYPE 
-  * @param omx_pxlfmt is the input openmax standard pixel format
-  * output is the ffmpeg library supported pixel format corresponding to this input pixel format
-  * this output ffmpeg pixel format will be needed in port parameter settings
+/**  Figure out equivalent FFmpeg PixelFormat based on OMX_COLOR_FORMATTYPE 
+  * @param omx_pxlfmt is the input OpenMAX standard pixel format
+  * output is the FFmpeg library supported pixel format corresponding to this input pixel format
+  * this output FFmpeg pixel format will be needed in port parameter settings
   */
 enum PixelFormat find_ffmpeg_pxlfmt(OMX_COLOR_FORMATTYPE omx_pxlfmt) {
   enum PixelFormat ffmpeg_pxlfmt;

@@ -1,8 +1,8 @@
 /**
   @file src/components/vorbis/omx_vorbisdec_component.c
 
-  This component implements a ogg-vorbis decoder. The vorbis decoder is based on libvorbis
-  software library.
+  This component implements an Ogg Vorbis decoder. The Vorbis decoder is based on
+  the libvorbis software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -260,7 +260,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp
   free(omx_vorbisdec_component_Private->internalOutputBuffer);
   omx_vorbisdec_component_Private->internalOutputBuffer = NULL;
   
-  /** reset te vorbis decoder related parameters */
+  /** reset the vorbis decoder related parameters */
   second_header_buffer_processed = 0;
   ogg_stream_clear(&omx_vorbisdec_component_Private->os);
   vorbis_block_clear(&omx_vorbisdec_component_Private->vb);
@@ -323,7 +323,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
     if(omx_vorbisdec_component_Private->isFirstBuffer) {
       omx_vorbisdec_component_Private->isFirstBuffer = 0;
       if(ogg_sync_pageout(&omx_vorbisdec_component_Private->oy, &omx_vorbisdec_component_Private->og) != 1)  {
-        DEBUG(DEB_LEV_ERR, "this input stream is not a vorbis stream\n");
+        DEBUG(DEB_LEV_ERR, "this input stream is not an Ogg stream\n");
         exit(1);
       }  
       ogg_stream_init(&omx_vorbisdec_component_Private->os, ogg_page_serialno(&omx_vorbisdec_component_Private->og));    
@@ -689,7 +689,7 @@ OMX_ERRORTYPE omx_vorbis_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandC
     if ((message->messageParam == OMX_StateIdle) && (omx_vorbisdec_component_Private->state == OMX_StateLoaded)) {
       err = omx_vorbisdec_component_Init(openmaxStandComp);
       if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s vorbis Decoder Init Failed=%x\n",__func__,err); 
+        DEBUG(DEB_LEV_ERR, "In %s Vorbis Decoder Init Failed=%x\n",__func__,err); 
         return err;
       }
     } else if ((message->messageParam == OMX_StateLoaded) && (omx_vorbisdec_component_Private->state == OMX_StateIdle)) {

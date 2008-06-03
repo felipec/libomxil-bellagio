@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_audiodec_component.h
 
-  This component implements and mp3 decoder. The Mp3 decoder is based on ffmpeg
+  This component implements an MP3 decoder. The MP3 decoder is based on FFmpeg
   software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
-/* Specific include files for ffmpeg*/
+/* Specific include files for FFmpeg*/
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 

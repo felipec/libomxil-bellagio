@@ -1,7 +1,7 @@
 /**
   @file src/tsemaphore.h
 
-  Implements a simple inter-thread semaphore so not to have to deal with IPC
+  Implements a simple inter-thread semaphore so as not to have to deal with IPC
   creation and the like.
 
   Copyright (C) 2007  STMicroelectronics and Nokia

@@ -10,9 +10,9 @@
 	OMXILCOMPONENTSPATH
 	If the components are installed in a different location, specify:
 
-	omxregister installation_path
+	omxregister-bellagio installation_path
 
-  Copyright (C) 2007, 2008  STMicroelectronics and Nokia
+        Copyright (C) 2007, 2008  STMicroelectronics and Nokia
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free
@@ -55,7 +55,7 @@ static const char arrow[] =  " ==> ";
  *
  * This function
  *  - reads for the given directory any library contained
- *  - check if the library belong to OpenMAX ST static component loader
+ *  - check if the library belongs to OpenMAX ST static component loader
  *    (it must contain the function omx_component_library_Setup for the initialization)
  *  - write the openmax names and related libraries to the registry file
  */

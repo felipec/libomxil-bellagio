@@ -1,7 +1,7 @@
 /**
   @file src/components/alsa/omx_alsasrc_component.h
 
-  OpenMax alsa src component. This component is an audio src that uses ALSA library.
+  OpenMAX ALSA source component. This component is an audio source that uses ALSA library.
 
   Copyright (C) 2008  STMicroelectronics and Nokia
 
@@ -46,9 +46,9 @@ DERIVEDCLASS(omx_alsasrc_component_PrivateType, omx_base_source_PrivateType)
   OMX_AUDIO_PARAM_PCMMODETYPE sPCMModeParam; \
    /** @param AudioPCMConfigured boolean flag to check if the audio has been configured */  \
   char AudioPCMConfigured;  \
-  /** @param playback_handle ALSA specif handle for audio player */  \
+  /** @param playback_handle ALSA specific handle for audio player */  \
   snd_pcm_t* playback_handle;  \
-  /** @param hw_params ALSA specif hardware parameters */  \
+  /** @param hw_params ALSA specific hardware parameters */  \
   snd_pcm_hw_params_t* hw_params;
 ENDCLASS(omx_alsasrc_component_PrivateType)
 

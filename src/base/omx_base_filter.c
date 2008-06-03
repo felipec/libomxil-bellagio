@@ -1,9 +1,9 @@
 /**
 	@file src/base/omx_base_filter.c
 	
-	OpenMax Base Filter component. This component does not perform any multimedia
+	OpenMAX Base Filter component. This component does not perform any multimedia
 	processing. It derives from base component and contains two ports. It can be used 
-	as base class for codec and filter components.
+	as a base class for codec and filter components.
 	
 	Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -46,11 +46,11 @@ OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OM
     openmaxStandComp->pComponentPrivate=omx_base_filter_Private;
   }
 
-  /*Call the base class constructory*/
+  /* Call the base class constructory */
   err = omx_base_component_Constructor(openmaxStandComp,cComponentName);
 
   /* here we can override whatever defaults the base_component constructor set
-  * e.g. we can override the function pointers in the private struct  */
+  * e.g. we can override the function pointers in the private struct */
   omx_base_filter_Private = openmaxStandComp->pComponentPrivate;
 
   omx_base_filter_Private->sPortTypesParam.nPorts = 2;

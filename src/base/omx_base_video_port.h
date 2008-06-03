@@ -50,7 +50,7 @@ DERIVEDCLASS(omx_base_video_PortType, omx_base_PortType)
 ENDCLASS(omx_base_video_PortType)
 
 /** 
-  * @brief the base contructor for the generic openmax ST Video port
+  * @brief The base contructor for the generic OpenMAX ST Video port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the component.
@@ -72,7 +72,7 @@ OMX_ERRORTYPE base_video_port_Constructor(
   OMX_BOOL isInput);
 
 /** 
-  * @brief the base video port destructor for the generic openmax ST Video port
+  * @brief The base video port destructor for the generic OpenMAX ST Video port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the port.

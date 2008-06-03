@@ -2,11 +2,11 @@
   @file src/components/vorbis/library_entry_point.c
   
   The library entry point. It must have the same name for each
-  library fo the components loaded by th ST static component loader.
+  library of the components loaded by the ST static component loader.
   This function fills the version, the component name and if existing also the roles
   and the specific names for each role. This base function is only an explanation.
-  For each library it must be implemented, and it must fill data of any component
-  in the library
+  It must be implemented for each library, and it must fill data of any component
+  in the library.
   
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -35,12 +35,12 @@
 #include <omx_vorbisdec_component.h>
 
 /** The library entry point. It must have the same name for each
- * library fo the components loaded by th ST static component loader.
+ * library of the components loaded by the ST static component loader.
  * 
  * This function fills the version, the component name and if existing also the roles
  * and the specific names for each role. This base function is only an explanation.
- * For each library it must be implemented, and it must fill data of any component
- * in the library
+ * It must be implemented for each library, and it must fill data of any component
+ * in the library.
  * 
  * @param stComponents pointer to an array of components descriptors.If NULL, the 
  * function will return only the number of components contained in the library

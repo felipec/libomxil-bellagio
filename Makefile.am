@@ -2,7 +2,7 @@ SUBDIRS = src include test m4 doc
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = libomxil-bellagio.spec Doxyfile footer_SF.html
+EXTRA_DIST = libomxil-bellagio.spec
 
 pkgconfigdir        = $(libdir)/pkgconfig
 pkgconfig_DATA      = libomxil-bellagio.pc
@@ -11,9 +11,6 @@ docdir = $(DESTDIR)$(prefix)/share/doc/@PACKAGE@
 doc_DATA = README \
    ChangeLog \
    TODO
-
-docs:
-	doxygen Doxyfile
 
 uninstall-local:
 	rm -f ~/.omxregistry

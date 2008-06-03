@@ -1,7 +1,7 @@
 /**
   @file src/base/omx_base_sink.h
 	  
-  OpenMax base sink component. This component does not perform any multimedia
+  OpenMAX base sink component. This component does not perform any multimedia
   processing. It derives from base component and contains a single port. It can be used 
   as base class for sink components.
 

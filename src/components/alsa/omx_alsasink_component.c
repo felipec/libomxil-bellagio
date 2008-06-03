@@ -1,7 +1,7 @@
 /**
   @file src/components/alsa/omx_alsasink_component.c
 
-  OpenMax alsa sink component. This component is an audio sink that uses ALSA library.
+  OpenMAX ALSA sink component. This component is an audio sink that uses ALSA library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -132,7 +132,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   openmaxStandComp->SetParameter  = omx_alsasink_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_alsasink_component_GetParameter;
 
-  /* Write in the default paramenters */
+  /* Write in the default parameters */
   omx_alsasink_component_Private->AudioPCMConfigured  = 0;
 
   if (!omx_alsasink_component_Private->AudioPCMConfigured) {

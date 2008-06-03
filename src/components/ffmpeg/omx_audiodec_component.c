@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_audiodec_component.c
 
-  This component implements and mp3 decoder. The Mp3 decoder is based on ffmpeg
+  This component implements an MP3 decoder. The MP3 decoder is based on FFmpeg
   software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
@@ -200,7 +200,7 @@ OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 }
 
 /** 
-  It initializates the ffmpeg framework, and opens an ffmpeg audiodecoder of type specified by IL client - currently only used for mp3 decoding
+  It initializates the FFmpeg framework, and opens an FFmpeg audiodecoder of type specified by IL client - currently only used for MP3 decoding
 */ 
 OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_PrivateType* omx_audiodec_component_Private) {
   OMX_U32 target_codecID;  // id of ffmpeg codec to be used for different audio formats 
@@ -232,7 +232,7 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
   omx_audiodec_component_Private->avCodecContext->extradata = omx_audiodec_component_Private->extradata;
   omx_audiodec_component_Private->avCodecContext->extradata_size = (int)omx_audiodec_component_Private->extradata_size;
 
-  /*open the avcodec if mp3,aac,vorbis format selected */
+  /*open the avcodec if MP3,AAC,Vorbis format selected */
   if (avcodec_open(omx_audiodec_component_Private->avCodecContext, omx_audiodec_component_Private->avCodec) < 0) {
     DEBUG(DEB_LEV_ERR, "Could not open codec\n");
     return OMX_ErrorInsufficientResources;
@@ -249,7 +249,7 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
 }
 
 /** 
-  It Deinitializates the ffmpeg framework, and close the ffmpeg mp3 decoder
+  It Deinitializates the FFmpeg framework, and close the FFmpeg MP3 decoder
 */
 void omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_PrivateType* omx_audiodec_component_Private) {
   
@@ -366,8 +366,8 @@ OMX_ERRORTYPE omx_audiodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   return err;
 }
 
-/** buffer management callback function for mp3 decoding in new standard 
- * of ffmpeg library 
+/** buffer management callback function for MP3 decoding in new standard 
+ * of FFmpeg library 
  */
 void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer, OMX_BUFFERHEADERTYPE* pOutputBuffer) 
 {
@@ -404,7 +404,7 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
     switch(omx_audiodec_component_Private->audio_coding_type)  {
       /*Update Parameter which has changed from avCodecContext*/
     case OMX_AUDIO_CodingMP3 :
-      /*pAudioMp3 is for input port Mp3 data*/
+      /*pAudioMp3 is for input port MP3 data*/
       omx_audiodec_component_Private->pAudioMp3.nChannels = omx_audiodec_component_Private->avCodecContext->channels;
       omx_audiodec_component_Private->pAudioMp3.nBitRate = omx_audiodec_component_Private->avCodecContext->bit_rate;
       omx_audiodec_component_Private->pAudioMp3.nSampleRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
@@ -447,7 +447,7 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
     if(omx_audiodec_component_Private->avCodecContext->sample_fmt==SAMPLE_FMT_S16)
       omx_audiodec_component_Private->pAudioPcmMode.nBitPerSample = 16;
     else if(omx_audiodec_component_Private->avCodecContext->sample_fmt==SAMPLE_FMT_S32)
-      omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = 32;
+      omx_audiodec_component_Private->pAudioPcmMode.nBitPerSample = 32;
     omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = omx_audiodec_component_Private->avCodecContext->sample_rate;
 
     /*Send Port Settings changed call back*/

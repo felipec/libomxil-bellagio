@@ -1,7 +1,7 @@
 /**
   @file src/components/parser3gp/omx_parser3gp_component.c
 
-  OpenMax parser3gp component. This component is a 3gp stream parser that parses the input
+  OpenMAX parser3gp component. This component is a 3GP stream parser that parses the input
   file format so that client calls the appropriate decoder.
 
   Copyright (C) 2008  STMicroelectronics and Nokia

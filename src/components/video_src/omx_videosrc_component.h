@@ -1,8 +1,8 @@
 /**
   @file src/components/video_src/omx_videosrc_component.h
 
-  OpenMax video source component. This component is a video source component
-  that captures video from the video camera
+  OpenMAX video source component. This component is a video source component
+  that captures video from the video camera.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -57,7 +57,7 @@
  */
 DERIVEDCLASS(omx_videosrc_component_PrivateType, omx_base_source_PrivateType)
 #define omx_videosrc_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
-  /** @param semaphore for video syncrhonization */\
+  /** @param semaphore for video synchronization */\
   tsem_t* videoSyncSem; \
   /** @param videoReady boolean flag that is true when the video format has been initialized */ \
   OMX_BOOL videoReady;  \

@@ -1,7 +1,7 @@
 /**
 	@file src/base/omx_base_filter.h
 	
-	OpenMax Base Filter component. This component does not perform any multimedia
+	OpenMAX Base Filter component. This component does not perform any multimedia
 	processing. It derives from base component and contains two ports. It can be used 
 	as base class for codec and filter components.
 	
@@ -62,7 +62,7 @@ DERIVEDCLASS(omx_base_filter_PrivateType, omx_base_component_PrivateType)
 ENDCLASS(omx_base_filter_PrivateType)
 
 /** 
- * @brief the base filter contructor for the openmax st components
+ * @brief The base filter contructor for the OpenMAX ST components
  * 
  * @param openmaxStandComp the ST component to be initialized
  * 
@@ -70,9 +70,9 @@ ENDCLASS(omx_base_filter_PrivateType)
  */
 OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
 
-/** @brief the base filter destructor for ST openmax components
+/** @brief the base filter destructor for ST OpenMAX components
  * 
- * @param openmaxStandComp the ST openmax component to be disposed
+ * @param openmaxStandComp the ST OpenMAX component to be disposed
  */
 OMX_ERRORTYPE omx_base_filter_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 

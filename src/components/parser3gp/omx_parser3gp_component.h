@@ -1,8 +1,8 @@
 /**
   @file src/components/parser3gp/omx_parser3gp_component.h
 
-  OpenMax parser3gp component. This component is a 3gp parser that parsers the input
-  3gp file to provide the audio and video streams outputs
+  OpenMAX parser3gp component. This component is a 3GP parser that parsers the input
+  3GP file to provide the audio and video streams outputs
 
   Copyright (C) 2008  STMicroelectronics and Nokia
 
@@ -38,7 +38,7 @@
 #include <omx_base_source.h>
 #include <string.h>
 
-/* Specific include files for ffmpeg library related decoding*/
+/* Specific include files for FFmpeg library related decoding*/
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/avio.h>
@@ -53,11 +53,11 @@ DERIVEDCLASS(omx_parser3gp_component_PrivateType, omx_base_source_PrivateType)
 #define omx_parser3gp_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
   /** @param sTimeStamp Store Time Stamp to be set*/ \
   OMX_TIME_CONFIG_TIMESTAMPTYPE sTimeStamp; \
-  /** @param avformatcontext is the ffmpeg video format context */ \
+  /** @param avformatcontext is the FFmpeg video format context */ \
   AVFormatContext *avformatcontext; \
-  /** @param avformatparameters is the ffmpeg video format related parameters */ \
+  /** @param avformatparameters is the FFmpeg video format related parameters */ \
   AVFormatParameters *avformatparameters; \
-  /** @param avinputformat is the ffmpeg video format related settings */ \
+  /** @param avinputformat is the FFmpeg video format related settings */ \
   AVInputFormat *avinputformat; \
   /** @param pTmpOutputBuffer is a temporary buffer to hold the data from av_read_frame */ \
   OMX_BUFFERHEADERTYPE* pTmpOutputBuffer; \
@@ -71,7 +71,7 @@ DERIVEDCLASS(omx_parser3gp_component_PrivateType, omx_base_source_PrivateType)
   tsem_t* avformatSyncSem; \
   /** @param avformatReady boolean flag that is true when the video format has been initialized */ \
   OMX_BOOL avformatReady; \
-  /** @param pkt is the ffmpeg packet structure for data delivery */ \
+  /** @param pkt is the FFmpeg packet structure for data delivery */ \
   AVPacket pkt;
 ENDCLASS(omx_parser3gp_component_PrivateType)
 

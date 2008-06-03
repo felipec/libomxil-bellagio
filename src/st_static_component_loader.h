@@ -32,7 +32,7 @@
 struct BOSA_COMPONENTLOADER * st_static_loader;
 
 /** @brief the private data structure handled by the ST static loader that described
- * an openMAX component
+ * an OpenMAX component
  * 
  * This structure contains all the fields that the loader must use to support 
  * the loading  unloading functions of the component, that are not described by the
@@ -55,7 +55,7 @@ void st_static_InitComponentLoader();
 /** @brief The constructor of the ST specific component loader. 
  * 
  * It is the component loader developed under linux by ST, for local libraries.
- * It is based on a registry file, like in the case of Gstreamer. It reads the 
+ * It is based on a registry file, like in the case of GStreamer. It reads the 
  * registry file, and allows the components to register themself to the 
  * main list templateList.
  */
@@ -81,7 +81,7 @@ OMX_ERRORTYPE BOSA_ST_CreateComponent(
     OMX_PTR pAppData,
     OMX_CALLBACKTYPE* pCallBacks);
 
-/** @brief destructor of the requested openmax component
+/** @brief destructor of the requested OpenMAX component
  * 
  */
 OMX_ERRORTYPE BOSA_ST_DestroyComponent(

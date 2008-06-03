@@ -43,11 +43,11 @@
  */
 #define DEB_LEV_SIMPLE_SEQ 4
 /** Messages representing steps in the execution. All the steps are described, 
- * also with iterations. With this level of output the performances are 
+ * also with iterations. With this level of output the performance is 
  * seriously compromised
  */
 #define DEB_LEV_FULL_SEQ   8
-/** Messages that indicates the beginning and the end of a function.
+/** Messages that indicate the beginning and the end of a function.
  * It can be used to trace the execution
  */
 #define DEB_LEV_FUNCTION_NAME 16

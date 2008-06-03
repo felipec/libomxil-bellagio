@@ -1,8 +1,8 @@
 /**
   @file src/components/audio_effects/omx_audio_mixer_component.h
 
-  OpenMax audio_mixer control component. This component implements a mixer that 
-  mixes multiple audio PCM stream and produce a single output stream
+  OpenMAX audio_mixer control component. This component implements a mixer that 
+  mixes multiple audio PCM streams and produces a single output stream.
 
   Copyright (C) 2008  STMicroelectronics and Nokia
 
@@ -92,7 +92,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetConfig(
   OMX_IN  OMX_INDEXTYPE nIndex,
   OMX_IN  OMX_PTR pComponentConfigStructure);
 
-/** This is the central function for component processing,overridden for audio mixer. It
+/** This is the central function for component processing, overridden for audio mixer. It
   * is executed in a separate thread, is synchronized with 
   * semaphores at each port, those are released each time a new buffer
   * is available on the given port.

@@ -1,7 +1,7 @@
 /**
   @file src/components/camera/omx_camera_source_component.c
   
-  OpenMax camera source component.
+  OpenMAX camera source component.
   The OpenMAX camera component is a V4L2-based video source whose functionalities
   include preview, video capture, image capture, video thumbnail and image
   thumbnail. It has 3 (output) ports: Port 0 is used for preview; Port 1 is used
@@ -835,7 +835,7 @@ OMX_ERRORTYPE omx_camera_source_component_Destructor(OMX_COMPONENTTYPE *openmaxS
 }
 
 /** Specific operations for camera component when state changes
- * @param openmaxStandComp the openmax component which state is to be changed
+ * @param openmaxStandComp the OpenMAX component which state is to be changed
  * @param destinationState the requested target state
  */
 static OMX_ERRORTYPE omx_camera_source_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32 destinationState) {

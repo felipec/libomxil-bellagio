@@ -1,8 +1,8 @@
 /**
   @file src/components/fbdev/omx_fbdev_sink_component.h
   
-  OpenMax FBDEV sink component. This component is a video sink that copies
-  data to a linux framebuffer device.
+  OpenMAX FBDEV sink component. This component is a video sink that copies
+  data to a >inux framebuffer device.
 
   Originally developed by Peter Littlefield
   Copyright (C) 2007  STMicroelectronics and Agere Systems
@@ -131,10 +131,10 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetConfig(
 
 /** function prototypes of some internal functions */
 
-/** finds openmax standard pixel format from screen info */
+/** finds OpenMAX standard pixel format from screen info */
 OMX_COLOR_FORMATTYPE find_omx_pxlfmt(struct fb_var_screeninfo *vscr_info);
 
-/** finds ffmpeg supported pixel format from input openmax standard pixel format */
+/** finds FFmpeg supported pixel format from input OpenMAX standard pixel format */
 enum PixelFormat find_ffmpeg_pxlfmt(OMX_COLOR_FORMATTYPE omx_pxlfmt);
 
 /** finds video stride  from input dimension and color format */

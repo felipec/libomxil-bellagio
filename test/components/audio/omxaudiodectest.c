@@ -1,9 +1,9 @@
 /**
   @file test/components/testaudio/omxaudiodectest.c
 
-  Test application that uses three OpenMAX components, a file reader,an audio decoder 
-  and an alsa sink. The application receives an compressed audio stream on input port
-  from a file, decodes it and sends it to the alsa sink, or to a file or standard output.
+  Test application that uses three OpenMAX components, a file reader, an audio decoder 
+  and an ALSA sink. The application receives an compressed audio stream on input port
+  from a file, decodes it and sends it to the ALSA sink, or to a file or standard output.
   The audio formats supported are:
   mp3 (ffmpeg)
 
@@ -98,11 +98,11 @@ void display_help() {
   printf("\n");
   printf("       -o outfile: If this option is specified, the decoded stream is written to outfile\n");
   printf("                   This option can't be used with '-t' \n");
-  printf("       -s single_ogg: Use the single role ogg decoder instead of the default one. Can't be used with -m or .mp3 file\n");
+  printf("       -s single_ogg: Use the single role Ogg Vorbis decoder instead of the default one. Can't be used with -m or .mp3 file\n");
   printf("       -t: The audio decoder is tunneled with the alsa sink\n");
-  printf("       -m: For mp3 decoding use the mad library. Can't be used with -s or .ogg file\n");
+  printf("       -m: For MP3 decoding use the mad library. Can't be used with -s or .ogg file\n");
   printf("       -d: If no output is specified, and no playback is specified,\n");
-  printf("            this flag activated the print of the stream directly on std out\n");
+  printf("           this flag activated the print of the stream directly on stdout\n");
   printf("       -f: Use filereader with mad\n");
   printf("       -g: Gain of the audio sink[0...100]\n");
   printf("       -h: Displays this help\n");
@@ -368,7 +368,7 @@ int main(int argc, char** argv) {
     DEBUG(DEFAULT_MESSAGES, "Decode file %s", input_file);
     DEBUG(DEFAULT_MESSAGES, " to ");
     if (flagPlaybackOn) {
-      DEBUG(DEFAULT_MESSAGES, " alsa sink");
+      DEBUG(DEFAULT_MESSAGES, " ALSA sink");
       if (flagSetupTunnel) {
         DEBUG(DEFAULT_MESSAGES, " with tunneling\n");
       } else {

@@ -1,7 +1,7 @@
 /**
   @file src/base/omx_base_component.h
 
-  OpenMax base component. This component does not perform any multimedia
+  OpenMAX base component. This component does not perform any multimedia
   processing.	It is used as a base component for new components development.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
@@ -43,7 +43,7 @@
 /** Default MIME string length */
 #define DEFAULT_MIME_STRING_LENGTH 128
 
-/*Check if Component is Deinitalizing*/
+/* Check if Component is deinitalizing*/
 #define IS_COMPONENT_DEINIT(component_Private, exit_condition)  \
                 pthread_mutex_lock(&component_Private->exit_mutex)      ,\
                 exit_condition = component_Private->bIsComponentDeinit ,\
@@ -75,8 +75,8 @@ typedef enum OMX_TRANS_STATETYPE {
     OMX_TransStateMax = 0X7FFFFFFF
 } OMX_TRANS_STATETYPE;
 
-/** @brief enumerates all the possible types of messages 
- * handled internally byu the component
+/** @brief Enumerates all the possible types of messages 
+ * handled internally by the component
  */
 typedef enum INTERNAL_MESSAGE_TYPE {
   SENDCOMMAND_MSG_TYPE = 1,/**< this flag specifies that the message send is a command */
@@ -84,9 +84,9 @@ typedef enum INTERNAL_MESSAGE_TYPE {
   WARNING_MSG_TYPE /**< this flag specifies that the message send is a warning message */
 } INTERNAL_MESSAGE_TYPE;
 
-/** @brief the container of an internal message
+/** @brief The container of an internal message
  * 
- * This structure contains a generic openmax request (from send command).
+ * This structure contains a generic OpenMAX request (from send command).
  * It is processed by the internal message handler thread
  */
 typedef struct internalRequestMessageType {
@@ -137,13 +137,13 @@ CLASS(omx_base_component_PrivateType)
 ENDCLASS(omx_base_component_PrivateType)
 
 /** 
- * @brief the base contructor for the openmax st components
+ * @brief The base contructor for the OpenMAX ST components
  * 
- * This function is executed by the ST staic component loader.
+ * This function is executed by the ST static component loader.
  * It takes care of constructing the instance of the component.
  * For the base_component component, the following is done:
  *
- * 1) Fills the basic openmax structure. The fields can be overwritten
+ * 1) Fills the basic OpenMAX structure. The fields can be overwritten
  *    by derived components. 
  * 3) Allocates (if needed) the omx_base_component_PrivateType private structure
  * 
@@ -153,12 +153,12 @@ ENDCLASS(omx_base_component_PrivateType)
  */
 OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
 
-/** @brief the base destructor for ST openmax components
+/** @brief the base destructor for ST OpenMAX components
  * 
  * This function is called by the standard function ComponentDeInit()
  * that is called by the IL core during the execution of the  FreeHandle()
  * 
- * @param openmaxStandComp the ST openmax component to be disposed
+ * @param openmaxStandComp the ST OpenMAX component to be disposed
  */
 OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
@@ -166,7 +166,7 @@ OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
  * the transiotion requested. This base function cover only the state
  * changes that do not involve any port
  * 
- * @param openmaxStandComp the openmax component which state is to be changed
+ * @param openmaxStandComp the OpenMAX component which state is to be changed
  * @param destinationState the requested target state
  *
  * @return OMX_ErrorNotImplemented if the state change is noty handled 
@@ -213,8 +213,8 @@ OMX_ERRORTYPE omx_base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hCom
  * This function is intended to be used only by a core. The ST static core 
  * in any case does not use this function, because it can not be used before the 
  * creation of the component, but uses a static list.
- * It is implemented only for API completion,and it will be not overriden 
- * by a derived component
+ * It is implemented only for API completion, and it will be not overriden 
+ * by a derived component.
  * 
  * @param hComponent handle of the component
  * @param cRole the output string containing the n-role of the component
@@ -225,7 +225,7 @@ OMX_ERRORTYPE omx_base_component_ComponentRoleEnum(
 	OMX_OUT OMX_U8 *cRole,
 	OMX_IN OMX_U32 nIndex);
 
-/** @brief standard openmax function
+/** @brief standard OpenMAX function
  * 
  * it sets the callback functions given by the IL client. 
  * See OMX_Component.h
@@ -235,11 +235,11 @@ OMX_ERRORTYPE omx_base_component_SetCallbacks(
 	OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
 	OMX_IN  OMX_PTR pAppData);
 
-/** @brief part of the standard openmax function
+/** @brief Part of the standard OpenMAX function
  * 
  * This function return the parameters not related to any port.
  * These parameters are handled in the derived components
- * See OMX_Core.h for standard reference
+ * See OMX_Core.h for standard reference.
  */
 OMX_ERRORTYPE omx_base_component_GetParameter(
 	OMX_IN  OMX_HANDLETYPE hComponent,
@@ -250,7 +250,7 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
  * 
  * This function return the parameters not related to any port,
  * These parameters are handled in the derived components
- * See OMX_Core.h for standard reference
+ * See OMX_Core.h for standard reference.
  * 
  * @return OMX_ErrorUnsupportedIndex if the index is not supported or not handled here
  */
@@ -264,7 +264,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
  * This base function is not implemented. If a derived component
  * needs to support any config, it must implement a derived 
  * version of this function and assign it to the correct pointer
- * in the private component descriptor
+ * in the private component descriptor.
  */
 OMX_ERRORTYPE omx_base_component_GetConfig(
 	OMX_IN  OMX_HANDLETYPE hComponent,
@@ -276,7 +276,7 @@ OMX_ERRORTYPE omx_base_component_GetConfig(
  * This base function is not implemented. If a derived component
  * needs to support any config, it must implement a derived 
  * version of this function and assign it to the correct pointer
- * in the private component descriptor
+ * in the private component descriptor.
  */
 OMX_ERRORTYPE omx_base_component_SetConfig(
 	OMX_IN  OMX_HANDLETYPE hComponent,
@@ -286,7 +286,7 @@ OMX_ERRORTYPE omx_base_component_SetConfig(
 /** @brief base function not implemented
  * 
  * This function can be eventually implemented by a
- * derived component if needed
+ * derived component if needed.
  */
 OMX_ERRORTYPE omx_base_component_GetExtensionIndex(
 	OMX_IN  OMX_HANDLETYPE hComponent,
@@ -295,7 +295,7 @@ OMX_ERRORTYPE omx_base_component_GetExtensionIndex(
 
 /** @returns the state of the component
  * 
- * This function does not need any override by derived components
+ * This function does not need any override by derived components.
  */
 OMX_ERRORTYPE omx_base_component_GetState(
 	OMX_IN  OMX_HANDLETYPE hComponent,

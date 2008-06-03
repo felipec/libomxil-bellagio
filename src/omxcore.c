@@ -144,7 +144,7 @@ OMX_ERRORTYPE OMX_Deinit() {
  * the requested component. If there are more components with the same name 
  * the first component is returned. The existence of multiple components with
  * the same name is not contemplated in OpenMAX specification. The assumption is
- * that ithis behavior is NOT allowed
+ * that this behavior is NOT allowed.
  * 
  * @return OMX_ErrorNone if a component has been found
  *         OMX_ErrorComponentNotFound if the requested component has not been found 
@@ -202,9 +202,9 @@ OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE pHandle)
 /** @brief the OMX_ComponentNameEnum standard function
  * 
  * This function build a complete list of names from all the loaders. 
- * FOr each loaader the index is from 0 to max, but this function must provide a single 
+ * For each loader the index is from 0 to max, but this function must provide a single 
  * list, with a common index. This implementation orders the loaders and the 
- * related list of components
+ * related list of components.
  */
 OMX_ERRORTYPE 
 OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,

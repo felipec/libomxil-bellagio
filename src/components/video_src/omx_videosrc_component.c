@@ -1,8 +1,8 @@
 /**
   @file src/components/video_src/omx_videosrc_component.c
 
-  OpenMax video source component. This component is a video source component
-  that captures video from the video camera
+  OpenMAX video source component. This component is a video source component
+  that captures video from the video camera.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 

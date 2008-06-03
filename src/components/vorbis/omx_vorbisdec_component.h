@@ -1,8 +1,8 @@
 /**
   @file src/components/vorbis/omx_vorbisdec_component.h
 
-  This component implements a ogg-vorbis decoder. The vorbis decoder is based on libvorbis
-  software library.
+  This component implements an Ogg Vorbis decoder. The Ogg Vorbis decoder is based on
+  the libvorbis software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -56,7 +56,7 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/  \
   OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;  \
-  /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg decoder */ \
+  /** @param minBufferLength Field that stores the minimun allowed size for FFmpeg decoder */ \
   OMX_U16 minBufferLength; \
   /** @param inputCurrBuffer Field that stores pointer of the current input buffer position */ \
   OMX_U8* inputCurrBuffer;\

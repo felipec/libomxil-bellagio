@@ -2,7 +2,7 @@
   @file src/components/camera/library_entry_point.c
 
   The library entry point. It must have the same name for each
-  library fo the components loaded by th ST static component loader.
+  library of the components loaded by the ST static component loader.
   This function fills the version, the component name and if existing also the roles
   and the specific names for each role. This base function is only an explanation.
   For each library it must be implemented, and it must fill data of any component
@@ -28,7 +28,7 @@
 #include <string.h>
 
 /** @brief The library entry point. It must have the same name for each
-  * library for the components loaded by the ST static component loader.
+  * library of the components loaded by the ST static component loader.
   * 
   * This function fills the version, the component name and if existing also the roles
   * and the specific names for each role. This base function is only an explanation.

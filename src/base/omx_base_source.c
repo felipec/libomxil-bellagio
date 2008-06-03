@@ -1,7 +1,7 @@
 /**
   @file src/base/omx_base_source.c
 
-  OpenMax base source component. This component does not perform any multimedia
+  OpenMAX base source component. This component does not perform any multimedia
   processing. It derives from base component and contains a single output port.
   This class can also be used for a two port source component
   It can be used as base class for source components.

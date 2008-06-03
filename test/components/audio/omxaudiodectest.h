@@ -2,8 +2,8 @@
   @file test/components/testaudio/omx_audiodectest.h
   
   Test application that uses three OpenMAX components, a file reader,an audio decoder 
-  and an alsa sink. The application receives an compressed audio stream on input port
-  from a file, decodes it and sends it to the alsa sink, or to a file or standard output.
+  and an ALSA sink. The application receives an compressed audio stream on input port
+  from a file, decodes it and sends it to the ALSA sink, or to a file or standard output.
   The audio formats supported are:
   mp3 (ffmpeg)
   

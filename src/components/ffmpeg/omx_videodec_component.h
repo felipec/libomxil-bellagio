@@ -1,8 +1,8 @@
 /**
   @file src/components/ffmpeg/omx_videodec_component.h
   
-  This component implements mpeg4 and avc video decoder. 
-  The MPEG4 and avc Video decoder is based on ffmpeg software library.
+  This component implements an H.264 / MPEG-4 AVC video decoder. 
+  The H.264 / MPEG-4 AVC Video decoder is based on the FFmpeg software library.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -55,11 +55,11 @@
   */
 DERIVEDCLASS(omx_videodec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_videodec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
-  /** @param avCodec pointer to the ffpeg video decoder */ \
+  /** @param avCodec pointer to the FFmpeg video decoder */ \
   AVCodec *avCodec; \
-  /** @param avCodecContext pointer to ffmpeg decoder context  */ \
+  /** @param avCodecContext pointer to FFmpeg decoder context  */ \
   AVCodecContext *avCodecContext;  \
-  /** @param picture pointer to ffmpeg AVFrame  */ \
+  /** @param picture pointer to FFmpeg AVFrame  */ \
   AVFrame *avFrame; \
   /** @param semaphore for avcodec access syncrhonization */\
   tsem_t* avCodecSyncSem; \
@@ -69,7 +69,7 @@ DERIVEDCLASS(omx_videodec_component_PrivateType, omx_base_filter_PrivateType)
   OMX_VIDEO_PARAM_AVCTYPE pVideoAvc;  \
   /** @param avcodecReady boolean flag that is true when the video coded has been initialized */ \
   OMX_BOOL avcodecReady;  \
-  /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg decoder */ \
+  /** @param minBufferLength Field that stores the minimun allowed size for FFmpeg decoder */ \
   OMX_U16 minBufferLength; \
   /** @param inputCurrBuffer Field that stores pointer of the current input buffer position */ \
   OMX_U8* inputCurrBuffer;\

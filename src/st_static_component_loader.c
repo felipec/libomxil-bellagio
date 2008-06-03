@@ -220,12 +220,12 @@ OMX_ERRORTYPE BOSA_ST_DeInitComponentLoader(BOSA_COMPONENTLOADER *loader) {
   return OMX_ErrorNone;
 }
 
-/** @brief creator of the requested openmax component
+/** @brief creator of the requested OpenMAX component
  *
  * This function searches for the requested component in the internal list.
- * If the copmponent is found, its constructor is called,
- * and the standard callback are assigned.
- * A pointer to a standard openmax component is returned.
+ * If the component is found, its constructor is called,
+ * and the standard callbacks are assigned.
+ * A pointer to a standard OpenMAX component is returned.
  */
 OMX_ERRORTYPE BOSA_ST_CreateComponent(
   BOSA_COMPONENTLOADER *loader,

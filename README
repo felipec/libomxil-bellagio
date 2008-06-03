@@ -1,7 +1,7 @@
 Bellagio OpenMAX Integration Layer 1.1.1 project
 Release 0.3.4
 
-This is an opensource implementation of the OpenMAX Integration Layer
+This is an Open Source implementation of the OpenMAX Integration Layer
 (IL) API ver. 1.1.1, specified by the Khronos group (see
 http://www.khronos.org/openmax).
 
@@ -10,23 +10,24 @@ following OpenMAX components (built as separate shared objects and
 loaded at runtime):
 
 AUDIO
-- OMX alsa sink component
-- OMX alsa source component
+- OMX ALSA sink component
+- OMX ALSA source component
 
-- OMX audio decoder based on ffmpeg/vorbis libraries that supports the
+- OMX audio decoder based on FFmpeg/Vorbis libraries that supports the
   following audio formats:
   o MP3
-  o OGG
+  o Ogg Vorbis
   o AAC (only RAW AAC format supported)
 - OMX audio decoder based on mad library that supports the MP3 audio
   format
-- OMX audio decoder based on vorbis that supports the OGG audio format
+- OMX audio decoder based on libvorbis that supports the Ogg Vorbis
+  audio format
 - OMX audio volume control
-- OMX audio file reader for ffmpeg components
+- OMX audio file reader for FFmpeg components
 - OMX audio mixer components
 
 VIDEO
-- OMX video decoder decoding input mpeg4 or h264 format file (in h264
+- OMX video decoder decoding input MPEG-4 or H.264 format file (in H.264
   format, there is no interlacing support) to produce output .yuv
   file.
 - OMX video color converter component converting from decoded output
@@ -36,19 +37,19 @@ VIDEO
 - OMX video capture component which captures video frame using a video
   camera and stores into a file or display using video sink.
 - OMX video encoder encoding input YUV format file or video captured
-  using camera component in mpeg4 video format to produce output .m4v
+  using camera component in MPEG-4 video format to produce output .m4v
   file.
 
 PARSER
-- OMX 3gp parser component. Parses input file/stream for audio and
+- OMX 3GP parser component. Parses input file/stream for audio and
   video output, which is then fed to audio and video decoder component
   for decoding.
 
-N.B. The 3gp parser can support Mpeg4,H264 video and Mp4,Aac
-audio. FFMpeg can't encode (Warning, using MS style audio codec tag,
-the file may be unplayable!) vorbis audio for a 3gp container and so
-also not decodable. Because of this vorbis decoding support has not
-been included in 3gp parser
+N.B. The 3GP parser can support MPEG-4,H.264 video and MPEG-4,AAC
+audio. FFmpeg can't encode (Warning, using MS style audio codec tag,
+the file may be unplayable!) Vorbis audio for a 3GP container and so
+also not decodable. Because of this Vorbis decoding support has not
+been included in the 3GP parser.
 
 BUILD
 =====
@@ -59,9 +60,9 @@ make
 make install
 make check
 
-If the pkg-config check fails, verify that the env variable
-PKG_CONFIG_PATH is set, and it points to the diectory(ies) containing
-the .pc files describing the package to be verified.  Usally it can be
+If the pkg-config check fails, verify that the environment variable
+PKG_CONFIG_PATH is set, and it points to the directory(ies) containing
+the .pc files describing the package to be verified.  Usually it can be
 set as (for a bash):
 
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/:/usr/lib/pkgconfig/
@@ -101,7 +102,7 @@ Usage: omxaudiodectest [-o outfile] [-stmdgh] filename
                    '-t'
        -s single_ogg: Use the single role ogg decoder instead of the
                       default one. Can't be used with -m or .mp3 file
-       -t: The audio decoder is tunneled with the alsa sink
+       -t: The audio decoder is tunneled with the ALSA sink
        -m: For mp3 decoding use the mad library. Can't be used with -s
            or .ogg file
        -d: If no output is specified, and no playback is specified,
@@ -115,7 +116,7 @@ Usage: omxvolcontroltest [-o outfile] [-g gain] filename
        -o outfile: If this option is specified, the output stream is
                    written to outfile otherwise redirected to std
                    output
-       -g: Gain of pcm data [0...100]
+       -g: Gain of PCM data [0...100]
        -h: Displays this help
 
 Usage: omxaudiomixertest [-o outfile] [-gi gain] -t -r 44100 -n 2 filename1 filename2
@@ -124,7 +125,7 @@ Usage: omxaudiomixertest [-o outfile] [-gi gain] -t -r 44100 -n 2 filename1 file
                    written to outfile otherwise redirected to std
                    output; Can't be used with -t.
        -gi       : Gain of stream i[0..3] data [0...100]
-       -t        : The audio mixer is tunneled with the alsa sink;
+       -t        : The audio mixer is tunneled with the ALSA sink;
                    Can't be used with -o
        -r 44100  : Sample Rate [Default 44100]
        -n 2      : Number of channel [Default 2]
@@ -140,12 +141,12 @@ Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filen
              same directory of input file the file name looks like
              input_filename_app.yuv/rgb depending on input option If
              the color conv option (-c) is specified then outfile will
-             be .rgb file Else outfile will be in .yuv format N.B :
+             be .rgb file Else outfile will be in .yuv format N.B.:
              This option is not needed if you use the sink component
  -c: Color conv option - input file is decoded and color converted in
      outfile(.rgb file)
  -h: Displays this help
- -f: input format specification in case of color conv comp usage
+ -f: input format specification in case of color conversion component usage
      The available input formats are -
       - OMX_COLOR_Format24bitRGB888  (default format)
       - OMX_COLOR_Format24bitBGR888
@@ -155,7 +156,7 @@ Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filen
       - OMX_COLOR_Format16bitRGB565
       - OMX_COLOR_Format16bitBGR565
  -s: Uses the video sink component to display the output of the color
-  converter(.rgb file)
+     converter (.rgb file)
  -t: Tunneling option - if this option is selected then by default the
      color converter and video sink components are selected even if
      those two options are not specified - the components are tunneled
@@ -174,7 +175,7 @@ Usage: omxvideocapnplay -o outputfile [-t] [-c] [-h] [-f input_fmt] [-s]
        -c: Color conv option - input file is decoded and color
            converted in outfile (.rgb file)
        -h: Displays this help
-       -f: input format specification in case of color conv comp usage
+       -f: input format specification in case of color conversion component usage
            The available input formats are -
               - OMX_COLOR_Format24bitRGB888  (default format)
               - OMX_COLOR_Format24bitBGR888
@@ -202,12 +203,12 @@ Usage: omxparsertest -o outfileVideo.yuv outfileAudio.pcm  [-t]  [-h] [-d] input
           N.B : This option is not needed if you use the sink
           component
        -h: Displays this help
-       -d: Uses the video and alsa sink component to display the video
+       -d: Uses the video and ALSA sink component to display the video
        and play the audio output input_filename is the user specified
        input file name
        -t: Tunneling option - if this option is selected then by
            default the color converter, video sink, volume control and
-           alsa sink components are selected even if these options are
+           ALSA sink components are selected even if these options are
            not specified - the components are tunneled between
            themselves
 
@@ -231,16 +232,16 @@ Usage: omxvideoenctest -o outfile [-W 320] [-H 240] [-t] [-C] [-h] [-f input_fmt
 FRAME BUFFER SUPPORT
 --------------------
 
-The video sink component, if used via specifying -s option mentioned
-above, uses machine's available framebuffer /dev/fb0.
+The video sink component, if used by specifying the -s option mentioned
+above, the uses machine's available framebuffer /dev/fb0.
 
 Users are requested to check if there is framebuffer support in their
 machine by command "fbset -i".
 
 If the output looks like - "open /dev/fb0 - no such file or directory"
 then there is no frame buffer support. Go to /etc/grub.conf file
-in your machine, append in the kernel arguement the following arguments,
-seperated by spaces: video=vesafb vga=0x305
+in your machine, append in the kernel argument the following arguments,
+separated by spaces: video=vesafb vga=0x305
 
 Save the file, restart the machine, type the "fbset -i" command and you
 can see there is framebuffer support having following configurations:
@@ -343,7 +344,7 @@ The command to be executed with this distribution is: "autoreconf -i"
 
 This version has been tested on:
 
-- FC6 2.6.20-1.2933.fc6 (with ffmpeg 0.4.9-0.37.20070503, libmad
+- FC6 2.6.20-1.2933.fc6 (with FFmpeg 0.4.9-0.37.20070503, libmad
   0.15.1b, libvorbis 1.1.2-1)
 - UBUNTU 2.6.17-11-generic
 

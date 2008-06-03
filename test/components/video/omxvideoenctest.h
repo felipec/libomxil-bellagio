@@ -2,7 +2,8 @@
   @file test/components/video/omxvideoenctest.h
   
   Test application that uses a OpenMAX component, a generic video encoder. 
-  The application receives an video stream (.yuv) encode in Mpeg4 Video format(.m4v).
+  The application receives an video stream (.yuv) and encodes it in
+  MPEG-4 Video format (.m4v).
   
   Copyright (C) 2008  STMicroelectronics and Nokia
 

@@ -1,7 +1,7 @@
 /**
   @file src/components/filereader/omx_filereader_component.h
 
-  OpenMax file reader component. This component is an file reader that detects the input
+  OpenMAX file reader component. This component is a file reader that detects the input
   file format so that client calls the appropriate decoder.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
@@ -38,7 +38,7 @@
 #include <omx_base_source.h>
 #include <string.h>
 
-/* Specific include files for ffmpeg library related decoding*/
+/* Specific include files for FFmpeg library related to decoding*/
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/avio.h>
@@ -53,13 +53,13 @@ DERIVEDCLASS(omx_filereader_component_PrivateType, omx_base_source_PrivateType)
 #define omx_filereader_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
   /** @param sTimeStamp Store Time Stamp to be set*/ \
   OMX_TIME_CONFIG_TIMESTAMPTYPE sTimeStamp; \
-  /** @param avformatcontext is the ffmpeg audio format context */ \
+  /** @param avformatcontext is the FFmpeg audio format context */ \
   AVFormatContext *avformatcontext; \
-  /** @param avformatparameters is the ffmpeg audio format related parameters */ \
+  /** @param avformatparameters is the FFmpeg audio format related parameters */ \
   AVFormatParameters *avformatparameters; \
-  /** @param avinputformat is the ffmpeg audio format related settings */ \
+  /** @param avinputformat is the FFmpeg audio format related settings */ \
   AVInputFormat *avinputformat; \
-  /** @param pkt is the ffmpeg packet structure for data delivery */ \
+  /** @param pkt is the FFmpeg packet structure for data delivery */ \
   AVPacket pkt; \
   /** @param sInputFileName is the input filename provided by client */ \
   OMX_STRING sInputFileName; \

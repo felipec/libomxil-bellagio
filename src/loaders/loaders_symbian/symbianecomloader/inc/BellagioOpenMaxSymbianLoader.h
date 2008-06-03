@@ -1,7 +1,7 @@
 /**
   @file src/loaders/symbianloader/inc/BellagioOpenMaxSymbianLoader.h
     
-  Component loader header for symbian. 
+  Component loader header for Symbian. 
     
   Copyright (C) 2008 Nokia
 

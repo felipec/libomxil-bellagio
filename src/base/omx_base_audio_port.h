@@ -47,7 +47,7 @@ DERIVEDCLASS(omx_base_audio_PortType, omx_base_PortType)
 ENDCLASS(omx_base_audio_PortType)
 
 /** 
-  * @brief the base contructor for the generic openmax ST Audio port
+  * @brief the base contructor for the generic OpenMAX ST Audio port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the component.
@@ -69,7 +69,7 @@ OMX_ERRORTYPE base_audio_port_Constructor(
   OMX_BOOL isInput);
 
 /** 
-  * @brief the base audio port destructor for the generic openmax ST Audio port
+  * @brief the base audio port destructor for the generic OpenMAX ST Audio port
   * 
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the port.

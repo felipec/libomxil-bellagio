@@ -1,7 +1,7 @@
 /**
   @file src/base/omx_base_component.c
 
-  OpenMax base_component component. This component does not perform any multimedia
+  OpenMAX base_component component. This component does not perform any multimedia
   processing.  It is used as a base_component for new components development.
 
   Copyright (C) 2007  STMicroelectronics and Nokia
@@ -47,14 +47,14 @@ extern "C" {
 #include "queue.h"
 
 /** 
- * @brief the base contructor for the openmax st components
+ * @brief The base contructor for the OpenMAX st components
  * 
- * This function is executed by the ST staic component loader.
+ * This function is executed by the ST static component loader.
  * It takes care of constructing the instance of the component.
  * For the base_component component, the following is done:
  *
- * 1) Fills the basic openmax structure. The fields can be overwritten
- *    by deerived components. 
+ * 1) Fills the basic OpenMAX structure. The fields can be overwritten
+ *    by derived components. 
  * 3) Allocates (if needed) the omx_base_component_PrivateType private structure
  * 
  * @param openmaxStandComp the ST component to be initialized
@@ -154,12 +154,12 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   return OMX_ErrorNone;
 }
 
-/** @brief the base destructor for ST openmax components
+/** @brief The base destructor for ST OpenMAX components
  * 
  * This function is called by the standard function ComponentDeInit()
  * that is called by the IL core during the execution of the  FreeHandle()
  * 
- * @param openmaxStandComp the ST openmax component to be disposed
+ * @param openmaxStandComp the ST OpenMAX component to be disposed
  */
 OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate;
@@ -242,7 +242,7 @@ OMX_ERRORTYPE omx_base_component_ComponentDeInit(
  * the transiotion requested. This base function cover only the state
  * changes that do not involve any port
  * 
- * @param openmaxStandComp the openmax component which state is to be changed
+ * @param openmaxStandComp the OpenMAX component which state is to be changed
  * @param destinationState the requested target state
  *
  * @return OMX_ErrorNotImplemented if the state change is noty handled in this base class, but needs
@@ -572,7 +572,7 @@ OMX_ERRORTYPE omx_base_component_ParameterSanityCheck(OMX_IN  OMX_HANDLETYPE hCo
   return checkHeader(pStructure , size);
 } 
 
-/** @brief standard openmax function
+/** @brief Standard OpenMAX function
  * 
  * it returns the version of the component. See OMX_Core.h
  */ 
@@ -611,7 +611,7 @@ OMX_ERRORTYPE omx_base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hCom
   return OMX_ErrorNone;
 }
 
-/** @brief Enumerates all the role of the component.
+/** @brief Enumerates all the roles of the component.
  * 
  * This function is intended to be used only by a core. The ST static core 
  * in any case does not use this function, because it can not be used before the 
@@ -627,7 +627,7 @@ OMX_ERRORTYPE omx_base_component_ComponentRoleEnum(
   return OMX_ErrorNoMore;
 }
 
-/** @brief standard openmax function
+/** @brief standard OpenMAX function
  * 
  * it sets the callback functions given by the IL client. 
  * See OMX_Component.h
@@ -657,7 +657,7 @@ OMX_ERRORTYPE omx_base_component_SetCallbacks(
   return OMX_ErrorNone;
 }
 
-/** @brief part of the standard openmax function
+/** @brief Part of the standard OpenMAX function
  * 
  * This function return the parameters not related to any port.
  * These parameters are handled in the derived components
@@ -750,7 +750,7 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
   return err;
 }
 
-/** @brief part of the standard openmax function
+/** @brief Part of the standard OpenMAX function
  * 
  * This function sets the parameters not related to any port.
  * These parameters are handled in the derived components

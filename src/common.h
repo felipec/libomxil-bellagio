@@ -1,8 +1,8 @@
 /**
   @file src/common.h
 
-  OpenMax Integration Layer Core. This library implements the OpenMAX core
-  responsible for environment setup, components tunneling and communication.
+  OpenMAX Integration Layer Core. This library implements the OpenMAX core
+  responsible for environment setup, component tunneling and communication.
 
   Copyright (C) 2007, 2008  STMicroelectronics and Nokia
 

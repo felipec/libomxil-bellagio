@@ -694,7 +694,7 @@ int main(int argc, char** argv) {
 
 
   /* Init the Omx core */
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "Init the Omx core\n");
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "Init the OMX core\n");
   if ((err = OMX_Init()) != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "The OpenMAX core can not be initialized. Exiting...\n");
     goto EXIT;

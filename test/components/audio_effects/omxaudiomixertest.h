@@ -2,7 +2,7 @@
   @file test/components/audio_effects/omxaudiomixertest.c
   
   This simple test application take one or more input stream/s. passes
-  these streams to audio mixer component and store mixed output into another 
+  these streams to an audio mixer component and stores the mixed output in another 
   output file.
   
   Copyright (C) 2008  STMicroelectronics and Nokia

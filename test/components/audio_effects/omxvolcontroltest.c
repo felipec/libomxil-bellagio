@@ -1,8 +1,8 @@
 /**
   @file test/components/audio_effects/omxvolcontroltest.c
   
-  This simple test application provides a tesnting stream for the volume control component. 
-  It will be added in the more complex audio test application in the next release  
+  This simple test application provides a testing stream for the volume control component. 
+  It will be added in the more complex audio test application in the next release.
   
   Copyright (C) 2007  STMicroelectronics and Nokia
 
@@ -56,7 +56,7 @@ void display_help() {
   printf("\n");
   printf("       -o outfile: If this option is specified, the output stream is written to outfile\n");
   printf("                   otherwise redirected to std output\n");
-  printf("       -g: Gain of pcm data [0...100]\n");
+  printf("       -g: Gain of PCM data [0...100]\n");
   printf("       -h: Displays this help\n");
   printf("\n");
   exit(1);

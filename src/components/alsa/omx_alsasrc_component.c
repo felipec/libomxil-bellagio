@@ -1,7 +1,7 @@
 /**
   @file src/components/alsa/omx_alsasrc_component.c
 
-  OpenMax alsa src component. This component is an audio src that uses ALSA library.
+  OpenMAX ALSA source component. This component is an audio source that uses ALSA library.
 
   Copyright (C) 2008  STMicroelectronics and Nokia
 

@@ -1,13 +1,18 @@
 check_PROGRAMS = omxvideodectest omxvideocapnplay omxvideoenctest
 
+bellagio_LDADD = $(top_builddir)/src/libomxil-bellagio.la
+bellagio_CFLAGS = -I$(top_srcdir)/include
+common_LDADD = $(builddir)/../common/libtestcommon.la
+common_CFLAGS = -I$(srcdir)/../common
+
 omxvideodectest_SOURCES = omxvideodectest.c omxvideodectest.h
-omxvideodectest_LDADD = $(top_builddir)/src/libomxil-bellagio.la ../common/libtestcommon.la -lpthread
-omxvideodectest_CFLAGS = -I$(srcdir)/../common -I$(top_srcdir)/include
+omxvideodectest_LDADD = $(bellagio_LDADD) $(common_LDADD) -lpthread
+omxvideodectest_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)
 
 omxvideocapnplay_SOURCES = omxvideocapnplay.c omxvideocapnplay.h
-omxvideocapnplay_LDADD = $(top_builddir)/src/libomxil-bellagio.la ../common/libtestcommon.la -lpthread
-omxvideocapnplay_CFLAGS = -I$(srcdir)/../common -I$(top_srcdir)/include
+omxvideocapnplay_LDADD = $(bellagio_LDADD) $(common_LDADD) -lpthread
+omxvideocapnplay_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)
 
 omxvideoenctest_SOURCES = omxvideoenctest.c omxvideoenctest.h
-omxvideoenctest_LDADD = $(top_builddir)/src/libomxil-bellagio.la ../common/libtestcommon.la -lpthread
-omxvideoenctest_CFLAGS = -I$(srcdir)/../common -I$(top_srcdir)/include
+omxvideoenctest_LDADD = $(bellagio_LDADD) $(common_LDADD) -lpthread
+omxvideoenctest_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)

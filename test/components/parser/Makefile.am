@@ -1,5 +1,10 @@
 check_PROGRAMS = omxparsertest
 
+bellagio_LDADD = $(top_builddir)/src/libomxil-bellagio.la
+bellagio_CFLAGS = -I$(top_srcdir)/include
+common_LDADD = $(builddir)/../common/libtestcommon.la
+common_CFLAGS = -I$(srcdir)/../common
+
 omxparsertest_SOURCES = omxparsertest.c omxparsertest.h
-omxparsertest_LDADD = $(top_builddir)/src/libomxil-bellagio.la ../common/libtestcommon.la -lpthread
-omxparsertest_CFLAGS = -I$(srcdir)/../common -I$(top_srcdir)/include
+omxparsertest_LDADD = $(bellagio_LDADD) $(common_LDADD) -lpthread
+omxparsertest_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)

@@ -2,8 +2,11 @@ omxparser3gpdir = $(plugindir)
 
 omxparser3gp_LTLIBRARIES = libomxparser3gp.la
 
-libomxparser3gp_la_SOURCES = omx_parser3gp_component.c library_entry_point.c omx_parser3gp_component.h
-libomxparser3gp_la_LIBADD = ../../libomxil-bellagio.la $(LIBS) -lavformat
-libomxparser3gp_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+libomxparser3gp_la_SOURCES = omx_parser3gp_component.c omx_parser3gp_component.h \
+			     library_entry_point.c
 
-AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src -I@top_srcdir@/src/base
+libomxparser3gp_la_LIBADD = -lavformat
+libomxparser3gp_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+libomxparser3gp_la_CFLAGS = -I$(top_srcdir)/include \
+			    -I$(top_srcdir)/src \
+			    -I$(top_srcdir)/src/base

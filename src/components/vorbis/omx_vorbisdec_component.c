@@ -390,6 +390,26 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
       DEBUG(DEB_LEV_ERR,"Encoded by: %s\n\n",omx_vorbisdec_component_Private->vc.vendor);
     }
 
+    /* Update pAudioVorbis settings */
+    omx_vorbisdec_component_Private->pAudioVorbis.nSampleRate = omx_vorbisdec_component_Private->vi.rate;
+    omx_vorbisdec_component_Private->pAudioVorbis.nChannels = omx_vorbisdec_component_Private->vi.channels;
+
+    /* Update audio port settings for this Vorbis bitstream */
+    if ((omx_vorbisdec_component_Private->pAudioPcmMode.nSamplingRate != omx_vorbisdec_component_Private->pAudioVorbis.nSampleRate) ||
+        (omx_vorbisdec_component_Private->pAudioPcmMode.nChannels != omx_vorbisdec_component_Private->pAudioVorbis.nChannels)) {
+      omx_vorbisdec_component_Private->pAudioPcmMode.nSamplingRate = omx_vorbisdec_component_Private->pAudioVorbis.nSampleRate;
+      omx_vorbisdec_component_Private->pAudioPcmMode.nChannels = omx_vorbisdec_component_Private->pAudioVorbis.nChannels;
+
+      /*Send Port Settings changed call back*/
+      (*(omx_vorbisdec_component_Private->callbacks->EventHandler))
+        (openmaxStandComp,
+        omx_vorbisdec_component_Private->callbackData,
+        OMX_EventPortSettingsChanged, /* The command was completed */
+        0,
+        1, /* This is the output port index */
+        NULL);
+    }
+
     omx_vorbisdec_component_Private->convsize=inputbuffer->nFilledLen/omx_vorbisdec_component_Private->vi.channels;
     /* OK, got and parsed all three headers. Initialize the Vorbis
     packet->PCM decoder. */

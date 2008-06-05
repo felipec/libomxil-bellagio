@@ -13,5 +13,4 @@ doc_DATA = README \
 	   TODO
 
 uninstall-local:
-	rm -f ~/.omxregistry
-	rm -rf $(libdir)/bellagio/
+	rm -rf $(plugindir)

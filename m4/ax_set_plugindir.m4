@@ -11,7 +11,6 @@ AC_DEFUN([AX_SET_PLUGINDIR],
     [directory where plugins are located])
   AC_MSG_NOTICE([Using $PLUGINDIR as the components install location])
 
-  dnl plugin directory configure-time variable for use in Makefile.am
-  plugindir="\$(libdir)/bellagio"
-  AC_SUBST(plugindir)
+  dnl plugin directory configure-time variable
+  AC_SUBST([plugindir], '[${libdir}/bellagio]')
 ])

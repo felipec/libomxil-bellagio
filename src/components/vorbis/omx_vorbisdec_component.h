@@ -64,8 +64,8 @@ DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
   OMX_U32 inputCurrLength;\
   /** @param internalOutputBuffer Field used for first internal output buffer */ \
   OMX_U8* internalOutputBuffer;\
-  /** @param isFirstBuffer Field that the buffer is the first buffer */ \
-  OMX_S32 isFirstBuffer;\
+  /** @param packetNumber Field counts the packets processed */ \
+  OMX_S32 packetNumber;\
   /** @param positionInOutBuf Field that used to calculate starting address of the next output frame to be written */ \
   OMX_S32 positionInOutBuf; \
   /** @param isNewBuffer Field that indicate a new buffer has arrived*/ \

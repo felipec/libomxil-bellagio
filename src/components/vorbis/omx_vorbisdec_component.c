@@ -37,8 +37,6 @@
 /** Maximum Number of Audio Vorbis Component Instance*/
 static OMX_U32 noVorbisDecInstance = 0;
 
-static int second_header_buffer_processed=0;
-
 /** The Constructor
   * @param cComponentName is the name of the component to be initialized
   */
@@ -239,13 +237,12 @@ OMX_ERRORTYPE omx_vorbisdec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) 
   nBufferSize = omx_vorbisdec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
   omx_vorbisdec_component_Private->internalOutputBuffer = malloc(nBufferSize);
   memset(omx_vorbisdec_component_Private->internalOutputBuffer, 0, nBufferSize);
-  omx_vorbisdec_component_Private->isFirstBuffer = 1;
+  omx_vorbisdec_component_Private->packetNumber = 0;
   omx_vorbisdec_component_Private->positionInOutBuf = 0;
   omx_vorbisdec_component_Private->isNewBuffer = 1;
   
   /** initializing vorbis decoder parameters */
   ogg_sync_init(&omx_vorbisdec_component_Private->oy);
-  second_header_buffer_processed = 0;
   omx_vorbisdec_component_Private->convsize = 0;
                                                                                                                              
   return err;
@@ -261,7 +258,6 @@ OMX_ERRORTYPE omx_vorbisdec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp
   omx_vorbisdec_component_Private->internalOutputBuffer = NULL;
   
   /** reset the vorbis decoder related parameters */
-  second_header_buffer_processed = 0;
   ogg_stream_clear(&omx_vorbisdec_component_Private->os);
   vorbis_block_clear(&omx_vorbisdec_component_Private->vb);
   vorbis_dsp_clear(&omx_vorbisdec_component_Private->vd);
@@ -290,7 +286,6 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
   OMX_S32 clipflag=0;
   int val;
   float  *mono;
-  static OMX_S32 index=0;
   int eos=0;
   char *vorbis_buffer;
   ogg_int16_t convbuffer[4096];
@@ -316,12 +311,10 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
   outputbuffer->nFilledLen = 0;
   outputbuffer->nOffset = 0;
   
-  if(omx_vorbisdec_component_Private->isFirstBuffer || second_header_buffer_processed == 1) {
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "in processing the first header buffer\n");
-
+  if(omx_vorbisdec_component_Private->packetNumber < 3) {
     omx_vorbisdec_component_Private->isNewBuffer = 0;
-    if(omx_vorbisdec_component_Private->isFirstBuffer) {
-      omx_vorbisdec_component_Private->isFirstBuffer = 0;
+    if(omx_vorbisdec_component_Private->packetNumber == 0) {
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "in processing the first header buffer\n");      
       if(ogg_sync_pageout(&omx_vorbisdec_component_Private->oy, &omx_vorbisdec_component_Private->og) != 1)  {
         DEBUG(DEB_LEV_ERR, "this input stream is not an Ogg stream\n");
         exit(1);
@@ -338,58 +331,53 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
         DEBUG(DEB_LEV_ERR, "Error reading initial header packet.\n");
         exit(1);
       }
+      
+      omx_vorbisdec_component_Private->packetNumber++;
+
       if(vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi, &omx_vorbisdec_component_Private->vc, &omx_vorbisdec_component_Private->op) < 0)  {
         DEBUG(DEB_LEV_ERR, "This Ogg bitstream does not contain Vorbis audio data\n");
         exit(1);
       }  
     }
 
-    index=0;
-    while(index<2)
+    while(omx_vorbisdec_component_Private->packetNumber < 3)
     {
-      while(index<2)
-      {
-        int result=ogg_sync_pageout(&omx_vorbisdec_component_Private->oy,&omx_vorbisdec_component_Private->og);
-        if(result==0) { //break; /* Need more data */
-          omx_vorbisdec_component_Private->isNewBuffer = 1;
-          second_header_buffer_processed = 1;  
-          inputbuffer->nFilledLen = 0;
-          return;
-        }
-        /* Don't complain about missing or corrupt data yet.  We'll
-        catch it at the packet output phase */
-        if(result==1)
-        {
-          ogg_stream_pagein(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->og); /* we can ignore any errors here as they'll also become apparent at packetout */
-          while(index<2){
-            result=ogg_stream_packetout(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->op);
-            if(result==0)break;
-            if(result<0) {
-              /* Uh oh; data at some point was corrupted or missing!
-              We can't tolerate that in a header.  Die. */
-              DEBUG(DEB_LEV_ERR,"Corrupt secondary header.  Exiting.\n");
-              exit(1);
-            }//end if
-            vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi,&omx_vorbisdec_component_Private->vc,&omx_vorbisdec_component_Private->op);
-            index++;
-          }//end while
-        }//end if
-      }//end while
-
-      omx_vorbisdec_component_Private->isNewBuffer = 1;
-      if(index == 2) {
-        second_header_buffer_processed = 0;  
-      } else {
-        second_header_buffer_processed = 1;  
+      int result=ogg_sync_pageout(&omx_vorbisdec_component_Private->oy,&omx_vorbisdec_component_Private->og);
+      if(result==0) { //break; /* Need more data */
+        omx_vorbisdec_component_Private->isNewBuffer = 1;
+        inputbuffer->nFilledLen = 0;
+        return;
       }
-      inputbuffer->nFilledLen = 0;
-      return;
-
+      /* Don't complain about missing or corrupt data yet.  We'll
+      catch it at the packet output phase */
+      if(result==1) 
+      {
+        ogg_stream_pagein(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->og);
+        /* we can ignore any errors here as they'll also become apparent at packetout */
+        while(omx_vorbisdec_component_Private->packetNumber < 3) {
+          result=ogg_stream_packetout(&omx_vorbisdec_component_Private->os,&omx_vorbisdec_component_Private->op);
+          if(result==0)break;
+          if(result<0) {
+          /* Uh oh; data at some point was corrupted or missing!
+            We can't tolerate that in a header.  Die. */
+            DEBUG(DEB_LEV_ERR,"Corrupt secondary header.  Exiting.\n");
+            exit(1);
+          }//end if
+          omx_vorbisdec_component_Private->packetNumber++;
+          vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi,&omx_vorbisdec_component_Private->vc,&omx_vorbisdec_component_Private->op);
+        }//end while
+      }//end if
     }//end while
+
+    omx_vorbisdec_component_Private->isNewBuffer = 1;
+    inputbuffer->nFilledLen = 0;
+    return;
+
   }
 
-  if(index==2){
-    index=0;
+  /* A Vorbis logical bitstream begins with 3 headers. Once the last of these has been processed,
+   * we can report the metadata and set up the output audio port appropriately. */
+  if(omx_vorbisdec_component_Private->packetNumber == 3) {
     /* Throw the comments plus a few lines about the bitstream we're decoding */
     {
       // ptr should be declared earlier//
@@ -447,6 +435,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
     DEBUG(DEB_LEV_ERR,"Corrupt or missing data in bitstream; continuing...\n");
   } else {
     /* we have a packet.  Decode it */
+    omx_vorbisdec_component_Private->packetNumber++;
 
     if(vorbis_synthesis(&omx_vorbisdec_component_Private->vb,&omx_vorbisdec_component_Private->op)==0) /* test for success! */
     vorbis_synthesis_blockin(&omx_vorbisdec_component_Private->vd,&omx_vorbisdec_component_Private->vb);

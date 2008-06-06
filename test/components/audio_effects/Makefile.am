@@ -2,7 +2,7 @@ check_PROGRAMS = omxvolcontroltest omxaudiomixertest
 
 bellagio_LDADD = $(top_builddir)/src/libomxil-bellagio.la
 bellagio_CFLAGS = -I$(top_srcdir)/include
-common_LDADD = $(builddir)/../common/libtestcommon.la -lpthread
+common_LDADD = ../common/libtestcommon.la -lpthread
 common_CFLAGS = -I$(srcdir)/../common
 
 omxvolcontroltest_SOURCES = omxvolcontroltest.c omxvolcontroltest.h

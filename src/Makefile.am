@@ -18,7 +18,7 @@ libomxil_bellagio_la_SOURCES = component_loader.h \
 			       common.c common.h
 
 libomxil_bellagio_la_CFLAGS = -I$(top_srcdir)/include -I$(srcdir)/base
-libomxil_bellagio_la_LIBADD = $(builddir)/base/libomxbase.la
+libomxil_bellagio_la_LIBADD = base/libomxbase.la
 
 include_extradir = $(includedir)/bellagio
 

@@ -2,7 +2,7 @@ check_PROGRAMS = omxcameratest
 
 bellagio_LDADD = $(top_builddir)/src/libomxil-bellagio.la
 bellagio_CFLAGS = -I$(top_srcdir)/include
-common_LDADD = $(builddir)/../common/libtestcommon.la
+common_LDADD = ../common/libtestcommon.la
 common_CFLAGS = -I$(srcdir)/../common
 
 omxcameratest_SOURCES = omxcameratest.c omxcameratest.h

@@ -3,7 +3,8 @@
 
   ST specific component loader for local components.
 
-  Copyright (C) 2007, 2008  STMicroelectronics and Nokia
+  Copyright (C) 2007, 2008  STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free

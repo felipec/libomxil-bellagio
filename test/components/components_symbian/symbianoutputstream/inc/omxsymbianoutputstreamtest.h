@@ -5,7 +5,7 @@
 	a pcm stream from a file or, if not specified, from standard input.
 	The audio stream is inteded as stereo, at 44100 Hz.
 	
-	Copyright (C) 2008  Nokia
+	Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
 
 	This library is free software; you can redistribute it and/or modify it under
 	the terms of the GNU Lesser General Public License as published by the Free

@@ -163,7 +163,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
  */
 OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate;
-  OMX_ERRORTYPE  err;
+  int err;
   
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   omx_base_component_Private->state = OMX_StateInvalid;
@@ -179,9 +179,9 @@ OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
     omx_base_component_Private->messageQueue=NULL;
   }
   
-  err=(OMX_ERRORTYPE)pthread_join(omx_base_component_Private->messageHandlerThread,NULL);
+  err = pthread_join(omx_base_component_Private->messageHandlerThread,NULL);
   if(err!=0) {
-    DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
+    DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n", __func__, err);
   }
 
   /*Deinitialize and free buffer management semaphore*/
@@ -260,7 +260,8 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
   if(destinationState == OMX_StateLoaded){
     switch(omx_base_component_Private->state){
     case OMX_StateInvalid:
-      return OMX_ErrorInvalidState;
+        err = OMX_ErrorInvalidState;
+        break;
     case OMX_StateWaitForResources:
       /* return back from wait for resources */
       omx_base_component_Private->state = OMX_StateLoaded;
@@ -311,7 +312,8 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
-      return OMX_ErrorIncorrectStateTransition;
+      err = OMX_ErrorIncorrectStateTransition;
+      break;
     }
     return err;
   }
@@ -770,7 +772,6 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxcomponent->pComponentPrivate;
   OMX_PARAM_BUFFERSUPPLIERTYPE *pBufferSupplier;
   omx_base_PortType *pPort;
-  /* OMX_PORT_PARAM_TYPE *pPortParam; */
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   DEBUG(DEB_LEV_PARAMS, "Setting parameter %i\n", nParamIndex);

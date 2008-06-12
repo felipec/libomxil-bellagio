@@ -19,9 +19,9 @@
   FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
   details.
 
-  $Date: 2008-05-02 14:26:16 +0530 (Fri, 02 May 2008) $
-  Revision $Rev: 1358 $
-  Author $Author: pankaj_sen $
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 

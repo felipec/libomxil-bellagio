@@ -30,6 +30,9 @@
 #ifndef _OMX_VIDEODEC_COMPONENT_H_
 #define _OMX_VIDEODEC_COMPONENT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <OMX_Types.h>
 #include <OMX_Component.h>
@@ -39,11 +42,19 @@
 #include <string.h>
 #include <omx_base_filter.h>
 #include <string.h>
+
 /* Specific include files */
+#if FFMPEG_LIBNAME_HEADERS
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+#include <libavutil/avutil.h>
+#else
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/swscale.h>
 #include <ffmpeg/avutil.h>
+#endif
 
 
 #define VIDEO_DEC_BASE_NAME "OMX.st.video_decoder"

@@ -30,6 +30,10 @@
 #ifndef _OMX_FFMPEG_COLORCONV_COMPONENT_H_
 #define _OMX_FFMPEG_COLORCONV_COMPONENT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <OMX_Types.h>
 #include <OMX_Component.h>
 #include <OMX_Core.h>
@@ -39,10 +43,17 @@
 #include <omx_base_filter.h>
 #include <omx_base_video_port.h>
 
+#if FFMPEG_LIBNAME_HEADERS
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libswscale/swscale.h>
+#else
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/avutil.h>
 #include <ffmpeg/swscale.h>
+#endif
 
 #define COLOR_CONV_BASE_NAME "OMX.st.video_colorconv.ffmpeg"
 #define COLOR_CONV_FFMPEG_NAME "OMX.st.video_colorconv.ffmpeg"

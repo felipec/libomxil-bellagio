@@ -212,13 +212,24 @@ fi
 
 # Check for FFmpeg API version
 if test "x$with_ffmpeg" = "xyes"; then
-	AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API])
 	old_CPPFLAGS="${CPPFLAGS}"
 	old_LDFLAGS="${LDFLAGS}"
 	CPPFLAGS="${CPPFLAGS} ${FFMPEG_CFLAGS}"
 	LDFLAGS="${LDFLAGS} ${FFMPEG_LIBS}"
+
+        # Check for FFmpeg audio decoder API version
+	AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API])
 	AC_CHECK_LIB([avcodec], [avcodec_decode_audio2],
 		     [AC_DEFINE([FFMPEG_DECODER_VERSION], [2])])
+
+	# Check for location of FFmpeg library headers. These were moved
+	# in FFmpeg r12194 (2008-02-25). For example, instead of
+ 	# including <ffmpeg/avformat.h>, now include <libavformat/avformat.h>.
+        AC_CHECK_HEADER([libavformat/avformat.h],
+                        [AC_DEFINE([FFMPEG_LIBNAME_HEADERS], [1],
+                         [FFmpeg has separate named include directories for each of its libraries])])
+
+	# Restore flags
 	CPPFLAGS="${old_CPPFLAGS}"
 	LDFLAGS="${old_LDFLAGS}"
 fi

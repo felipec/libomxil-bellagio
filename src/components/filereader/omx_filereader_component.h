@@ -31,6 +31,10 @@
 #ifndef _OMX_FILEREADER_COMPONENT_H_
 #define _OMX_FILEREADER_COMPONENT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <OMX_Types.h>
 #include <OMX_Component.h>
 #include <OMX_Core.h>
@@ -40,9 +44,15 @@
 #include <string.h>
 
 /* Specific include files for FFmpeg library related to decoding*/
+#if FFMPEG_LIBNAME_HEADERS
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavformat/avio.h>
+#else
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
 #include <ffmpeg/avio.h>
+#endif
 
 /** Maximum number of base_component component instances */
 #define MAX_NUM_OF_filereader_component_INSTANCES 1

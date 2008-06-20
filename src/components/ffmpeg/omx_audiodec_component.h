@@ -30,6 +30,10 @@
 #ifndef _OMX_MP3DEC_COMPONENT_H_
 #define _OMX_MP3DEC_COMPONENT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <OMX_Types.h>
 #include <OMX_Component.h>
 #include <OMX_Core.h>
@@ -37,9 +41,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
+
 /* Specific include files for FFmpeg*/
+#if FFMPEG_LIBNAME_HEADERS
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#else
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
+#endif
 
 #define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3"

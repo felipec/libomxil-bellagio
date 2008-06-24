@@ -172,6 +172,10 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
 			return OMX_ErrorNone;
 		}
 	}
+        /*Required to meet conformance test: do not remove*/
+        if (err == OMX_ErrorInsufficientResources) {
+          return OMX_ErrorInsufficientResources;
+        }
 	DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
 	return OMX_ErrorComponentNotFound;
 }

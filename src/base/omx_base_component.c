@@ -494,6 +494,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
           DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
         }
       }
+      err = OMX_ErrorInvalidState;
       break;
     }
     return err;

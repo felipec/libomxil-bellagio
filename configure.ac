@@ -44,7 +44,6 @@ AC_CONFIG_FILES([
     test/components/audio_effects/Makefile
     test/components/parser/Makefile
     test/components/camera/Makefile
-    test/components/clocksrc/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #

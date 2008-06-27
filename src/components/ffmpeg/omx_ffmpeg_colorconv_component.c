@@ -5,7 +5,7 @@
   software library.
 
   Originally developed by Peter Littlefield
-  Copyright (C) 2007  STMicroelectronics and Agere Systems
+  Copyright (C) 2007-2008  STMicroelectronics and Agere Systems
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -226,13 +226,16 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *open
     */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
+  omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nStartPortNumber = 0;
+  omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts = 2;
+
   /** Allocate Ports and call port constructor. */
-  if (omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts && !omx_ffmpeg_colorconv_component_Private->ports) {
-    omx_ffmpeg_colorconv_component_Private->ports = calloc(omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts && !omx_ffmpeg_colorconv_component_Private->ports) {
+    omx_ffmpeg_colorconv_component_Private->ports = calloc(omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts, sizeof(omx_base_PortType *));
     if (!omx_ffmpeg_colorconv_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       omx_ffmpeg_colorconv_component_Private->ports[i] = calloc(1, sizeof(omx_ffmpeg_colorconv_component_PortType));
       if (!omx_ffmpeg_colorconv_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -349,7 +352,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Destructor(OMX_COMPONENTTYPE *openm
 
   /* frees port/s */
   if (omx_ffmpeg_colorconv_component_Private->ports) {
-    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       if(omx_ffmpeg_colorconv_component_Private->ports[i])
         omx_ffmpeg_colorconv_component_Private->ports[i]->PortDestructor(omx_ffmpeg_colorconv_component_Private->ports[i]);
     }
@@ -1127,7 +1130,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
       if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
         break;
       }
-      memcpy(ComponentParameterStructure, &omx_ffmpeg_colorconv_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+      memcpy(ComponentParameterStructure, &omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo], sizeof(OMX_PORT_PARAM_TYPE));
       break;    
     case OMX_IndexParamVideoPortFormat:
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
@@ -1190,7 +1193,7 @@ OMX_ERRORTYPE omx_video_colorconv_UseEGLImage (
   omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = (omx_ffmpeg_colorconv_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
 
-  if (nPortIndex >= omx_ffmpeg_colorconv_component_Private->sPortTypesParam.nPorts) {
+  if (nPortIndex >= omx_ffmpeg_colorconv_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;
   }

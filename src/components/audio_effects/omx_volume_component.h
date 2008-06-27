@@ -4,7 +4,7 @@
   OpenMAX volume control component. This component implements a filter that 
   controls the volume level of the audio PCM stream.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

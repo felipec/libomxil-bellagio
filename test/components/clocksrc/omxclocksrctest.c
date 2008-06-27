@@ -181,15 +181,6 @@ int main(int argc, char** argv) {
     DEBUG(DEFAULT_MESSAGES,"Waiting for clock event %i \n",(int)i);
     tsem_down(appPriv->clockEventSem); 
   }
-  /*
-
-  err = OMX_GetConfig(handle, OMX_IndexConfigTimeCurrentWallTime, &sClientTimeStamp);
-  sClientTimeStamp.nPortIndex=1;
-printf("Mona : sending a start time for port %d from application\n",sClientTimeStamp.nPortIndex);
-  err = OMX_SetConfig(handle, OMX_IndexConfigTimeClientStartTime, &sClientTimeStamp);
-  if(err!=OMX_ErrorNone) {
-    DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig 0 \n",err);
-  }*/
 
   /* set the audio as the master */
   setHeader(&sRefClock, sizeof(OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE));
@@ -228,7 +219,6 @@ printf("Mona : sending a start time for port %d from application\n",sClientTimeS
   tsem_down(appPriv->eventSem);
 
   OMX_FreeHandle(handle);
-printf("Mona after the free handle call\n");
 
 //  free(appPriv->eventSem);
   free(appPriv);

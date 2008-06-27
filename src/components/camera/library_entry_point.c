@@ -8,7 +8,7 @@
   For each library it must be implemented, and it must fill data of any component
   in the library
 
-  Copyright (C) 2007  Motorola
+  Copyright (C) 2007-2008  Motorola and STMicroelectronics
 
   This code is licensed under LGPL see README for full LGPL notice.
 

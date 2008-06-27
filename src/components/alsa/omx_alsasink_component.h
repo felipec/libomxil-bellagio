@@ -3,7 +3,7 @@
 
   OpenMAX ALSA sink component. This component is an audio sink that uses ALSA library.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -40,17 +40,21 @@
 
 /** Alsasinkport component private structure.
  * see the define above
+ * @param sPCMModeParam Audio PCM specific OpenMAX parameter  
+ * @param AudioPCMConfigured boolean flag to check if the audio has been configured 
+ * @param playback_handle ALSA specif handle for audio player
+ * @param xScale the scale of the media clock
+ * @param eState the state of the media clock
+ * @param hw_params ALSA specif hardware parameters 
  */
 DERIVEDCLASS(omx_alsasink_component_PrivateType, omx_base_sink_PrivateType)
 #define omx_alsasink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS \
-  /** @param sPCMModeParam Audio PCM specific OpenMAX parameter */ \
-  OMX_AUDIO_PARAM_PCMMODETYPE sPCMModeParam; \
-   /** @param AudioPCMConfigured boolean flag to check if the audio has been configured */  \
-  char AudioPCMConfigured;  \
-  /** @param playback_handle ALSA specific handle for audio player */  \
-  snd_pcm_t* playback_handle;  \
-  /** @param hw_params ALSA specific hardware parameters */  \
-  snd_pcm_hw_params_t* hw_params;
+  OMX_AUDIO_PARAM_PCMMODETYPE  sPCMModeParam; \
+  char                         AudioPCMConfigured;  \
+  snd_pcm_t*                   playback_handle;  \
+  OMX_S32                      xScale; \
+  OMX_TIME_CLOCKSTATE          eState; \
+  snd_pcm_hw_params_t*         hw_params;
 ENDCLASS(omx_alsasink_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -59,6 +63,15 @@ OMX_ERRORTYPE omx_alsasink_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 
 void omx_alsasink_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
+  OMX_BUFFERHEADERTYPE* inputbuffer);
+
+OMX_ERRORTYPE omx_alsasink_component_port_SendBufferFunction(
+  omx_base_PortType *openmaxStandPort, 
+  OMX_BUFFERHEADERTYPE* pBuffer);
+
+/* to handle the communication at the clock port */
+OMX_BOOL omx_alsasink_component_ClockPortHandleFunction(
+  omx_alsasink_component_PrivateType* omx_alsasink_component_Private,
   OMX_BUFFERHEADERTYPE* inputbuffer);
 
 OMX_ERRORTYPE omx_alsasink_component_GetParameter(

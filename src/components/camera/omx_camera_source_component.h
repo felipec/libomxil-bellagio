@@ -1,13 +1,13 @@
 /**
   @file src/components/camera/omx_camera_source_component.h
   
-  OpenMax camera source component.
+  OpenMAX camera source component.
   The OpenMAX camera component is a V4L2-based video source whose functionalities
   include preview, video capture, image capture, video thumbnail and image
   thumbnail. It has 3 (output) ports: Port 0 is used for preview; Port 1 is used
   for video and image capture; Port 2 is used for video and image thumbnail.
   
-  Copyright (C) 2007  Motorola
+  Copyright (C) 2007-2008  Motorola and STMicroelectronics
 
   This code is licensed under LGPL see README for full LGPL notice.
 

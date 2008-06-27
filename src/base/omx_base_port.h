@@ -1,9 +1,9 @@
 /**
   @file src/base/omx_base_port.h
-	  
+    
   Base class for OpenMAX ports to be used in derived components.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -76,11 +76,11 @@
 typedef enum BUFFER_STATUS_FLAG {
   BUFFER_FREE = 0,
   BUFFER_ALLOCATED = 0x0001,  /**< This flag is applied to a buffer when it is allocated
-							   by the given port of the component */
+                 by the given port of the component */
   BUFFER_ASSIGNED = 0x0002, /**< This flag is applied to a buffer when it is assigned
-							  from another port or by the IL client */
+                from another port or by the IL client */
   HEADER_ALLOCATED = 0x0004 /**< This flag is applied to a buffer when buffer header is allocated 
-							  by the given port of the component */
+                by the given port of the component */
   } BUFFER_STATUS_FLAG;
 
 /** @brief the status of a port related to the tunneling with another component
@@ -88,15 +88,15 @@ typedef enum BUFFER_STATUS_FLAG {
 typedef enum TUNNEL_STATUS_FLAG {
   NO_TUNNEL = 0, /**< No tunnel established */
   TUNNEL_ESTABLISHED = 0x0001, /**< the TUNNEL_ESTABLISHED specifies if a port is tunneled.
-														  * It is assigned to a private field of the port if it is tunneled
-														  */
+                              * It is assigned to a private field of the port if it is tunneled
+                              */
   TUNNEL_IS_SUPPLIER = 0x0002, /**< the TUNNEL_IS_SUPPLIER specifies if a tunneled port is the supplier.
-														  * It is assigned to a private field of the port if it is tunneled and also it is the buffer supplier for the tunnel.
-														  */
+                              * It is assigned to a private field of the port if it is tunneled and also it is the buffer supplier for the tunnel.
+                              */
   PROPRIETARY_COMMUNICATION_ESTABLISHED = 0x0004 /** The tunnel established is created between two components of the same
-																									* vendor. These components can take advantage from a vendor specific 
-																									* communication
-																									*/
+                                                  * vendor. These components can take advantage from a vendor specific 
+                                                  * communication
+                                                  */
 } TUNNEL_STATUS_FLAG;
 
 
@@ -131,11 +131,11 @@ CLASS(omx_base_PortType)
   OMX_ERRORTYPE (*PortDestructor)(omx_base_PortType *openmaxStandPort); /**< The destructor of the port*/ \
   OMX_ERRORTYPE (*Port_DisablePort)(omx_base_PortType *openmaxStandPort); /**< Disables the port */ \
   OMX_ERRORTYPE (*Port_EnablePort)(omx_base_PortType *openmaxStandPort); /**< Enables the port */ \
-  OMX_ERRORTYPE (*Port_SendBufferFunction)(omx_base_PortType *openmaxStandPort, OMX_BUFFERHEADERTYPE* pBuffer);	/**< Holds the EmptyThisBuffer of FillThisBuffer function, if the port is input or output */ \
-  OMX_ERRORTYPE (*Port_AllocateBuffer)(omx_base_PortType *openmaxStandPort,OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_PTR pAppPrivate,OMX_IN OMX_U32 nSizeBytes);/**< Replaces the AllocateBuffer call for the base port. */	 \
+  OMX_ERRORTYPE (*Port_SendBufferFunction)(omx_base_PortType *openmaxStandPort, OMX_BUFFERHEADERTYPE* pBuffer);  /**< Holds the EmptyThisBuffer of FillThisBuffer function, if the port is input or output */ \
+  OMX_ERRORTYPE (*Port_AllocateBuffer)(omx_base_PortType *openmaxStandPort,OMX_INOUT OMX_BUFFERHEADERTYPE** pBuffer,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_PTR pAppPrivate,OMX_IN OMX_U32 nSizeBytes);/**< Replaces the AllocateBuffer call for the base port. */   \
   OMX_ERRORTYPE (*Port_UseBuffer)(omx_base_PortType *openmaxStandPort,OMX_BUFFERHEADERTYPE** ppBufferHdr,OMX_U32 nPortIndex,OMX_PTR pAppPrivate,OMX_U32 nSizeBytes,OMX_U8* pBuffer);/**< The standard use buffer function applied to the port class */ \
   OMX_ERRORTYPE (*Port_FreeBuffer)(omx_base_PortType *openmaxStandPort,OMX_U32 nPortIndex,OMX_BUFFERHEADERTYPE* pBuffer); /**< The standard free buffer function applied to the port class */ \
-  OMX_ERRORTYPE (*Port_AllocateTunnelBuffer)(omx_base_PortType *openmaxStandPort,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_U32 nSizeBytes);/**< AllocateTunnelBuffer call for the base port. */	 \
+  OMX_ERRORTYPE (*Port_AllocateTunnelBuffer)(omx_base_PortType *openmaxStandPort,OMX_IN OMX_U32 nPortIndex,OMX_IN OMX_U32 nSizeBytes);/**< AllocateTunnelBuffer call for the base port. */   \
   OMX_ERRORTYPE (*Port_FreeTunnelBuffer)(omx_base_PortType *openmaxStandPort,OMX_U32 nPortIndex); /**< The free buffer function used to free tunnelled buffers */ \
   OMX_ERRORTYPE (*BufferProcessedCallback)(OMX_HANDLETYPE hComponent, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE* pBuffer);/**< Holds the EmptyBufferDone or FillBufferDone callback, if the port is input or output port */ \
   OMX_ERRORTYPE (*FlushProcessingBuffers)(omx_base_PortType *openmaxStandPort); /**< release all the buffers currently under processing */ \
@@ -165,7 +165,7 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
  * every object used by the base port.
  * 
  * @param openmaxStandPort the ST port to be disposed
-	*/
+  */
 OMX_ERRORTYPE base_port_Destructor(omx_base_PortType *openmaxStandPort);
 
 /** @brief Disables the port.

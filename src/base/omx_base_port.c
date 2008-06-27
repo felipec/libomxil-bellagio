@@ -3,7 +3,7 @@
 
   Base class for OpenMAX ports to be used in derived components.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -55,7 +55,7 @@
   */
 
 OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput) {
-	
+  
   /* omx_base_component_PrivateType* omx_base_component_Private; */
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -79,7 +79,7 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
   if((*openmaxStandPort)->pAllocSem==NULL) {
     (*openmaxStandPort)->pAllocSem = calloc(1,sizeof(tsem_t));
     if((*openmaxStandPort)->pAllocSem==NULL) {
-    	return OMX_ErrorInsufficientResources;
+      return OMX_ErrorInsufficientResources;
     }
     tsem_init((*openmaxStandPort)->pAllocSem, 0);
   }
@@ -112,6 +112,8 @@ OMX_ERRORTYPE base_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base
   (*openmaxStandPort)->bIsTransientToDisabled=OMX_FALSE;
   (*openmaxStandPort)->bIsFullOfBuffers=OMX_FALSE;
   (*openmaxStandPort)->bIsEmptyOfBuffers=OMX_FALSE;
+  (*openmaxStandPort)->bBufferStateAllocated = NULL;
+  (*openmaxStandPort)->pInternalBufferStorage = NULL;
 
   (*openmaxStandPort)->PortDestructor = &base_port_Destructor;
   (*openmaxStandPort)->Port_AllocateBuffer = &base_port_AllocateBuffer;
@@ -165,21 +167,23 @@ OMX_ERRORTYPE base_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPo
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandPort->standCompContainer->pComponentPrivate;
 
-  pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
-  openmaxStandPort->bIsPortFlushed=OMX_TRUE;
-  /*Signal the buffer management thread of port flush,if it is waiting for buffers*/
-  if(omx_base_component_Private->bMgmtSem->semval==0) {
-    tsem_up(omx_base_component_Private->bMgmtSem);
-  }
+  if(openmaxStandPort->sPortParam.eDomain!=OMX_PortDomainOther) { /* clock buffers not used in the clients buffer managment function */
+    pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+    openmaxStandPort->bIsPortFlushed=OMX_TRUE;
+    /*Signal the buffer management thread of port flush,if it is waiting for buffers*/
+    if(omx_base_component_Private->bMgmtSem->semval==0) {
+      tsem_up(omx_base_component_Private->bMgmtSem);
+    }
 
-  if(omx_base_component_Private->state==OMX_StatePause ) {
-    /*Waiting at paused state*/
-    tsem_signal(omx_base_component_Private->bStateSem);
+    if(omx_base_component_Private->state==OMX_StatePause ) {
+      /*Waiting at paused state*/
+      tsem_signal(omx_base_component_Private->bStateSem);
+    }
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+    /* Wait until flush is completed */
+    pthread_cond_wait(&omx_base_component_Private->flush_all_condition,&omx_base_component_Private->flush_mutex);
+    pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
   }
-  DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
-  /* Wait until flush is completed */
-  pthread_cond_wait(&omx_base_component_Private->flush_all_condition,&omx_base_component_Private->flush_mutex);
-  pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
 
   tsem_reset(omx_base_component_Private->bMgmtSem);
 
@@ -259,7 +263,7 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
     if(!PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
       /*Signal Buffer Mgmt Thread if it's holding any buffer*/
       if(omx_base_component_Private->bMgmtSem->semval==0) {
-      	tsem_up(omx_base_component_Private->bMgmtSem);
+        tsem_up(omx_base_component_Private->bMgmtSem);
       }
       /*Wait till all buffers are freed*/
       tsem_down(openmaxStandPort->pAllocSem);
@@ -287,8 +291,8 @@ OMX_ERRORTYPE base_port_DisablePort(omx_base_PortType *openmaxStandPort) {
   openmaxStandPort->bIsTransientToDisabled = OMX_FALSE;
   openmaxStandPort->sPortParam.bEnabled = OMX_FALSE;
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out %s Port Index=%d isEnabled=%d\n", __func__,
-		(int)openmaxStandPort->sPortParam.nPortIndex,
-		(int)openmaxStandPort->sPortParam.bEnabled);
+    (int)openmaxStandPort->sPortParam.nPortIndex,
+    (int)openmaxStandPort->sPortParam.bEnabled);
   return err;
 }
 
@@ -313,9 +317,9 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
   openmaxStandPort->sPortParam.bEnabled = OMX_TRUE;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s port T flag=%x popu=%d state=%x\n", __func__,
-  	(int)openmaxStandPort->nTunnelFlags,
-	  (int)openmaxStandPort->sPortParam.bPopulated,
-  	(int)omx_base_component_Private->state);
+    (int)openmaxStandPort->nTunnelFlags,
+    (int)openmaxStandPort->sPortParam.bPopulated,
+    (int)omx_base_component_Private->state);
 
 
   if (!PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
@@ -325,7 +329,7 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
       openmaxStandPort->sPortParam.bPopulated = OMX_TRUE;
     }
   } else { //Port Tunneled and supplier. Then allocate tunnel buffers
-    err= openmaxStandPort->Port_AllocateTunnelBuffer(openmaxStandPort, openmaxStandPort->sPortParam.nPortIndex, openmaxStandPort->sPortParam.nBufferSize);						
+    err= openmaxStandPort->Port_AllocateTunnelBuffer(openmaxStandPort, openmaxStandPort->sPortParam.nPortIndex, openmaxStandPort->sPortParam.nBufferSize);            
     if(err!=OMX_ErrorNone) { 
       DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
       return err;
@@ -361,7 +365,7 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
   OMX_U32 nPortIndex,
   OMX_PTR pAppPrivate,
   OMX_U32 nSizeBytes) {
-	
+  
   unsigned int i;
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
@@ -385,7 +389,7 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
     DEBUG(DEB_LEV_ERR, "In %s: Requested Buffer Size %lu is less than Minimum Buffer Size %lu\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
     return OMX_ErrorIncorrectStateTransition;
   }
-	
+  
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
       openmaxStandPort->pInternalBufferStorage[i] = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
@@ -424,7 +428,7 @@ OMX_ERRORTYPE base_port_AllocateBuffer(
   DEBUG(DEB_LEV_ERR, "In %s Error: no available buffers\n",__func__);
   return OMX_ErrorInsufficientResources;
 }
-	
+  
 /** @brief Called by the standard use buffer, it implements a base functionality.
  *  
  * This function can be overriden if the use buffer implicate more complicated operations.
@@ -464,7 +468,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
     DEBUG(DEB_LEV_ERR, "In %s: Given Buffer Size %lu is less than Minimum Buffer Size %lu\n", __func__, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
     return OMX_ErrorIncorrectStateTransition;
   }
-	
+  
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
       openmaxStandPort->pInternalBufferStorage[i] = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
@@ -546,7 +550,7 @@ OMX_ERRORTYPE base_port_FreeBuffer(
         NULL);
     }
   }
-	
+  
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] & (BUFFER_ASSIGNED | BUFFER_ALLOCATED)) {
 
@@ -606,7 +610,7 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
       return OMX_ErrorIncorrectStateTransition;
     }
   }
-	
+  
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
       pBuffer = calloc(1,nSizeBytes);
@@ -773,18 +777,18 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
   /* Temporarily disable this check for gst-openmax */
 #if NO_GST_OMX_PATCH
   {
-	OMX_BOOL foundBuffer = OMX_FALSE;
-	if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
-	  for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
-		if (pBuffer->pBuffer == openmaxStandPort->pInternalBufferStorage[i]->pBuffer) {
-			foundBuffer = OMX_TRUE;
-			break;
-		}
-	  }
-	}
-	if (!foundBuffer) {
-	  return OMX_ErrorBadParameter;
-	}
+  OMX_BOOL foundBuffer = OMX_FALSE;
+  if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
+    for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
+    if (pBuffer->pBuffer == openmaxStandPort->pInternalBufferStorage[i]->pBuffer) {
+      foundBuffer = OMX_TRUE;
+      break;
+    }
+    }
+  }
+  if (!foundBuffer) {
+    return OMX_ErrorBadParameter;
+  }
   }
 #endif
 
@@ -792,7 +796,7 @@ OMX_ERRORTYPE base_port_SendBufferFunction(
     DEBUG(DEB_LEV_ERR, "In %s: received wrong buffer header on input port\n", __func__);
     return err;
   }
-	
+  
   /* And notify the buffer management thread we have a fresh new buffer to manage */
   if(!PORT_IS_BEING_FLUSHED(openmaxStandPort) && !(PORT_IS_BEING_DISABLED(openmaxStandPort) && PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort))){
     queue(openmaxStandPort->pBufferQueue, pBuffer);
@@ -841,7 +845,7 @@ OMX_ERRORTYPE base_port_ReturnBufferFunction(omx_base_PortType* openmaxStandPort
         __func__, eError,omx_base_component_Private->name);
       }
     }
-  }	
+  }  
   else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort) && 
             !PORT_IS_BEING_FLUSHED(openmaxStandPort)) {
     if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
@@ -915,6 +919,10 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
       if(param.format.video.eCompressionFormat == OMX_VIDEO_CodingMax) {
         return OMX_ErrorPortsNotCompatible;
       }
+    } else if(param.eDomain==OMX_PortDomainOther) {
+      if(param.format.other.eFormat == OMX_OTHER_FormatMax) {
+        return OMX_ErrorPortsNotCompatible;
+      }
     }
 
     /* Get Buffer Supplier type of the Tunnelled Component*/
@@ -937,7 +945,7 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
     if (pTunnelSetup->nTunnelFlags & OMX_PORTTUNNELFLAG_READONLY) {
       // the buffer provider MUST be the output port provider
       pTunnelSetup->eSupplier = OMX_BufferSupplyInput;
-      openmaxStandPort->nTunnelFlags |= TUNNEL_IS_SUPPLIER;	
+      openmaxStandPort->nTunnelFlags |= TUNNEL_IS_SUPPLIER;  
       openmaxStandPort->eBufferSupplier=OMX_BufferSupplyInput;
     } else {
       if (pTunnelSetup->eSupplier == OMX_BufferSupplyInput) {
@@ -984,6 +992,10 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
       }
     } else if(param.eDomain==OMX_PortDomainVideo) {
       if(param.format.video.eCompressionFormat == OMX_VIDEO_CodingMax) {
+        return OMX_ErrorPortsNotCompatible;
+      }
+    } else if(param.eDomain==OMX_PortDomainOther) {
+      if(param.format.other.eFormat == OMX_OTHER_FormatMax) {
         return OMX_ErrorPortsNotCompatible;
       }
     }

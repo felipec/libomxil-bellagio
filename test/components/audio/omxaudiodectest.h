@@ -7,7 +7,7 @@
   The audio formats supported are:
   mp3 (ffmpeg)
   
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -60,7 +60,7 @@ typedef struct appPrivateType{
 }appPrivateType;
 
 #define BUFFER_IN_SIZE 4096
-#define BUFFER_OUT_SIZE 2*8192
+#define BUFFER_OUT_SIZE 4*8192
 
 /** Specification version*/
 #define VERSIONMAJOR    1

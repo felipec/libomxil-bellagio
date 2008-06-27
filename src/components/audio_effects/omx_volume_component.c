@@ -4,7 +4,7 @@
   OpenMAX volume control component. This component implements a filter that 
   controls the volume level of the audio PCM stream.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -45,7 +45,6 @@ static OMX_U32 noVolumeCompInstance = 0;
 OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_volume_component_PrivateType* omx_volume_component_Private;
-  /* omx_base_audio_PortType *inPort, *outPort;*/
   OMX_U32 i;
 
   if (!openmaxStandComp->pComponentPrivate) {
@@ -64,13 +63,16 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   /** Calling base filter constructor */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
+  omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
+  omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 2;
+
   /** Allocate Ports and call port constructor. */  
-  if (omx_volume_component_Private->sPortTypesParam.nPorts && !omx_volume_component_Private->ports) {
-    omx_volume_component_Private->ports = calloc(omx_volume_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_volume_component_Private->ports) {
+    omx_volume_component_Private->ports = calloc(omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_volume_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_volume_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       omx_volume_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
       if (!omx_volume_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -84,11 +86,6 @@ OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   /** Domain specific section for the ports. */  
   omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
   omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
-
-  /*
-  inPort = (omx_base_audio_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
-  outPort = (omx_base_audio_PortType *) omx_volume_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
-  */
 
   omx_volume_component_Private->gain = GAIN_VALUE; //100.0f; // default gain
   omx_volume_component_Private->destructor = omx_volume_component_Destructor;
@@ -116,7 +113,7 @@ OMX_ERRORTYPE omx_volume_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
 
   /* frees port/s */
   if (omx_volume_component_Private->ports) {
-    for (i=0; i < omx_volume_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       if(omx_volume_component_Private->ports[i])
         omx_volume_component_Private->ports[i]->PortDestructor(omx_volume_component_Private->ports[i]);
     }
@@ -264,7 +261,7 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
       if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
         break;
       }
-      memcpy(ComponentParameterStructure, &omx_volume_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+      memcpy(ComponentParameterStructure, &omx_volume_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
       break;    
     case OMX_IndexParamAudioPortFormat:
       pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;

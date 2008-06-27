@@ -5,7 +5,7 @@
   data to a >inux framebuffer device.
 
   Originally developed by Peter Littlefield
-  Copyright (C) 2007  STMicroelectronics and Agere Systems
+  Copyright (C) 2007-2008  STMicroelectronics and Agere Systems
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -44,6 +44,7 @@
 #include <sys/time.h>
 
 #include <omx_base_video_port.h>
+#include <omx_base_clock_port.h>
 #include <omx_base_sink.h>
 #include <linux/fb.h>
 
@@ -51,9 +52,6 @@
   *  Should somehow be passed from client
   */
 #define FBDEV_FILENAME  "/dev/fb0" 
-
-/** Maximum number of sink component instances */
-#define MAX_NUM_OF_fbdev_sink_component_INSTANCES 2
 
 /** FBDEV sink port component port structure.
   */
@@ -73,29 +71,37 @@ ENDCLASS(omx_fbdev_sink_component_PortType)
 
 /** FBDEV sink port component private structure.
   * see the define above
+  * @param fd The file descriptor for the framebuffer 
+  * @param vscr_info The fb_var_screeninfo structure for the framebuffer 
+  * @param fscr_info The fb_fix_screeninfo structure for the framebuffer
+  * @param scr_data Pointer to the mmapped memory for the framebuffer 
+  * @param fbpxlfmt frame buffer pixel format
+  * @param fbwidth frame buffer display width 
+  * @param fbheight frame buffer display height 
+  * @param fbbpp frame buffer pixel depth
+  * @param fbstride frame buffer display stride 
+  * @param xScale the scale of the media clock
+  * @param eState the state of the media clock
+  * @param product frame buffer memory area 
+  * @param frameDropFlag the flag active on scale change indicates that frames are to be dropped 
+  * @param dropFrameCount counts the number of frames dropped 
   */
 DERIVEDCLASS(omx_fbdev_sink_component_PrivateType, omx_base_sink_PrivateType)
 #define omx_fbdev_sink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS \
-  /** @param fd The file descriptor for the framebuffer */ \
-  int fd; \
-  /** @param vscr_info The fb_var_screeninfo structure for the framebuffer */ \
-  struct fb_var_screeninfo vscr_info; \
-  /** @param fscr_info The fb_fix_screeninfo structure for the framebuffer */ \
-  struct fb_fix_screeninfo fscr_info; \
-  /** @param scr_data Pointer to the mmapped memory for the framebuffer */ \
-  unsigned char *scr_ptr; \
-  /** @param fbpxlfmt frame buffer pixel format*/ \
-  OMX_COLOR_FORMATTYPE fbpxlfmt; \
-  /** @param fbwidth frame buffer display width */ \
-  OMX_U32 fbwidth; \
-  /** @param fbheight frame buffer display height */ \
-  OMX_U32 fbheight; \
-  /** @param fbbpp frame buffer pixel depth*/ \
-  OMX_U32 fbbpp; \
-  /** @param fbstride frame buffer display stride */ \
-  OMX_S32 fbstride; \
-  /** @param product frame buffer memory area */ \
-  OMX_U32 product;
+  int                          fd; \
+  struct                       fb_var_screeninfo vscr_info; \
+  struct                       fb_fix_screeninfo fscr_info; \
+  unsigned char                *scr_ptr; \
+  OMX_COLOR_FORMATTYPE         fbpxlfmt; \
+  OMX_U32                      fbwidth; \
+  OMX_U32                      fbheight; \
+  OMX_U32                      fbbpp; \
+  OMX_S32                      fbstride; \
+  OMX_S32                      xScale; \
+  OMX_TIME_CLOCKSTATE          eState; \
+  OMX_U32                      product;\
+  OMX_BOOL                     frameDropFlag;\
+  int                          dropFrameCount;
 ENDCLASS(omx_fbdev_sink_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -108,6 +114,15 @@ OMX_ERRORTYPE omx_fbdev_sink_component_MessageHandler(OMX_COMPONENTTYPE* , inter
 void omx_fbdev_sink_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
   OMX_BUFFERHEADERTYPE* pInputBuffer);
+
+OMX_ERRORTYPE omx_fbdev_sink_component_port_SendBufferFunction(
+  omx_base_PortType *openmaxStandPort,
+  OMX_BUFFERHEADERTYPE* pBuffer);
+
+/* to handle the communication at the clock port */
+OMX_BOOL omx_fbdev_sink_component_ClockPortHandleFunction(
+  omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private,
+  OMX_BUFFERHEADERTYPE* inputbuffer);
 
 OMX_ERRORTYPE omx_fbdev_sink_component_SetConfig(
   OMX_IN  OMX_HANDLETYPE hComponent,

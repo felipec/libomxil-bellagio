@@ -4,8 +4,8 @@
   This component implements MPEG-4 video encoder. 
   The MPEG-4 Video encoder is based on FFmpeg software library.
 
-  Copyright (C) 2007  STMicroelectronics
-  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
+  Copyright (C) 2007-2008 STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies)
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -69,13 +69,16 @@ OMX_ERRORTYPE omx_videoenc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     */
   eError = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
+  omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nStartPortNumber = 0;
+  omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts = 2;
+
   /** Allocate Ports and call port constructor. */  
-  if (omx_videoenc_component_Private->sPortTypesParam.nPorts && !omx_videoenc_component_Private->ports) {
-    omx_videoenc_component_Private->ports = calloc(omx_videoenc_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts && !omx_videoenc_component_Private->ports) {
+    omx_videoenc_component_Private->ports = calloc(omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts, sizeof(omx_base_PortType *));
     if (!omx_videoenc_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_videoenc_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       omx_videoenc_component_Private->ports[i] = calloc(1, sizeof(omx_base_video_PortType));
       if (!omx_videoenc_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -170,7 +173,7 @@ OMX_ERRORTYPE omx_videoenc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 
   /* frees port/s */
   if (omx_videoenc_component_Private->ports) {
-    for (i=0; i < omx_videoenc_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       if(omx_videoenc_component_Private->ports[i])
         omx_videoenc_component_Private->ports[i]->PortDestructor(omx_videoenc_component_Private->ports[i]);
     }
@@ -531,7 +534,7 @@ OMX_ERRORTYPE omx_videoenc_component_GetParameter(
       if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
         break;
       }
-      memcpy(ComponentParameterStructure, &omx_videoenc_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+      memcpy(ComponentParameterStructure, &omx_videoenc_component_Private->sPortTypesParam[OMX_PortDomainVideo], sizeof(OMX_PORT_PARAM_TYPE));
       break;    
     case OMX_IndexParamVideoPortFormat:
       {

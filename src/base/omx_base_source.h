@@ -1,11 +1,11 @@
 /**
   @file src/base/omx_base_source.h
-	  
+    
   OpenMAX base source component. This component does not perform any multimedia
   processing. It derives from base component and contains a single port. It can be used 
   as base class for source components.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

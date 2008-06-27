@@ -2,9 +2,9 @@
   @file src/base/omx_base_component.h
 
   OpenMAX base component. This component does not perform any multimedia
-  processing.	It is used as a base component for new components development.
+  processing.It is used as a base component for new components development.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -40,9 +40,11 @@
 /** Default size of the internal input buffer */
 #define DEFAULT_IN_BUFFER_SIZE  4 * 1024
 /** Default size of the internal output buffer */
-#define DEFAULT_OUT_BUFFER_SIZE 16 * 1024
+#define DEFAULT_OUT_BUFFER_SIZE 32 * 1024 /*16 * 1024 */ // TODO - check this size is ok 
 /** Default MIME string length */
 #define DEFAULT_MIME_STRING_LENGTH 128
+
+#define NUM_DOMAINS 4
 
 /* Check if Component is deinitalizing*/
 #define IS_COMPONENT_DEINIT(component_Private, exit_condition)  \
@@ -58,7 +60,7 @@ typedef struct OMX_VENDOR_EXTRADATATYPE  {
 } OMX_VENDOR_EXTRADATATYPE;
 
 /** this is the list of custom vendor index */
-typedef enum OMX_INDEXVENDORTYPE {	
+typedef enum OMX_INDEXVENDORTYPE {
   /** only one index for file reader component input file */ 
   OMX_IndexVendorFileReadInputFilename = 0xFF000001,
   OMX_IndexVendorParser3gpInputFilename = 0xFF000002,
@@ -69,9 +71,13 @@ typedef enum OMX_INDEXVENDORTYPE {
 /** This enum defines the transition states of the Component*/
 typedef enum OMX_TRANS_STATETYPE {
     OMX_TransStateInvalid,
-    OMX_TransStateLoadedToIdle,      
-    OMX_TransStateIdleToExecuting,        
-    OMX_TransStateExecutingToIdle,   
+    OMX_TransStateLoadedToIdle,
+    OMX_TransStateIdleToPause,
+    OMX_TransStatePauseToExecuting,
+    OMX_TransStateIdleToExecuting,
+    OMX_TransStateExecutingToIdle,
+    OMX_TransStateExecutingToPause,
+    OMX_TransStatePauseToIdle,
     OMX_TransStateIdleToLoaded,       
     OMX_TransStateMax = 0X7FFFFFFF
 } OMX_TRANS_STATETYPE;
@@ -103,7 +109,7 @@ CLASS(omx_base_component_PrivateType)
 #define omx_base_component_PrivateType_FIELDS \
   OMX_COMPONENTTYPE *openmaxStandComp; /**< The OpenMAX standard data structure describing a component */ \
   omx_base_PortType **ports; /** @param ports The ports of the component */ \
-  OMX_PORT_PARAM_TYPE sPortTypesParam; /** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
+  OMX_PORT_PARAM_TYPE sPortTypesParam[NUM_DOMAINS]; /** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
   char uniqueID; /**< ID code that identifies an ST static component*/ \
   char* name; /**< component name */\
   OMX_STATETYPE state; /**< The state of the component */ \
@@ -113,17 +119,17 @@ CLASS(omx_base_component_PrivateType)
                               Loaded when the transition is from Idle to Loaded \
                               Idle when the transition is from Loaded to Idle */ \
   OMX_CALLBACKTYPE* callbacks; /**< pointer to every client callback function, \ 
-															  as specified by the standard*/ \
+                                as specified by the standard*/ \
   OMX_PTR callbackData;/**< Private data that can be send with \ 
-											  the client callbacks. Not specified by the standard */ \
+                        the client callbacks. Not specified by the standard */ \
   queue_t* messageQueue;/**< the queue of all the messages recevied by the component */\
   tsem_t* messageSem;/**< the semaphore that coordinates the access to the message queue */\
   OMX_U32 nGroupPriority; /**< @param nGroupPriority Resource management field: component priority (common to a group of components) */\
   OMX_U32 nGroupID; /**< @param nGroupID ID of a group of components that share the same logical chain */\
   OMX_MARKTYPE *pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
-  pthread_mutex_t flush_mutex;	/** @param flush_mutex mutex for the flush condition from buffers */ \
-  pthread_cond_t flush_all_condition;	/** @param flush_all_condition condition for the flush all buffers */ \
-  pthread_cond_t flush_condition;	/** @param The flush_condition condition */ \
+  pthread_mutex_t flush_mutex;  /** @param flush_mutex mutex for the flush condition from buffers */ \
+  pthread_cond_t flush_all_condition;  /** @param flush_all_condition condition for the flush all buffers */ \
+  pthread_cond_t flush_condition;  /** @param The flush_condition condition */ \
   tsem_t* bMgmtSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
   tsem_t* bStateSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
   int messageHandlerThreadID; /** @param  messageHandlerThreadID The ID of the pthread that handles the messages for the components */ \
@@ -174,8 +180,8 @@ OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
  * in this base class, but needs a specific handling
  */
 OMX_ERRORTYPE omx_base_component_DoStateSet(
-	OMX_COMPONENTTYPE *openmaxStandComp,
-	OMX_U32 destinationState);
+  OMX_COMPONENTTYPE *openmaxStandComp,
+  OMX_U32 destinationState);
 
 /** @brief Checks the header of a structure for consistency 
  * with size and spec version
@@ -204,10 +210,10 @@ void setHeader(OMX_PTR header, OMX_U32 size);
  * it returns the version of the component. See OMX_Core.h
  */ 
 OMX_ERRORTYPE omx_base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_STRING pComponentName,
-	OMX_OUT OMX_VERSIONTYPE* pComponentVersion,
-	OMX_OUT OMX_VERSIONTYPE* pSpecVersion,
-	OMX_OUT OMX_UUIDTYPE* pComponentUUID);
+  OMX_OUT OMX_STRING pComponentName,
+  OMX_OUT OMX_VERSIONTYPE* pComponentVersion,
+  OMX_OUT OMX_VERSIONTYPE* pSpecVersion,
+  OMX_OUT OMX_UUIDTYPE* pComponentUUID);
 
 /** @brief Enumerates all the role of the component.
  * 
@@ -222,9 +228,9 @@ OMX_ERRORTYPE omx_base_component_GetComponentVersion(OMX_IN  OMX_HANDLETYPE hCom
  * @param nIndex the index of the role requested
  */ 
 OMX_ERRORTYPE omx_base_component_ComponentRoleEnum(
-	OMX_IN OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_U8 *cRole,
-	OMX_IN OMX_U32 nIndex);
+  OMX_IN OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_U8 *cRole,
+  OMX_IN OMX_U32 nIndex);
 
 /** @brief standard OpenMAX function
  * 
@@ -232,9 +238,9 @@ OMX_ERRORTYPE omx_base_component_ComponentRoleEnum(
  * See OMX_Component.h
  */ 
 OMX_ERRORTYPE omx_base_component_SetCallbacks(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
-	OMX_IN  OMX_PTR pAppData);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_CALLBACKTYPE* pCallbacks,
+  OMX_IN  OMX_PTR pAppData);
 
 /** @brief Part of the standard OpenMAX function
  * 
@@ -243,9 +249,9 @@ OMX_ERRORTYPE omx_base_component_SetCallbacks(
  * See OMX_Core.h for standard reference.
  */
 OMX_ERRORTYPE omx_base_component_GetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_INOUT OMX_PTR ComponentParameterStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nParamIndex,
+  OMX_INOUT OMX_PTR ComponentParameterStructure);
 
 /** @brief part of the standard openmax function
  * 
@@ -256,9 +262,9 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
  * @return OMX_ErrorUnsupportedIndex if the index is not supported or not handled here
  */
 OMX_ERRORTYPE omx_base_component_SetParameter(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nParamIndex,
-	OMX_IN  OMX_PTR ComponentParameterStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nParamIndex,
+  OMX_IN  OMX_PTR ComponentParameterStructure);
 
 /** @brief base GetConfig function
  * 
@@ -268,9 +274,9 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
  * in the private component descriptor.
  */
 OMX_ERRORTYPE omx_base_component_GetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_INOUT OMX_PTR pComponentConfigStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nIndex,
+  OMX_INOUT OMX_PTR pComponentConfigStructure);
 
 /** @brief base SetConfig function
  * 
@@ -280,9 +286,9 @@ OMX_ERRORTYPE omx_base_component_GetConfig(
  * in the private component descriptor.
  */
 OMX_ERRORTYPE omx_base_component_SetConfig(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_INDEXTYPE nIndex,
-	OMX_IN  OMX_PTR pComponentConfigStructure);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_INDEXTYPE nIndex,
+  OMX_IN  OMX_PTR pComponentConfigStructure);
 
 /** @brief base function not implemented
  * 
@@ -290,17 +296,17 @@ OMX_ERRORTYPE omx_base_component_SetConfig(
  * derived component if needed.
  */
 OMX_ERRORTYPE omx_base_component_GetExtensionIndex(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_STRING cParameterName,
-	OMX_OUT OMX_INDEXTYPE* pIndexType);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_STRING cParameterName,
+  OMX_OUT OMX_INDEXTYPE* pIndexType);
 
 /** @returns the state of the component
  * 
  * This function does not need any override by derived components.
  */
 OMX_ERRORTYPE omx_base_component_GetState(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_OUT OMX_STATETYPE* pState);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_STATETYPE* pState);
 
 /** @brief standard SendCommand function
  * 
@@ -308,10 +314,10 @@ OMX_ERRORTYPE omx_base_component_GetState(
  * a special derived component could do it.
  */  
 OMX_ERRORTYPE omx_base_component_SendCommand(
-	OMX_IN  OMX_HANDLETYPE hComponent,
-	OMX_IN  OMX_COMMANDTYPE Cmd,
-	OMX_IN  OMX_U32 nParam,
-	OMX_IN  OMX_PTR pCmdData);
+  OMX_IN  OMX_HANDLETYPE hComponent,
+  OMX_IN  OMX_COMMANDTYPE Cmd,
+  OMX_IN  OMX_U32 nParam,
+  OMX_IN  OMX_PTR pCmdData);
 
 /** @brief This standard functionality is called when the component is
  * destroyed in the FreeHandle standard call. 
@@ -321,8 +327,8 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
  * The implementaiton of the ComponentDeInit contains the 
  * implementation specific part of the destroying phase.
  */
- OMX_ERRORTYPE omx_base_component_ComponentDeInit(
-	OMX_IN  OMX_HANDLETYPE hComponent);
+OMX_ERRORTYPE omx_base_component_ComponentDeInit(
+  OMX_IN  OMX_HANDLETYPE hComponent);
 
 /** @brief Component's message handler thread function
  * 

@@ -3,8 +3,8 @@
 
   OpenMAX ALSA source component. This component is an audio source that uses ALSA library.
 
-  Copyright (C) 2008  STMicroelectronics
-  Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
+  Copyright (C) 2007-2008  STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies)
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -61,13 +61,16 @@ OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
     return OMX_ErrorInsufficientResources;
   }
 
+  omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
+  omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 1;
+
   /** Allocate Ports and call port constructor. */  
-  if (omx_alsasrc_component_Private->sPortTypesParam.nPorts && !omx_alsasrc_component_Private->ports) {
-    omx_alsasrc_component_Private->ports = calloc(omx_alsasrc_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_alsasrc_component_Private->ports) {
+    omx_alsasrc_component_Private->ports = calloc(omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_alsasrc_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_alsasrc_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       omx_alsasrc_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
       if (!omx_alsasrc_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -163,7 +166,7 @@ OMX_ERRORTYPE omx_alsasrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCo
 
   /* frees port/s */
   if (omx_alsasrc_component_Private->ports) {
-    for (i=0; i < omx_alsasrc_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       if(omx_alsasrc_component_Private->ports[i])
         omx_alsasrc_component_Private->ports[i]->PortDestructor(omx_alsasrc_component_Private->ports[i]);
     }
@@ -449,7 +452,7 @@ OMX_ERRORTYPE omx_alsasrc_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
-    memcpy(ComponentParameterStructure, &omx_alsasrc_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+    memcpy(ComponentParameterStructure, &omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
     break;    
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;

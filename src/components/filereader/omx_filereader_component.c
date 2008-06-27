@@ -4,7 +4,7 @@
   OpenMAX file reader component. This component is an file reader that detects the input
   file format so that client calls the appropriate decoder.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -62,13 +62,16 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   
   err = omx_base_source_Constructor(openmaxStandComp, cComponentName);
 
+  omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
+  omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 1;
+
   /** Allocate Ports and call port constructor. */  
-  if (omx_filereader_component_Private->sPortTypesParam.nPorts && !omx_filereader_component_Private->ports) {
-    omx_filereader_component_Private->ports = calloc(omx_filereader_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_filereader_component_Private->ports) {
+    omx_filereader_component_Private->ports = calloc(omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_filereader_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_filereader_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       omx_filereader_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
       if (!omx_filereader_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -142,7 +145,7 @@ OMX_ERRORTYPE omx_filereader_component_Destructor(OMX_COMPONENTTYPE *openmaxStan
   
   /* frees port/s */
   if (omx_filereader_component_Private->ports) {
-    for (i=0; i < omx_filereader_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       if(omx_filereader_component_Private->ports[i])
         omx_filereader_component_Private->ports[i]->PortDestructor(omx_filereader_component_Private->ports[i]);
     }
@@ -423,7 +426,7 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
-    memcpy(ComponentParameterStructure, &omx_filereader_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+    memcpy(ComponentParameterStructure, &omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
     break;    
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
@@ -493,8 +496,8 @@ OMX_ERRORTYPE omx_filereader_component_SetConfig(
     case OMX_IndexConfigTimePosition : 
       sTimeStamp = (OMX_TIME_CONFIG_TIMESTAMPTYPE*)pComponentConfigStructure;
       /*Check Structure Header and verify component state*/
-      if (sTimeStamp->nPortIndex >= (omx_filereader_component_Private->sPortTypesParam.nStartPortNumber + omx_filereader_component_Private->sPortTypesParam.nPorts)) {
-        DEBUG(DEB_LEV_ERR, "Bad Port index %i when the component has %i ports\n", (int)sTimeStamp->nPortIndex, (int)omx_filereader_component_Private->sPortTypesParam.nPorts);
+      if (sTimeStamp->nPortIndex >= (omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber + omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts)) {
+        DEBUG(DEB_LEV_ERR, "Bad Port index %i when the component has %i ports\n", (int)sTimeStamp->nPortIndex, (int)omx_filereader_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts);
         return OMX_ErrorBadPortIndex;
       }
 

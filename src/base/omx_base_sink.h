@@ -1,11 +1,11 @@
 /**
   @file src/base/omx_base_sink.h
-	  
+    
   OpenMAX base sink component. This component does not perform any multimedia
   processing. It derives from base component and contains a single port. It can be used 
   as base class for sink components.
-
-  Copyright (C) 2007  STMicroelectronics
+  
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -40,9 +40,8 @@
 #include <stdlib.h>
 
 
-/** OMX_BASE_SINK_INPUTPORT_INDEX is the index of any input port for the derived components
- */
-#define OMX_BASE_SINK_INPUTPORT_INDEX 0
+#define OMX_BASE_SINK_INPUTPORT_INDEX   0     /* The index of the input port for the derived components */
+#define OMX_BASE_SINK_CLOCKPORT_INDEX   1     /* The index of the clock port for the dervied components */
 
 /** OMX_BASE_SINK_ALLPORT_INDEX as the standard specifies, the -1 value for port index is used to point to all the ports
  */

@@ -4,8 +4,8 @@
   This component implements H.264 / MPEG-4 AVC video decoder. 
   The H.264 / MPEG-4 AVC Video decoder is based on the FFmpeg software library.
 
-  Copyright (C) 2007  STMicroelectronics
-  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
+  Copyright (C) 2007-2008 STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies)
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -71,13 +71,16 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   eError = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
+  omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nStartPortNumber = 0;
+  omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts = 2;
+
   /** Allocate Ports and call port constructor. */
-  if (omx_videodec_component_Private->sPortTypesParam.nPorts && !omx_videodec_component_Private->ports) {
-    omx_videodec_component_Private->ports = calloc(omx_videodec_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts && !omx_videodec_component_Private->ports) {
+    omx_videodec_component_Private->ports = calloc(omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts, sizeof(omx_base_PortType *));
     if (!omx_videodec_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_videodec_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       omx_videodec_component_Private->ports[i] = calloc(1, sizeof(omx_base_video_PortType));
       if (!omx_videodec_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -187,7 +190,7 @@ OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 
   /* frees port/s */   
   if (omx_videodec_component_Private->ports) {   
-    for (i=0; i < omx_videodec_component_Private->sPortTypesParam.nPorts; i++) {   
+    for (i=0; i < omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {   
       if(omx_videodec_component_Private->ports[i])   
         omx_videodec_component_Private->ports[i]->PortDestructor(omx_videodec_component_Private->ports[i]);   
     }   
@@ -690,7 +693,7 @@ OMX_ERRORTYPE omx_videodec_component_GetParameter(
       if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
         break;
       }
-      memcpy(ComponentParameterStructure, &omx_videodec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+      memcpy(ComponentParameterStructure, &omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo], sizeof(OMX_PORT_PARAM_TYPE));
       break;    
     case OMX_IndexParamVideoPortFormat:
       {

@@ -5,9 +5,9 @@
   and an ALSA sink. The application receives an compressed audio stream on input port
   from a file, decodes it and sends it to the ALSA sink, or to a file or standard output.
   The audio formats supported are:
-  mp3 (ffmpeg)
+  MP3 (FFmpeg)
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -36,6 +36,7 @@
 #define MP3_TYPE_SEL    1
 #define VORBIS_TYPE_SEL 2
 #define AAC_TYPE_SEL    3 
+#define G726_TYPE_SEL   4 
 #define COMPONENT_NAME_BASE "OMX.st.audio_decoder"
 #define BASE_ROLE "audio_decoder.ogg"
 #define COMPONENT_NAME_BASE_LEN 20
@@ -100,7 +101,7 @@ void display_help() {
   printf("       -o outfile: If this option is specified, the decoded stream is written to outfile\n");
   printf("                   This option can't be used with '-t' \n");
   printf("       -s single_ogg: Use the single role Ogg Vorbis decoder instead of the default one. Can't be used with -m or .mp3 file\n");
-  printf("       -t: The audio decoder is tunneled with the alsa sink\n");
+  printf("       -t: The audio decoder is tunneled with the ALSA sink\n");
   printf("       -m: For MP3 decoding use the mad library. Can't be used with -s or .ogg file\n");
   printf("       -d: If no output is specified, and no playback is specified,\n");
   printf("           this flag activated the print of the stream directly on stdout\n");
@@ -407,6 +408,14 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(MAD/VORBIS) Selected\n");
       display_help();
     }
+  } else if(*(input_file+index -1) == '6') {   
+    selectedType = G726_TYPE_SEL;
+    DEBUG(DEFAULT_MESSAGES, "G726\n");
+    if(flagIsMadRequested || flagSingleOGGSelected) {
+      DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(MAD/VORBIS) Selected\n");
+      display_help();
+    }
+    flagUsingFFMpeg = 0; //Explicitly not using filereader in case of G726
   } else {
     DEBUG(DEB_LEV_ERR, "The input audio format is not supported - exiting\n");
     exit(1);
@@ -475,6 +484,8 @@ int main(int argc, char** argv) {
     }
   } else if (selectedType == AAC_TYPE_SEL) {   
     strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".aac");
+  } else if (selectedType == G726_TYPE_SEL) {   
+    strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".g726");
   }
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
@@ -520,6 +531,14 @@ int main(int argc, char** argv) {
         DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig 0 \n",err);
       }
     }
+    /* disable the clock port of the ALSA sink */
+    err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
+    if(err != OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
+      exit(1);
+    }
+    tsem_down(appPriv->sinkEventSem); /* audio sink clock port disabled */
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
   }
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
@@ -1132,7 +1151,7 @@ OMX_ERRORTYPE audiodecEventHandler(
 
         err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 0, NULL);
         if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"alsa sink port disable failed\n");
+          DEBUG(DEB_LEV_ERR,"ALSA sink port disable failed\n");
           exit(1);
         }
 
@@ -1150,7 +1169,7 @@ OMX_ERRORTYPE audiodecEventHandler(
 
         err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortEnable, 0, NULL);
         if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"alsa sink port disable failed\n");
+          DEBUG(DEB_LEV_ERR,"ALSA sink port disable failed\n");
           exit(1);
         }
 
@@ -1306,7 +1325,7 @@ OMX_ERRORTYPE audiodecFillBufferDone(
   OMX_ERRORTYPE err;
   int i;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
-  /* Output data to alsa sink */
+  /* Output data to ALSA sink */
   if(pBuffer != NULL){
     if (pBuffer->nFilledLen == 0) {
       DEBUG(DEB_LEV_ERR, "Ouch! In %s: had 0 data size in output buffer...\n", __func__);
@@ -1330,7 +1349,7 @@ OMX_ERRORTYPE audiodecFillBufferDone(
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
       }
-    } else if ((!flagSetupTunnel) && (flagPlaybackOn))  { //playback on, redirect to alsa sink, if it is not tunneled
+    } else if ((!flagSetupTunnel) && (flagPlaybackOn))  { //playback on, redirect to ALSA sink, if it is not tunneled
       if(inBufferVolume1->pBuffer == pBuffer->pBuffer) {
         inBufferVolume1->nFilledLen = pBuffer->nFilledLen;
         err = OMX_EmptyThisBuffer(appPriv->volumehandle, inBufferVolume1);
@@ -1449,7 +1468,7 @@ OMX_ERRORTYPE volumeFillBufferDone(
   int i;
   static int volCompBufferDropped=0;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
-  /* Output data to alsa sink */
+  /* Output data to ALSA sink */
   if(pBuffer != NULL){
     if (pBuffer->nFilledLen == 0) {
       DEBUG(DEB_LEV_ERR, "Ouch! In %s: had 0 data size in output buffer...\n", __func__);
@@ -1473,7 +1492,7 @@ OMX_ERRORTYPE volumeFillBufferDone(
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
       }
-    } else if ((!flagSetupTunnel) && (flagPlaybackOn))  { //playback on, redirect to alsa sink, if it is not tunneled
+    } else if ((!flagSetupTunnel) && (flagPlaybackOn))  { //playback on, redirect to ALSA sink, if it is not tunneled
       if(!bEOS) {
         if(inBufferSink1->pBuffer == pBuffer->pBuffer) {
           inBufferSink1->nFilledLen = pBuffer->nFilledLen;

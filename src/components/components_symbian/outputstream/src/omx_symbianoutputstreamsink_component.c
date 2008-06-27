@@ -49,20 +49,23 @@ omx_symbianoutputstreamsink_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
         }
     }
 
-    err = omx_base_sink_Constructor(openmaxStandComp,cComponentName);
+    err = omx_base_sink_Constructor(openmaxStandComp,cComponentName); 
 
     omx_symbianoutputstreamsink_component_Private = openmaxStandComp->pComponentPrivate;
+  
+    omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
+    omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 1;
 
-    if (omx_symbianoutputstreamsink_component_Private->sPortTypesParam.nPorts && !omx_symbianoutputstreamsink_component_Private->ports) 
+    if (omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_symbianoutputstreamsink_component_Private->ports) 
     {
-        omx_symbianoutputstreamsink_component_Private->ports = calloc(omx_symbianoutputstreamsink_component_Private->sPortTypesParam.nPorts,sizeof (omx_base_PortType *));
+        omx_symbianoutputstreamsink_component_Private->ports = calloc(omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts,sizeof (omx_base_PortType *));
 
         if (!omx_symbianoutputstreamsink_component_Private->ports) 
         {
             return OMX_ErrorInsufficientResources;
         }
         
-        for (i=0; i < omx_symbianoutputstreamsink_component_Private->sPortTypesParam.nPorts; i++) 
+        for (i=0; i < omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) 
         {
             omx_symbianoutputstreamsink_component_Private->ports[i] = calloc(1, sizeof(omx_symbianoutputstreamsink_component_PortType));
             if (!omx_symbianoutputstreamsink_component_Private->ports[i]) 
@@ -133,7 +136,7 @@ omx_symbianoutputstreamsink_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
     openmaxStandComp->GetConfig     = omx_symbianoutputstreamsink_component_GetConfig;
 
     /* Write in the default paramenters */
-    omx_symbianoutputstreamsink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioInit, &omx_symbianoutputstreamsink_component_Private->sPortTypesParam);
+    omx_symbianoutputstreamsink_component_SetParameter(openmaxStandComp, OMX_IndexParamAudioInit, &omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio]);
     pPort->AudioPCMConfigured	= 0;
 
     if (!pPort->AudioPCMConfigured) 
@@ -244,7 +247,7 @@ omx_symbianoutputstreamsink_component_SetParameter(OMX_IN  OMX_HANDLETYPE hCompo
                 DEBUG(DEB_LEV_ERR, "Header Check Error=%x\n",err); 
                 break;
             }
-            memcpy(&omx_symbianoutputstreamsink_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
+            memcpy(&omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio],ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
             break;
 
         case OMX_IndexParamAudioPortFormat:
@@ -318,7 +321,7 @@ omx_symbianoutputstreamsink_component_GetParameter(OMX_IN  OMX_HANDLETYPE hCompo
     {
         case OMX_IndexParamAudioInit:
             setHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE));
-            memcpy(ComponentParameterStructure, &omx_symbianoutputstreamsink_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+            memcpy(ComponentParameterStructure, &omx_symbianoutputstreamsink_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
             break;
 
         case OMX_IndexParamAudioPortFormat:

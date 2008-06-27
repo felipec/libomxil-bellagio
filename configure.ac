@@ -33,6 +33,7 @@ AC_CONFIG_FILES([
     src/components/audio_effects/Makefile
     src/components/video_src/Makefile
     src/components/parser3gp/Makefile
+    src/components/clocksrc/Makefile
     src/components/camera/Makefile
     m4/Makefile
     test/Makefile
@@ -43,6 +44,7 @@ AC_CONFIG_FILES([
     test/components/audio_effects/Makefile
     test/components/parser/Makefile
     test/components/camera/Makefile
+    test/components/clocksrc/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #
@@ -111,6 +113,24 @@ AC_ARG_ENABLE(
     [with_videosrc=$enableval],
     [with_videosrc=no])
 
+#Check whether clock component has been requested                                
+AC_ARG_ENABLE(
+    [clocksrc],
+    [AC_HELP_STRING(
+        [--disable-clocksrc],
+        [whether to disable the clocksrc compilation])],
+    [with_clocksrc=$enableval],
+    [with_clocksrc=yes]) dnl default
+
+#Enable clock source log
+AC_ARG_ENABLE( 
+    [clocksrclog],
+    [AC_HELP_STRING(
+        [--enable-clocksrclog],
+        [whether to enable clock component log compilation])],
+    [with_clocksrclog=$enableval],
+    [with_clocksrclog=no])
+
 #Check whether to disable all components
 AC_ARG_ENABLE(
     [components],
@@ -119,6 +139,7 @@ AC_ARG_ENABLE(
         [whether to disable all the components])],
     [with_components=$enableval],
     [with_components=yes])
+
 
 ################################################################################
 # Check for programs                                                           #
@@ -245,6 +266,11 @@ if test "x$with_vorbis" = "xyes"; then
 	LDFLAGS="${old_LDFLAGS}"
 fi
 
+# Check for clock component log
+if test "x$with_clocksrclog" = "xyes"; then
+        AC_DEFINE([AV_SYNC_LOG], [1], [Clock Component Log])
+fi
+
 ################################################################################
 # Check for types                                                              #
 ################################################################################
@@ -286,5 +312,6 @@ AM_CONDITIONAL([WITH_MADCOMPONENTS], [test x$with_mad = xyes])
 AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test x$with_vorbis = xyes])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xyes])
 AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xyes])
+AM_CONDITIONAL([WITH_CLOCKSRC], [test x$with_clocksrc = xyes])
 
 AC_OUTPUT

@@ -523,8 +523,8 @@ OMX_ERRORTYPE omx_clocksrc_component_SetConfig(
     gettimeofday(&tv,&zv);
     walltime = ((OMX_TICKS)tv.tv_sec)*1000000 + ((OMX_TICKS)tv.tv_usec);
     mediatime = omx_clocksrc_component_Private->MediaTimeBase + Scale*(walltime - omx_clocksrc_component_Private->WallTimeBase);
-    omx_clocksrc_component_Private->WallTimeBase   = walltime; //Mona - suitable start time to be used here
-    omx_clocksrc_component_Private->MediaTimeBase  = mediatime;  // Mona - needs to be checked 
+    omx_clocksrc_component_Private->WallTimeBase   = walltime; //TODO - suitable start time to be used here
+    omx_clocksrc_component_Private->MediaTimeBase  = mediatime;  // TODO - needs to be checked 
 
     /* update the new scale value */
     pConfigScale = (OMX_TIME_CONFIG_SCALETYPE*) pComponentConfigStructure;
@@ -558,7 +558,7 @@ OMX_ERRORTYPE omx_clocksrc_component_SetConfig(
       gettimeofday(&tv,&zv);
       walltime = ((OMX_TICKS)tv.tv_sec)*1000000 + ((OMX_TICKS)tv.tv_usec);
       mediatime = omx_clocksrc_component_Private->MediaTimeBase + Scale*(walltime - omx_clocksrc_component_Private->WallTimeBase);
-      int thresh=100;  // TODO - what is a good threshold to use
+      int thresh=2000;  // TODO - what is a good threshold to use
       mediaTimediff = (sMediaTimeRequest->nMediaTimestamp - (sMediaTimeRequest->nOffset*Scale)) - mediatime;
       DEBUG(DEB_LEV_SIMPLE_SEQ," pI=%d MTD=%lld MT=%lld RT=%lld offset=%lld, Scale=%d\n",
                (int)portIndex,mediaTimediff,mediatime,sMediaTimeRequest->nMediaTimestamp,sMediaTimeRequest->nOffset,(int)Scale);

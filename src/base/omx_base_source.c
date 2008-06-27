@@ -6,7 +6,7 @@
   This class can also be used for a two port source component
   It can be used as base class for source components.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -34,7 +34,7 @@
 
 OMX_ERRORTYPE omx_base_source_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
 
-  OMX_ERRORTYPE err = OMX_ErrorNone;	
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_base_source_PrivateType* omx_base_source_Private;
 
   if (openmaxStandComp->pComponentPrivate) {
@@ -47,14 +47,12 @@ OMX_ERRORTYPE omx_base_source_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, O
   }
 
   // we could create our own port structures here
-  // fixme maybe the base class could use a "port factory" function pointer?	
+  // fixme maybe the base class could use a "port factory" function pointer?  
   err = omx_base_component_Constructor(openmaxStandComp, cComponentName);
 
   /* here we can override whatever defaults the base_component constructor set
   * e.g. we can override the function pointers in the private struct  */
   omx_base_source_Private = openmaxStandComp->pComponentPrivate;
-  omx_base_source_Private->sPortTypesParam.nPorts = 1;
-  omx_base_source_Private->sPortTypesParam.nStartPortNumber = 0;	
   omx_base_source_Private->BufferMgmtFunction = omx_base_source_BufferMgmtFunction;
 
   return err;
@@ -307,59 +305,64 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
       }
     }
 
-    for(i=0;i<omx_base_source_Private->sPortTypesParam.nPorts;i++) {
-      /*Process Output buffer of Port i */
-      if(isOutputBufferNeeded[i]==OMX_FALSE) {
-        if(omx_base_source_Private->pMark!=NULL){
-          pOutputBuffer[i]->hMarkTargetComponent=omx_base_source_Private->pMark->hMarkTargetComponent;
-          pOutputBuffer[i]->pMarkData=omx_base_source_Private->pMark->pMarkData;
-          omx_base_source_Private->pMark=NULL;
-        }
-        target_component=(OMX_COMPONENTTYPE*)pOutputBuffer[i]->hMarkTargetComponent;
-        if(target_component==(OMX_COMPONENTTYPE *)openmaxStandComp) {
-          /*Clear the mark and generate an event*/
-          (*(omx_base_source_Private->callbacks->EventHandler))
-            (openmaxStandComp,
-            omx_base_source_Private->callbackData,
-            OMX_EventMark, /* The command was completed */
-            1, /* The commands was a OMX_CommandStateSet */
-            i, /* The state has been changed in message->messageParam2 */
-            pOutputBuffer[i]->pMarkData);
-        } else if(pOutputBuffer[i]->hMarkTargetComponent!=NULL){
-          /*If this is not the target component then pass the mark*/
-          pOutputBuffer[i]->pMarkData=NULL;
-        }
-        //pOutputBuffer[0]->nTimeStamp = pOutputBuffer[0]->nTimeStamp;
+    for(i=0;i < (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts  +
+                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts -1);i++) {
 
-        if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer[i]->nFilledLen == 0) {
-          //(*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[0], pOutputBuffer[1]);
-          (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[i]);
-        } else {
-          /*It no buffer management call back then don't produce any output buffer*/
-          pOutputBuffer[i]->nFilledLen = 0;
-        }
+      if(omx_base_source_Private->ports[i]->sPortParam.eDomain!=OMX_PortDomainOther){ /* clock ports are not to be processed */
+        /*Process Output buffer of Port i */
+        if(isOutputBufferNeeded[i]==OMX_FALSE) {
+          if(omx_base_source_Private->pMark!=NULL){
+            pOutputBuffer[i]->hMarkTargetComponent=omx_base_source_Private->pMark->hMarkTargetComponent;
+            pOutputBuffer[i]->pMarkData=omx_base_source_Private->pMark->pMarkData;
+            omx_base_source_Private->pMark=NULL;
+          }
+          target_component=(OMX_COMPONENTTYPE*)pOutputBuffer[i]->hMarkTargetComponent;
+          if(target_component==(OMX_COMPONENTTYPE *)openmaxStandComp) {
+            /*Clear the mark and generate an event*/
+            (*(omx_base_source_Private->callbacks->EventHandler))
+              (openmaxStandComp,
+              omx_base_source_Private->callbackData,
+              OMX_EventMark, /* The command was completed */
+              1, /* The commands was a OMX_CommandStateSet */
+              i, /* The state has been changed in message->messageParam2 */
+              pOutputBuffer[i]->pMarkData);
+          } else if(pOutputBuffer[i]->hMarkTargetComponent!=NULL){
+            /*If this is not the target component then pass the mark*/
+            pOutputBuffer[i]->pMarkData=NULL;
+          }
+
+          if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer[i]->nFilledLen == 0) {
+            //(*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[0], pOutputBuffer[1]);
+            (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[i]);
+          } else {
+            /*If no buffer management call back then don't produce any output buffer*/
+            pOutputBuffer[i]->nFilledLen = 0;
+          }
       
-        if(pOutputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS && pOutputBuffer[i]->nFilledLen==0) {
-          DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pOutputBuffer[i]->nFilledLen);
-          (*(omx_base_source_Private->callbacks->EventHandler))
-            (openmaxStandComp,
-            omx_base_source_Private->callbackData,
-            OMX_EventBufferFlag, /* The command was completed */
-            i, /* The commands was a OMX_CommandStateSet */
-            pOutputBuffer[i]->nFlags, /* The state has been changed in message->messageParam2 */
-            NULL);
-        }
-        if(omx_base_source_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pOutPort[0]) || PORT_IS_BEING_FLUSHED(pOutPort[1]))) {
-          /*Waiting at paused state*/
-          tsem_wait(omx_base_component_Private->bStateSem);
-        }
+          if(pOutputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS && pOutputBuffer[i]->nFilledLen==0) {
+            DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pOutputBuffer[i]->nFilledLen);
+            (*(omx_base_source_Private->callbacks->EventHandler))
+              (openmaxStandComp,
+              omx_base_source_Private->callbackData,
+              OMX_EventBufferFlag, /* The command was completed */
+              i, /* The commands was a OMX_CommandStateSet */
+              pOutputBuffer[i]->nFlags, /* The state has been changed in message->messageParam2 */
+              NULL);
+          }
+          if(omx_base_source_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pOutPort[0]) || PORT_IS_BEING_FLUSHED(pOutPort[1]))) {
+            /*Waiting at paused state*/
+            tsem_wait(omx_base_component_Private->bStateSem);
+          }
 
-         /*Output Buffer has been produced or EOS. So, return output buffer and get new buffer*/
-        if(pOutputBuffer[i]->nFilledLen!=0 || pOutputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS){
-          pOutPort[i]->ReturnBufferFunction(pOutPort[i],pOutputBuffer[i]);
-          outBufExchanged[i]--;
-          pOutputBuffer[i]=NULL;
-          isOutputBufferNeeded[i]=OMX_TRUE;
+           /*Output Buffer has been produced or EOS. So, return output buffer and get new buffer*/
+          if(pOutputBuffer[i]->nFilledLen!=0 || pOutputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS){
+            pOutPort[i]->ReturnBufferFunction(pOutPort[i],pOutputBuffer[i]);
+            outBufExchanged[i]--;
+            pOutputBuffer[i]=NULL;
+            isOutputBufferNeeded[i]=OMX_TRUE;
+          }
         }
       }
     }

@@ -2,9 +2,9 @@
   @file src/components/video_src/omx_videosrc_component.h
 
   OpenMAX video source component. This component is a video source component
-  that captures video from the video camera.
+  that captures video from the video camera. This camera component is based on V4L2.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <omx_base_source.h>
 #include <string.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -53,12 +53,19 @@
 
 #define VIDEO_DEV_NAME "/dev/video"
 
+struct buffer
+{
+  void *start;
+  unsigned int length;
+};
+
+
 /** Video Source component private structure.
  * see the define above
  */
 DERIVEDCLASS(omx_videosrc_component_PrivateType, omx_base_source_PrivateType)
 #define omx_videosrc_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
-  /** @param semaphore for video synchronization */\
+  /** @param semaphore for video syncrhonization */\
   tsem_t* videoSyncSem; \
   /** @param videoReady boolean flag that is true when the video format has been initialized */ \
   OMX_BOOL videoReady;  \
@@ -67,23 +74,19 @@ DERIVEDCLASS(omx_videosrc_component_PrivateType, omx_base_source_PrivateType)
   /** @param deviceHandle handle to the video capture device */ \
   OMX_S32 deviceHandle; \
   /** @param capability capability of the video capture device */ \
-  struct video_capability capability; \
-  /** @param captureWindow capture window structor */ \
-  struct video_window captureWindow; \
-  /** @param imageProperties picture properties*/ \
-  struct video_picture imageProperties; \
-  /** @param memoryBuffer capture memory space */ \
-  struct video_mbuf memoryBuffer; \
-  /** @param memoryMap memory mapped area */ \
-  char* memoryMap; \
-  /** @param mmaps memory area structore to retrieve each frame */ \
-  struct video_mmap* mmaps; \
-  /** @param iFrameIndex Frame Index */ \
-  OMX_U32 iFrameIndex; \
+  struct v4l2_capability cap; \
   /** @param iFrameSize output frame size */ \
   OMX_U32 iFrameSize; \
   /** @param bOutBufferMemoryMapped boolean flag. True,if output buffer is memory mapped to avoid memcopy*/ \
-  OMX_BOOL bOutBufferMemoryMapped;
+  OMX_BOOL bOutBufferMemoryMapped; \
+  /* @param cropcap input image cropping */ \
+  struct v4l2_cropcap cropcap; \
+  struct v4l2_crop crop; \
+  /* @param fmt Stream data format */ \
+  struct v4l2_format fmt; \
+  struct buffer *buffers; \
+  /* can be V4L2_PIX_FMT_YUV420 or V4L2_PIX_FMT_PWC2 */ \
+  int pixel_format; 
 ENDCLASS(omx_videosrc_component_PrivateType)
 
 /* Component private entry points declaration */

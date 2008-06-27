@@ -4,7 +4,7 @@
   This component implements an MP3 decoder based on mad
   software library.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -103,14 +103,16 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   /** first we set the parameter common to both formats
     * parameters related to input port which does not depend upon input audio format
     */
+  omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
+  omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 2;
 
   /** Allocate Ports and call port constructor. */  
-  if (omx_maddec_component_Private->sPortTypesParam.nPorts && !omx_maddec_component_Private->ports) {
-    omx_maddec_component_Private->ports = calloc(omx_maddec_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_maddec_component_Private->ports) {
+    omx_maddec_component_Private->ports = calloc(omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_maddec_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       omx_maddec_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
       if (!omx_maddec_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -259,7 +261,7 @@ OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
 
   /* frees port/s */
   if (omx_maddec_component_Private->ports) {
-    for (i=0; i < omx_maddec_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       if(omx_maddec_component_Private->ports[i])
         omx_maddec_component_Private->ports[i]->PortDestructor(omx_maddec_component_Private->ports[i]);
     }
@@ -669,7 +671,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
-    memcpy(ComponentParameterStructure, &omx_maddec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+    memcpy(ComponentParameterStructure, &omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
     break;    
 
   case OMX_IndexParamAudioPortFormat:

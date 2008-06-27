@@ -4,7 +4,7 @@
   OpenMAX base_component component. This component does not perform any multimedia
   processing.  It is used as a base_component for new components development.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -64,6 +64,7 @@ extern "C" {
  */
 OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   omx_base_component_PrivateType* omx_base_component_Private;
+  OMX_U32 i;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
@@ -129,7 +130,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   }
   strcpy(omx_base_component_Private->name,cComponentName);
   omx_base_component_Private->state = OMX_StateLoaded;
-  omx_base_component_Private->transientState = OMX_TransStateInvalid;
+  omx_base_component_Private->transientState = OMX_TransStateMax;
   omx_base_component_Private->callbacks = NULL;
   omx_base_component_Private->callbackData = NULL;
   omx_base_component_Private->nGroupPriority = 0;
@@ -139,12 +140,16 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   omx_base_component_Private->DoStateSet = &omx_base_component_DoStateSet;
   omx_base_component_Private->messageHandler = omx_base_component_MessageHandler;
   omx_base_component_Private->destructor = omx_base_component_Destructor;
+  omx_base_component_Private->bufferMgmtThreadID = -1;
 
   pthread_mutex_init(&omx_base_component_Private->flush_mutex, NULL);
   pthread_cond_init(&omx_base_component_Private->flush_all_condition, NULL);
   pthread_cond_init(&omx_base_component_Private->flush_condition, NULL);
 
-  setHeader(&omx_base_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+  for(i=0;i<NUM_DOMAINS;i++) {
+    memset(&omx_base_component_Private->sPortTypesParam[i], 0, sizeof(OMX_PORT_PARAM_TYPE));
+    setHeader(&omx_base_component_Private->sPortTypesParam[i], sizeof(OMX_PORT_PARAM_TYPE));
+  }
 
   omx_base_component_Private->messageHandlerThreadID = pthread_create(&omx_base_component_Private->messageHandlerThread,
   NULL,
@@ -184,7 +189,7 @@ OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
   if(err!=0) {
     DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n", __func__, err);
   }
-
+  
   /*Deinitialize and free buffer management semaphore*/
   if(omx_base_component_Private->bMgmtSem){
     tsem_deinit(omx_base_component_Private->bMgmtSem);
@@ -252,7 +257,7 @@ OMX_ERRORTYPE omx_base_component_ComponentDeInit(
 OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32 destinationState) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate;
   omx_base_PortType *pPort;
-  OMX_U32 i,j;
+  OMX_U32 i,j,k;
   OMX_ERRORTYPE err=OMX_ErrorNone;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -261,8 +266,8 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
   if(destinationState == OMX_StateLoaded){
     switch(omx_base_component_Private->state){
     case OMX_StateInvalid:
-        err = OMX_ErrorInvalidState;
-        break;
+      err = OMX_ErrorInvalidState;
+      break;
     case OMX_StateWaitForResources:
       /* return back from wait for resources */
       omx_base_component_Private->state = OMX_StateLoaded;
@@ -271,45 +276,58 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       err = OMX_ErrorSameState;
       break;
     case OMX_StateIdle:
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-        pPort = omx_base_component_Private->ports[i];
-        if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
-          while(pPort->pBufferQueue->nelem > 0) {
-            DEBUG(DEB_LEV_PARAMS, "In %s Buffer %d remained in the port %d queue of comp%s\n",
-                 __func__,(int)pPort->pBufferQueue->nelem,(int)i,omx_base_component_Private->name);
-            dequeue(pPort->pBufferQueue);
-          }
-          /* Freeing here the buffers allocated for the tunneling:*/
-          err = pPort->Port_FreeTunnelBuffer(pPort,i);
-          if(err!=OMX_ErrorNone) { 
-            DEBUG(DEB_LEV_ERR, "In %s Freeing Tunnel Buffer Error=%x\n",__func__,err); 
-            return err; 
-          } 
-        } else {
-          DEBUG(DEB_LEV_FULL_SEQ, "In %s nPortIndex=%d pAllocSem Semval=%x\n", __func__,(int)i,(int)pPort->pAllocSem->semval);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+          i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+            omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          
+          pPort = omx_base_component_Private->ports[i];
+          if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
+            while(pPort->pBufferQueue->nelem > 0) {
+              DEBUG(DEB_LEV_PARAMS, "In %s Buffer %d remained in the port %d queue of comp%s\n",
+                   __func__,(int)pPort->pBufferQueue->nelem,(int)i,omx_base_component_Private->name);
+              dequeue(pPort->pBufferQueue);
+            }
+            /* Freeing here the buffers allocated for the tunneling:*/
+            err = pPort->Port_FreeTunnelBuffer(pPort,i);
+            if(err!=OMX_ErrorNone) { 
+              DEBUG(DEB_LEV_ERR, "In %s Freeing Tunnel Buffer Error=%x\n",__func__,err); 
+              return err; 
+            } 
+          } else {
+            DEBUG(DEB_LEV_FULL_SEQ, "In %s nPortIndex=%d pAllocSem Semval=%x\n", __func__,(int)i,(int)pPort->pAllocSem->semval);
 
-          /*If ports are enabled then wait till all buffers are freed*/
-          if(PORT_IS_ENABLED(pPort)) {
-            tsem_down(pPort->pAllocSem);
+            /*If ports are enabled then wait till all buffers are freed*/
+            if(PORT_IS_ENABLED(pPort)) {
+              tsem_down(pPort->pAllocSem);
+            }
+          }
+          pPort->sPortParam.bPopulated = OMX_FALSE;
+
+          if(pPort->pInternalBufferStorage != NULL) {
+            free(pPort->pInternalBufferStorage);
+            pPort->pInternalBufferStorage=NULL;
+          }
+          
+          if(pPort->bBufferStateAllocated != NULL) {
+            free(pPort->bBufferStateAllocated);
+            pPort->bBufferStateAllocated=NULL;
           }
         }
-        pPort->sPortParam.bPopulated = OMX_FALSE;
       }
       omx_base_component_Private->state = OMX_StateLoaded;
-      /*Signal Buffer Management thread to exit*/
-      tsem_up(omx_base_component_Private->bMgmtSem);
-      pthread_join(omx_base_component_Private->bufferMgmtThread,NULL);
-      if(err != 0) {
-        DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
+
+      if(omx_base_component_Private->bufferMgmtThreadID == 0 ){
+        /*Signal Buffer Management thread to exit*/
+        tsem_up(omx_base_component_Private->bMgmtSem);
+        pthread_join(omx_base_component_Private->bufferMgmtThread,NULL);
+        omx_base_component_Private->bufferMgmtThreadID = -1;
+        if(err != 0) {
+          DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
+        }
       }
-      /*Free Internal Buffer Storage and Buffer Allocation State flags*/
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-        pPort = omx_base_component_Private->ports[i];
-        free(pPort->bBufferStateAllocated);
-        pPort->bBufferStateAllocated=NULL;
-        free(pPort->pInternalBufferStorage);
-        pPort->pInternalBufferStorage=NULL;
-      }
+      
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
@@ -332,7 +350,8 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     default:
       DEBUG(DEB_LEV_ERR, "In %s: state transition not allowed\n", __func__);
-      return OMX_ErrorIncorrectStateTransition;
+      err = OMX_ErrorIncorrectStateTransition;
+      break;
     }
     return err;
   }
@@ -346,7 +365,11 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       omx_base_component_Private->state = OMX_StateIdle;
       break;
     case OMX_StateLoaded:
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
         pPort = omx_base_component_Private->ports[i];
         if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
           if(PORT_IS_ENABLED(pPort)) {
@@ -368,6 +391,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
             DEBUG(DEB_LEV_ERR, "In %s: Port %i Disabled So no wait\n",__func__,(int)i);
         }
         DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : port %d flags  0x%x\n",(int)i, (int)pPort->nTunnelFlags);
+        }
       }
       omx_base_component_Private->state = OMX_StateIdle;
       /** starting buffer management thread */
@@ -385,11 +409,16 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     case OMX_StateExecuting:
       /*Flush Ports*/
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-        DEBUG(DEB_LEV_FULL_SEQ, "Flushing Port %i\n",(int)i);
-        pPort = omx_base_component_Private->ports[i];
-        if(PORT_IS_ENABLED(pPort)) {
-          pPort->FlushProcessingBuffers(pPort);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+        i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+        omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          DEBUG(DEB_LEV_FULL_SEQ, "Flushing Port %i\n",(int)i);
+          pPort = omx_base_component_Private->ports[i];
+          if(PORT_IS_ENABLED(pPort)) {
+            pPort->FlushProcessingBuffers(pPort);
+          }
         }
       }
       omx_base_component_Private->state = OMX_StateIdle;
@@ -435,32 +464,44 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
     case OMX_StateIdle:
       omx_base_component_Private->state=OMX_StateExecuting;
       /*Send Tunneled Buffer to the Neighbouring Components*/
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-        if (PORT_IS_TUNNELED(omx_base_component_Private->ports[i]) &&
-          PORT_IS_BUFFER_SUPPLIER(omx_base_component_Private->ports[i])) {
-          for(j=0;j<omx_base_component_Private->ports[i]->nNumTunnelBuffer;j++) {
-            tsem_up(omx_base_component_Private->ports[i]->pBufferSem);
-            /*signal buffer management thread availability of buffers*/
-            tsem_up(omx_base_component_Private->bMgmtSem);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+        i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+          omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          pPort = omx_base_component_Private->ports[i];
+          if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
+            for(k=0;k<pPort->nNumTunnelBuffer;k++) {
+              tsem_up(pPort->pBufferSem);
+              /*signal buffer management thread availability of buffers*/
+              tsem_up(omx_base_component_Private->bMgmtSem);
+            }
           }
         }
       }
-      omx_base_component_Private->transientState = OMX_TransStateInvalid;
+      omx_base_component_Private->transientState = OMX_TransStateMax;
       err = OMX_ErrorNone;
       break;
     case OMX_StatePause:
       omx_base_component_Private->state=OMX_StateExecuting;
 
       /* Tunneled Supplier Ports were enabled in paused state. So signal buffer managment thread*/
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-        pPort=omx_base_component_Private->ports[i];
-        DEBUG(DEB_LEV_PARAMS, "In %s: state transition Paused 2 Executing, nelem=%d,semval=%d,Buf Count Actual=%d\n", __func__,
-          pPort->pBufferQueue->nelem,pPort->pBufferSem->semval,(int)pPort->sPortParam.nBufferCountActual);
-        if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort) && 
-          (pPort->pBufferQueue->nelem == (pPort->pBufferSem->semval + pPort->sPortParam.nBufferCountActual))) {
-          for(j=0; j < pPort->sPortParam.nBufferCountActual;j++) {
-            tsem_up(pPort->pBufferSem);
-            tsem_up(omx_base_component_Private->bMgmtSem);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+          i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+          omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+
+          pPort=omx_base_component_Private->ports[i];
+          DEBUG(DEB_LEV_PARAMS, "In %s: state transition Paused 2 Executing, nelem=%d,semval=%d,Buf Count Actual=%d\n", __func__,
+            pPort->pBufferQueue->nelem,pPort->pBufferSem->semval,(int)pPort->sPortParam.nBufferCountActual);
+
+          if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort) && 
+            (pPort->pBufferQueue->nelem == (pPort->pBufferSem->semval + pPort->sPortParam.nBufferCountActual))) {
+            for(k=0; k < pPort->sPortParam.nBufferCountActual;k++) {
+              tsem_up(pPort->pBufferSem);
+              tsem_up(omx_base_component_Private->bMgmtSem);
+            }
           }
         }
       }
@@ -485,11 +526,12 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       break;
     default:
       omx_base_component_Private->state = OMX_StateInvalid;
-      /*Signal Buffer Management Thread to Exit*/
-      tsem_up(omx_base_component_Private->bMgmtSem);
-      if(omx_base_component_Private->bufferMgmtThread){
-        pthread_detach(omx_base_component_Private->bufferMgmtThread);
+      
+      if(omx_base_component_Private->bufferMgmtThreadID == 0 ){
+        /*Signal Buffer Management Thread to Exit*/
+        tsem_up(omx_base_component_Private->bMgmtSem);
         pthread_join(omx_base_component_Private->bufferMgmtThread,NULL);
+        omx_base_component_Private->bufferMgmtThreadID = -1;
         if(err!=0) {
           DEBUG(DEB_LEV_FUNCTION_NAME,"In %s pthread_join returned err=%d\n",__func__,err);
         }
@@ -558,9 +600,15 @@ OMX_ERRORTYPE omx_base_component_ParameterSanityCheck(OMX_IN  OMX_HANDLETYPE hCo
   OMX_IN  size_t size) {
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)(((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate);
   omx_base_PortType *pPort;
+  int nNumPorts;
 
-  if (nPortIndex >= (omx_base_component_Private->sPortTypesParam.nStartPortNumber + omx_base_component_Private->sPortTypesParam.nPorts)) {
-    DEBUG(DEB_LEV_ERR, "Bad Port index %i when the component has %i ports\n", (int)nPortIndex, (int)omx_base_component_Private->sPortTypesParam.nPorts);
+  nNumPorts = omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+              omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+              omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+              omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts;
+
+  if (nPortIndex >= nNumPorts) {
+    DEBUG(DEB_LEV_ERR, "Bad Port index %i when the component has %i ports\n", (int)nPortIndex, (int)nNumPorts);
     return OMX_ErrorBadPortIndex;
   }
 
@@ -644,19 +692,24 @@ OMX_ERRORTYPE omx_base_component_SetCallbacks(
   OMX_COMPONENTTYPE *omxcomponent = (OMX_COMPONENTTYPE*)hComponent;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxcomponent->pComponentPrivate;
   omx_base_PortType *pPort;
-  OMX_U32 i;
+  OMX_U32 i,j;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   omx_base_component_Private->callbacks = pCallbacks;
   omx_base_component_Private->callbackData = pAppData;  
 
-  for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-    pPort = omx_base_component_Private->ports[i];
-    if (pPort->sPortParam.eDir == OMX_DirInput) {
-      pPort->BufferProcessedCallback = omx_base_component_Private->callbacks->EmptyBufferDone;
-    } else {
-      pPort->BufferProcessedCallback = omx_base_component_Private->callbacks->FillBufferDone;
-    }  
+  /* for all ports */
+  for(j = 0; j < NUM_DOMAINS; j++) {
+    for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+    i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+      omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+      pPort = omx_base_component_Private->ports[i];
+      if (pPort->sPortParam.eDir == OMX_DirInput) {
+        pPort->BufferProcessedCallback = omx_base_component_Private->callbacks->EmptyBufferDone;
+      } else {
+        pPort->BufferProcessedCallback = omx_base_component_Private->callbacks->FillBufferDone;
+      }
+    }
   }
   return OMX_ErrorNone;
 }
@@ -705,9 +758,13 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_PORTDEFINITIONTYPE))) != OMX_ErrorNone) { 
       break;
     }
-    if (pPortDef->nPortIndex >= (omx_base_component_Private->sPortTypesParam.nStartPortNumber + omx_base_component_Private->sPortTypesParam.nPorts)) {
+    if (pPortDef->nPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
       return OMX_ErrorBadPortIndex;
     }
+
     memcpy(pPortDef, &omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     break;
   case OMX_IndexParamPriorityMgmt:
@@ -723,7 +780,10 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE))) != OMX_ErrorNone) { 
       break;
     }
-    if (pBufferSupplier->nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+    if (pBufferSupplier->nPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                                        omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                                        omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                                        omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
       return OMX_ErrorBadPortIndex;
     }
 
@@ -852,14 +912,15 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
         (pPortParam->nBufferCountActual > old_nBufferCountActual)) {
 
         pPort = omx_base_component_Private->ports[pPortDef->nPortIndex];
+        if(pPort->pInternalBufferStorage) {
+          pPort->pInternalBufferStorage = realloc(pPort->pInternalBufferStorage,pPort->sPortParam.nBufferCountActual*sizeof(OMX_BUFFERHEADERTYPE *));
+        }
+
         if(pPort->bBufferStateAllocated) {
-          pPort->bBufferStateAllocated = realloc(pPort->bBufferStateAllocated,pPort->sPortParam.nBufferCountActual*sizeof(BUFFER_STATUS_FLAG *));
+          pPort->bBufferStateAllocated = realloc(pPort->bBufferStateAllocated,pPort->sPortParam.nBufferCountActual*sizeof(BUFFER_STATUS_FLAG));
           for(j=0; j < pPort->sPortParam.nBufferCountActual; j++) {
             pPort->bBufferStateAllocated[j] = BUFFER_FREE;
           }
-        }
-        if(pPort->pInternalBufferStorage) {
-          pPort->pInternalBufferStorage = realloc(pPort->pInternalBufferStorage,pPort->sPortParam.nBufferCountActual*sizeof(OMX_BUFFERHEADERTYPE *));
         }
       }
     }
@@ -878,12 +939,16 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     break;
   case OMX_IndexParamCompBufferSupplier:
     pBufferSupplier = (OMX_PARAM_BUFFERSUPPLIERTYPE*)ComponentParameterStructure;
-    DEBUG(DEB_LEV_PARAMS, "In %s Buf Sup Port index=%d, nport=%d\n", __func__,
-      (int)pBufferSupplier->nPortIndex,(int)omx_base_component_Private->sPortTypesParam.nPorts);
+    
+    DEBUG(DEB_LEV_PARAMS, "In %s Buf Sup Port index=%d\n", __func__,(int)pBufferSupplier->nPortIndex);
+
     if(pBufferSupplier == NULL) {
       return OMX_ErrorBadParameter;
     }
-    if(pBufferSupplier->nPortIndex > omx_base_component_Private->sPortTypesParam.nPorts) {
+    if(pBufferSupplier->nPortIndex > (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                                      omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                                      omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                                      omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
       return OMX_ErrorBadPortIndex;
     }
     err = omx_base_component_ParameterSanityCheck(hComponent, pBufferSupplier->nPortIndex, pBufferSupplier, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
@@ -1017,7 +1082,7 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
   internalRequestMessageType *message;
   queue_t* messageQueue;
   tsem_t* messageSem;
-  OMX_U32 i,j;
+  OMX_U32 i,j,k;
   omx_base_PortType *pPort;
   OMX_ERRORTYPE err = OMX_ErrorNone;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -1038,12 +1103,26 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     message->messageType = OMX_CommandStateSet;
     if ((nParam == OMX_StateIdle) && (omx_base_component_Private->state == OMX_StateLoaded)) {
       /*Allocate Internal Buffer Storage and Buffer Allocation State flags*/
-      for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-        pPort = omx_base_component_Private->ports[i];
-        pPort->bBufferStateAllocated=calloc(1,pPort->sPortParam.nBufferCountActual*sizeof(BUFFER_STATUS_FLAG *));
-        pPort->pInternalBufferStorage=calloc(1,pPort->sPortParam.nBufferCountActual*sizeof(OMX_BUFFERHEADERTYPE *));
-        for(j=0; j < pPort->sPortParam.nBufferCountActual; j++)
-          pPort->bBufferStateAllocated[j] = BUFFER_FREE;
+       /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+              
+          pPort = omx_base_component_Private->ports[i];
+          
+          if(pPort->pInternalBufferStorage == NULL) {
+            pPort->pInternalBufferStorage = calloc(pPort->sPortParam.nBufferCountActual,sizeof(OMX_BUFFERHEADERTYPE *));
+          }           
+
+          if(pPort->bBufferStateAllocated == NULL) {
+            pPort->bBufferStateAllocated = calloc(pPort->sPortParam.nBufferCountActual,sizeof(BUFFER_STATUS_FLAG));
+          } 
+          
+          for(k=0; k < pPort->sPortParam.nBufferCountActual; k++) {
+            pPort->bBufferStateAllocated[k] = BUFFER_FREE;
+          }
+        }
       }
 
       omx_base_component_Private->transientState = OMX_TransStateLoadedToIdle;
@@ -1054,39 +1133,61 @@ OMX_ERRORTYPE omx_base_component_SendCommand(
     }    
     break;
   case OMX_CommandFlush:
-    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts && nParam != OMX_ALL) {
+    if (nParam >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts) && nParam != OMX_ALL) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandFlush;
     break;
   case OMX_CommandPortDisable:
-    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts && nParam != OMX_ALL) {
+    if (nParam >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts) && nParam != OMX_ALL) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandPortDisable;
     if(message->messageParam == OMX_ALL) {
-      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-        omx_base_component_Private->ports[i]->bIsTransientToDisabled = OMX_TRUE;
+       /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          omx_base_component_Private->ports[i]->bIsTransientToDisabled = OMX_TRUE;
+        }
       }
     } else {
       omx_base_component_Private->ports[message->messageParam]->bIsTransientToDisabled = OMX_TRUE;
     }
     break;
   case OMX_CommandPortEnable:
-    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts && nParam != OMX_ALL) {
+    if (nParam >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts) && nParam != OMX_ALL) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandPortEnable;
     if(message->messageParam == OMX_ALL) {
-      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-        omx_base_component_Private->ports[i]->bIsTransientToEnabled = OMX_TRUE;
+       /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          omx_base_component_Private->ports[i]->bIsTransientToEnabled = OMX_TRUE;
+        }
       }
     } else {
       omx_base_component_Private->ports[message->messageParam]->bIsTransientToEnabled = OMX_TRUE;
     }
     break;
   case OMX_CommandMarkBuffer:
-    if (nParam >= omx_base_component_Private->sPortTypesParam.nPorts && nParam != OMX_ALL) {
+    if (nParam >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts) && nParam != OMX_ALL) {
       return OMX_ErrorBadPortIndex;
     }
     message->messageType = OMX_CommandMarkBuffer;
@@ -1160,9 +1261,9 @@ void* compMessageHandlerFunction(void* param) {
  */
 OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandComp,internalRequestMessageType* message) {
   omx_base_component_PrivateType* omx_base_component_Private=openmaxStandComp->pComponentPrivate;
-  OMX_U32 i,j;
-  OMX_ERRORTYPE err = OMX_ErrorNone;
-  omx_base_PortType* pPort;
+  OMX_U32                         i,j,k;
+  OMX_ERRORTYPE                   err = OMX_ErrorNone;
+  omx_base_PortType*              pPort;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
@@ -1199,12 +1300,22 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
   case OMX_CommandFlush: {
     /*Flush port/s*/
     if(message->messageParam == OMX_ALL) {
-      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-        omx_base_component_Private->ports[i]->bIsPortFlushed = OMX_TRUE;
+       /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          omx_base_component_Private->ports[i]->bIsPortFlushed = OMX_TRUE;
+        }
       }
-      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-        pPort=omx_base_component_Private->ports[i];
-        err = pPort->FlushProcessingBuffers(pPort);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+        i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+          omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          pPort=omx_base_component_Private->ports[i];
+          err = pPort->FlushProcessingBuffers(pPort);
+        }
       }
     }
     else {
@@ -1221,25 +1332,30 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
       NULL);
     } else {
       if(message->messageParam == OMX_ALL){ /*Flush all port*/
-        for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-          (*(omx_base_component_Private->callbacks->EventHandler))
-          (openmaxStandComp,
-          omx_base_component_Private->callbackData,
-          OMX_EventCmdComplete, /* The command was completed */
-          OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
-          i, /* The state has been changed in message->messageParam */
-          NULL);
-        }    
-        for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-          /* Signal the buffer Semaphore and the buffer managment semaphore, to restart the exchange of buffers after flush */
-          if (PORT_IS_TUNNELED(omx_base_component_Private->ports[i]) && PORT_IS_BUFFER_SUPPLIER(omx_base_component_Private->ports[i])) {
-            for(j=0;j<omx_base_component_Private->ports[i]->nNumTunnelBuffer;j++) {
-              tsem_up(omx_base_component_Private->ports[i]->pBufferSem);
-              /*signal buffer management thread availability of buffers*/
-              tsem_up(omx_base_component_Private->bMgmtSem);
+        /* for all ports */
+        for(j = 0; j < NUM_DOMAINS; j++) {
+          for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+          i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+            omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+            (*(omx_base_component_Private->callbacks->EventHandler))
+            (openmaxStandComp,
+            omx_base_component_Private->callbackData,
+            OMX_EventCmdComplete, /* The command was completed */
+            OMX_CommandFlush, /* The commands was a OMX_CommandStateSet */
+            i, /* The state has been changed in message->messageParam */
+            NULL);
+
+            pPort=omx_base_component_Private->ports[i];
+            /* Signal the buffer Semaphore and the buffer managment semaphore, to restart the exchange of buffers after flush */
+            if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
+              for(k=0;k<pPort->nNumTunnelBuffer;k++) {
+                tsem_up(pPort->pBufferSem);
+                /*signal buffer management thread availability of buffers*/
+                tsem_up(omx_base_component_Private->bMgmtSem);
+              }
             }
-          }
-        }    
+          }		
+        }
       } else {/*Flush input/output port*/
         (*(omx_base_component_Private->callbacks->EventHandler))
         (openmaxStandComp,
@@ -1249,14 +1365,14 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
         message->messageParam, /* The state has been changed in message->messageParam */
         NULL);
         /* Signal the buffer Semaphore and the buffer managment semaphore, to restart the exchange of buffers after flush */
-        if (PORT_IS_TUNNELED(omx_base_component_Private->ports[message->messageParam])
+        if (PORT_IS_TUNNELED(omx_base_component_Private->ports[message->messageParam]) 
              && PORT_IS_BUFFER_SUPPLIER(omx_base_component_Private->ports[message->messageParam])) {
             for(j=0;j<omx_base_component_Private->ports[message->messageParam]->nNumTunnelBuffer;j++) {
               tsem_up(omx_base_component_Private->ports[message->messageParam]->pBufferSem);
               /*signal buffer management thread availability of buffers*/
               tsem_up(omx_base_component_Private->bMgmtSem);
             }
-        }
+          }
       }
     }
   }
@@ -1266,14 +1382,24 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
     if(message->messageParam == OMX_ALL) {
       /*If Component is not in loaded state,then First Flush all buffers then disable the port*/
       if(omx_base_component_Private->state!=OMX_StateLoaded) {
-        for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
+        /* for all ports */
+        for(j = 0; j < NUM_DOMAINS; j++) {
+          for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+          i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+            omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
           pPort=omx_base_component_Private->ports[i];
           err = pPort->FlushProcessingBuffers(pPort);
+          }
         }
       }
-      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-        pPort=omx_base_component_Private->ports[i];
-        err = pPort->Port_DisablePort(pPort);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+        i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+          omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          pPort=omx_base_component_Private->ports[i];
+          err = pPort->Port_DisablePort(pPort);
+        }
       }
     }
     else {
@@ -1295,14 +1421,19 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
       NULL);
     } else {
       if(message->messageParam == OMX_ALL){ /*Disable all ports*/
-        for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
-          (*(omx_base_component_Private->callbacks->EventHandler))
-          (openmaxStandComp,
-          omx_base_component_Private->callbackData,
-          OMX_EventCmdComplete, /* The command was completed */
-          OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
-          i, /* The state has been changed in message->messageParam */
-          NULL);
+        /* for all ports */
+        for(j = 0; j < NUM_DOMAINS; j++) {
+          for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+            (*(omx_base_component_Private->callbacks->EventHandler))
+            (openmaxStandComp,
+            omx_base_component_Private->callbackData,
+            OMX_EventCmdComplete, /* The command was completed */
+            OMX_CommandPortDisable, /* The commands was a OMX_CommandStateSet */
+            i, /* The state has been changed in message->messageParam */
+            NULL);
+          }
         }
       } else {
         (*(omx_base_component_Private->callbacks->EventHandler))
@@ -1319,9 +1450,14 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
   case OMX_CommandPortEnable:{
     /*Flush port/s*/
     if(message->messageParam == OMX_ALL) {
-      for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-        pPort=omx_base_component_Private->ports[i];
-        err = pPort->Port_EnablePort(pPort);
+      /* for all ports */
+      for(j = 0; j < NUM_DOMAINS; j++) {
+        for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+          i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+            omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+          pPort=omx_base_component_Private->ports[i];
+          err = pPort->Port_EnablePort(pPort);
+          }
         }
     } else {
       pPort=omx_base_component_Private->ports[message->messageParam];
@@ -1356,7 +1492,11 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
         }
 
       } else {
-        for (i = 0; i < omx_base_component_Private->sPortTypesParam.nPorts; i++) {
+        /* for all ports */
+        for(j = 0; j < NUM_DOMAINS; j++) {
+          for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+          i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+            omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
           (*(omx_base_component_Private->callbacks->EventHandler))
           (openmaxStandComp,
           omx_base_component_Private->callbackData,
@@ -1364,15 +1504,21 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
           OMX_CommandPortEnable, /* The commands was a OMX_CommandStateSet */
           i, /* The state has been changed in message->messageParam */
           NULL);
+          }
         }
 
         if (omx_base_component_Private->state==OMX_StateExecuting) {
-          for(i=0;i<omx_base_component_Private->sPortTypesParam.nPorts;i++) {
-            pPort=omx_base_component_Private->ports[i];
-            if (PORT_IS_BUFFER_SUPPLIER(pPort)) {
-              for(i=0; i < pPort->sPortParam.nBufferCountActual;i++) {
-                tsem_up(pPort->pBufferSem);
-                tsem_up(omx_base_component_Private->bMgmtSem);
+          /* for all ports */
+          for(j = 0; j < NUM_DOMAINS; j++) {
+            for(i = omx_base_component_Private->sPortTypesParam[j].nStartPortNumber;
+            i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
+              omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
+              pPort=omx_base_component_Private->ports[i];
+              if (PORT_IS_BUFFER_SUPPLIER(pPort)) {
+                for(k=0; k < pPort->sPortParam.nBufferCountActual;k++) {
+                  tsem_up(pPort->pBufferSem);
+                  tsem_up(omx_base_component_Private->bMgmtSem);
+                }
               }
             }
           }
@@ -1402,7 +1548,10 @@ OMX_ERRORTYPE omx_base_component_AllocateBuffer(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
 
-  if (nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+  if (nPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;
   }
@@ -1425,7 +1574,10 @@ OMX_ERRORTYPE omx_base_component_UseBuffer(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
 
-  if (nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+  if (nPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;
   }
@@ -1455,10 +1607,14 @@ OMX_ERRORTYPE omx_base_component_FreeBuffer(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
 
-  if (nPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+  if (nPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                     omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;
   }
+
   pPort = omx_base_component_Private->ports[nPortIndex];
 
   return pPort->Port_FreeBuffer(pPort,
@@ -1473,7 +1629,10 @@ OMX_ERRORTYPE omx_base_component_EmptyThisBuffer(
   omx_base_PortType *pPort;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
-  if (pBuffer->nInputPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+  if (pBuffer->nInputPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                                   omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;
   }
@@ -1492,7 +1651,10 @@ OMX_ERRORTYPE omx_base_component_FillThisBuffer(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  if (pBuffer->nOutputPortIndex >= omx_base_component_Private->sPortTypesParam.nPorts) {
+  if (pBuffer->nOutputPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                                    omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                                    omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                                    omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
     DEBUG(DEB_LEV_ERR, "In %s: wrong port index\n", __func__);
     return OMX_ErrorBadPortIndex;
   }
@@ -1514,7 +1676,10 @@ OMX_ERRORTYPE omx_base_component_ComponentTunnelRequest(
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort; 
   
-  if (nPort >= omx_base_component_Private->sPortTypesParam.nPorts) {
+  if (nPort >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
     return OMX_ErrorBadPortIndex;
   }
   

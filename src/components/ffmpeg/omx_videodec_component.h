@@ -4,7 +4,7 @@
   This component implements an H.264 / MPEG-4 AVC video decoder. 
   The H.264 / MPEG-4 AVC Video decoder is based on the FFmpeg software library.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

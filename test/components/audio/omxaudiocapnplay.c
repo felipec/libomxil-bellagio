@@ -5,7 +5,7 @@
   The application receives an audio stream (.m4v or .264) decoded by a multiple format source component.
   The decoded output is seen by a yuv viewer.
   
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -429,6 +429,14 @@ int main(int argc, char** argv) {
       } else {
         DEBUG(DEFAULT_MESSAGES, "Found The audio sink component for volume componenterter \n");
       }
+      /* disable the clock port of the ALSA sink */
+      err = OMX_SendCommand(appPriv->alsasink_handle, OMX_CommandPortDisable, 1, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
+        exit(1);
+      }
+      tsem_down(appPriv->alsasinkEventSem); /* audio sink clock port disabled */
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
     }
   }
 

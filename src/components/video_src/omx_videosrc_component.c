@@ -2,9 +2,9 @@
   @file src/components/video_src/omx_videosrc_component.c
 
   OpenMAX video source component. This component is a video source component
-  that captures video from the video camera.
+  that captures video from the video camera.This camera component is based on V4L2.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -28,6 +28,7 @@
 
 */
 
+#include <assert.h>
 #include <omxcore.h>
 #include <omx_base_video_port.h>
 #include <omx_videosrc_component.h>
@@ -38,6 +39,24 @@
 static OMX_U32 noViderSrcInstance=0;
 
 #define DEFAULT_FILENAME_LENGTH 256
+
+#define CLEAR(x) memset (&(x), 0, sizeof (x))
+
+static unsigned int n_buffers = 0;
+
+static int xioctl(int fd, int request, void *arg);
+static int init_device(omx_videosrc_component_PrivateType* omx_videosrc_component_Private);
+static int uninit_device(omx_videosrc_component_PrivateType* omx_videosrc_component_Private);
+static int start_capturing(omx_videosrc_component_PrivateType* omx_videosrc_component_Private);
+static int stop_capturing(omx_videosrc_component_PrivateType* omx_videosrc_component_Private);
+static int init_mmap(omx_videosrc_component_PrivateType* omx_videosrc_component_Private);
+
+static int errno_return(const char *s)
+{
+  DEBUG(DEB_LEV_ERR, "%s error %d, %s\n", s, errno, strerror(errno));
+  return OMX_ErrorHardware;
+}
+
 
 /** The Constructor 
  */
@@ -63,13 +82,16 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   
   err = omx_base_source_Constructor(openmaxStandComp, cComponentName);
   
-  /** Allocate Ports and call port constructor. */  
-  if (omx_videosrc_component_Private->sPortTypesParam.nPorts && !omx_videosrc_component_Private->ports) {
-    omx_videosrc_component_Private->ports = calloc(omx_videosrc_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nStartPortNumber = 0;
+  omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts = 1;
+
+    /** Allocate Ports and call port constructor. */  
+  if (omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts && !omx_videosrc_component_Private->ports) {
+    omx_videosrc_component_Private->ports = calloc(omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts, sizeof(omx_base_PortType *));
     if (!omx_videosrc_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_videosrc_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       omx_videosrc_component_Private->ports[i] = calloc(1, sizeof(omx_base_video_PortType));
       if (!omx_videosrc_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -85,19 +107,13 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 
   pPort = (omx_base_video_PortType *) omx_videosrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
   
-  /** for the moment, the file reader works with video component
-  * so the domain is set to video
-  * in future it may be assigned after checking the input file format 
-  * or there can be seperate file reader of video component
-  */  
-  /*Input pPort buffer size is equal to the size of the output buffer of the previous component*/
-  pPort->sPortParam.format.video.nFrameWidth = 176;
-  pPort->sPortParam.format.video.nFrameHeight= 144;
+  pPort->sPortParam.format.video.nFrameWidth = 320;
+  pPort->sPortParam.format.video.nFrameHeight= 240;
   pPort->sPortParam.format.video.eColorFormat= OMX_COLOR_FormatYUV420Planar;
   pPort->sVideoParam.eColorFormat = OMX_COLOR_FormatYUV420Planar;
 
   pPort->sPortParam.nBufferSize = pPort->sPortParam.format.video.nFrameWidth*
-                                  pPort->sPortParam.format.video.nFrameHeight*3; // RGB
+                                  pPort->sPortParam.format.video.nFrameHeight*3; // RGB888
   omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.nBufferSize;
 
   omx_videosrc_component_Private->BufferMgmtCallback = omx_videosrc_component_BufferMgmtCallback;
@@ -120,45 +136,21 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
     tsem_init(omx_videosrc_component_Private->videoSyncSem, 0);
   }
 
-  omx_videosrc_component_Private->mmaps = NULL;
-  omx_videosrc_component_Private->memoryMap = NULL;
   omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_FALSE;
 
   /* Test if Camera Attached */
-  omx_videosrc_component_Private->deviceHandle = open(VIDEO_DEV_NAME, O_RDWR);
+  omx_videosrc_component_Private->deviceHandle = open(VIDEO_DEV_NAME, O_RDWR /* required */  | O_NONBLOCK, 0);
   if (omx_videosrc_component_Private->deviceHandle < 0) {
     DEBUG(DEB_LEV_ERR, "In %s Unable to open video capture device %s! errno=%d  ENODEV : %d \n", 
       __func__,VIDEO_DEV_NAME,errno,ENODEV);
     return OMX_ErrorHardware;
   } 
 
-  if ((omx_videosrc_component_Private->capability.type & VID_TYPE_SCALES) != 0)
-  {       // supports the ability to scale captured images
-    
-    omx_videosrc_component_Private->captureWindow.x = 0;
-    omx_videosrc_component_Private->captureWindow.y = 0;
-    omx_videosrc_component_Private->captureWindow.width = pPort->sPortParam.format.video.nFrameWidth;
-    omx_videosrc_component_Private->captureWindow.height = pPort->sPortParam.format.video.nFrameHeight;
-    omx_videosrc_component_Private->captureWindow.chromakey = -1;
-    omx_videosrc_component_Private->captureWindow.flags = 0;
-    omx_videosrc_component_Private->captureWindow.clips = 0;
-    omx_videosrc_component_Private->captureWindow.clipcount = 0;
-    if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSWIN, &omx_videosrc_component_Private->captureWindow) == -1)
-    {       // could not set window values for capture
-      DEBUG(DEB_LEV_ERR,"could not set window values for capture\n");
-    }
-  }
-  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCGMBUF, &omx_videosrc_component_Private->memoryBuffer) == -1)
-  { // failed to retrieve information about capture memory space
-    DEBUG(DEB_LEV_ERR,"failed to retrieve information about capture memory space\n");
-  }
- 
-  // obtain memory mapped area
-  omx_videosrc_component_Private->memoryMap = mmap (0, omx_videosrc_component_Private->memoryBuffer.size, PROT_READ | PROT_WRITE, MAP_SHARED, omx_videosrc_component_Private->deviceHandle, 0);
-  if (omx_videosrc_component_Private->memoryMap == NULL)
-  { // failed to retrieve pointer to memory mapped area
-    DEBUG(DEB_LEV_ERR,"failed to retrieve pointer to memory mapped area\n");
-  }
+  omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_YUV420;
+
+  err = init_device(omx_videosrc_component_Private);
+
+  err = init_mmap(omx_videosrc_component_Private);
 
   return err;
 }
@@ -167,6 +159,7 @@ OMX_ERRORTYPE omx_videosrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
  */
 OMX_ERRORTYPE omx_videosrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
   OMX_U32 i;
   
   if(omx_videosrc_component_Private->videoSyncSem) {
@@ -175,19 +168,7 @@ OMX_ERRORTYPE omx_videosrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
     omx_videosrc_component_Private->videoSyncSem=NULL;
   }
 
-  /* free the video_mmap structures */
-  if(omx_videosrc_component_Private->mmaps != NULL) {
-    DEBUG(DEB_LEV_FULL_SEQ, "In %s Freeing mmaps \n",__func__);
-    free (omx_videosrc_component_Private->mmaps);
-    omx_videosrc_component_Private->mmaps = NULL;
-  }
-
-  /* unmap the capture memory */
-  if(omx_videosrc_component_Private->memoryMap != NULL) {
-    DEBUG(DEB_LEV_FULL_SEQ, "In %s Freeing memoryMap \n",__func__);
-    munmap (omx_videosrc_component_Private->memoryMap, omx_videosrc_component_Private->memoryBuffer.size);
-    omx_videosrc_component_Private->memoryMap = NULL;
-  }
+  err = uninit_device(omx_videosrc_component_Private);
  
   if(omx_videosrc_component_Private->deviceHandle != -1) {
     if(-1 == close(omx_videosrc_component_Private->deviceHandle)) {
@@ -198,7 +179,7 @@ OMX_ERRORTYPE omx_videosrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 
   /* frees port/s */
   if (omx_videosrc_component_Private->ports) {
-    for (i=0; i < omx_videosrc_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       if(omx_videosrc_component_Private->ports[i])
         omx_videosrc_component_Private->ports[i]->PortDestructor(omx_videosrc_component_Private->ports[i]);
     }
@@ -208,6 +189,7 @@ OMX_ERRORTYPE omx_videosrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 
   noViderSrcInstance--;
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
+
   return omx_base_source_Destructor(openmaxStandComp);
 }
 
@@ -217,208 +199,82 @@ OMX_ERRORTYPE omx_videosrc_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
   omx_base_video_PortType *pPort = (omx_base_video_PortType *)omx_videosrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
-  OMX_U32 i = 0;
-  struct video_channel vchannel;
-  struct video_audio audio;
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 
-  /** Video Capability Query */
-  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCGCAP, &omx_videosrc_component_Private->capability) != -1)
-  {       // query was successful
-    DEBUG(DEB_LEV_FULL_SEQ, "Video Capability Query Successful\n");
-  }
-  else
-  {       // query failed
-    DEBUG(DEB_LEV_ERR, "Video Capability Query Failed\n");
-  }
-
-  if ((omx_videosrc_component_Private->capability.type & VID_TYPE_CAPTURE) != 0)
-  {       // this device can capture video to memory
-    DEBUG(DEB_LEV_FULL_SEQ,"This device can capture video to memory\n");
-
-    DEBUG(DEB_LEV_PARAMS,"Name=%s,Type=%x,channel=%d,audios=%d, \nmaxW=%d,maxH=%d,minW=%d,minH=%d\n",omx_videosrc_component_Private->capability.name,
-        omx_videosrc_component_Private->capability.type,
-        omx_videosrc_component_Private->capability.channels,   /* Num channels */
-        omx_videosrc_component_Private->capability.audios,     /* Num audio devices */
-        omx_videosrc_component_Private->capability.maxwidth,   /* Supported width */
-        omx_videosrc_component_Private->capability.maxheight,  /* And height */
-        omx_videosrc_component_Private->capability.minwidth,   /* Supported width */
-        omx_videosrc_component_Private->capability.minheight  /* And height */);
-  }
-  else
-  {       // this device cannot capture video to memory
-    DEBUG(DEB_LEV_ERR,"This device cannot capture video to memory\n");
-  }
-
-  DEBUG(DEB_LEV_FULL_SEQ,"CaptureWindow Type=%x x=%d,y=%d,w=%d,h=%d, chromakey=%d,flags =%x clipcount=%x\n",
-    omx_videosrc_component_Private->capability.type,
-      omx_videosrc_component_Private->captureWindow.x,
-    omx_videosrc_component_Private->captureWindow.y,
-    omx_videosrc_component_Private->captureWindow.width,
-    omx_videosrc_component_Private->captureWindow.height ,
-    omx_videosrc_component_Private->captureWindow.chromakey ,
-    omx_videosrc_component_Private->captureWindow.flags ,
-    omx_videosrc_component_Private->captureWindow.clipcount);
-
-  if ((omx_videosrc_component_Private->capability.type & VID_TYPE_SCALES) != 0)
-  {       // supports the ability to scale captured images
-    
-    omx_videosrc_component_Private->captureWindow.x = 0;
-    omx_videosrc_component_Private->captureWindow.y = 0;
-    omx_videosrc_component_Private->captureWindow.width = pPort->sPortParam.format.video.nFrameWidth;
-    omx_videosrc_component_Private->captureWindow.height = pPort->sPortParam.format.video.nFrameHeight;
-    omx_videosrc_component_Private->captureWindow.chromakey = -1;
-    omx_videosrc_component_Private->captureWindow.flags = 0;
-    omx_videosrc_component_Private->captureWindow.clips = 0;
-    omx_videosrc_component_Private->captureWindow.clipcount = 0;
-    if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSWIN, &omx_videosrc_component_Private->captureWindow) == -1)
-    {       // could not set window values for capture
-      DEBUG(DEB_LEV_ERR,"could not set window values for capture\n");
-    }
+  /* Presently V4L2_PIX_FMT_YUV420 format is supported by the camera */
+  switch(pPort->sPortParam.format.video.eColorFormat) {
+  case OMX_COLOR_FormatYUV420Planar:
+  case OMX_COLOR_FormatYUV420PackedPlanar:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_YUV420;
+    break;
+  case OMX_COLOR_Format16bitRGB565:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_RGB565 ;       // 565 16 bit RGB //
+    omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
+                                                 pPort->sPortParam.format.video.nFrameHeight*2;
+    omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
+                                               pPort->sPortParam.format.video.nFrameHeight*2;
+    break;
+  case OMX_COLOR_Format24bitRGB888:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_RGB24  ;       // 24bit RGB //
+    omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
+                                                 pPort->sPortParam.format.video.nFrameHeight*3;
+    break;
+  case OMX_COLOR_Format32bitARGB8888:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_RGB32     ;       // 32bit RGB //
+    omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
+                                                 pPort->sPortParam.format.video.nFrameHeight*4;
+    break;
+  case OMX_COLOR_FormatYUV422Planar:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_YUV422P   ;      // YUV 4:2:2 Planar //
+    omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
+                                                 pPort->sPortParam.format.video.nFrameHeight*2;
+    break;
+  case OMX_COLOR_FormatYUV411Planar:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_YUV411P   ;      // YUV 4:1:1 Planar //
+    break;
+  default:
+    omx_videosrc_component_Private->pixel_format = V4L2_PIX_FMT_YUV420;
+    break;
   }
 
-  /*Default output frame size*/
+  /** Initialize video capture pixel format */
+  omx_videosrc_component_Private->fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  omx_videosrc_component_Private->fmt.fmt.pix.width = pPort->sPortParam.format.video.nFrameWidth;
+  omx_videosrc_component_Private->fmt.fmt.pix.height = pPort->sPortParam.format.video.nFrameHeight;
+  omx_videosrc_component_Private->fmt.fmt.pix.pixelformat = omx_videosrc_component_Private->pixel_format;
+  omx_videosrc_component_Private->fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_S_FMT, &omx_videosrc_component_Private->fmt))
+    return errno_return("VIDIOC_S_FMT");
+
+  // Note VIDIOC_S_FMT may change width and height. //
+  pPort->sPortParam.format.video.nFrameWidth = omx_videosrc_component_Private->fmt.fmt.pix.width;
+  pPort->sPortParam.format.video.nFrameHeight = omx_videosrc_component_Private->fmt.fmt.pix.height;
+
+  /*output frame size*/
   omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
                                                pPort->sPortParam.format.video.nFrameHeight*3/2;
-  
-  // get image properties
-  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCGPICT, &omx_videosrc_component_Private->imageProperties) != -1)
-  {       // successfully retrieved the default image properties
 
-    DEBUG(DEB_LEV_PARAMS,"Imp Prop br=%d hue=%d,col=%d,con=%d,white=%d, depth=%d,palette =%d \n",
-      omx_videosrc_component_Private->imageProperties.brightness,
-      omx_videosrc_component_Private->imageProperties.hue,
-      omx_videosrc_component_Private->imageProperties.colour,
-      omx_videosrc_component_Private->imageProperties.contrast,
-      omx_videosrc_component_Private->imageProperties.whiteness,      /* Black and white only */
-      omx_videosrc_component_Private->imageProperties.depth,          /* Capture depth */
-      omx_videosrc_component_Private->imageProperties.palette);        /* Palette in use */
+  DEBUG(DEB_ALL_MESS,"Frame Width=%d, Height=%d, Frame Size=%d n_buffers=%d\n",
+    (int)pPort->sPortParam.format.video.nFrameWidth,
+    (int)pPort->sPortParam.format.video.nFrameHeight,
+    (int)omx_videosrc_component_Private->iFrameSize,n_buffers);
 
-    omx_videosrc_component_Private->imageProperties.depth = 12;
-
-    /*Presently VIDEO_PALETTE_YUV420P format is supported by the camera*/
-    switch(pPort->sPortParam.format.video.eColorFormat) {
-    case OMX_COLOR_FormatYUV420Planar:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_YUV420P;
-      break;
-    case OMX_COLOR_Format16bitRGB565:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_RGB565 ;       /* 565 16 bit RGB */
-      omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
-                                                   pPort->sPortParam.format.video.nFrameHeight*2;
-      omx_videosrc_component_Private->imageProperties.depth = 16;
-      omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
-                                                 pPort->sPortParam.format.video.nFrameHeight*2;
-      break;
-    case OMX_COLOR_Format24bitRGB888:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_RGB24  ;       /* 24bit RGB */
-      omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
-                                                   pPort->sPortParam.format.video.nFrameHeight*3;
-      omx_videosrc_component_Private->imageProperties.depth = 24;
-      break;
-    case OMX_COLOR_Format32bitARGB8888:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_RGB32     ;       /* 32bit RGB */
-      omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
-                                                   pPort->sPortParam.format.video.nFrameHeight*4;
-      omx_videosrc_component_Private->imageProperties.depth = 32;
-      break;
-    case OMX_COLOR_FormatYUV422Planar:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_YUV422P   ;      /* YUV 4:2:2 Planar */
-      omx_videosrc_component_Private->iFrameSize = pPort->sPortParam.format.video.nFrameWidth*
-                                                   pPort->sPortParam.format.video.nFrameHeight*2;
-      omx_videosrc_component_Private->imageProperties.depth = 16;
-      break;
-    case OMX_COLOR_FormatYUV411Planar:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_YUV411P   ;      /* YUV 4:1:1 Planar */
-      break;
-    default:
-      omx_videosrc_component_Private->imageProperties.palette = VIDEO_PALETTE_YUV420P;
-      break;
-    }
-    
-    DEBUG(DEB_LEV_FULL_SEQ,"Frame Size=%d\n",(int)omx_videosrc_component_Private->iFrameSize);
-
-    if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSPICT, &omx_videosrc_component_Private->imageProperties) == -1)
-    {       // failed to set the image properties
-      DEBUG(DEB_LEV_ERR,"failed to set the image properties\n");
-    }
-  }
-  
-  vchannel.channel=0;
-  if(ioctl(omx_videosrc_component_Private->deviceHandle, VIDIOCGCHAN, &vchannel)==-1) {
-    DEBUG(DEB_LEV_ERR,"failed to get video channel\n");
-  } else {
-    DEBUG(DEB_LEV_FULL_SEQ,"video channel=%d,name=%s,tuners=%d,flags=%d,type=%x norm=%d\n",
-       vchannel.channel,
-       vchannel.name,
-       vchannel.tuners,
-       vchannel.flags,
-       vchannel.type,
-       vchannel.norm);
-
-    vchannel.flags = VIDEO_VC_TUNER;
-    vchannel.norm = VIDEO_MODE_AUTO;
-
-    if(ioctl(omx_videosrc_component_Private->deviceHandle, VIDIOCSCHAN, &vchannel)==-1) {
-      DEBUG(DEB_LEV_ERR,"failed to set video channel\n");
-    }
-  } 
-
-  /* mute audio */
-  audio.audio = 0;
-  if(ioctl(omx_videosrc_component_Private->deviceHandle, VIDIOCGAUDIO, &audio)==-1) {
-    DEBUG(DEB_LEV_ERR,"failed to get audio\n");
-  } else {
-    DEBUG(DEB_LEV_FULL_SEQ,"audio=%d,vol=%d,bass=%d,treble=%d,flags=%x \nname=%s,mode=%d,balance=%d,step=%d\n",
-      audio.audio,          /* Audio channel */
-      audio.volume,         /* If settable */
-      audio.bass, audio.treble,
-      audio.flags,
-      audio.name,
-      audio.mode,
-      audio.balance,        /* Stereo balance */
-      audio.step);           /* Step actual volume uses */
-
-    audio.flags = VIDEO_AUDIO_MUTE;
-    audio.volume=0;
-    if(ioctl(omx_videosrc_component_Private->deviceHandle, VIDIOCSAUDIO, &audio)==-1){
-      DEBUG(DEB_LEV_ERR,"failed to set audio\n");
-    } 
-  }
-
-  /**
-    The pointer memoryMap and the offsets within memoryBuffer.offsets combine to give us the address of each buffered frame. For example:
-    Buffered Frame 0 is located at:  memoryMap + memoryBuffer.offsets[0]
-    Buffered Frame 1 is located at:  memoryMap + memoryBuffer.offsets[1]
-    Buffered Frame 2 is located at:  memoryMap + memoryBuffer.offsets[2]
-    etc...
-    The number of buffered frames is stored in memoryBuffer.frames.
-   */
- 
-  omx_videosrc_component_Private->mmaps = (malloc (omx_videosrc_component_Private->memoryBuffer.frames * sizeof (struct video_mmap)));
-
-  i = 0;
-  // fill out the fields
-  while (i < omx_videosrc_component_Private->memoryBuffer.frames)
-  {
-    omx_videosrc_component_Private->mmaps[i].frame = i;
-    omx_videosrc_component_Private->mmaps[i].width = pPort->sPortParam.format.video.nFrameWidth;
-    omx_videosrc_component_Private->mmaps[i].height = pPort->sPortParam.format.video.nFrameHeight;
-    omx_videosrc_component_Private->mmaps[i].format = omx_videosrc_component_Private->imageProperties.palette;
-    ++ i;
-  }
-  
   /** initialization for buff mgmt callback function */
   omx_videosrc_component_Private->bIsEOSSent = OMX_FALSE;
-  omx_videosrc_component_Private->iFrameIndex = 0 ;
   
+  err = start_capturing(omx_videosrc_component_Private);
+
   omx_videosrc_component_Private->videoReady = OMX_TRUE;
+
   /*Indicate that video is ready*/
   tsem_up(omx_videosrc_component_Private->videoSyncSem);
 
-  DEBUG(DEB_LEV_FULL_SEQ,"Memory Buf Size=%d\n",omx_videosrc_component_Private->memoryBuffer.size);
+  
 
-  return OMX_ErrorNone;
+  return err;
 }
 
 /** The DeInitialization function 
@@ -428,6 +284,9 @@ OMX_ERRORTYPE omx_videosrc_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
+
+  stop_capturing(omx_videosrc_component_Private);
+
   /** closing input file */
   omx_videosrc_component_Private->videoReady = OMX_FALSE;
   tsem_reset(omx_videosrc_component_Private->videoSyncSem);
@@ -442,6 +301,9 @@ OMX_ERRORTYPE omx_videosrc_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
 void omx_videosrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pOutputBuffer) {
 
   omx_videosrc_component_PrivateType* omx_videosrc_component_Private = openmaxStandComp->pComponentPrivate;
+  struct v4l2_buffer buf;
+  
+  CLEAR(buf);
   
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 
@@ -455,32 +317,39 @@ void omx_videosrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   }
 
   pOutputBuffer->nOffset = 0;
+  pOutputBuffer->nFilledLen = 0;
 
-  //Capturing using MMIO.
-  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCMCAPTURE, &omx_videosrc_component_Private->mmaps[omx_videosrc_component_Private->iFrameIndex]) == -1)
-  {       // capture request failed
-    DEBUG(DEB_LEV_ERR,"capture request failed\n");
-  }
-  // wait for the currently indexed frame to complete capture
-  if (ioctl (omx_videosrc_component_Private->deviceHandle, VIDIOCSYNC, &omx_videosrc_component_Private->iFrameIndex) == -1)
-  {       // sync request failed
-    pOutputBuffer->nFilledLen = 0;
-    DEBUG(DEB_LEV_ERR,"sync request failed\n");
-    return;
+  buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  buf.memory = V4L2_MEMORY_MMAP;
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_DQBUF, &buf)) {
+    switch (errno) {
+    case EAGAIN:
+	    return;
+	  case EIO:
+	    /* Could ignore EIO, see spec. */
+	    /* fall through */
+
+	  default:
+      DEBUG(DEB_LEV_ERR,"In %s error VIDIOC_DQBUF\n",__func__);
+	    return;
+    }
   }
 
-  DEBUG(DEB_LEV_FULL_SEQ,"%d-%d\n",(int)omx_videosrc_component_Private->iFrameIndex,(int)omx_videosrc_component_Private->memoryBuffer.frames);
-  if(omx_videosrc_component_Private->bOutBufferMemoryMapped == OMX_FALSE) { // In case OMX_UseBuffer copy frame to buffer metadata
-    DEBUG(DEB_LEV_ERR,"In %s copy frame to metadata\n",__func__);
-    memcpy(pOutputBuffer->pBuffer,omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[omx_videosrc_component_Private->iFrameIndex],omx_videosrc_component_Private->iFrameSize);
+  assert(buf.index < n_buffers);
+
+  if(omx_videosrc_component_Private->bOutBufferMemoryMapped == OMX_FALSE) { /* In case OMX_UseBuffer copy frame to buffer metadata */
+    memcpy(pOutputBuffer->pBuffer,omx_videosrc_component_Private->buffers[buf.index].start,omx_videosrc_component_Private->iFrameSize);
   }
+
   pOutputBuffer->nFilledLen = omx_videosrc_component_Private->iFrameSize;
 
-  omx_videosrc_component_Private->iFrameIndex++;
-  /*Wrap the frame buffer to the first buffer*/
-  if(omx_videosrc_component_Private->iFrameIndex == omx_videosrc_component_Private->memoryBuffer.frames) {
-    omx_videosrc_component_Private->iFrameIndex =0;
+  DEBUG(DEB_LEV_FULL_SEQ,"Camera output buffer nFilledLen=%d buf.length=%d\n",(int)pOutputBuffer->nFilledLen,buf.length);
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_QBUF, &buf)) {
+    DEBUG(DEB_LEV_ERR,"In %s error VIDIOC_DQBUF\n",__func__);
   }
+
   /** return the current output buffer */
   return;
 }
@@ -563,7 +432,7 @@ OMX_ERRORTYPE omx_videosrc_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
-    memcpy(ComponentParameterStructure, &omx_videosrc_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+    memcpy(ComponentParameterStructure, &omx_videosrc_component_Private->sPortTypesParam[OMX_PortDomainVideo], sizeof(OMX_PORT_PARAM_TYPE));
     break;    
   case OMX_IndexParamVideoPortFormat:
     pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
@@ -654,12 +523,13 @@ OMX_ERRORTYPE videosrc_port_AllocateBuffer(
       }
       setHeader(openmaxStandPort->pInternalBufferStorage[i], sizeof(OMX_BUFFERHEADERTYPE));
       /* Map the buffer with the device's memory area*/
-      if(i > omx_videosrc_component_Private->memoryBuffer.frames) {
-        DEBUG(DEB_LEV_ERR, "In %s returning error i=%d, nframe=%d\n", __func__,i,omx_videosrc_component_Private->memoryBuffer.frames);
+      if(i > n_buffers) {
+        DEBUG(DEB_LEV_ERR, "In %s returning error i=%d, nframe=%d\n", __func__,i,n_buffers);
         return OMX_ErrorInsufficientResources;
       }
+      
       omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_TRUE;
-      openmaxStandPort->pInternalBufferStorage[i]->pBuffer = (OMX_U8*)(omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[i]);
+      openmaxStandPort->pInternalBufferStorage[i]->pBuffer = omx_videosrc_component_Private->buffers[i].start;
       openmaxStandPort->pInternalBufferStorage[i]->nAllocLen = (int)nSizeBytes;
       openmaxStandPort->pInternalBufferStorage[i]->pPlatformPrivate = openmaxStandPort;
       openmaxStandPort->pInternalBufferStorage[i]->pAppPrivate = pAppPrivate;
@@ -724,7 +594,6 @@ OMX_ERRORTYPE videosrc_port_FreeBuffer(
       if (openmaxStandPort->bBufferStateAllocated[i] & BUFFER_ALLOCATED) {
         if(openmaxStandPort->pInternalBufferStorage[i]->pBuffer){
           DEBUG(DEB_LEV_PARAMS, "In %s freeing %i pBuffer=%x\n",__func__, (int)i, (int)openmaxStandPort->pInternalBufferStorage[i]->pBuffer);
-          //free(openmaxStandPort->pInternalBufferStorage[i]->pBuffer);
           openmaxStandPort->pInternalBufferStorage[i]->pBuffer=NULL;
           omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_FALSE;
         }
@@ -783,12 +652,12 @@ OMX_ERRORTYPE videosrc_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStand
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
       /* Map the buffer with the device's memory area*/
-      if(i > omx_videosrc_component_Private->memoryBuffer.frames) {
-        DEBUG(DEB_LEV_ERR, "In %s returning error i=%d, nframe=%d\n", __func__,i,omx_videosrc_component_Private->memoryBuffer.frames);
+      if(i > n_buffers) {
+        DEBUG(DEB_LEV_ERR, "In %s returning error i=%d, nframe=%d\n", __func__,i,n_buffers);
         return OMX_ErrorInsufficientResources;
       }
       omx_videosrc_component_Private->bOutBufferMemoryMapped = OMX_TRUE;
-      pBuffer = (OMX_U8*)(omx_videosrc_component_Private->memoryMap + omx_videosrc_component_Private->memoryBuffer.offsets[i]);
+      pBuffer = omx_videosrc_component_Private->buffers[i].start;
 
       /*Retry more than once, if the tunneled component is not in Loaded->Idle State*/
       while(numRetry <TUNNEL_USE_BUFFER_RETRY) {
@@ -895,5 +764,175 @@ OMX_ERRORTYPE videosrc_port_FreeTunnelBuffer(omx_base_PortType *openmaxStandPort
     }
   }
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s Qelem=%d BSem=%d\n", __func__,openmaxStandPort->pBufferQueue->nelem,openmaxStandPort->pBufferSem->semval);
+  return OMX_ErrorNone;
+}
+
+static int xioctl(int fd, int request, void *arg)
+{
+  int r;
+
+  do
+    r = ioctl(fd, request, arg);
+  while (-1 == r && EINTR == errno);
+
+  return r;
+}
+
+static int init_device(omx_videosrc_component_PrivateType* omx_videosrc_component_Private)
+{
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_QUERYCAP, &omx_videosrc_component_Private->cap)) {
+    if (EINVAL == errno) {
+	    DEBUG(DEB_LEV_ERR, "%s is no V4L2 device\n", VIDEO_DEV_NAME);
+	    return OMX_ErrorHardware;
+    } else {
+	    return errno_return("VIDIOC_QUERYCAP");
+	  }
+  }
+
+  if (!(omx_videosrc_component_Private->cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+    DEBUG(DEB_LEV_ERR, "%s is no video capture device\n", VIDEO_DEV_NAME);
+    return OMX_ErrorHardware;
+  }
+  
+  if (!(omx_videosrc_component_Private->cap.capabilities & V4L2_CAP_STREAMING)) {
+	  DEBUG(DEB_LEV_ERR, "%s does not support streaming i/o\n", VIDEO_DEV_NAME);
+	  return OMX_ErrorHardware;
+	}
+
+  /* Select video input, video standard and tune here. */
+  omx_videosrc_component_Private->cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_CROPCAP, &omx_videosrc_component_Private->cropcap)) {
+    /* Errors ignored. */
+  }
+
+  omx_videosrc_component_Private->crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  omx_videosrc_component_Private->crop.c = omx_videosrc_component_Private->cropcap.defrect;	/* reset to default */
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_S_CROP, &omx_videosrc_component_Private->crop)) {
+    switch (errno) {
+    case EINVAL:
+	    /* Cropping not supported. */
+	    break;
+	  default:
+	    /* Errors ignored. */
+	    break;
+	  }
+  }
+
+  CLEAR(omx_videosrc_component_Private->fmt);
+  
+  return OMX_ErrorNone;
+}
+
+static int start_capturing(omx_videosrc_component_PrivateType* omx_videosrc_component_Private)
+{
+  unsigned int i;
+  enum v4l2_buf_type type;
+
+  for (i = 0; i < n_buffers; ++i)
+	{
+	  struct v4l2_buffer buf;
+
+	  CLEAR(buf);
+
+	  buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	  buf.memory = V4L2_MEMORY_MMAP;
+	  buf.index = i;
+
+	  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_QBUF, &buf))
+	    return errno_return("VIDIOC_QBUF");
+	}
+
+  type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_STREAMON, &type))
+	  return errno_return("VIDIOC_STREAMON");
+   
+  return OMX_ErrorNone;
+}
+
+static int stop_capturing(omx_videosrc_component_PrivateType* omx_videosrc_component_Private)
+{
+  enum v4l2_buf_type type;
+
+  type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_STREAMOFF, &type))
+    return errno_return("VIDIOC_STREAMOFF");
+    
+  return OMX_ErrorNone;
+}
+
+static int uninit_device(omx_videosrc_component_PrivateType* omx_videosrc_component_Private)
+{
+  unsigned int i;
+  
+  for (i = 0; i < n_buffers; ++i) {
+    if (-1 == munmap(omx_videosrc_component_Private->buffers[i].start, omx_videosrc_component_Private->buffers[i].length))
+      return errno_return("munmap");
+  }
+
+  free(omx_videosrc_component_Private->buffers);
+
+  return OMX_ErrorNone;
+}
+
+static int init_mmap(omx_videosrc_component_PrivateType* omx_videosrc_component_Private)
+{
+  struct v4l2_requestbuffers req;
+
+  CLEAR(req);
+
+  req.count = 4;
+  req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  req.memory = V4L2_MEMORY_MMAP;
+
+  if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_REQBUFS, &req)) {
+    if (EINVAL == errno) {
+      DEBUG(DEB_LEV_ERR, "%s does not support "
+        "memory mapping\n", VIDEO_DEV_NAME);
+      return OMX_ErrorHardware;
+    } else {
+      return errno_return("VIDIOC_REQBUFS");
+    }
+  }
+
+  if (req.count < 2) {
+    DEBUG(DEB_LEV_ERR, "Insufficient buffer memory on %s\n", VIDEO_DEV_NAME);
+    return OMX_ErrorHardware;
+  }
+
+  omx_videosrc_component_Private->buffers = calloc(req.count, sizeof(*omx_videosrc_component_Private->buffers));
+
+  if (!omx_videosrc_component_Private->buffers) {
+    DEBUG(DEB_LEV_ERR,"Out of memory\n");
+    return OMX_ErrorHardware;
+  }
+
+  for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
+    struct v4l2_buffer buf;
+
+    CLEAR(buf);
+
+    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_MMAP;
+    buf.index = n_buffers;
+
+    if (-1 == xioctl(omx_videosrc_component_Private->deviceHandle, VIDIOC_QUERYBUF, &buf))
+	    return errno_return("VIDIOC_QUERYBUF");
+
+    omx_videosrc_component_Private->buffers[n_buffers].length = buf.length;
+    omx_videosrc_component_Private->buffers[n_buffers].start = mmap(NULL /* start anywhere */ ,
+				    buf.length,
+				    PROT_READ | PROT_WRITE /* required */ ,
+				    MAP_SHARED /* recommended */ ,
+				    omx_videosrc_component_Private->deviceHandle, buf.m.offset);
+
+    if (MAP_FAILED == omx_videosrc_component_Private->buffers[n_buffers].start)
+      return errno_return("mmap");
+  }
+
   return OMX_ErrorNone;
 }

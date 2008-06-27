@@ -4,8 +4,8 @@
   This component implements an MP3 decoder. The MP3 decoder is based on FFmpeg
   software library.
 
-  Copyright (C) 2007  STMicroelectronics
-  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
+  Copyright (C) 2007-2008 STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies)
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
-
+ 
 /* Specific include files for FFmpeg*/
 #if FFMPEG_LIBNAME_HEADERS
 #include <libavcodec/avcodec.h>
@@ -55,9 +55,11 @@
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_NAME "OMX.st.audio_decoder.ogg"
 #define AUDIO_DEC_AAC_NAME "OMX.st.audio_decoder.aac" 
+#define AUDIO_DEC_G726_NAME "OMX.st.audio_decoder.g726"
 #define AUDIO_DEC_MP3_ROLE "audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_ROLE "audio_decoder.ogg"
 #define AUDIO_DEC_AAC_ROLE "audio_decoder.aac"   
+#define AUDIO_DEC_G726_ROLE "audio_decoder.g726"
 
 /** AudioDec component private structure.
  */
@@ -65,7 +67,7 @@ DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_audiodec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
   /** @param avCodec pointer to the ffpeg audio decoder */ \
   AVCodec *avCodec;  \
-  /** @param avCodecContext pointer to ffmpeg decoder context  */ \
+  /** @param avCodecContext pointer to FFmpeg decoder context  */ \
   AVCodecContext *avCodecContext;  \
   /** @param semaphore for avcodec access syncrhonization */\
   tsem_t* avCodecSyncSem; \
@@ -75,11 +77,13 @@ DERIVEDCLASS(omx_audiodec_component_PrivateType, omx_base_filter_PrivateType)
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioAAC Reference to  OMX_AUDIO_PARAM_AACPROFILETYPE structure */ \
   OMX_AUDIO_PARAM_AACPROFILETYPE  pAudioAac;  \
+  /** @param pAudioG726 Reference to  OMX_AUDIO_PARAM_G726TYPE structure */ \
+  OMX_AUDIO_PARAM_G726TYPE pAudioG726; \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/  \
   OMX_AUDIO_PARAM_PCMMODETYPE pAudioPcmMode;  \
   /** @param avcodecReady boolean flag that is true when the audio coded has been initialized */ \
   OMX_BOOL avcodecReady;  \
-  /** @param minBufferLength Field that stores the minimun allowed size for ffmpeg decoder */ \
+  /** @param minBufferLength Field that stores the minimun allowed size for FFmpeg decoder */ \
   OMX_U16 minBufferLength; \
   /** @param inputCurrBuffer Field that stores pointer of the current input buffer position */ \
   OMX_U8* inputCurrBuffer;\

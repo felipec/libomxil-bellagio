@@ -4,8 +4,8 @@
   This component implements an MPEG-4 video encoder. 
   The MPEG-4 Video encoder is based on the FFmpeg software library.
 
-  Copyright (C) 2007  STMicroelectronics
-  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
+  Copyright (C) 2007-2008 STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies)
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -47,15 +47,14 @@
 #if FFMPEG_LIBNAME_HEADERS
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
+#include <libswscale/swscale.h>
 #else
 #include <ffmpeg/avcodec.h>
 #include <ffmpeg/avformat.h>
-#include <ffmpeg/swscale.h>
 #include <ffmpeg/avutil.h>
+#include <ffmpeg/swscale.h>
 #endif
-
 
 #define VIDEO_ENC_BASE_NAME "OMX.st.video_encoder"
 #define VIDEO_ENC_MPEG4_NAME "OMX.st.video_encoder.mpeg4"

@@ -4,7 +4,7 @@
   This component implements an Ogg Vorbis decoder. The Ogg Vorbis decoder is based on
   the libvorbis software library.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -51,8 +51,6 @@
  */
 DERIVEDCLASS(omx_vorbisdec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_vorbisdec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
-  /** @param semaphore for avcodec access syncrhonization */\
-  tsem_t* avCodecSyncSem; \
   /** @param pAudioVorbis Reference to OMX_AUDIO_PARAM_VORBISTYPE structure */ \
   OMX_AUDIO_PARAM_VORBISTYPE pAudioVorbis;  \
   /** @param pAudioPcmMode Referece to OMX_AUDIO_PARAM_PCMMODETYPE structure*/  \

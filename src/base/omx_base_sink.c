@@ -5,7 +5,7 @@
   processing. It derives from base component and contains a single input port. 
   It can be used as base class for sink components.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008  STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -33,7 +33,7 @@
 #include <omx_base_sink.h>
 
 OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;	
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_base_sink_PrivateType* omx_base_sink_Private;
 
   if (openmaxStandComp->pComponentPrivate) {
@@ -46,15 +46,12 @@ OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_
   }
 
   // we could create our own port structures here
-  // fixme maybe the base class could use a "port factory" function pointer?	
+  // fixme maybe the base class could use a "port factory" function pointer?  
   err = omx_base_component_Constructor(openmaxStandComp,cComponentName);
 
   /* here we can override whatever defaults the base_component constructor set
   * e.g. we can override the function pointers in the private struct  */
   omx_base_sink_Private = openmaxStandComp->pComponentPrivate;
-
-  omx_base_sink_Private->sPortTypesParam.nPorts = 1;
-  omx_base_sink_Private->sPortTypesParam.nStartPortNumber = 0;	
 
   omx_base_sink_Private->BufferMgmtFunction = omx_base_sink_BufferMgmtFunction;
 
@@ -73,15 +70,15 @@ OMX_ERRORTYPE omx_base_sink_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
   */
 void* omx_base_sink_BufferMgmtFunction (void* param) {
   OMX_COMPONENTTYPE* openmaxStandComp = (OMX_COMPONENTTYPE*)param;
-  omx_base_component_PrivateType* omx_base_component_Private=(omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate;
-  omx_base_sink_PrivateType* omx_base_sink_Private = (omx_base_sink_PrivateType*)omx_base_component_Private;
-  omx_base_PortType *pInPort=(omx_base_PortType *)omx_base_sink_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
-  tsem_t* pInputSem = pInPort->pBufferSem;
-  queue_t* pInputQueue = pInPort->pBufferQueue;
-  OMX_BUFFERHEADERTYPE* pInputBuffer=NULL;
-  OMX_COMPONENTTYPE* target_component;
-  OMX_BOOL isInputBufferNeeded=OMX_TRUE;
-  int inBufExchanged=0;
+  omx_base_component_PrivateType* omx_base_component_Private  = (omx_base_component_PrivateType*)openmaxStandComp->pComponentPrivate;
+  omx_base_sink_PrivateType*      omx_base_sink_Private       = (omx_base_sink_PrivateType*)omx_base_component_Private;
+  omx_base_PortType               *pInPort                    = (omx_base_PortType *)omx_base_sink_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
+  tsem_t*                         pInputSem                   = pInPort->pBufferSem;
+  queue_t*                        pInputQueue                 = pInPort->pBufferQueue;
+  OMX_BUFFERHEADERTYPE*           pInputBuffer                = NULL;
+  OMX_COMPONENTTYPE*              target_component;
+  OMX_BOOL                        isInputBufferNeeded         = OMX_TRUE;
+  int                             inBufExchanged              = 0;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n", __func__);
   while(omx_base_component_Private->state == OMX_StateIdle || omx_base_component_Private->state == OMX_StateExecuting ||  omx_base_component_Private->state == OMX_StatePause || 
@@ -161,13 +158,13 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
           pInputBuffer->pMarkData);
       } else if(pInputBuffer->hMarkTargetComponent!=NULL){
         /*If this is not the target component then pass the mark*/
-				DEBUG(DEB_LEV_FULL_SEQ, "Can't Pass Mark. This is a Sink!!\n");
+        DEBUG(DEB_LEV_FULL_SEQ, "Can't Pass Mark. This is a Sink!!\n");
       }
       if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer->nFilledLen != 0) {
         (*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer);
       }
       else {
-        /*It no buffer management call back the explicitly consume input buffer*/
+        /*If no buffer management call back the explicitly consume input buffer*/
         pInputBuffer->nFilledLen = 0;
       }
       /*Input Buffer has been completely consumed. So, get new input buffer*/

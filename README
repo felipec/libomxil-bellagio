@@ -36,6 +36,9 @@ VIDEO
   color converter component output .rgb file.
 - OMX video capture component which captures video frame using a video
   camera and stores into a file or display using video sink.
+- OMX Camera component also captures video having 3 ports. Port 0 is used
+  for preview; Port 1 is used for video and image capture; Port 2 is used 
+  for video and image thumbnail.
 - OMX video encoder encoding input YUV format file or video captured
   using camera component in MPEG-4 video format to produce output .m4v
   file.
@@ -44,6 +47,11 @@ PARSER
 - OMX 3GP parser component. Parses input file/stream for audio and
   video output, which is then fed to audio and video decoder component
   for decoding.
+
+CLOCK
+- OMX Clock component. It take audio(default) as input reference clock
+  and provide media clock to video sink and other component. It support
+  fast forward and rewind.
 
 N.B. The 3GP parser can support MPEG-4,H.264 video and MPEG-4,AAC
 audio. FFmpeg can't encode (Warning, using MS style audio codec tag,

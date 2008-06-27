@@ -1,31 +1,31 @@
 /**
-	@file src/base/omx_base_filter.c
-	
-	OpenMAX Base Filter component. This component does not perform any multimedia
-	processing. It derives from base component and contains two ports. It can be used 
-	as a base class for codec and filter components.
-	
-	Copyright (C) 2007  STMicroelectronics
-	Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
+  @file src/base/omx_base_filter.c
+  
+  OpenMAX Base Filter component. This component does not perform any multimedia
+  processing. It derives from base component and contains two ports. It can be used 
+  as a base class for codec and filter components.
+  
+  Copyright (C) 2007-2008  STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
-	This library is free software; you can redistribute it and/or modify it under
-	the terms of the GNU Lesser General Public License as published by the Free
-	Software Foundation; either version 2.1 of the License, or (at your option)
-	any later version.
+  This library is free software; you can redistribute it and/or modify it under
+  the terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version.
 
-	This library is distributed in the hope that it will be useful, but WITHOUT
-	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-	FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-	details.
+  This library is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+  details.
 
-	You should have received a copy of the GNU Lesser General Public License
-	along with this library; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin St, Fifth Floor, Boston, MA
-	02110-1301  USA
-	
-	$Date$
-	Revision $Rev$
-	Author $Author$
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301  USA
+  
+  $Date$
+  Revision $Rev$
+  Author $Author$
 
 */
 
@@ -34,7 +34,7 @@
 #include "omx_base_filter.h"
 
 OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;	
+  OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_base_filter_PrivateType* omx_base_filter_Private;
 
   if (openmaxStandComp->pComponentPrivate) {
@@ -53,9 +53,6 @@ OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OM
   /* here we can override whatever defaults the base_component constructor set
   * e.g. we can override the function pointers in the private struct */
   omx_base_filter_Private = openmaxStandComp->pComponentPrivate;
-
-  omx_base_filter_Private->sPortTypesParam.nPorts = 2;
-  omx_base_filter_Private->sPortTypesParam.nStartPortNumber = 0;	
 
   omx_base_filter_Private->BufferMgmtFunction = omx_base_filter_BufferMgmtFunction;
 
@@ -197,11 +194,17 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
           pInputBuffer->pMarkData);
       } else if(pInputBuffer->hMarkTargetComponent!=NULL){
         /*If this is not the target component then pass the mark*/
-        pOutputBuffer->hMarkTargetComponent	= pInputBuffer->hMarkTargetComponent;
+        pOutputBuffer->hMarkTargetComponent = pInputBuffer->hMarkTargetComponent;
         pOutputBuffer->pMarkData = pInputBuffer->pMarkData;
         pInputBuffer->pMarkData=NULL;
       }
       pOutputBuffer->nTimeStamp = pInputBuffer->nTimeStamp;
+      if(pInputBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {    
+         DEBUG(DEB_LEV_FULL_SEQ, "Detected  START TIME flag in the input buffer filled len=%d\n", (int)pInputBuffer->nFilledLen);
+         pOutputBuffer->nFlags = pInputBuffer->nFlags;
+         pInputBuffer->nFlags = 0;
+      }
+
 
       if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen != 0) {
         (*(omx_base_filter_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer, pOutputBuffer);

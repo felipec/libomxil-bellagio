@@ -6,7 +6,7 @@
   The output video/image data of the capture port and thumbnail port of the
   camera are saved in disk files, respectively.
 
-  Copyright (C) 2007  Motorola
+  Copyright (C) 2007-2008  Motorola and STMicroelectronics
 
   This code is licensed under LGPL see README for full LGPL notice.
 
@@ -272,7 +272,10 @@ OMX_ERRORTYPE fbsinkEventHandler(
           break;
       }    
       tsem_up(appPriv->fbsinkEventSem);
-    }
+    } else if (OMX_CommandPortEnable || OMX_CommandPortDisable) {
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Received Port Enable/Disable Event\n",__func__);
+      tsem_up(appPriv->fbsinkEventSem);
+    } 
   }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s, return code: 0x%X\n",__func__, OMX_ErrorNone);
@@ -788,6 +791,15 @@ int main(int argc, char** argv) {
     DEBUG(DEB_LEV_ERR, "Setup tunnel between color conv port and fbsink failed!Exiting...\n");
     goto EXIT;
   }
+
+  /* disable the clock port of the video sink */
+  err = OMX_SendCommand(appPriv->fbsinkhandle, OMX_CommandPortDisable, 1, NULL);
+  if(err != OMX_ErrorNone) {
+    DEBUG(DEB_LEV_ERR,"video sink clock port disable failed err=%x \n",err);
+    exit(1);
+  }
+  tsem_down(appPriv->fbsinkEventSem); /* video sink clock port disabled */
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
 
 RUN_AGAIN:
 

@@ -5,7 +5,7 @@
   The application receives an video stream (.m4v or .264) decoded by a multiple format decoder component.
   The decoded output is seen by a yuv viewer.
   
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

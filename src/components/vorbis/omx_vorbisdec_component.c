@@ -4,7 +4,7 @@
   This component implements an Ogg Vorbis decoder. The Vorbis decoder is based on
   the libvorbis software library.
 
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -71,14 +71,16 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
   /** first we set the parameter common to both formats
     * common parameters related to input port
     */
+  omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
+  omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 2;
 
   /** Allocate Ports and call port constructor. */  
-  if (omx_vorbisdec_component_Private->sPortTypesParam.nPorts && !omx_vorbisdec_component_Private->ports) {
-    omx_vorbisdec_component_Private->ports = calloc(omx_vorbisdec_component_Private->sPortTypesParam.nPorts, sizeof(omx_base_PortType *));
+  if (omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_vorbisdec_component_Private->ports) {
+    omx_vorbisdec_component_Private->ports = calloc(omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_vorbisdec_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       omx_vorbisdec_component_Private->ports[i] = calloc(1, sizeof(omx_base_audio_PortType));
       if (!omx_vorbisdec_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
@@ -151,13 +153,6 @@ OMX_ERRORTYPE omx_vorbisdec_component_Constructor( OMX_COMPONENTTYPE *openmaxSta
     return OMX_ErrorInvalidComponentName;
   }
 
-  if(!omx_vorbisdec_component_Private->avCodecSyncSem) {
-    omx_vorbisdec_component_Private->avCodecSyncSem = calloc(1, sizeof(tsem_t));
-    if(omx_vorbisdec_component_Private->avCodecSyncSem == NULL) {
-      return OMX_ErrorInsufficientResources;
-    }
-    tsem_init(omx_vorbisdec_component_Private->avCodecSyncSem, 0);
-  }
   if(noVorbisDecInstance > MAX_COMPONENT_VORBISDEC) {
     return OMX_ErrorInsufficientResources;
   }
@@ -172,15 +167,9 @@ OMX_ERRORTYPE omx_vorbisdec_component_Destructor(OMX_COMPONENTTYPE *openmaxStand
   omx_vorbisdec_component_PrivateType* omx_vorbisdec_component_Private = openmaxStandComp->pComponentPrivate;
   OMX_U32 i;
 
-  if(omx_vorbisdec_component_Private->avCodecSyncSem) {
-    tsem_deinit(omx_vorbisdec_component_Private->avCodecSyncSem);
-    free(omx_vorbisdec_component_Private->avCodecSyncSem);
-    omx_vorbisdec_component_Private->avCodecSyncSem = NULL;
-  }
-
   /* frees port/s */
   if (omx_vorbisdec_component_Private->ports) {
-    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
       if(omx_vorbisdec_component_Private->ports[i])
         omx_vorbisdec_component_Private->ports[i]->PortDestructor(omx_vorbisdec_component_Private->ports[i]);
     }
@@ -630,7 +619,7 @@ OMX_ERRORTYPE omx_vorbisdec_component_GetParameter(
     if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
       break;
     }
-    memcpy(ComponentParameterStructure, &omx_vorbisdec_component_Private->sPortTypesParam, sizeof(OMX_PORT_PARAM_TYPE));
+    memcpy(ComponentParameterStructure, &omx_vorbisdec_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
     break;    
 
   case OMX_IndexParamAudioPortFormat:

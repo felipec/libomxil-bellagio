@@ -8,7 +8,7 @@
   For each library it must be implemented, and it must fill data of any component
   in the library
   
-  Copyright (C) 2007  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
@@ -71,7 +71,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     return OMX_ErrorInsufficientResources;
   }
   strcpy(stComponents[0]->name, "OMX.st.audio_decoder");
-  stComponents[0]->name_specific_length = 3; 
+  stComponents[0]->name_specific_length = 4; 
   stComponents[0]->constructor = omx_audiodec_component_Constructor;  
 
   stComponents[0]->name_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));  
@@ -93,9 +93,11 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[0]->name_specific[0], "OMX.st.audio_decoder.mp3");
   strcpy(stComponents[0]->name_specific[1], "OMX.st.audio_decoder.ogg");
   strcpy(stComponents[0]->name_specific[2], "OMX.st.audio_decoder.aac");
+  strcpy(stComponents[0]->name_specific[3], "OMX.st.audio_decoder.g726");
   strcpy(stComponents[0]->role_specific[0], "audio_decoder.mp3");
   strcpy(stComponents[0]->role_specific[1], "audio_decoder.ogg");
   strcpy(stComponents[0]->role_specific[2], "audio_decoder.aac");
+  strcpy(stComponents[0]->role_specific[3], "audio_decoder.g726");
 
 
   /** component 2 - video decoder */
@@ -201,5 +203,6 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[3]->role_specific[0], "video_encoder.mpeg4");
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
+
   return 4; 
 }

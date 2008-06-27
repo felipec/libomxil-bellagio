@@ -6,13 +6,13 @@
   The output video/image data of the capture port and thumbnail port of the
   camera are saved in disk files, respectively.
 
-  Copyright (C) 2007  Motorola
+  Copyright (C) 2007-2008  Motorola and STMicroelectronics
 
   This code is licensed under LGPL see README for full LGPL notice.
 
   Date                             Author                Comment
   Fri, 06 Jul 2007                 Motorola              File created
-  Tue, 06 Apr 2008               STM                     Update: Adding support for the color converter
+  Tue, 06 Apr 2008                 STM                   Update: Adding support for the color converter
 
   This Program is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS

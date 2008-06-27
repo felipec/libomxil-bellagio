@@ -13,8 +13,8 @@
     H.264
     MPEG4        
 
-  Copyright (C) 2008  STMicroelectronics
-  Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
+  Copyright (C) 2007-2008 STMicroelectronics
+  Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the Free
@@ -57,6 +57,7 @@
 
 typedef struct appPrivateType{
   tsem_t* parser3gpEventSem;
+  tsem_t* clockEventSem;
   tsem_t* videoDecoderEventSem;
   tsem_t* colorconvEventSem;
   tsem_t* fbdevSinkEventSem;
@@ -71,6 +72,7 @@ typedef struct appPrivateType{
   OMX_HANDLETYPE audiosinkhandle;
   OMX_HANDLETYPE volumehandle;
   OMX_HANDLETYPE parser3gphandle;
+  OMX_HANDLETYPE clocksrchandle;
 }appPrivateType;
 
 #define BUFFER_IN_SIZE 4096    
@@ -147,6 +149,20 @@ OMX_ERRORTYPE parser3gpFillBufferDone(
   OMX_OUT OMX_HANDLETYPE hComponent,
   OMX_OUT OMX_PTR pAppData,
   OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE clocksrcEventHandler(
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_EVENTTYPE eEvent,
+  OMX_OUT OMX_U32 Data1,
+  OMX_OUT OMX_U32 Data2,
+  OMX_OUT OMX_PTR pEventData);
+
+OMX_ERRORTYPE clocksrcFillBufferDone(
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+
 
 /** callback prototypes for audio Decoder */
 OMX_ERRORTYPE audiodecEventHandler(

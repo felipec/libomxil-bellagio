@@ -7,7 +7,7 @@
   thumbnail. It has 3 (output) ports: Port 0 is used for preview; Port 1 is used
   for video and image capture; Port 2 is used for video and image thumbnail.
   
-  Copyright (C) 2007  Motorola
+  Copyright (C) 2007-2008  Motorola and STMicroelectronics
 
   This code is licensed under LGPL see README for full LGPL notice.
 
@@ -722,7 +722,9 @@ OMX_ERRORTYPE omx_camera_source_component_Constructor(OMX_COMPONENTTYPE *openmax
 
   /* Overwrite default settings by base source */
   omx_camera_source_component_Private = (omx_camera_source_component_PrivateType *)openmaxStandComp->pComponentPrivate;
-  omx_camera_source_component_Private->sPortTypesParam.nPorts = NUM_CAMERAPORTS;
+  omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nStartPortNumber = 0;
+  omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts = NUM_CAMERAPORTS;
+
   omx_camera_source_component_Private->BufferMgmtFunction = omx_camera_source_component_BufferMgmtFunction;
 
   /** Init camera private parameters by default values */
@@ -759,12 +761,12 @@ OMX_ERRORTYPE omx_camera_source_component_Constructor(OMX_COMPONENTTYPE *openmax
   
 
   /** Allocate Ports. */
-  if (omx_camera_source_component_Private->sPortTypesParam.nPorts && !omx_camera_source_component_Private->ports) {
-    omx_camera_source_component_Private->ports = calloc(omx_camera_source_component_Private->sPortTypesParam.nPorts, sizeof (omx_base_PortType *));
+  if (omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts && !omx_camera_source_component_Private->ports) {
+    omx_camera_source_component_Private->ports = calloc(omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts, sizeof (omx_base_PortType *));
     if (!omx_camera_source_component_Private->ports) {
       return OMX_ErrorInsufficientResources;
     }
-    for (i=0; i < omx_camera_source_component_Private->sPortTypesParam.nPorts; i++) {
+    for (i=0; i < omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       /** this is the important thing separating this from the base class; size of the struct is for derived class port type
         * this could be refactored as a smarter factory function instead?
         */
@@ -775,7 +777,7 @@ OMX_ERRORTYPE omx_camera_source_component_Constructor(OMX_COMPONENTTYPE *openmax
     }
   }
 
-  for (i=0; i<omx_camera_source_component_Private->sPortTypesParam.nPorts; i++) {
+  for (i=0; i<omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
     /** Call base port constructor */
     base_video_port_Constructor(openmaxStandComp, &omx_camera_source_component_Private->ports[i], i, OMX_FALSE);
     port = (omx_camera_source_component_PortType *) omx_camera_source_component_Private->ports[i];
@@ -812,8 +814,8 @@ OMX_ERRORTYPE omx_camera_source_component_Destructor(OMX_COMPONENTTYPE *openmaxS
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s for camera component\n",__func__);
 
   /** frees the port structures*/
-  if (omx_camera_source_component_Private->sPortTypesParam.nPorts && omx_camera_source_component_Private->ports) {
-    for (i = 0; i < omx_camera_source_component_Private->sPortTypesParam.nPorts; i++) {
+  if (omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts && omx_camera_source_component_Private->ports) {
+    for (i = 0; i < omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
       if(omx_camera_source_component_Private->ports[i]) {
         base_port_Destructor(omx_camera_source_component_Private->ports[i]);
       }
@@ -942,7 +944,7 @@ static OMX_ERRORTYPE omx_camera_source_component_GetParameter(
         DEBUG(DEB_LEV_ERR, "%s (line %d): Check header failed!\n", __func__, __LINE__);
         break;
       }
-      memcpy(ComponentParameterStructure,&omx_camera_source_component_Private->sPortTypesParam,sizeof(OMX_PORT_PARAM_TYPE));
+      memcpy(ComponentParameterStructure,&omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo],sizeof(OMX_PORT_PARAM_TYPE));
       break;
 
     case OMX_IndexParamVideoPortFormat:
@@ -1016,7 +1018,7 @@ static OMX_ERRORTYPE omx_camera_source_component_SetParameter(
         DEBUG(DEB_LEV_ERR, "%s (line %d): Check header failed!\n", __func__, __LINE__);
         break;
       }
-      memcpy(&omx_camera_source_component_Private->sPortTypesParam,ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
+      memcpy(&omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo],ComponentParameterStructure,sizeof(OMX_PORT_PARAM_TYPE));
       break;
 
     case OMX_IndexParamPortDefinition:

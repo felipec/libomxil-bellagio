@@ -152,9 +152,10 @@ ENDCLASS(omx_base_component_PrivateType)
  *
  * 1) Fills the basic OpenMAX structure. The fields can be overwritten
  *    by derived components. 
- * 3) Allocates (if needed) the omx_base_component_PrivateType private structure
+ * 2) Allocates (if needed) the omx_base_component_PrivateType private structure
  * 
  * @param openmaxStandComp the ST component to be initialized
+ * @param cComponentName the OpenMAX string that describes the component
  * 
  * @return OMX_ErrorInsufficientResources if a memory allocation fails
  */

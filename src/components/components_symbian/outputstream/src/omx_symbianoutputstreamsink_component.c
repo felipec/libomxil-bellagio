@@ -1,5 +1,5 @@
 /**
- * @file src/components/symbianoutputstream/omx_symbianoutputstreamsink_component.c
+ * @file src/components/components_symbian/outputstream/src/omx_symbianoutputstreamsink_component.c
  * 
  * OpenMAX Symbian output stream sink component. 
  * This component is an audio sink that uses Symbian MMF output stream class.

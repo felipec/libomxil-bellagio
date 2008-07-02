@@ -1,5 +1,5 @@
 /**
-  @file src/loaders/symbianloader/inc/nrc_symbian_component_loader.h
+  @file src/loaders/loaders_symbian/symbianecomloader/inc/nrc_symbian_component_loader.h
 
   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
 

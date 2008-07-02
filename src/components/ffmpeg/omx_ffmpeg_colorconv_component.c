@@ -200,6 +200,7 @@ OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt) {
 }
 
 /** The Constructor 
+  * @param openmaxStandComp the component handle to be constructed
   * @param cComponentName is the name of the constructed component
   */
 OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
@@ -446,14 +447,18 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Deinit(OMX_COMPONENTTYPE *openmaxSt
 /**  This function copies source inmage to destination image of required dimension and color formats 
   * @param src_ptr is the source image strting pointer
   * @param src_stride is the source image stride (src_width * byte_per_pixel)
-  * @param src_width is source image width & src_height is source image height
-  * @param src_offset_x & src_offset_y are x,y offset values (if any) from starting pointer
+  * @param src_width is source image width 
+  * @param src_height is source image height
+  * @param src_offset_x is x offset value (if any) from starting pointer
+  * @param src_offset_y is y offset value (if any) from starting pointer
   * @param dest_ptr is the destination image strting pointer
   * @param dest_stride is the destination image stride (dest_width * byte_per_pixel)
-  * @param dest_width is destination image width & dest_height is destination image height
-  * @param dest_offset_x dest_offset_y are x,y offset values (if any) from starting pointer
-  * @param cpy_width cpy_height is the source image copy width and height - it determines the portion of 
-    source image to be copied from source to destination image
+  * @param dest_width is destination image width 
+  * @param dest_height is destination image height
+  * @param dest_offset_x is x offset value (if any) from ending pointer
+  * @param dest_offset_y is y offset value (if any) from ending pointer
+  * @param cpy_width  is the source image copy width - it determines the portion of source image to be copied from source to destination image
+  * @param cpy_height is the source image copy height - it determines the portion of source image to be copied from source to destination image
   * @param colorformat is the source image color format
   */
 void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U32 src_height, 

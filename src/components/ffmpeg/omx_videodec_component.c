@@ -47,6 +47,7 @@ static OMX_U32 noVideoDecInstance = 0;
 #define DEFAULT_VIDEO_OUTPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*3/2   // YUV 420P 
 
 /** The Constructor of the video decoder component
+  * @param openmaxStandComp the component handle to be constructed
   * @param cComponentName is the name of the constructed component
   */
 OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {

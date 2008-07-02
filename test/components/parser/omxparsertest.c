@@ -488,7 +488,7 @@ OMX_ERRORTYPE test_OpenClose(OMX_STRING component_name) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   DEBUG(DEFAULT_MESSAGES, "GENERAL TEST %s\n",__func__);
-  if(component_name==AUDIO_COMPONENT_NAME_BASE){
+  if(strcmp(component_name, AUDIO_COMPONENT_NAME_BASE) == 0){
      err = OMX_GetHandle(&appPriv->audiodechandle, component_name, NULL, &audiodeccallbacks);
      if(err != OMX_ErrorNone) {
        DEBUG(DEB_LEV_ERR, "No component found\n");
@@ -498,7 +498,7 @@ OMX_ERRORTYPE test_OpenClose(OMX_STRING component_name) {
          DEBUG(DEB_LEV_ERR, "In %s err %08x in Free Handle\n",__func__,err);
        }
      }
-   } else if(component_name==VIDEO_COMPONENT_NAME_BASE){
+   } else if(strcmp(component_name, VIDEO_COMPONENT_NAME_BASE) == 0){
      err = OMX_GetHandle(&appPriv->videodechandle, component_name, NULL , &videodeccallbacks);
      if(err != OMX_ErrorNone) {
        DEBUG(DEB_LEV_ERR, "No component found\n");

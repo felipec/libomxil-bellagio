@@ -1,5 +1,5 @@
 /**
-  @file test/components/audio_effects/omxcompnameenumtest.c
+  @file test/components/components_symbian/symbiancompnameenum/src/omxcompnameenumtest.c
     
   Copyright (C) 2008  STMicroelectronics
   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).

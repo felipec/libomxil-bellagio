@@ -1,5 +1,5 @@
 /**
-  @file test/components/testaudio/omxaudiodectest.c
+  @file test/components/audio/omxaudiodectest.c
 
   Test application that uses three OpenMAX components, a file reader, an audio decoder 
   and an ALSA sink. The application receives an compressed audio stream on input port

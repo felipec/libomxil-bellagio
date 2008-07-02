@@ -1,5 +1,5 @@
 /**
-  @file src/loaders/symbianloader/inc/BellagioOpenMaxSymbianLoader.h
+  @file src/loaders/loaders_symbian/symbianecomloader/inc/BellagioOpenMaxSymbianLoader.h
     
   Component loader header for Symbian. 
     

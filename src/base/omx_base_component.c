@@ -56,9 +56,10 @@ extern "C" {
  *
  * 1) Fills the basic OpenMAX structure. The fields can be overwritten
  *    by derived components. 
- * 3) Allocates (if needed) the omx_base_component_PrivateType private structure
+ * 2) Allocates (if needed) the omx_base_component_PrivateType private structure
  * 
  * @param openmaxStandComp the ST component to be initialized
+ * @param cComponentName the OpenMAX string that describes the component
  * 
  * @return OMX_ErrorInsufficientResources if a memory allocation fails
  */
@@ -836,8 +837,9 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
   omx_base_PortType *pPort;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  DEBUG(DEB_LEV_PARAMS, "Setting parameter %i\n", nParamIndex);
+  DEBUG(DEB_LEV_PARAMS, "Setting parameter %x\n", nParamIndex);
   if (ComponentParameterStructure == NULL) {
+    DEBUG(DEB_LEV_ERR, "In %s parameter provided is null! err = %x\n", __func__, err); 
     return OMX_ErrorBadParameter;
   }
  
@@ -867,8 +869,10 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
       OMX_PARAM_PORTDEFINITIONTYPE *pPortParam;
       OMX_U32 j,old_nBufferCountActual=0;
       pPortParam = &omx_base_component_Private->ports[pPortDef->nPortIndex]->sPortParam;
-      if( pPortDef->nBufferCountActual < pPortParam->nBufferCountMin) {
-        return OMX_ErrorBadParameter;
+      if(pPortDef->nBufferCountActual < pPortParam->nBufferCountMin) {
+        DEBUG(DEB_LEV_ERR, "In %s nBufferCountActual of param (%i) is < of nBufferCountMin of port(%i)\n",__func__, (int)pPortDef->nBufferCountActual, (int)pPortParam->nBufferCountMin); 
+        err = OMX_ErrorBadParameter;
+        break;
       }
       old_nBufferCountActual         = pPortParam->nBufferCountActual;
       pPortParam->nBufferCountActual = pPortDef->nBufferCountActual;
@@ -901,6 +905,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
         memcpy(&pPortParam->format.other, &pPortDef->format.other, sizeof(OMX_OTHER_PORTDEFINITIONTYPE));
         break;
       default:
+        DEBUG(DEB_LEV_ERR, "In %s wrong port domain. Out of OpenMAX scope\n",__func__); 
         err = OMX_ErrorBadParameter;
         break;
       }
@@ -943,6 +948,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     DEBUG(DEB_LEV_PARAMS, "In %s Buf Sup Port index=%d\n", __func__,(int)pBufferSupplier->nPortIndex);
 
     if(pBufferSupplier == NULL) {
+      DEBUG(DEB_LEV_ERR, "In %s pBufferSupplier is null!\n",__func__);
       return OMX_ErrorBadParameter;
     }
     if(pBufferSupplier->nPortIndex > (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
@@ -954,7 +960,7 @@ OMX_ERRORTYPE omx_base_component_SetParameter(
     err = omx_base_component_ParameterSanityCheck(hComponent, pBufferSupplier->nPortIndex, pBufferSupplier, sizeof(OMX_PARAM_BUFFERSUPPLIERTYPE));
     if(err==OMX_ErrorIncorrectStateOperation) {
       if (PORT_IS_ENABLED(omx_base_component_Private->ports[pBufferSupplier->nPortIndex])) {
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Incorrect State=%x\n",__func__,omx_base_component_Private->state);
+        DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x\n",__func__,omx_base_component_Private->state);
         return OMX_ErrorIncorrectStateOperation;
       }
     } else if (err != OMX_ErrorNone) {

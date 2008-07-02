@@ -1,5 +1,5 @@
 /**
-  @file src/loaders/BellagioOpenMaxLoader.h
+  @file src/loaders/loaders_symbian/inc/BellagioOpenMaxLoader.h
     
   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
 

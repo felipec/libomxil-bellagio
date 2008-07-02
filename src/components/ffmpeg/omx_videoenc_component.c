@@ -42,6 +42,7 @@ static OMX_U32 noVideoEncInstance = 0;
 #define OUTPUT_ENCODED_COLOR_FMT OMX_COLOR_FormatYUV420Planar
 
 /** The Constructor of the video encoder component
+  * @param openmaxStandComp the component handle to be constructed
   * @param cComponentName is the name of the constructed component
   */
 OMX_ERRORTYPE omx_videoenc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {

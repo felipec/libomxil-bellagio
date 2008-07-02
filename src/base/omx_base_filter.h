@@ -66,7 +66,8 @@ ENDCLASS(omx_base_filter_PrivateType)
  * @brief The base filter contructor for the OpenMAX ST components
  * 
  * @param openmaxStandComp the ST component to be initialized
- * 
+ * @param cComponentName the OpenMAX string that describes the component
+ *  
  * @return OMX_ErrorInsufficientResources if a memory allocation fails
  */
 OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);

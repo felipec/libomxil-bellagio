@@ -1,6 +1,6 @@
 /**
-  @file src/components/components_symbian/BellagioOpenMaxComponent.h
-    
+  @file src/components/components_symbian/inc/BellagioOpenMaxComponent.h
+
   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

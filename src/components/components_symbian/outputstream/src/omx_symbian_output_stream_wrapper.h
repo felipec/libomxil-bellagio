@@ -1,5 +1,5 @@
 /**
-  @file src/components/symbianoutputstream/omx_symbian_output_stream_wrapper.h
+  @file src/components/components_symbian/outputstream/src/omx_symbian_output_stream_wrapper.h
     
   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
 

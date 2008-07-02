@@ -1,5 +1,5 @@
 /**
-	@file test/components/symbianoutputstream/omxsymbianoutputstreamtest.c
+	@file test/components/components_symbian/symbianoutputstream/src/omxsymbianoutputstreamtest.c
 	
 	Simple application that uses an OpenMAX Symbian output stream sink component. The application receives
 	a pcm stream from a file or, if not specified, from standard input.
@@ -223,13 +223,13 @@ OMX_ERRORTYPE symbianoutputstreamEventHandler(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_EVENTTYPE eEvent,
-	OMX_OUT OMX_U32 Data1,
-	OMX_OUT OMX_U32 Data2,
+	OMX_OUT OMX_U32 nData1,
+	OMX_OUT OMX_U32 nData2,
 	OMX_OUT OMX_PTR pEventData)
 {
 	DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);
-	DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)Data2);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)nData1);
+	DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)nData2);
 	tsem_up(appPriv->eventSem);
 	return OMX_ErrorNone;
 }

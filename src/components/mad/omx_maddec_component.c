@@ -70,6 +70,7 @@ void omx_maddec_component_madLibDeInit(omx_maddec_component_PrivateType* omx_mad
 
 /** The Constructor 
   *
+  * @param openmaxStandComp the component handle to be constructed
   * @param cComponentName name of the component to be constructed
   */
 OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
@@ -355,7 +356,9 @@ static inline int scale_int (mad_fixed_t sample) {
 }
 
 /** This function is the buffer management callback function for MP3 decoding
-  * is used to process the input buffer and provide one output buffer 
+  * is used to process the input buffer and provide one output buffer
+  *  
+  * @param openmaxStandComp the component handle
   * @param inputbuffer is the input buffer containing the input MP3 content
   * @param outputbuffer is the output buffer on which the output pcm content will be written
   */

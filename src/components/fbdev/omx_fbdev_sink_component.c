@@ -60,9 +60,12 @@ long GetTime() {
     return ((long)now.tv_sec) * 1000 + ((long)now.tv_usec) / 1000;
 }
 
-/** The Constructor 
-  * @param cComponentName is the name of the constructed component
-  */
+/** The Constructor
+ * 
+ * @param openmaxStandComp is the handle to be constructed
+ * @param cComponentName is the name of the constructed component
+ * 
+ */ 
 OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;  
   omx_fbdev_sink_component_PortType *pPort;
@@ -521,15 +524,20 @@ OMX_COLOR_FORMATTYPE find_omx_pxlfmt(struct fb_var_screeninfo *vscr_info) {
 /**  This function copies source image to destination image of required dimension and color formats 
   * @param src_ptr is the source image strting pointer
   * @param src_stride is the source image stride (src_width * byte_per_pixel)
-  * @param src_width is source image width & src_height is source image height
-  * @param src_offset_x & src_offset_y are x,y offset values (if any) from starting pointer
+  * @param src_width is source image width 
+  * @param src_height is source image height
+  * @param src_offset_x is x offset value (if any) from starting pointer
+  * @param src_offset_y is y offset value (if any) from starting pointer
   * @param dest_ptr is the destination image strting pointer
   * @param dest_stride is the destination image stride (dest_width * byte_per_pixel)
-  * @param dest_width is destination image width & dest_height is destination image height
-  * @param dest_offset_x dest_offset_y are x,y offset values (if any) from starting pointer
-  * @param cpy_width cpy_height is the source image copy width and height - it determines the portion of 
-    source image to be copied from source to destination image
+  * @param dest_width is destination image width 
+  * @param dest_height is destination image height
+  * @param dest_offset_x is x offset value (if any) from ending pointer
+  * @param dest_offset_y is y offset value (if any) from ending pointer
+  * @param cpy_width  is the source image copy width - it determines the portion of source image to be copied from source to destination image
+  * @param cpy_height is the source image copy height - it determines the portion of source image to be copied from source to destination image
   * @param colorformat is the source image color format
+  * @param fbpxlfmt undocumented
   */
 void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U32 src_height, 
                   OMX_S32 src_offset_x, OMX_S32 src_offset_y,

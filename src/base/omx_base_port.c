@@ -48,7 +48,9 @@
   * It takes care of constructing the instance of the port and 
   * every object needed by the base port.
   * 
+  * @param openmaxStandComp in the component that holds the port
   * @param openmaxStandPort the ST port to be initialized
+  * @param nPortIndex the index of the port
   * @param isInput specifices if the port is an input or an output
   * 
   * @return OMX_ErrorInsufficientResources if a memory allocation fails

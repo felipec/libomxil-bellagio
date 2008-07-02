@@ -156,8 +156,8 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
   OMX_IN  OMX_PTR pAppData,
   OMX_IN  OMX_CALLBACKTYPE* pCallBacks) {
   
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   int i;
-  OMX_ERRORTYPE err;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
   for (i = 0; i < bosa_loaders; i++) {
@@ -180,10 +180,15 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
   return OMX_ErrorComponentNotFound;
 }
 
-/** @brief the OMX_FreeHandle standard function
+/** @brief The OMX_FreeHandle standard function
  * 
+ * This function executes the BOSA_DestroyComponent of the component loaders
+ * 
+ * @param hComponent the component handle to be freed
+ * 
+ * @return The error of the BOSA_DestroyComponent function or OMX_ErrorNone
  */
-OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE pHandle) 
+OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent) 
 {
   int i;
     OMX_ERRORTYPE err;
@@ -192,7 +197,7 @@ OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE pHandle)
     {
     err = loadersList[i]->BOSA_DestroyComponent(
           loadersList[i],
-          pHandle);
+          hComponent);
 
     if (err == OMX_ErrorNone) 
     {
@@ -248,6 +253,14 @@ OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
 /** @brief the OMX_SetupTunnel standard function
  * 
  * The implementation of this function is described in the OpenMAX spec
+ * 
+ * @param hOutput component handler that controls the output port of the tunnel
+ * @param nPortOutput index of the output port of the tunnel
+ * @param hInput component handler that controls the input port of the tunnel
+ * @param nPortInput index of the input port of the tunnel
+ * 
+ * @return OMX_ErrorBadParameter, OMX_ErrorPortsNotCompatible, tunnel rejected by a component
+ * or OMX_ErrorNone if the tunnel has been established
  */
 OMX_ERRORTYPE OMX_SetupTunnel(
   OMX_IN  OMX_HANDLETYPE hOutput,
@@ -338,6 +351,11 @@ OMX_ERRORTYPE OMX_GetRolesOfComponent (
  * 
  * This function searches in all the component loaders any component
  * supporting the requested role
+ * 
+ * @param role See spec
+ * @param pNumComps See spec
+ * @param compNames See spec
+ * 
  */
 OMX_ERRORTYPE OMX_GetComponentsOfRole ( 
   OMX_IN      OMX_STRING role,

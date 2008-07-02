@@ -1,5 +1,5 @@
 /**
-	@file src/user_debug_levels.h
+	@file test/components/common/user_debug_levels.h
 	
 	Define the level of debug prints on standard err. The different levels can 
 	be composed with binary OR.

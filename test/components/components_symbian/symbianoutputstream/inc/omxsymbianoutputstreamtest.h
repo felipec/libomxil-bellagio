@@ -1,6 +1,6 @@
 /**
-	@file test/components/symbianoutputstream/omxsymbianoutputstreamtest.h
-	
+	@file test/components/components_symbian/symbianoutputstream/inc/omxsymbianoutputstreamtest.h
+
 	Simple application that uses an OpenMAX Symbian output stream component. The application receives
 	a pcm stream from a file or, if not specified, from standard input.
 	The audio stream is inteded as stereo, at 44100 Hz.
@@ -80,8 +80,8 @@ OMX_ERRORTYPE symbianoutputstreamEventHandler(
 	OMX_OUT OMX_HANDLETYPE hComponent,
 	OMX_OUT OMX_PTR pAppData,
 	OMX_OUT OMX_EVENTTYPE eEvent,
-	OMX_OUT OMX_U32 Data1,
-	OMX_OUT OMX_U32 Data2,
+	OMX_OUT OMX_U32 nData1,
+	OMX_OUT OMX_U32 nData2,
 	OMX_OUT OMX_PTR pEventData);
 
     /** The EmptyBufferDone method is used to return emptied buffers from an

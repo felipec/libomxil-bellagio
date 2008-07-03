@@ -161,7 +161,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   /** set the function pointers */
   omx_fbdev_sink_component_Private->destructor = omx_fbdev_sink_component_Destructor;
   omx_fbdev_sink_component_Private->BufferMgmtCallback = omx_fbdev_sink_component_BufferMgmtCallback;
-  omx_fbdev_sink_component_Private->ports[0]->Port_SendBufferFunction = omx_fbdev_sink_component_port_SendBufferFunction;  // TODO - check this out - for clock port base Send Buffer function is used
+  omx_fbdev_sink_component_Private->ports[0]->Port_SendBufferFunction = omx_fbdev_sink_component_port_SendBufferFunction; 
   openmaxStandComp->SetParameter = omx_fbdev_sink_component_SetParameter;
   openmaxStandComp->GetParameter = omx_fbdev_sink_component_GetParameter;
   omx_fbdev_sink_component_Private->messageHandler = omx_fbdev_sink_component_MessageHandler;
@@ -1140,12 +1140,12 @@ OMX_BOOL omx_fbdev_sink_component_ClockPortHandleFunction(omx_fbdev_sink_compone
 
   /* frame is not to be droppef so send the request for the timestamp for the data delivery */
   if(SendFrame){ 
-    if(PORT_IS_TUNNELED(pClockPort) && /*!PORT_IS_BEING_FLUSHED(pPort) &&*/ !PORT_IS_BEING_FLUSHED(pClockPort)) { //TODO - this condition can be removed
+    if(PORT_IS_TUNNELED(pClockPort) && !PORT_IS_BEING_FLUSHED(pClockPort)) { 
       setHeader(&pClockPort->sMediaTimeRequest, sizeof(OMX_TIME_CONFIG_MEDIATIMEREQUESTTYPE));
       pClockPort->sMediaTimeRequest.nMediaTimestamp = pInputBuffer->nTimeStamp;
       pClockPort->sMediaTimeRequest.nOffset         = 100; /*set the requested offset */
       pClockPort->sMediaTimeRequest.nPortIndex      = pClockPort->nTunneledPort;
-      pClockPort->sMediaTimeRequest.pClientPrivate  = NULL; /* TODO fill the appropriate value */
+      pClockPort->sMediaTimeRequest.pClientPrivate  = NULL; /* fill the appropriate value */
       err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeMediaTimeRequest, &pClockPort->sMediaTimeRequest);
       if(err!=OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
@@ -1230,8 +1230,6 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
       pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
     }
 
-   /* TODO - removed the scale change check */
- 
     /* do not send the data to sink and return back, if the clock is not running*/
     if(!omx_fbdev_sink_component_Private->eState==OMX_TIME_ClockStateRunning){
       pInputBuffer->nFilledLen=0;

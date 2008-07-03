@@ -328,7 +328,7 @@ OMX_BOOL omx_alsasink_component_ClockPortHandleFunction(omx_alsasink_component_P
      clockBuffer = dequeue(pClockPort->pBufferQueue);
      pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
      if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
-       if(/*(omx_alsasink_component_Private->xScale>>16)==2 &&*/ (pMediaTime->xScale>>16)==1){ /* TODO - check with Q16 format only */
+       if(/*(omx_alsasink_component_Private->xScale>>16)==2 &&*/ (pMediaTime->xScale>>16)==1){ /* check with Q16 format only */
              /* rebase the clock time base when turning to normal play mode*/
           hclkComponent = pClockPort->hTunneledComponent;
           setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
@@ -351,7 +351,7 @@ OMX_BOOL omx_alsasink_component_ClockPortHandleFunction(omx_alsasink_component_P
     if(!PORT_IS_BEING_FLUSHED(pClockPort)){
      pClockPort->sMediaTimeRequest.nOffset         = 100; /*set the requested offset */
      pClockPort->sMediaTimeRequest.nPortIndex      = pClockPort->nTunneledPort;
-     pClockPort->sMediaTimeRequest.pClientPrivate  = NULL; /* TODO fill the appropriate value */
+     pClockPort->sMediaTimeRequest.pClientPrivate  = NULL; /* fill the appropriate value */
      pClockPort->sMediaTimeRequest.nMediaTimestamp = inputbuffer->nTimeStamp;
      err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeMediaTimeRequest, &pClockPort->sMediaTimeRequest);
      if(err!=OMX_ErrorNone) {
@@ -445,12 +445,7 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
     return;
   }
 
-   if(!PORT_IS_TUNNELED(pClockPort)){
-      allDataSent = OMX_FALSE;  /* TODO remove it from the special case as it is handled below -send the data to the buffer if clock port is not tunneled */
-   }
-
-
-allDataSent = OMX_FALSE;  
+  allDataSent = OMX_FALSE;  
 
   totalBuffer = inputbuffer->nFilledLen/frameSize;
   offsetBuffer = 0;

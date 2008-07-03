@@ -523,7 +523,7 @@ OMX_ERRORTYPE omx_clocksrc_component_SetConfig(
     gettimeofday(&tv,&zv);
     walltime = ((OMX_TICKS)tv.tv_sec)*1000000 + ((OMX_TICKS)tv.tv_usec);
     mediatime = omx_clocksrc_component_Private->MediaTimeBase + Scale*(walltime - omx_clocksrc_component_Private->WallTimeBase);
-    omx_clocksrc_component_Private->WallTimeBase   = walltime; //TODO - suitable start time to be used here
+    omx_clocksrc_component_Private->WallTimeBase   = walltime; // suitable start time to be used here
     omx_clocksrc_component_Private->MediaTimeBase  = mediatime;  // TODO - needs to be checked 
 
     /* update the new scale value */

@@ -63,7 +63,7 @@ typedef struct appPrivateType{
 }appPrivateType;
 
 /* Size of the buffers requested to the component */
-#define BUFFER_IN_SIZE 2*8192
+#define BUFFER_IN_SIZE 2*8192*2
 
 /* Callback prototypes */
 OMX_ERRORTYPE volcEventHandler(

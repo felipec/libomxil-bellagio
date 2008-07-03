@@ -60,7 +60,7 @@ OMX_BUFFERHEADERTYPE *pOutBuffer[2];
 OMX_BUFFERHEADERTYPE *pInBufferVolc[2], *pOutBufferVolc[2];
 OMX_BUFFERHEADERTYPE *pInBufferSink[2];
 
-OMX_U32 buffer_out_size = 16384;
+OMX_U32 buffer_out_size = 16384 * 2;
 
 int rate = 0,channel=0;
 char *output_file;

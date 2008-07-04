@@ -1,19 +1,23 @@
 Bellagio OpenMAX Integration Layer 1.1.1 project
-Release 0.3.4
+Release 0.9.0
 
 This is an Open Source implementation of the OpenMAX Integration Layer
 (IL) API ver. 1.1.1, specified by the Khronos group (see
 http://www.khronos.org/openmax).
 
-This package includes the libomxil shared library together with the
+This package includes the libomxil-bellagio shared library together with the
 following OpenMAX components (built as separate shared objects and
 loaded at runtime):
-
+CORE FUNCTIONALITIES
+- An IL core
+- A component loader for static libraries for Linux
+- A component loader for Symbian
+- A framework of components and ports base 
+  implementations for Bellagio Hierarchy
 AUDIO
 - OMX ALSA sink component
 - OMX ALSA source component
-
-- OMX audio decoder based on FFmpeg/Vorbis libraries that supports the
+- OMX audio decoder based on FFmpeg libraries that supports the
   following audio formats:
   o MP3
   o Ogg Vorbis
@@ -24,7 +28,7 @@ AUDIO
   audio format
 - OMX audio volume control
 - OMX audio file reader for FFmpeg components
-- OMX audio mixer components
+- OMX audio mixer component
 
 VIDEO
 - OMX video decoder decoding input MPEG-4 or H.264 format file (in H.264
@@ -52,6 +56,11 @@ CLOCK
 - OMX Clock component. It take audio(default) as input reference clock
   and provide media clock to video sink and other component. It support
   fast forward and rewind.
+
+SYMBIAN COMPONENTS
+- Audio mixer
+- MMF Output stream audio renderer
+- Volume control component
 
 N.B. The 3GP parser can support MPEG-4,H.264 video and MPEG-4,AAC
 audio. FFmpeg can't encode (Warning, using MS style audio codec tag,
@@ -83,6 +92,9 @@ registered with the command "omxregister-bellagio".
 That will create a registry file that will contain all the components
 installed by default in /usr/local/lib/libomxil-bellagio (read the man
 page).
+
+Note: the default location for the installation is TARGET=/usr/local/lib 
+for the library, and the component will be installed in TARGET/bellagio 
 
 Now, run the tests.
 

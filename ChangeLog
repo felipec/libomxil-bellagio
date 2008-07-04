@@ -1,3 +1,14 @@
+Changes in 0.9.0:
+The main additions to this delivery are:
+
+ - The symbian version of bellagio with a new component loader, 
+   several components and all the needed infrastructure has been added
+ - Audio video synchronization support, with the addition of 
+   a new Clock component
+ - Enhancement in the build system
+ - New naming for the bellagio library. Now it is named libomxil-bellagio
+
+
 Changes in 0.3.4:
 added several components: 
  - audio source based on alsa

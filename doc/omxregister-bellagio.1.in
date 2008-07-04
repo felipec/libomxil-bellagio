@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii omxregister-bellagio.1
 .\"
-.TH OMXREGISTER-BELLAGIO 1 "March 2008" Bellagio "OpenMAX Bellagio"
+.TH OMXREGISTER-BELLAGIO 1 "July 2008" Bellagio "OpenMAX Bellagio"
 .SH NAME
 omxregister-bellagio \- register
 .SM OpenMAX/Bellagio

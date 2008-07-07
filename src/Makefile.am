@@ -19,6 +19,7 @@ libomxil_bellagio_la_SOURCES = component_loader.h \
 
 libomxil_bellagio_la_CFLAGS = -I$(top_srcdir)/include -I$(srcdir)/base
 libomxil_bellagio_la_LIBADD = base/libomxbase.la
+libomxil_bellagio_la_LDFLAGS = -version-info @SHARED_VERSION_INFO@
 
 include_extradir = $(includedir)/bellagio
 

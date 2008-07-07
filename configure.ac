@@ -132,7 +132,7 @@ AC_ARG_ENABLE(
     [with_videosrc=$enableval],
     [with_videosrc=no])
 
-#Check whether clock component has been requested                                
+#Check whether clock component has been requested
 AC_ARG_ENABLE(
     [clocksrc],
     [AC_HELP_STRING(
@@ -142,7 +142,7 @@ AC_ARG_ENABLE(
     [with_clocksrc=yes]) dnl default
 
 #Enable clock source log
-AC_ARG_ENABLE( 
+AC_ARG_ENABLE(
     [clocksrclog],
     [AC_HELP_STRING(
         [--enable-clocksrclog],
@@ -159,6 +159,14 @@ AC_ARG_ENABLE(
     [with_components=$enableval],
     [with_components=yes])
 
+#Check whether to create documentation 
+AC_ARG_ENABLE(
+    [doc],
+    [AC_HELP_STRING(
+        [--enable-doc],
+        [whether to enable documentation generation])],
+    [with_doc=$enableval],
+    [with_doc=no])
 
 ################################################################################
 # Check for programs                                                           #
@@ -173,7 +181,7 @@ AM_PROG_LIBTOOL
 
 # Check for doxygen
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, true, false)
-AM_CONDITIONAL(HAVE_DOXYGEN,$HAVE_DOXYGEN)
+AM_CONDITIONAL(HAVE_DOXYGEN,($HAVE_DOXYGEN) && (test x$with_doc = xyes))
 if test $HAVE_DOXYGEN = "false"; then
              AC_MSG_WARN([*** doxygen not found, docs will not be built])
 fi

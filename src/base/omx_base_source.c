@@ -6,7 +6,7 @@
   This class can also be used for a two port source component
   It can be used as base class for source components.
 
-  Copyright (C) 2007-2008  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

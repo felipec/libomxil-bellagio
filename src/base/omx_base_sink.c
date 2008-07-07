@@ -5,7 +5,7 @@
   processing. It derives from base component and contains a single input port. 
   It can be used as base class for sink components.
 
-  Copyright (C) 2007-2008  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
   This library is free software; you can redistribute it and/or modify it under

@@ -4,7 +4,7 @@
   This component implements and MP3 decoder. The MP3 decoder is based on FFmpeg
   software library.
 
-  Copyright (C) 2007-2008  STMicroelectronics
+  Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies)
 
   This library is free software; you can redistribute it and/or modify it under

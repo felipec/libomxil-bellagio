@@ -705,7 +705,7 @@ int main(int argc, char** argv) {
   bOmxInitialized =  OMX_TRUE;
 
   /* Initialize application private data */
-  appPriv = (appPrivateType *)malloc(sizeof(appPrivateType));
+  appPriv = malloc(sizeof(appPrivateType));
   if (appPriv == NULL) {
     DEBUG(DEB_LEV_ERR, "Allocate app private data failed!Exiting...\n");
     err = OMX_ErrorInsufficientResources;
@@ -758,7 +758,7 @@ int main(int argc, char** argv) {
   }
 
   /* Allocate and init semaphores */
-  appPriv->cameraSourceEventSem = (tsem_t *)malloc(sizeof(tsem_t));
+  appPriv->cameraSourceEventSem = malloc(sizeof(tsem_t));
   if (appPriv->cameraSourceEventSem == NULL) {
     DEBUG(DEB_LEV_ERR, "Allocate camera event semaphore failed!Exiting...\n");
     err = OMX_ErrorInsufficientResources;
@@ -766,7 +766,7 @@ int main(int argc, char** argv) {
   }
   tsem_init(appPriv->cameraSourceEventSem, 0);
 
-  appPriv->fbsinkEventSem = (tsem_t *)malloc(sizeof(tsem_t));
+  appPriv->fbsinkEventSem = malloc(sizeof(tsem_t));
   if (appPriv->fbsinkEventSem == NULL) {
     DEBUG(DEB_LEV_ERR, "Allocate fbsink event semaphore failed!Exiting...\n");
     err = OMX_ErrorInsufficientResources;
@@ -774,7 +774,7 @@ int main(int argc, char** argv) {
   }
   tsem_init(appPriv->fbsinkEventSem, 0);
 
-  appPriv->colorconvEventSem = (tsem_t *)malloc(sizeof(tsem_t));
+  appPriv->colorconvEventSem = malloc(sizeof(tsem_t));
   if (appPriv->colorconvEventSem == NULL) {
     DEBUG(DEB_LEV_ERR, "Allocate colorconv event semaphore failed!Exiting...\n");
     err = OMX_ErrorInsufficientResources;

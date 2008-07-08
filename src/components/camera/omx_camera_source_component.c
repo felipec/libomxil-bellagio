@@ -770,7 +770,7 @@ OMX_ERRORTYPE omx_camera_source_component_Constructor(OMX_COMPONENTTYPE *openmax
       /** this is the important thing separating this from the base class; size of the struct is for derived class port type
         * this could be refactored as a smarter factory function instead?
         */
-      omx_camera_source_component_Private->ports[i] = (omx_base_PortType *)calloc(1, sizeof(omx_camera_source_component_PortType));
+      omx_camera_source_component_Private->ports[i] = calloc(1, sizeof(omx_camera_source_component_PortType));
       if (!omx_camera_source_component_Private->ports[i]) {
         return OMX_ErrorInsufficientResources;
       }

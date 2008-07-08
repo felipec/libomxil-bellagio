@@ -86,7 +86,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   }
 
   strncpy(stComponents[0]->name_specific[0], "OMX.st.v4l.camera_source", OMX_MAX_STRINGNAME_SIZE);
-  stComponents[0]->name_specific[OMX_MAX_STRINGNAME_SIZE-1] = '\0';
+  stComponents[0]->name_specific[0][OMX_MAX_STRINGNAME_SIZE-1] = '\0';
 
   /* component roles */
   stComponents[0]->role_specific = calloc(stComponents[0]->name_specific_length, sizeof(char *));
@@ -104,7 +104,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   }
 
   strncpy(stComponents[0]->role_specific[0], "v4l.camera_source", OMX_MAX_STRINGNAME_SIZE);
-  stComponents[0]->role_specific[OMX_MAX_STRINGNAME_SIZE-1] = '\0';
+  stComponents[0]->role_specific[0][OMX_MAX_STRINGNAME_SIZE-1] = '\0';
 
   /* component constructor */
   stComponents[0]->constructor = omx_camera_source_component_Constructor;

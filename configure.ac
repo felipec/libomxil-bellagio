@@ -109,10 +109,10 @@ AC_ARG_ENABLE(
 AC_ARG_ENABLE(
     [fbvideosink],
     [AC_HELP_STRING(
-        [--enable-fbvideosink],
-        [whether to enable the fbdev video sink])],
+        [--disable-fbvideosink],
+        [whether to disable the fbdev video sink])],
     [with_fbdev_videosink=$enableval],
-    [with_fbdev_videosink=no])
+    [with_fbdev_videosink=yes])
 
 #Check whether ALSA components have been requested
 AC_ARG_ENABLE(
@@ -127,10 +127,10 @@ AC_ARG_ENABLE(
 AC_ARG_ENABLE(
     [videosrc],
     [AC_HELP_STRING(
-        [--enable-videosrc],
-        [whether to enable the video src/camera])],
+        [--disable-videosrc],
+        [whether to disable the video src/camera])],
     [with_videosrc=$enableval],
-    [with_videosrc=no])
+    [with_videosrc=yes])
 
 #Check whether clock component has been requested
 AC_ARG_ENABLE(

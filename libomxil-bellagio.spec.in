@@ -52,6 +52,10 @@ make
 %{_libdir}/libomxil-bellagio.so.0.0.0
 %{_libdir}/bellagio/libomxalsa.so
 %{_libdir}/bellagio/libomxaudio_effects.so
+%{_libdir}/bellagio/libomxclocksrc.so
+%{_libdir}/bellagio/libomxfbdev.so
+%{_libdir}/bellagio/libomxvideosrc.so
+%{_libdir}/bellagio/libomxcamera.so
 %{_libdir}/bellagio/libomxffmpeg.so
 %{_libdir}/bellagio/libomxfilereader.so
 %{_libdir}/bellagio/libomxmad.so
@@ -59,6 +63,8 @@ make
 %{_libdir}/bellagio/libomxvorbis.so
 
 %changelog
+* Mon Jul 07 2008 Giulio Urlini
+- added clock source, video source, camera, frame buffer writer
 * Thu Mar 06 2008 Marc-Andre Lureau
 - copy&pasted some good practices from some other .spec.in
 - changed components directory

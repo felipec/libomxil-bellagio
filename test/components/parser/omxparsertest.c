@@ -516,7 +516,6 @@ OMX_ERRORTYPE test_OpenClose(OMX_STRING component_name) {
 
 int main(int argc, char** argv) {
   int argn_dec;
-  char *temp                          = NULL;
   int gain                            = -1;
   OMX_ERRORTYPE                       err;
   OMX_INDEXTYPE                       eIndexParamFilename;
@@ -840,14 +839,15 @@ int main(int argc, char** argv) {
      DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
     exit(1);
   } else {
+    char *temp = malloc(25);
     DEBUG(DEB_LEV_SIMPLE_SEQ,"FileName Param index : %x \n",eIndexParamFilename);
-    temp = malloc(25);
     OMX_GetParameter(appPriv->parser3gphandle,eIndexParamFilename,temp);
     err = OMX_SetParameter(appPriv->parser3gphandle,eIndexParamFilename,input_file);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"\n error in input format - exiting\n");
       exit(1);
     }
+    free(temp);
   }
 
   /* Set up the tunnel between the clock component ports and the client clock ports and disable the rest of the ports */
@@ -1695,7 +1695,6 @@ int main(int argc, char** argv) {
   free(input_file);
   free(output_file_audio);
   free(output_file_video);
-  free(temp);
 
   return 0;
 }  

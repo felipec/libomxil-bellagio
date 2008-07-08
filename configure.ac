@@ -64,6 +64,7 @@ AC_CONFIG_FILES([
     test/components/audio_effects/Makefile
     test/components/parser/Makefile
     test/components/camera/Makefile
+    test/components/clocksrc/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #
@@ -181,8 +182,8 @@ AM_PROG_LIBTOOL
 
 # Check for doxygen
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, true, false)
-AM_CONDITIONAL(HAVE_DOXYGEN,($HAVE_DOXYGEN) && (test x$with_doc = xyes))
-if test $HAVE_DOXYGEN = "false"; then
+AM_CONDITIONAL(HAVE_DOXYGEN,$HAVE_DOXYGEN)
+if ((test $HAVE_DOXYGEN = "false") || (test x$with_doc = xno)); then
              AC_MSG_WARN([*** doxygen not found, docs will not be built])
 fi
 

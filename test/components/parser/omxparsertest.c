@@ -841,7 +841,7 @@ int main(int argc, char** argv) {
     exit(1);
   } else {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"FileName Param index : %x \n",eIndexParamFilename);
-    temp = (char *)malloc(25);
+    temp = malloc(25);
     OMX_GetParameter(appPriv->parser3gphandle,eIndexParamFilename,temp);
     err = OMX_SetParameter(appPriv->parser3gphandle,eIndexParamFilename,input_file);
     if(err != OMX_ErrorNone) {

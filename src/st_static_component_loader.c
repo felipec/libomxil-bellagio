@@ -58,7 +58,7 @@ OMX_U32 numLib=0;
  */
 void st_static_InitComponentLoader() {
 
-  st_static_loader = (BOSA_COMPONENTLOADER *) calloc(1, sizeof(BOSA_COMPONENTLOADER));
+  st_static_loader = calloc(1, sizeof(BOSA_COMPONENTLOADER));
   assert(st_static_loader);
 
   st_static_loader->BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;

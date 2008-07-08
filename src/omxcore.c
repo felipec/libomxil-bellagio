@@ -70,7 +70,7 @@ OMX_ERRORTYPE BOSA_AddComponentLoader(BOSA_COMPONENTLOADER *pLoader)
   assert(pLoader);
   
   bosa_loaders++;
-  newLoadersList = (BOSA_COMPONENTLOADER **) realloc(loadersList, bosa_loaders * sizeof(BOSA_COMPONENTLOADER *));
+  newLoadersList = realloc(loadersList, bosa_loaders * sizeof(BOSA_COMPONENTLOADER *));
   
   if (!newLoadersList)
     return OMX_ErrorInsufficientResources;

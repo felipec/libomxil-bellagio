@@ -90,7 +90,7 @@ createComponentLoaders()
 		}
 	    fptr = functionPointer;
 
-		loader = (BOSA_COMPONENTLOADER *) calloc(1, sizeof(BOSA_COMPONENTLOADER));
+		loader = calloc(1, sizeof(BOSA_COMPONENTLOADER));
 
 		if (loader == NULL) 
 		{

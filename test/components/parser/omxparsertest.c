@@ -1317,7 +1317,7 @@ int main(int argc, char** argv) {
 
     DEBUG(DEB_LEV_SIMPLE_SEQ,"waiting for  clock src state executing\n");
     tsem_down(appPriv->clockEventSem);
-    DEBUG(DEFAULT_MESSAGES, "CLOCK SRC in EXECUTING state\n");
+    DEBUG(DEFAULT_MESSAGES, "clock src in executing state\n");
 
     /* set the audio as the master */ 
     setHeader(&sRefClock, sizeof(OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE));

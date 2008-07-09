@@ -405,7 +405,7 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   if(PORT_IS_TUNNELED(pClockPort)){
     /* if  first time stamp is received then notify the clock component */  
     if(inputbuffer->nInputPortIndex == OMX_BASE_SINK_INPUTPORT_INDEX && inputbuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-      DEBUG(DEB_LEV_ERR,"In %s  first time stamp = %llx \n", __func__,inputbuffer->nTimeStamp);
+      DEBUG(DEB_LEV_FULL_SEQ,"In %s  first time stamp = %llx \n", __func__,inputbuffer->nTimeStamp);
       inputbuffer->nFlags = 0;
       hclkComponent = pClockPort->hTunneledComponent;
       setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));

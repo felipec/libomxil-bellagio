@@ -411,7 +411,7 @@ OMX_ERRORTYPE omx_clocksrc_component_SetConfig(
         } else if(omx_clocksrc_component_Private->sClockState.eState == OMX_TIME_ClockStateWaitingForStartTime) {
           return OMX_ErrorSameState;
         }
-        DEBUG(DEB_ALL_MESS," in  %s ...set to OMX_TIME_ClockStateWaitingForStartTime  mask sent=%d\n",__func__,(int)clockstate->nWaitMask);
+        DEBUG(DEB_LEV_SIMPLE_SEQ," in  %s ...set to OMX_TIME_ClockStateWaitingForStartTime  mask sent=%d\n",__func__,(int)clockstate->nWaitMask);
         memcpy(&omx_clocksrc_component_Private->sClockState, clockstate, sizeof(OMX_TIME_CONFIG_CLOCKSTATETYPE));
       break;
       case OMX_TIME_ClockStateStopped:
@@ -467,7 +467,7 @@ OMX_ERRORTYPE omx_clocksrc_component_SetConfig(
       gettimeofday(&tv,&zv);
       walltime = ((OMX_TICKS)tv.tv_sec)*1000000 + ((OMX_TICKS)tv.tv_usec);
       omx_clocksrc_component_Private->WallTimeBase          = walltime; 
-      DEBUG(DEB_ALL_MESS,"Mediatimebase=%llx walltimebase=%llx \n",omx_clocksrc_component_Private->MediaTimeBase,omx_clocksrc_component_Private->WallTimeBase);
+      DEBUG(DEB_LEV_SIMPLE_SEQ,"Mediatimebase=%llx walltimebase=%llx \n",omx_clocksrc_component_Private->MediaTimeBase,omx_clocksrc_component_Private->WallTimeBase);
       omx_clocksrc_component_Private->eUpdateType        = OMX_TIME_UpdateClockStateChanged;
       /* update the state change in all port */
       for(i=0;i<omx_clocksrc_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts;i++) {

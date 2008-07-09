@@ -1210,7 +1210,7 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
     DEBUG(DEB_LEV_FULL_SEQ, "In %s Clock Port is Tunneled. Sending Request\n", __func__);
     /* if first time stamp is received then notify the clock component */  
     if(pInputBuffer->nInputPortIndex == OMX_BASE_SINK_INPUTPORT_INDEX && pInputBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-      DEBUG(DEB_LEV_ERR," In %s  first time stamp = %llx \n", __func__,pInputBuffer->nTimeStamp);
+      DEBUG(DEB_LEV_FULL_SEQ," In %s  first time stamp = %llx \n", __func__,pInputBuffer->nTimeStamp);
       pInputBuffer->nFlags = 0;
       hclkComponent = pClockPort->hTunneledComponent;
       setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));

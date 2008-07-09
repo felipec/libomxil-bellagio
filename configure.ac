@@ -164,10 +164,10 @@ AC_ARG_ENABLE(
 AC_ARG_ENABLE(
     [doc],
     [AC_HELP_STRING(
-        [--enable-doc],
+        [--disable-doc],
         [whether to enable documentation generation])],
     [with_doc=$enableval],
-    [with_doc=no])
+    [with_doc=yes])
 
 ################################################################################
 # Check for programs                                                           #
@@ -182,8 +182,8 @@ AM_PROG_LIBTOOL
 
 # Check for doxygen
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, true, false)
-AM_CONDITIONAL(HAVE_DOXYGEN,$HAVE_DOXYGEN)
-if ((test $HAVE_DOXYGEN = "false") || (test x$with_doc = xno)); then
+AM_CONDITIONAL(HAVE_DOXYGEN,($HAVE_DOXYGEN) && (test x$with_doc = xyes))
+if (test $HAVE_DOXYGEN = "false"); then
              AC_MSG_WARN([*** doxygen not found, docs will not be built])
 fi
 

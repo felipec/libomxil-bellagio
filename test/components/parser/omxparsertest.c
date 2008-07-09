@@ -816,22 +816,22 @@ int main(int argc, char** argv) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Disabled\n", __func__);
 
    if(flagIsDisplayRequested){
-   err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
-   if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed\n");
-      exit(1);
-    }
-    tsem_down(appPriv->audioSinkEventSem); /* audio sink clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
-
-   err = OMX_SendCommand(appPriv->videosinkhandle, OMX_CommandPortDisable, 1, NULL);
-   if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"videosink clock port disable failed\n");
-      exit(1);
-    }
-    tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
-  }
+      err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
+      if(err != OMX_ErrorNone) {
+         DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed\n");
+         exit(1);
+       }
+       tsem_down(appPriv->audioSinkEventSem); /* audio sink clock port disabled */
+       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
+   
+      err = OMX_SendCommand(appPriv->videosinkhandle, OMX_CommandPortDisable, 1, NULL);
+      if(err != OMX_ErrorNone) {
+         DEBUG(DEB_LEV_ERR,"videosink clock port disable failed\n");
+         exit(1);
+       }
+       tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port disabled */
+       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
+   }
  }
 
   /** setting the input format in parser3gp */

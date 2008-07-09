@@ -807,6 +807,15 @@ int main(int argc, char** argv) {
 
  /* disable the clock ports of the clients (audio, video and parser), if AVsync not enabled*/
  if(!flagAVsync) {
+   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortDisable, 2, NULL);
+   if(err != OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"parser clock port disable failed\n");
+      exit(1);
+    }
+    tsem_down(appPriv->parser3gpEventSem); /* parser clock port disabled */
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Disabled\n", __func__);
+
+   if(flagIsDisplayRequested){
    err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
    if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed\n");
@@ -822,15 +831,7 @@ int main(int argc, char** argv) {
     }
     tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port disabled */
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
-
-   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortDisable, 2, NULL);
-   if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"parser clock port disable failed\n");
-      exit(1);
-    }
-    tsem_down(appPriv->parser3gpEventSem); /* parser clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Disabled\n", __func__);
-
+  }
  }
 
   /** setting the input format in parser3gp */
@@ -2054,8 +2055,8 @@ OMX_ERRORTYPE videodecEmptyBufferDone(
       else {
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Fill This Buffer\n", __func__,(int)pBuffer->nFlags);
         iBufferDropped++;
-        if(iBufferDropped==2) {
-//          tsem_up(appPriv->eofSem);
+        if(iBufferDropped==2 && !flagIsDisplayRequested) {
+          tsem_up(appPriv->eofSem);
         }
       }
     } else {
@@ -2209,12 +2210,12 @@ OMX_ERRORTYPE colorconvEmptyBufferDone(
       DEBUG(DEB_LEV_ERR, "In %s: eos=%x Dropping Fill This Buffer\n", __func__,(int)pBuffer->nFlags);
       iBufferDropped++;
       if(iBufferDropped == 2) {
-//        tsem_up(appPriv->eofSem);
+        tsem_up(appPriv->eofSem);
       }
     }
   } else {
     if(!bEOS) {
-//      tsem_up(appPriv->eofSem);
+      tsem_up(appPriv->eofSem);
     }
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
@@ -2459,14 +2460,14 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
       else {
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Fill This Buffer\n", __func__,(int)pBuffer->nFlags);
         iBufferDropped++;
-        if(iBufferDropped==2) {
-//          tsem_up(appPriv->eofSem);
+        if(iBufferDropped==2 && !flagIsDisplayRequested) {
+          tsem_up(appPriv->eofSem);
         }
       }
     } else {
       if(!bEOS) {
         DEBUG(DEB_LEV_SIMPLE_SEQ,"It is here EOS = %d\n",appPriv->eofSem->semval);
-//        tsem_up(appPriv->eofSem);
+        tsem_up(appPriv->eofSem);
       }
       DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
     }
@@ -2619,13 +2620,13 @@ OMX_ERRORTYPE volumeEmptyBufferDone(
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Fill This Buffer\n", __func__,(int)pBuffer->nFlags);
       iBufferDropped++;
       if(iBufferDropped==2) {
-//        tsem_up(appPriv->eofSem);
+        tsem_up(appPriv->eofSem);
       }
     }
   } else {
     if(!bEOS) {
       DEBUG(DEFAULT_MESSAGES,"It is here EOS = %d\n",appPriv->eofSem->semval);
-//      tsem_up(appPriv->eofSem);
+      tsem_up(appPriv->eofSem);
     }
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
@@ -2691,7 +2692,7 @@ OMX_ERRORTYPE volumeFillBufferDone(
         DEBUG(DEFAULT_MESSAGES,"In %s EOS reached\n",__func__);
         volCompBufferDropped++;
         if(volCompBufferDropped==2) {
-//          tsem_up(appPriv->eofSem);
+          tsem_up(appPriv->eofSem);
         }
       }
     }

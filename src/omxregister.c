@@ -70,28 +70,53 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 	int (*fptr)(void *);
 	stLoaderComponentType **stComponents;
 	int ncomponents = 0, nroles=0;
+	int pathconsumed = 0;
+	int currentgiven;
+	int index;
+	char* currentpath = componentspath;
+	char* actual;
+	/* the componentpath contains a single or multiple directories
+	 * and is is semi colon separated like env variables in Linux
+	 */
+	while (!pathconsumed) {
+		DEBUG(DEB_LEV_ERR, "---beginning\n");
+		index = 0;
+		currentgiven = 0;
+		while (!currentgiven) {
+			if (*(currentpath + index) == '\0') {
+				pathconsumed = 1;
+				DEBUG(DEB_LEV_ERR, "---end of paths\n");
+			}		
+			if ((*(currentpath + index) == ':') || (*(currentpath + index) =='\0')) {
+				currentgiven = 1;
+				actual = malloc(index + 1);
+				strncpy(actual, currentpath, index);
+				*(actual+index) = '\0';
+				DEBUG(DEB_LEV_ERR, "---detected path %s\n", actual);
+				currentpath = currentpath + index + 1;
+			}
+			index++;
+		}
+		/* Populate the registry file */
+		dirp = opendir(actual);
+		if(dirp == NULL){
+			int err = errno;
+			DEBUG(DEB_LEV_ERR, "Cannot open directory %s\n", actual);
+			return err;
+		}
+		while((dp = readdir(dirp)) != NULL) {
+			int len = strlen(dp->d_name);
 
-	/* Populate the registry file */
-	dirp = opendir(componentspath);
-	if(dirp == NULL){
-    int err = errno;
-		DEBUG(DEB_LEV_ERR, "Cannot open directory %s\n", componentspath);
-		return err;
-	}
-
-	while((dp = readdir(dirp)) != NULL) {
-    int len = strlen(dp->d_name);
-
-		if(len >= 3){
+			if(len >= 3){
 
 
-      if(strncmp(dp->d_name+len-3, ".so", 3) == 0){
-        char lib_absolute_path[strlen(componentspath) + len + 1];
+				if(strncmp(dp->d_name+len-3, ".so", 3) == 0){
+					char lib_absolute_path[strlen(actual) + len + 1];
 
-				strcpy(lib_absolute_path, componentspath);
-				strcat(lib_absolute_path, dp->d_name);
+					strcpy(lib_absolute_path, actual);
+					strcat(lib_absolute_path, dp->d_name);
 
-				if((handle = dlopen(lib_absolute_path, RTLD_NOW)) == NULL) {
+					if((handle = dlopen(lib_absolute_path, RTLD_NOW)) == NULL) {
 					DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", lib_absolute_path, dlerror());
 				} else {
 					if ((fptr = dlsym(handle, "omx_component_library_Setup")) == NULL) {
@@ -118,17 +143,17 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 								stComponents[i]->componentVersion.s.nStep,
 								lib_absolute_path);
 						if (verbose)
-              printf("Component %s registered\n", stComponents[i]->name);
+							printf("Component %s registered\n", stComponents[i]->name);
 
 						// allocate max memory
-            len = sizeof(arrow)                 /* arrow */
-                 +strlen(stComponents[i]->name) /* component name */
-                 +sizeof(arrow)                 /* arrow */
-                 +1                             /* '\n' */
-                 +1                             /* '\0' */;
-            buffer = realloc(buffer, len);
+						len = sizeof(arrow)                 /* arrow */
+						+strlen(stComponents[i]->name) /* component name */
+						+sizeof(arrow)                 /* arrow */
+						+1                             /* '\n' */
+						+1                             /* '\0' */;
+						buffer = realloc(buffer, len);
 
-            // insert first of all the name of the library
+						// insert first of all the name of the library
 						strcpy(buffer, arrow);
 						strcat(buffer, stComponents[i]->name);
 
@@ -137,10 +162,10 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 							strcat(buffer, arrow);
 							for(j=0;j<stComponents[i]->name_specific_length;j++){
 								if (verbose)
-                  printf("  Specific role %s registered\n", stComponents[i]->name_specific[j]);
-                len += strlen(stComponents[i]->name_specific[j]) /* specific role */
-                      +1                                         /* ':' */;
-                buffer = realloc(buffer, len);
+									printf("  Specific role %s registered\n", stComponents[i]->name_specific[j]);
+								len += strlen(stComponents[i]->name_specific[j]) /* specific role */
+								+1                                         /* ':' */;
+								buffer = realloc(buffer, len);
 								strcat(buffer, stComponents[i]->name_specific[j]);
 								strcat(buffer, ":");
 							}
@@ -150,16 +175,17 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 						ncomponents++;
 					}
 					for (i = 0; i < num_of_comp; i++) {
-						free(stComponents[i]);
+							free(stComponents[i]);
 					}
-					free(stComponents);
+						free(stComponents);
+					}
 				}
 			}
 		}
+		free(actual);
+		free(buffer);
+		closedir(dirp);
 	}
-	free(buffer);
-	closedir(dirp);
-
 	if (verbose) {
 		printf("\n %i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
 	} else {

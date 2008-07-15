@@ -692,7 +692,7 @@ int main(int argc, char** argv) {
   }else {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Omx core is initialized \n");
   }
-
+/*
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
   test_OMX_ComponentNameEnum();
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
@@ -711,7 +711,7 @@ int main(int argc, char** argv) {
 
   DEBUG(DEFAULT_MESSAGES, "The component selected for video decoding is %s\n Role is decided by the decoder\n", VIDEO_COMPONENT_NAME_BASE);
   DEBUG(DEFAULT_MESSAGES, "The component selected for audio decoding is %s\n Role is decided by the decoder\n", AUDIO_COMPONENT_NAME_BASE);
-
+*/
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Using Parser3gp \n");
   /** parser3gp component --  gethandle*/
   err = OMX_GetHandle(&appPriv->parser3gphandle, PARSER_3GP, NULL /*appPriv */, &parser3gpcallbacks);

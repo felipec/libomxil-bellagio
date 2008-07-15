@@ -30,6 +30,12 @@ data directory with all the components found in
 Display a verbose output, listing all the components registered.
 .IP -h
 Display help.
+.IP componentspath
+Location of the
+.SM OpenMAX/Bellagio
+components (by default
+.I @plugindir@)\. 
+.SM Multiple locations should be separated by colons
 .SH FILES
 .I $XDG_DATA_HOME/@PACKAGE@/registry
 or
@@ -39,11 +45,6 @@ The
 .SM OpenMAX/Bellagio
 component registry file.
 .RE
-.IP componentspath
-Location of the
-.SM OpenMAX/Bellagio
-components (by default
-.I @plugindir@)\.
 .SH ENVIRONMENT
 .IP OMX_BELLAGIO_REGISTRY
 .RS

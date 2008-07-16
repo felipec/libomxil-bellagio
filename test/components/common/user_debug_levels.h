@@ -64,7 +64,7 @@
 
 
 /** \def DEBUG_LEVEL is the current level do debug output on standard err */
-#define DEBUG_LEVEL (DEB_LEV_ERR | DEB_ALL_MESS)
+#define DEBUG_LEVEL (DEB_LEV_ERR | DEFAULT_MESSAGES)
 #if DEBUG_LEVEL > 0
 #define DEBUG(n, args...) do { if (DEBUG_LEVEL & (n)){fprintf(stderr, args);} } while (0)
 #else

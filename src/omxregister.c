@@ -55,7 +55,7 @@ static const char arrow[] =  " ==> ";
 /** @brief Creates a list of components on a registry file
  *
  * This function
- *  - reads for the given directory any library contained
+ *  - reads for the given directory(ies) any library contained
  *  - check if the library belongs to OpenMAX ST static component loader
  *    (it must contain the function omx_component_library_Setup for the initialization)
  *  - write the openmax names and related libraries to the registry file
@@ -75,24 +75,31 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 	int index;
 	char* currentpath = componentspath;
 	char* actual;
+	nameList *allNames = NULL;
+	nameList *currentName = NULL;
+	nameList *tempName = NULL;
 	/* the componentpath contains a single or multiple directories
-	 * and is is semi colon separated like env variables in Linux
+	 * and is is colon separated like env variables in Linux
 	 */
+
 	while (!pathconsumed) {
-		DEBUG(DEB_LEV_ERR, "---beginning\n");
 		index = 0;
 		currentgiven = 0;
 		while (!currentgiven) {
 			if (*(currentpath + index) == '\0') {
 				pathconsumed = 1;
-				DEBUG(DEB_LEV_ERR, "---end of paths\n");
 			}		
 			if ((*(currentpath + index) == ':') || (*(currentpath + index) =='\0')) {
 				currentgiven = 1;
-				actual = malloc(index + 1);
+				if (*(currentpath + index - 1) != '/') {
+					actual = malloc(index + 2);
+					*(actual + index) = '/';
+					*(actual+index + 1) = '\0';
+				} else {
+					actual = malloc(index + 1);
+					*(actual+index) = '\0';
+				}
 				strncpy(actual, currentpath, index);
-				*(actual+index) = '\0';
-				DEBUG(DEB_LEV_ERR, "---detected path %s\n", actual);
 				currentpath = currentpath + index + 1;
 			}
 			index++;
@@ -103,6 +110,10 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 			int err = errno;
 			DEBUG(DEB_LEV_ERR, "Cannot open directory %s\n", actual);
 			return err;
+		} else {
+			if (verbose) {
+				printf("\n Scanning directory %s\n", actual);
+			}
 		}
 		while((dp = readdir(dirp)) != NULL) {
 			int len = strlen(dp->d_name);
@@ -123,18 +134,45 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 							DEBUG(DEB_LEV_ERR, "the library %s is not compatible with ST static component loader - %s\n", lib_absolute_path, dlerror());
 							continue;
 						}
+						if (verbose) {
+							printf("\n Scanning openMAX libary %s\n", lib_absolute_path);
+						}
 						num_of_comp = fptr(NULL);
 						stComponents = malloc(num_of_comp * sizeof(stLoaderComponentType*));
 						for (i = 0; i<num_of_comp; i++) {
 							stComponents[i] = malloc(sizeof(stLoaderComponentType));
 						}
 						fptr(stComponents);
-
 						fwrite(lib_absolute_path, 1, strlen(lib_absolute_path), omxregistryfp);
 						fwrite("\n", 1, 1, omxregistryfp);
 
 
 						for (i = 0; i<num_of_comp; i++) {
+							tempName = allNames;
+							if (tempName != NULL) {
+								do  {
+									if (!strcmp(tempName->name, stComponents[i]->name)) {
+										DEBUG(DEB_LEV_ERR, "Component %s already registered. Skip\n", stComponents[i]->name);
+										break;
+									}
+									tempName = tempName->next;
+								} while(tempName != NULL);
+								if (tempName != NULL) {
+									continue;
+								}
+							}
+							if (allNames == NULL) {
+								allNames = malloc(sizeof(nameList));
+								currentName = allNames;
+							} else {
+								currentName->next = malloc(sizeof(nameList));
+								currentName = currentName->next;
+							}
+							currentName->next = NULL;
+							currentName->name = malloc(strlen(stComponents[i]->name) + 1);
+							strcpy(currentName->name, stComponents[i]->name);
+							*(currentName->name + strlen(currentName->name)) = '\0';
+
 							DEBUG(DEB_LEV_PARAMS, "Found component %s version=%d.%d.%d.%d in shared object %s\n",
 								stComponents[i]->name,
 								stComponents[i]->componentVersion.s.nVersionMajor,
@@ -183,10 +221,9 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 			}
 		}
 		free(actual);
-		free(buffer);
-		buffer = NULL;
 		closedir(dirp);
 	}
+	free(buffer);
 	if (verbose) {
 		printf("\n %i OpenMAX IL ST static components with %i roles succesfully scanned\n", ncomponents, nroles);
 	} else {

@@ -32,4 +32,10 @@
 
 char *registryGetFilename(void);
 
+typedef struct nameList {
+	char* name;
+	struct nameList *next;
+} nameList;
+
+
 #endif

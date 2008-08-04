@@ -429,14 +429,6 @@ int main(int argc, char** argv) {
       } else {
         DEBUG(DEFAULT_MESSAGES, "Found The audio sink component for volume componenterter \n");
       }
-      /* disable the clock port of the ALSA sink */
-      err = OMX_SendCommand(appPriv->alsasink_handle, OMX_CommandPortDisable, 1, NULL);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
-        exit(1);
-      }
-      tsem_down(appPriv->alsasinkEventSem); /* audio sink clock port disabled */
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
     }
   }
 

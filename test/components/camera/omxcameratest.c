@@ -792,15 +792,6 @@ int main(int argc, char** argv) {
     goto EXIT;
   }
 
-  /* disable the clock port of the video sink */
-  err = OMX_SendCommand(appPriv->fbsinkhandle, OMX_CommandPortDisable, 1, NULL);
-  if(err != OMX_ErrorNone) {
-    DEBUG(DEB_LEV_ERR,"video sink clock port disable failed err=%x \n",err);
-    exit(1);
-  }
-  tsem_down(appPriv->fbsinkEventSem); /* video sink clock port disabled */
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
-
 RUN_AGAIN:
 
   /* Transition camera component Loaded-->Idle */

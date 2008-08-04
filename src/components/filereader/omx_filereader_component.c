@@ -119,7 +119,7 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     if(omx_filereader_component_Private->avformatSyncSem == NULL) return OMX_ErrorInsufficientResources;
     tsem_init(omx_filereader_component_Private->avformatSyncSem, 0);
   }
-  omx_filereader_component_Private->sInputFileName = malloc(DEFAULT_FILENAME_LENGTH);
+  omx_filereader_component_Private->sInputFileName = calloc(1,DEFAULT_FILENAME_LENGTH);
   memset(omx_filereader_component_Private->sInputFileName,0,DEFAULT_FILENAME_LENGTH);
   /*Default Coding type*/
   omx_filereader_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
@@ -215,7 +215,7 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     * open the codec in the audio decoder component 
     */      
   /* filling up the OMX_VENDOR_EXTRADATATYPE structure */
-  pExtraData = malloc(sizeof(OMX_VENDOR_EXTRADATATYPE));
+  pExtraData = calloc(1,sizeof(OMX_VENDOR_EXTRADATATYPE));
   pExtraData->nPortIndex = 0; //output port index
   pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
   pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
@@ -368,7 +368,7 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
     nFileNameLength = strlen((char *)ComponentParameterStructure) + 1;
     if(nFileNameLength > DEFAULT_FILENAME_LENGTH) {
       free(omx_filereader_component_Private->sInputFileName);
-      omx_filereader_component_Private->sInputFileName = malloc(nFileNameLength);
+      omx_filereader_component_Private->sInputFileName = calloc(1,nFileNameLength);
     }
     strcpy(omx_filereader_component_Private->sInputFileName, (char *)ComponentParameterStructure);
     omx_filereader_component_Private->bIsEOSSent = OMX_FALSE;

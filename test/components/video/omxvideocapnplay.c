@@ -577,15 +577,6 @@ int main(int argc, char** argv) {
       } else {
         DEBUG(DEFAULT_MESSAGES, "Found The video sink component for color converter \n");
       }
-
-      /* disable the clock port of the video sink */
-      err = OMX_SendCommand(appPriv->fbdev_sink_handle, OMX_CommandPortDisable, 1, NULL);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"video sink clock port disable failed err=%x \n",err);
-        exit(1);
-      }
-      tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port disabled */
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
     }
   }
 

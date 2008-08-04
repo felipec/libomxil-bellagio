@@ -91,7 +91,7 @@ void display_help() {
   printf("default directory $HOME/stream/audio\n");
   printf("Usage: omxaudiodecbatchtest [optional]dirname\n");
   printf("\n");
-  printf("       dirname: dirname from where audio files to be played\n");
+  printf("       dirname: dirname from where audio files to be played [default $HOME/stream/audio]\n");
   printf("       -s: Disable Seek\n");
   printf("       -t: Disable Tunnelling\n");
   printf("       -h: Displays this help\n");
@@ -220,15 +220,6 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "No sink found. Exiting...\n");
       exit(1);
     }
-
-    /* disable the clock port of the ALSA sink */
-    err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
-      exit(1);
-    }
-    tsem_down(appPriv->sinkEventSem); /* audio sink clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
 
     DEBUG(DEFAULT_MESSAGES, "Getting Handle for Component %s\n", AUDIO_EFFECT);
     err = OMX_GetHandle(&appPriv->volumehandle, AUDIO_EFFECT, NULL , &volumecallbacks);

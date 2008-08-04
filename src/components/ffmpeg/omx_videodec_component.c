@@ -127,7 +127,7 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   }  
 
   if(!omx_videodec_component_Private->avCodecSyncSem) {
-    omx_videodec_component_Private->avCodecSyncSem = malloc(sizeof(tsem_t));
+    omx_videodec_component_Private->avCodecSyncSem = calloc(1,sizeof(tsem_t));
     if(omx_videodec_component_Private->avCodecSyncSem == NULL) {
       return OMX_ErrorInsufficientResources;
     }
@@ -843,8 +843,8 @@ OMX_ERRORTYPE omx_videodec_component_SetConfig(
           if(omx_videodec_component_Private->extradata) {
             free(omx_videodec_component_Private->extradata);
           }
-          omx_videodec_component_Private->extradata = (unsigned char *)malloc((int)pExtradata->nDataSize*sizeof(char));
-          memcpy(omx_videodec_component_Private->extradata,(unsigned char*)(pExtradata->pData),pExtradata->nDataSize);
+          omx_videodec_component_Private->extradata = calloc(1,(int)pExtradata->nDataSize*sizeof(char));
+          memcpy(omx_videodec_component_Private->extradata, (unsigned char *)pExtradata->pData,pExtradata->nDataSize);
         } else {
                   DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");
         }

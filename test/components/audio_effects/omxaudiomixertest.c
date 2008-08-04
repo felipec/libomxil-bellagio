@@ -264,14 +264,6 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "No sink found. Exiting...\n");
       exit(1);
     }
-    /* disable the clock port of the ALSA sink */
-    err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
-      exit(1);
-    }
-    tsem_down(appPriv->sinkEventSem); /* audio sink clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
   }
 
   /*Max 4 input stream*/

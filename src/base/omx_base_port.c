@@ -355,7 +355,7 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
 
 /** @brief Called by the standard allocate buffer, it implements a base functionality.
  *  
- * This function can be overriden if the allocation of the buffer is not a simply malloc call.
+ * This function can be overriden if the allocation of the buffer is not a simply calloc call.
  * The parameters are the same as the standard function, except for the handle of the port 
  * instead of the handler of the component
  * When the buffers needed by this port are all assigned or allocated, the variable 

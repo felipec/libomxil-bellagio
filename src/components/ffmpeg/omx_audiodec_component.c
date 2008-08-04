@@ -369,7 +369,7 @@ OMX_ERRORTYPE omx_audiodec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   omx_audiodec_component_Private->inputCurrBuffer=NULL;
   omx_audiodec_component_Private->inputCurrLength=0;
   nBufferSize=omx_audiodec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize * 2;
-  omx_audiodec_component_Private->internalOutputBuffer = malloc(nBufferSize);
+  omx_audiodec_component_Private->internalOutputBuffer = calloc(1,nBufferSize);
   memset(omx_audiodec_component_Private->internalOutputBuffer, 0, nBufferSize);
   omx_audiodec_component_Private->positionInOutBuf = 0;
   omx_audiodec_component_Private->isNewBuffer=1;
@@ -841,7 +841,7 @@ OMX_ERRORTYPE omx_audiodec_component_SetConfig(
           if(omx_audiodec_component_Private->extradata) {
             free(omx_audiodec_component_Private->extradata);
           }
-          omx_audiodec_component_Private->extradata = malloc((int)pExtradata->nDataSize);
+          omx_audiodec_component_Private->extradata = calloc(1,(int)pExtradata->nDataSize);
           memcpy(omx_audiodec_component_Private->extradata, pExtradata->pData,pExtradata->nDataSize);
         } else {
             DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");

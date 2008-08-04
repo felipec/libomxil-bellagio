@@ -114,6 +114,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
       return OMX_ErrorInsufficientResources;
     }
     base_clock_port_Constructor(openmaxStandComp, &omx_fbdev_sink_component_Private->ports[1], 1, OMX_TRUE); 
+    omx_fbdev_sink_component_Private->ports[1]->sPortParam.bEnabled = OMX_FALSE;
   }
 
   pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];

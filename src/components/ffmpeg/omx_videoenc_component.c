@@ -122,7 +122,7 @@ OMX_ERRORTYPE omx_videoenc_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   }  
 
   if(!omx_videoenc_component_Private->avCodecSyncSem) {
-    omx_videoenc_component_Private->avCodecSyncSem = malloc(sizeof(tsem_t));
+    omx_videoenc_component_Private->avCodecSyncSem = calloc(1,sizeof(tsem_t));
     if(omx_videoenc_component_Private->avCodecSyncSem == NULL) {
       return OMX_ErrorInsufficientResources;
     }

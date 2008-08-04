@@ -40,7 +40,7 @@ OMX_ERRORTYPE omx_base_source_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, O
   if (openmaxStandComp->pComponentPrivate) {
     omx_base_source_Private = (omx_base_source_PrivateType*)openmaxStandComp->pComponentPrivate;
   } else {
-    omx_base_source_Private = malloc(sizeof(omx_base_source_PrivateType));
+    omx_base_source_Private = calloc(1,sizeof(omx_base_source_PrivateType));
     if (!omx_base_source_Private) {
       return OMX_ErrorInsufficientResources;
     }

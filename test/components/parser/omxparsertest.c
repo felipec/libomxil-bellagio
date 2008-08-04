@@ -806,31 +806,31 @@ int main(int argc, char** argv) {
   }
 
  /* disable the clock ports of the clients (audio, video and parser), if AVsync not enabled*/
- if(!flagAVsync) {
-   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortDisable, 2, NULL);
+ if(flagAVsync) {
+   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortEnable, 2, NULL);
    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"parser clock port disable failed\n");
+      DEBUG(DEB_LEV_ERR,"parser clock port Enable failed\n");
       exit(1);
     }
     tsem_down(appPriv->parser3gpEventSem); /* parser clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Disabled\n", __func__);
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Enabled\n", __func__);
 
    if(flagIsDisplayRequested){
-      err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
+      err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortEnable, 1, NULL);
       if(err != OMX_ErrorNone) {
-         DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed\n");
+         DEBUG(DEB_LEV_ERR,"audiosink clock port Enable failed\n");
          exit(1);
        }
        tsem_down(appPriv->audioSinkEventSem); /* audio sink clock port disabled */
-       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
+       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Enabled\n", __func__);
    
-      err = OMX_SendCommand(appPriv->videosinkhandle, OMX_CommandPortDisable, 1, NULL);
+      err = OMX_SendCommand(appPriv->videosinkhandle, OMX_CommandPortEnable, 1, NULL);
       if(err != OMX_ErrorNone) {
-         DEBUG(DEB_LEV_ERR,"videosink clock port disable failed\n");
+         DEBUG(DEB_LEV_ERR,"videosink clock port Enable failed\n");
          exit(1);
        }
        tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port disabled */
-       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Disabled\n", __func__);
+       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Enabled\n", __func__);
    }
  }
 

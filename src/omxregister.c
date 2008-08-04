@@ -92,11 +92,11 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 			if ((*(currentpath + index) == ':') || (*(currentpath + index) =='\0')) {
 				currentgiven = 1;
 				if (*(currentpath + index - 1) != '/') {
-					actual = malloc(index + 2);
+					actual = calloc(1,index + 2);
 					*(actual + index) = '/';
 					*(actual+index + 1) = '\0';
 				} else {
-					actual = malloc(index + 1);
+					actual = calloc(1,index + 1);
 					*(actual+index) = '\0';
 				}
 				strncpy(actual, currentpath, index);
@@ -138,9 +138,9 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 							printf("\n Scanning openMAX libary %s\n", lib_absolute_path);
 						}
 						num_of_comp = fptr(NULL);
-						stComponents = malloc(num_of_comp * sizeof(stLoaderComponentType*));
+						stComponents = calloc(num_of_comp , sizeof(stLoaderComponentType*));
 						for (i = 0; i<num_of_comp; i++) {
-							stComponents[i] = malloc(sizeof(stLoaderComponentType));
+							stComponents[i] = calloc(1,sizeof(stLoaderComponentType));
 						}
 						fptr(stComponents);
 						fwrite(lib_absolute_path, 1, strlen(lib_absolute_path), omxregistryfp);
@@ -162,14 +162,14 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 								}
 							}
 							if (allNames == NULL) {
-								allNames = malloc(sizeof(nameList));
+								allNames = calloc(1,sizeof(nameList));
 								currentName = allNames;
 							} else {
-								currentName->next = malloc(sizeof(nameList));
+								currentName->next = calloc(1,sizeof(nameList));
 								currentName = currentName->next;
 							}
 							currentName->next = NULL;
-							currentName->name = malloc(strlen(stComponents[i]->name) + 1);
+							currentName->name = calloc(1,strlen(stComponents[i]->name) + 1);
 							strcpy(currentName->name, stComponents[i]->name);
 							*(currentName->name + strlen(currentName->name)) = '\0';
 

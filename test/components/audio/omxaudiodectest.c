@@ -531,14 +531,6 @@ int main(int argc, char** argv) {
         DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig 0 \n",err);
       }
     }
-    /* disable the clock port of the ALSA sink */
-    err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortDisable, 1, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
-      exit(1);
-    }
-    tsem_down(appPriv->sinkEventSem); /* audio sink clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
   }
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {

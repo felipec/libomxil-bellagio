@@ -174,7 +174,7 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   }
   /** initialise the semaphore to be used for mad decoder access synchronization */
   if(!omx_maddec_component_Private->madDecSyncSem) {
-    omx_maddec_component_Private->madDecSyncSem = malloc(sizeof(tsem_t));
+    omx_maddec_component_Private->madDecSyncSem = calloc(1,sizeof(tsem_t));
     if(omx_maddec_component_Private->madDecSyncSem == NULL) {
       return OMX_ErrorInsufficientResources;
     }
@@ -197,9 +197,9 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
     return OMX_ErrorInsufficientResources;
 
   /** initialising mad structures */
-  omx_maddec_component_Private->stream = malloc (sizeof(struct mad_stream));
-  omx_maddec_component_Private->synth = malloc (sizeof(struct mad_synth));
-  omx_maddec_component_Private->frame = malloc (sizeof(struct mad_frame));
+  omx_maddec_component_Private->stream = calloc (1,sizeof(struct mad_stream));
+  omx_maddec_component_Private->synth = calloc (1,sizeof(struct mad_synth));
+  omx_maddec_component_Private->frame = calloc (1,sizeof(struct mad_frame));
 
   return err;
 }
@@ -287,8 +287,8 @@ OMX_ERRORTYPE omx_maddec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)  {
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   /** initializing omx_maddec_component_Private->temporary_buffer with 2k memory space*/
-  omx_maddec_component_Private->temporary_buffer = malloc(sizeof(OMX_BUFFERHEADERTYPE));
-  omx_maddec_component_Private->temporary_buffer->pBuffer = malloc(DEFAULT_IN_BUFFER_SIZE*2);
+  omx_maddec_component_Private->temporary_buffer = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
+  omx_maddec_component_Private->temporary_buffer->pBuffer = calloc(1,DEFAULT_IN_BUFFER_SIZE*2);
   memset(omx_maddec_component_Private->temporary_buffer->pBuffer, 0, DEFAULT_IN_BUFFER_SIZE*2);
 
   omx_maddec_component_Private->temp_input_buffer = omx_maddec_component_Private->temporary_buffer->pBuffer;

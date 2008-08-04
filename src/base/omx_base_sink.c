@@ -39,7 +39,7 @@ OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_
   if (openmaxStandComp->pComponentPrivate) {
     omx_base_sink_Private = (omx_base_sink_PrivateType*)openmaxStandComp->pComponentPrivate;
   } else {
-    omx_base_sink_Private = malloc(sizeof(omx_base_sink_PrivateType));
+    omx_base_sink_Private = calloc(1,sizeof(omx_base_sink_PrivateType));
     if (!omx_base_sink_Private) {
       return OMX_ErrorInsufficientResources;
     }

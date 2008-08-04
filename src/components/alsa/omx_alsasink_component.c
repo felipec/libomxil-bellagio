@@ -92,6 +92,7 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
       return OMX_ErrorInsufficientResources;
     }
     base_clock_port_Constructor(openmaxStandComp, &omx_alsasink_component_Private->ports[1], 1, OMX_TRUE); 
+    omx_alsasink_component_Private->ports[1]->sPortParam.bEnabled = OMX_FALSE;
   }
 
   pPort = (omx_base_audio_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];

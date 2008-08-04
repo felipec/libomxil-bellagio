@@ -107,6 +107,7 @@ OMX_ERRORTYPE omx_parser3gp_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
   base_video_port_Constructor(openmaxStandComp, &omx_parser3gp_component_Private->ports[VIDEO_PORT_INDEX], VIDEO_PORT_INDEX, OMX_FALSE);
   base_audio_port_Constructor(openmaxStandComp, &omx_parser3gp_component_Private->ports[AUDIO_PORT_INDEX], AUDIO_PORT_INDEX, OMX_FALSE); 
   base_clock_port_Constructor(openmaxStandComp, &omx_parser3gp_component_Private->ports[CLOCK_PORT_INDEX], CLOCK_PORT_INDEX, OMX_TRUE); 
+  omx_parser3gp_component_Private->ports[CLOCK_PORT_INDEX]->sPortParam.bEnabled = OMX_FALSE;
 
   pPortV = (omx_base_video_PortType *) omx_parser3gp_component_Private->ports[VIDEO_PORT_INDEX];
   pPortA = (omx_base_audio_PortType *) omx_parser3gp_component_Private->ports[AUDIO_PORT_INDEX]; 
@@ -138,8 +139,8 @@ OMX_ERRORTYPE omx_parser3gp_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
 
   /* Write in the default paramenters */
 
-  omx_parser3gp_component_Private->pTmpOutputBuffer = malloc(sizeof(OMX_BUFFERHEADERTYPE));
-  omx_parser3gp_component_Private->pTmpOutputBuffer->pBuffer = (OMX_U8*) malloc(DEFAULT_OUT_BUFFER_SIZE);
+  omx_parser3gp_component_Private->pTmpOutputBuffer = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
+  omx_parser3gp_component_Private->pTmpOutputBuffer->pBuffer = calloc(1,DEFAULT_OUT_BUFFER_SIZE);
   memset(omx_parser3gp_component_Private->pTmpOutputBuffer->pBuffer, 0, DEFAULT_OUT_BUFFER_SIZE);
   omx_parser3gp_component_Private->pTmpOutputBuffer->nFilledLen=0;
   omx_parser3gp_component_Private->pTmpOutputBuffer->nAllocLen=DEFAULT_OUT_BUFFER_SIZE;
@@ -151,7 +152,7 @@ OMX_ERRORTYPE omx_parser3gp_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
     if(omx_parser3gp_component_Private->avformatSyncSem == NULL) return OMX_ErrorInsufficientResources;
     tsem_init(omx_parser3gp_component_Private->avformatSyncSem, 0);
   }
-  omx_parser3gp_component_Private->sInputFileName = malloc(DEFAULT_FILENAME_LENGTH);
+  omx_parser3gp_component_Private->sInputFileName = calloc(1,DEFAULT_FILENAME_LENGTH);
   memset(omx_parser3gp_component_Private->sInputFileName,0,DEFAULT_FILENAME_LENGTH);
   /*Default Coding type*/
   omx_parser3gp_component_Private->video_coding_type = OMX_VIDEO_CodingAVC;
@@ -549,7 +550,7 @@ OMX_ERRORTYPE omx_parser3gp_component_SetParameter(
     nFileNameLength = strlen((char *)ComponentParameterStructure) * sizeof(char) + 1;
     if(nFileNameLength > DEFAULT_FILENAME_LENGTH) {
       free(omx_parser3gp_component_Private->sInputFileName);
-      omx_parser3gp_component_Private->sInputFileName = malloc(nFileNameLength);
+      omx_parser3gp_component_Private->sInputFileName = calloc(1,nFileNameLength);
     }
     strcpy(omx_parser3gp_component_Private->sInputFileName, (char *)ComponentParameterStructure);
     break;

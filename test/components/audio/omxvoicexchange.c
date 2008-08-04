@@ -224,15 +224,6 @@ int main(int argc, char** argv) {
     exit(1);
   } 
 
-  /* disable the clock port of the alsa sink */
-  err = OMX_SendCommand(appPriv->audiosinkHandle, OMX_CommandPortDisable, 1, NULL);
-  if(err != OMX_ErrorNone) {
-     DEBUG(DEB_LEV_ERR,"audiosink clock port disable failed err=%x \n",err);
-     exit(1);
-   }
-   tsem_down(appPriv->audiosinkEventSem); /* audio sink clock port disabled */
-   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Disabled\n", __func__);
-
   /*Set Sample Rate and Channel*/
   if(rate > 0 || channel >0)  {
     DEBUG(DEFAULT_MESSAGES, "Setting Rate and Channel\n");

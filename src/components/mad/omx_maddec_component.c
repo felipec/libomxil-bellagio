@@ -289,7 +289,6 @@ OMX_ERRORTYPE omx_maddec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)  {
   /** initializing omx_maddec_component_Private->temporary_buffer with 2k memory space*/
   omx_maddec_component_Private->temporary_buffer = calloc(1,sizeof(OMX_BUFFERHEADERTYPE));
   omx_maddec_component_Private->temporary_buffer->pBuffer = calloc(1,DEFAULT_IN_BUFFER_SIZE*2);
-  memset(omx_maddec_component_Private->temporary_buffer->pBuffer, 0, DEFAULT_IN_BUFFER_SIZE*2);
 
   omx_maddec_component_Private->temp_input_buffer = omx_maddec_component_Private->temporary_buffer->pBuffer;
   omx_maddec_component_Private->temporary_buffer->nFilledLen=0;

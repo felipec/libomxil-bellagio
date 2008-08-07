@@ -53,7 +53,7 @@ char* registryGetFilename(void) {
 
   buffer=getenv("XDG_DATA_HOME");
   if(buffer!=NULL&&*buffer!='\0') {
-    omxregistryfile = calloc(1,strlen(buffer) + strlen(REGISTRY_DIR) + strlen(REGISTRY_FILENAME) + 2);
+    omxregistryfile = malloc(strlen(buffer) + strlen(REGISTRY_DIR) + strlen(REGISTRY_FILENAME) + 2);
     strcpy(omxregistryfile, buffer);
     strcat(omxregistryfile, "/");
     strcat(omxregistryfile, REGISTRY_DIR);
@@ -62,14 +62,14 @@ char* registryGetFilename(void) {
 
   buffer=getenv("HOME");
   if(buffer!=NULL&&*buffer!='\0') {
-    omxregistryfile  = calloc(1,strlen(buffer) + strlen(DATA_HOME_DIR) + strlen(REGISTRY_DIR) + strlen(REGISTRY_FILENAME) + 3);
+    omxregistryfile  = malloc(strlen(buffer) + strlen(DATA_HOME_DIR) + strlen(REGISTRY_DIR) + strlen(REGISTRY_FILENAME) + 3);
     strcpy(omxregistryfile, buffer);
     strcat(omxregistryfile, "/");
     strcat(omxregistryfile, DATA_HOME_DIR);
     strcat(omxregistryfile, "/");
     strcat(omxregistryfile, REGISTRY_DIR);
   } else {
-    omxregistryfile  = calloc(1,strlen(REGISTRY_DIR) + strlen(REGISTRY_FILENAME) + 2);
+    omxregistryfile  = malloc(strlen(REGISTRY_DIR) + strlen(REGISTRY_FILENAME) + 2);
     strcpy(omxregistryfile, ".");
     strcat(omxregistryfile, REGISTRY_DIR);
   }

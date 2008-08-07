@@ -273,7 +273,7 @@ OMX_ERRORTYPE OMX_SetupTunnel(
   OMX_TUNNELSETUPTYPE* tunnelSetup;
   
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  tunnelSetup = calloc(1,sizeof(OMX_TUNNELSETUPTYPE));
+  tunnelSetup = malloc(sizeof(OMX_TUNNELSETUPTYPE));
   component = (OMX_COMPONENTTYPE*)hOutput;
   tunnelSetup->nTunnelFlags = 0;
   tunnelSetup->eSupplier = OMX_BufferSupplyUnspecified;
@@ -385,9 +385,9 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
       return OMX_ErrorComponentNotFound;
     }
     if (only_number_requested == 0) {
-      tempCompNames = calloc(temp_num_comp , sizeof(OMX_STRING));
+      tempCompNames = malloc(temp_num_comp * sizeof(OMX_STRING));
       for (j=0; j<temp_num_comp; j++) {
-        tempCompNames[j] = calloc(1,OMX_MAX_STRINGNAME_SIZE * sizeof(char));
+        tempCompNames[j] = malloc(OMX_MAX_STRINGNAME_SIZE * sizeof(char));
       }
       err = loadersList[i]->BOSA_GetComponentsOfRole(
           loadersList[i],

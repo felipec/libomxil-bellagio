@@ -102,9 +102,9 @@ OMX_ERRORTYPE BOSA_ST_InitComponentLoader(BOSA_COMPONENTLOADER *loader) {
     return ENOENT;
   }
   free(registry_filename);
-  libname = calloc(1,OMX_MAX_STRINGNAME_SIZE * 2);
+  libname = malloc(OMX_MAX_STRINGNAME_SIZE * 2);
 
-  templateList = calloc(1,sizeof (stLoaderComponentType*));
+  templateList = malloc(sizeof (stLoaderComponentType*));
   templateList[0] = NULL;
 
   fseek(omxregistryfp, 0, 0);

@@ -843,7 +843,7 @@ OMX_ERRORTYPE omx_videodec_component_SetConfig(
           if(omx_videodec_component_Private->extradata) {
             free(omx_videodec_component_Private->extradata);
           }
-          omx_videodec_component_Private->extradata = calloc(1,(int)pExtradata->nDataSize*sizeof(char));
+          omx_videodec_component_Private->extradata = malloc((int)pExtradata->nDataSize*sizeof(char));
           memcpy(omx_videodec_component_Private->extradata, (unsigned char *)pExtradata->pData,pExtradata->nDataSize);
         } else {
                   DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");

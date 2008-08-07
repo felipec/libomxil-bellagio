@@ -120,7 +120,6 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
     tsem_init(omx_filereader_component_Private->avformatSyncSem, 0);
   }
   omx_filereader_component_Private->sInputFileName = calloc(1,DEFAULT_FILENAME_LENGTH);
-  memset(omx_filereader_component_Private->sInputFileName,0,DEFAULT_FILENAME_LENGTH);
   /*Default Coding type*/
   omx_filereader_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
 

@@ -389,7 +389,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Init(OMX_COMPONENTTYPE *openmaxStan
   omx_ffmpeg_colorconv_component_Private->in_alloc_size = avpicture_get_size(inPort->ffmpeg_pxlfmt, 
   inPort->sPortParam.format.video.nFrameWidth, inPort->sPortParam.format.video.nFrameHeight);
 
-  omx_ffmpeg_colorconv_component_Private->in_buffer = calloc(1,omx_ffmpeg_colorconv_component_Private->in_alloc_size);
+  omx_ffmpeg_colorconv_component_Private->in_buffer = malloc(omx_ffmpeg_colorconv_component_Private->in_alloc_size);
 
   if (omx_ffmpeg_colorconv_component_Private->in_buffer == NULL) {
     DEBUG(DEB_LEV_ERR, "\nError allocating internal input buffer!\n");
@@ -399,7 +399,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_Init(OMX_COMPONENTTYPE *openmaxStan
   omx_ffmpeg_colorconv_component_Private->conv_alloc_size = avpicture_get_size(outPort->ffmpeg_pxlfmt,
               inPort->sPortParam.format.video.nFrameWidth, inPort->sPortParam.format.video.nFrameHeight);
 
-  omx_ffmpeg_colorconv_component_Private->conv_buffer = calloc(1,omx_ffmpeg_colorconv_component_Private->conv_alloc_size);
+  omx_ffmpeg_colorconv_component_Private->conv_buffer = malloc(omx_ffmpeg_colorconv_component_Private->conv_alloc_size);
 
   if (omx_ffmpeg_colorconv_component_Private->conv_buffer == NULL) {
     DEBUG(DEB_LEV_ERR, "\nError allocating internal conversion buffer! size : %d \n", 

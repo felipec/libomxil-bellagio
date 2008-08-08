@@ -83,7 +83,7 @@ FILE *fd,*outfile;
 char *input_file, *output_file;
 int selectedType = 0;
 
-int flagIsOutputEspected;
+int flagIsOutputExpected;
 int flagDecodedOutputReceived;
 int flagInputReceived;
 int flagIsColorConvRequested;
@@ -400,7 +400,7 @@ int main(int argc, char** argv) {
   if(argc < 2){
     display_help();
   } else {
-    flagIsOutputEspected = 0;
+    flagIsOutputExpected = 0;
     flagDecodedOutputReceived = 0;
     flagInputReceived = 0;
     flagIsColorConvRequested = 0;
@@ -411,7 +411,7 @@ int main(int argc, char** argv) {
     argn_dec = 1;
     while (argn_dec < argc) {
       if (*(argv[argn_dec]) == '-') {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           display_help();
         }
         switch (*(argv[argn_dec] + 1)) {
@@ -427,7 +427,7 @@ int main(int argc, char** argv) {
             flagIsSinkRequested = 1;
             break;
           case 'o':
-            flagIsOutputEspected = 1;
+            flagIsOutputExpected = 1;
             break;
           case 'c':
             flagIsColorConvRequested = 1;
@@ -439,7 +439,7 @@ int main(int argc, char** argv) {
             display_help();
         }
       } else {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           if(strstr(argv[argn_dec], ".yuv") == NULL && strstr(argv[argn_dec], ".rgb") == NULL) {
             output_file = malloc(strlen(argv[argn_dec]) + 5);
             strcpy(output_file,argv[argn_dec]);
@@ -448,7 +448,7 @@ int main(int argc, char** argv) {
             output_file = malloc(strlen(argv[argn_dec]) + 1);
             strcpy(output_file,argv[argn_dec]);
           }          
-          flagIsOutputEspected = 0;
+          flagIsOutputExpected = 0;
           flagDecodedOutputReceived = 1;
         } else if(flagIsFormatRequested) {
           if(strstr(argv[argn_dec], "OMX_COLOR_Format24bitRGB888") != NULL) {
@@ -486,7 +486,7 @@ int main(int argc, char** argv) {
 
     /** output file name check */
     //case 1 - user did not specify any output file
-    if(!flagIsOutputEspected && !flagDecodedOutputReceived) {
+    if(!flagIsOutputExpected && !flagDecodedOutputReceived) {
       if(flagIsColorConvRequested) {
         if(!flagIsSinkRequested) {
           DEBUG(DEB_LEV_ERR,"\n you did not enter any output file name and entered color converter option");
@@ -1312,19 +1312,32 @@ OMX_ERRORTYPE videodecEmptyBufferDone(
 
   OMX_ERRORTYPE err;
   int data_read;
+  static int iBufferDropped=0;
+
   DEBUG(DEB_LEV_FULL_SEQ, "Hi there, I am in the %s callback.\n", __func__);
 
   data_read = fread(pBuffer->pBuffer, 1, buffer_in_size, fd);
+  pBuffer->nFilledLen = data_read;
+  pBuffer->nOffset = 0;
   if (data_read <= 0) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In the %s no more input data available\n", __func__);
+    iBufferDropped++;
+    if(iBufferDropped>=2) {
+      bEOS=OMX_TRUE;
+      return OMX_ErrorNone;
+    }
+    pBuffer->nFilledLen=0;
     pBuffer->nFlags = OMX_BUFFERFLAG_EOS;
-    pBuffer->nFilledLen = 0;
-    tsem_up(appPriv->eofSem);
+    err = OMX_EmptyThisBuffer(hComponent, pBuffer);
     return OMX_ErrorNone;
   }
   pBuffer->nFilledLen = data_read;
-  DEBUG(DEB_LEV_PARAMS, "Empty buffer %x\n", (int)pBuffer);
-  err = OMX_EmptyThisBuffer(hComponent, pBuffer);
+  if(!bEOS) {
+    DEBUG(DEB_LEV_FULL_SEQ, "Empty buffer %x\n", (int)pBuffer);
+    err = OMX_EmptyThisBuffer(hComponent, pBuffer);
+  } else {
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s Dropping Empty This buffer to Audio Dec\n", __func__);
+  }
   return OMX_ErrorNone;
 }
 

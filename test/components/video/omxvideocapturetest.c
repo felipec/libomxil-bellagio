@@ -57,7 +57,7 @@ appPrivateType* appPriv;
 char *output_file;
 FILE *outfile;
 
-int flagIsOutputEspected;
+int flagIsOutputExpected;
 static OMX_BOOL bEOS = OMX_FALSE;
 
 static void setHeader(OMX_PTR header, OMX_U32 size) {
@@ -103,11 +103,11 @@ int main(int argc, char** argv) {
   if(argc < 2){
     display_help();
   } else {
-    flagIsOutputEspected = 0;
+    flagIsOutputExpected = 0;
     argn_dec = 1;
     while (argn_dec < argc) {
       if (*(argv[argn_dec]) == '-') {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           display_help();
         }
         switch (*(argv[argn_dec] + 1)) {
@@ -115,13 +115,13 @@ int main(int argc, char** argv) {
             display_help();
             break;
           case 'o':
-            flagIsOutputEspected = 1;
+            flagIsOutputExpected = 1;
             break;
           default:
             display_help();
         }
       } else {
-        if (flagIsOutputEspected) {
+        if (flagIsOutputExpected) {
           if(strstr(argv[argn_dec], ".yuv") == NULL && strstr(argv[argn_dec], ".rgb") == NULL) {
             output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 5);
             strcpy(output_file,argv[argn_dec]);
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
             output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
             strcpy(output_file,argv[argn_dec]);
           }          
-          flagIsOutputEspected = 0;
+          flagIsOutputExpected = 0;
         } 
       }
       argn_dec++;

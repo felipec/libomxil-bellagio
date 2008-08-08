@@ -106,7 +106,8 @@ OMX_ERRORTYPE omx_alsasink_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
  /* Initializing the function pointers */
   omx_alsasink_component_Private->BufferMgmtCallback  = omx_alsasink_component_BufferMgmtCallback;
   omx_alsasink_component_Private->destructor          = omx_alsasink_component_Destructor;
-  pPort->Port_SendBufferFunction                      = omx_alsasink_component_port_SendBufferFunction;  
+  pPort->Port_SendBufferFunction                      = omx_alsasink_component_port_SendBufferFunction; 
+  pPort->FlushProcessingBuffers                       = omx_alsasink_component_port_FlushProcessingBuffers;
 
   setHeader(&pPort->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
   pPort->sAudioParam.nPortIndex = 0;
@@ -256,7 +257,7 @@ OMX_ERRORTYPE omx_alsasink_component_port_SendBufferFunction(omx_base_PortType *
   }
 
   /* Temporarily disable this check for gst-openmax */
-#if NO_GST_OMX_PATCh
+#if NO_GST_OMX_PATCH
   {
   OMX_BOOL foundBuffer = OMX_FALSE;
   if(pBuffer!=NULL && pBuffer->pBuffer!=NULL) {
@@ -279,14 +280,12 @@ OMX_ERRORTYPE omx_alsasink_component_port_SendBufferFunction(omx_base_PortType *
   }
 
   pClockPort  = (omx_base_clock_PortType*)omx_base_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
-  if(PORT_IS_TUNNELED(pClockPort) && !PORT_IS_BEING_FLUSHED(openmaxStandPort)){  
-    if(pBuffer->nInputPortIndex == OMX_BASE_SINK_INPUTPORT_INDEX && pBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME)
-      SendFrame = OMX_TRUE;
-    else{
-      SendFrame = omx_alsasink_component_ClockPortHandleFunction((omx_alsasink_component_PrivateType*)omx_base_component_Private, pBuffer); 
-      /* drop the frame */
-      if(!SendFrame) pBuffer->nFilledLen=0;
-    }
+  if(PORT_IS_TUNNELED(pClockPort) && !PORT_IS_BEING_FLUSHED(openmaxStandPort) &&
+      (omx_base_component_Private->transientState != OMX_TransStateExecutingToIdle) && 
+      (pBuffer->nFlags != OMX_BUFFERFLAG_EOS)){  
+    SendFrame = omx_alsasink_component_ClockPortHandleFunction((omx_alsasink_component_PrivateType*)omx_base_component_Private, pBuffer); 
+    /* drop the frame */
+    if(!SendFrame) pBuffer->nFilledLen=0;
   }
 
   /* And notify the buffer management thread we have a fresh new buffer to manage */
@@ -316,19 +315,57 @@ OMX_BOOL omx_alsasink_component_ClockPortHandleFunction(omx_alsasink_component_P
   OMX_TIME_CONFIG_TIMESTAMPTYPE       sClientTimeStamp;
   OMX_ERRORTYPE                       err;
   OMX_BOOL                            SendFrame=OMX_TRUE;
+  omx_base_audio_PortType             *pAudioPort;
 
   int static                          count=0; //frame counter
 
   pClockPort    = (omx_base_clock_PortType*)omx_alsasink_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
+  pAudioPort    = (omx_base_audio_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   hclkComponent = pClockPort->hTunneledComponent;
   setHeader(&pClockPort->sMediaTimeRequest, sizeof(OMX_TIME_CONFIG_MEDIATIMEREQUESTTYPE));
 
-    /* check for any scale change information from the clock component */
-    if(pClockPort->pBufferSem->semval>0){
-     tsem_down(pClockPort->pBufferSem);
-     clockBuffer = dequeue(pClockPort->pBufferQueue);
-     pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
-     if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
+  /* if  first time stamp is received then notify the clock component */  
+  if(inputbuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
+    DEBUG(DEB_LEV_FULL_SEQ,"In %s  first time stamp = %llx \n", __func__,inputbuffer->nTimeStamp);
+    inputbuffer->nFlags = 0;
+    hclkComponent = pClockPort->hTunneledComponent;
+    setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
+    sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
+    sClientTimeStamp.nTimestamp = inputbuffer->nTimeStamp;
+    err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeClientStartTime, &sClientTimeStamp);
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
+    }
+
+    if(!PORT_IS_BEING_FLUSHED(pAudioPort) && !PORT_IS_BEING_FLUSHED(pClockPort)) {
+      tsem_down(pClockPort->pBufferSem); /* wait for state change notification from clock src*/
+
+      /* update the clock state and clock scale info into the alsa sink private data */
+      if(pClockPort->pBufferQueue->nelem > 0) {
+        clockBuffer = dequeue(pClockPort->pBufferQueue);
+        pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;  
+        omx_alsasink_component_Private->eState = pMediaTime->eState;
+        omx_alsasink_component_Private->xScale = pMediaTime->xScale;
+        pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
+      }
+    }
+  }
+
+  /* do not send the data to alsa and return back, if the clock is not running or the scale is anything but 1*/
+  if(!(omx_alsasink_component_Private->eState==OMX_TIME_ClockStateRunning  && (omx_alsasink_component_Private->xScale>>16)==1)){ 
+    inputbuffer->nFilledLen=0;
+    //return;
+    SendFrame = OMX_FALSE;
+    return SendFrame;
+  }
+  
+  /* check for any scale change information from the clock component */
+  if(pClockPort->pBufferSem->semval>0){
+    tsem_down(pClockPort->pBufferSem);
+    if(pClockPort->pBufferQueue->nelem > 0) {
+      clockBuffer = dequeue(pClockPort->pBufferQueue);
+      pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
+      if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
        if(/*(omx_alsasink_component_Private->xScale>>16)==2 &&*/ (pMediaTime->xScale>>16)==1){ /* check with Q16 format only */
              /* rebase the clock time base when turning to normal play mode*/
           hclkComponent = pClockPort->hTunneledComponent;
@@ -341,47 +378,151 @@ OMX_BOOL omx_alsasink_component_ClockPortHandleFunction(omx_alsasink_component_P
           }
        }
        omx_alsasink_component_Private->xScale = pMediaTime->xScale;
-     }
-     pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
+      }
+      pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
     }
+  }
 
   count++;
-  if(count==15){ //send request for every 15th frame 
-     count=0;
+  if(count==15) { //send request for every 15th frame 
+    count=0;
     /* requesting for the timestamp for the data delivery */
-    if(!PORT_IS_BEING_FLUSHED(pClockPort)){
-     pClockPort->sMediaTimeRequest.nOffset         = 100; /*set the requested offset */
-     pClockPort->sMediaTimeRequest.nPortIndex      = pClockPort->nTunneledPort;
-     pClockPort->sMediaTimeRequest.pClientPrivate  = NULL; /* fill the appropriate value */
-     pClockPort->sMediaTimeRequest.nMediaTimestamp = inputbuffer->nTimeStamp;
-     err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeMediaTimeRequest, &pClockPort->sMediaTimeRequest);
-     if(err!=OMX_ErrorNone) {
+    if(!PORT_IS_BEING_FLUSHED(pAudioPort) && !PORT_IS_BEING_FLUSHED(pClockPort)&&
+        omx_alsasink_component_Private->transientState != OMX_TransStateExecutingToIdle) {
+      pClockPort->sMediaTimeRequest.nOffset         = 100; /*set the requested offset */
+      pClockPort->sMediaTimeRequest.nPortIndex      = pClockPort->nTunneledPort;
+      pClockPort->sMediaTimeRequest.pClientPrivate  = NULL; /* fill the appropriate value */
+      pClockPort->sMediaTimeRequest.nMediaTimestamp = inputbuffer->nTimeStamp;
+      err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeMediaTimeRequest, &pClockPort->sMediaTimeRequest);
+      if(err!=OMX_ErrorNone) {
        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
-     }
-     if(!PORT_IS_BEING_FLUSHED(pClockPort)) {
-       tsem_down(pClockPort->pBufferSem); /* wait for the request fullfillment */
-       clockBuffer = dequeue(pClockPort->pBufferQueue);
-       pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
-       if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
-          omx_alsasink_component_Private->xScale = pMediaTime->xScale;
-       }
-       if(pMediaTime->eUpdateType==OMX_TIME_UpdateRequestFulfillment){
-         if((pMediaTime->nOffset)>0) {
+      }
+      if(!PORT_IS_BEING_FLUSHED(pAudioPort) && !PORT_IS_BEING_FLUSHED(pClockPort) &&
+        omx_alsasink_component_Private->transientState != OMX_TransStateExecutingToIdle) {
+        tsem_down(pClockPort->pBufferSem); /* wait for the request fullfillment */
+        if(pClockPort->pBufferQueue->nelem > 0) {
+          clockBuffer = dequeue(pClockPort->pBufferQueue);
+          pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
+          if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
+            omx_alsasink_component_Private->xScale = pMediaTime->xScale;
+          }
+          if(pMediaTime->eUpdateType==OMX_TIME_UpdateRequestFulfillment) {
+            if((pMediaTime->nOffset)>0) {
 #ifdef AV_SYNC_LOG
          fprintf(fd,"%lld %lld\n",inputbuffer->nTimeStamp,pMediaTime->nWallTimeAtMediaTime);
 #endif
-         SendFrame = OMX_TRUE; /* as offset is >0 send the data to the device */
-         }
-         else {
-         SendFrame = OMX_FALSE; /* as offset is <0 do not send the data to the device */
-         }
-       }
-       pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
-     }
+              SendFrame = OMX_TRUE; /* as offset is >0 send the data to the device */
+            }
+            else {
+              SendFrame = OMX_FALSE; /* as offset is <0 do not send the data to the device */
+            }
+          }
+          pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
+        }
+      }
     }
   }
 
   return(SendFrame);
+}
+
+/** @brief Releases buffers under processing.
+ * This function must be implemented in the derived classes, for the
+ * specific processing
+ */
+OMX_ERRORTYPE omx_alsasink_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort) {
+  omx_base_component_PrivateType* omx_base_component_Private;
+  omx_alsasink_component_PrivateType* omx_alsasink_component_Private;
+  OMX_BUFFERHEADERTYPE* pBuffer;
+  omx_base_clock_PortType               *pClockPort;
+  
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+  omx_base_component_Private        = (omx_base_component_PrivateType*)openmaxStandPort->standCompContainer->pComponentPrivate;
+  omx_alsasink_component_Private  = ( omx_alsasink_component_PrivateType*) omx_base_component_Private;
+
+  pClockPort    = (omx_base_clock_PortType*) omx_alsasink_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
+
+  if(openmaxStandPort->sPortParam.eDomain!=OMX_PortDomainOther) { /* clock buffers not used in the clients buffer managment function */
+    pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+    openmaxStandPort->bIsPortFlushed=OMX_TRUE;
+    /*Signal the buffer management thread of port flush,if it is waiting for buffers*/
+    if(omx_base_component_Private->bMgmtSem->semval==0) {
+      tsem_up(omx_base_component_Private->bMgmtSem);
+    }
+
+    if(omx_base_component_Private->state==OMX_StatePause ) {
+      /*Waiting at paused state*/
+      tsem_signal(omx_base_component_Private->bStateSem);
+    }
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+    /* Wait until flush is completed */
+    pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+    /*Dummy signal to clock port*/
+    if(pClockPort->pBufferSem->semval == 0) {
+      tsem_up(pClockPort->pBufferSem);
+    }
+    tsem_down(omx_base_component_Private->flush_all_condition);
+    if(pClockPort->pBufferSem->semval > 0) {
+      tsem_down(pClockPort->pBufferSem); 
+    }
+  }
+
+  tsem_reset(omx_base_component_Private->bMgmtSem);
+  
+  /* Flush all the buffers not under processing */
+  while (openmaxStandPort->pBufferSem->semval > 0) {
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s TFlag=%x Flusing Port=%d,Semval=%d Qelem=%d\n", 
+    __func__,(int)openmaxStandPort->nTunnelFlags,(int)openmaxStandPort->sPortParam.nPortIndex,
+    (int)openmaxStandPort->pBufferSem->semval,(int)openmaxStandPort->pBufferQueue->nelem);
+
+    tsem_down(openmaxStandPort->pBufferSem);
+    pBuffer = dequeue(openmaxStandPort->pBufferQueue);
+    if (PORT_IS_TUNNELED(openmaxStandPort) && !PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s: Comp %s is returning io:%d buffer\n", 
+        __func__,omx_base_component_Private->name,(int)openmaxStandPort->sPortParam.nPortIndex);
+      if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
+        ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->FillThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
+      } else {
+        ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->EmptyThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
+      }
+    } else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+      queue(openmaxStandPort->pBufferQueue,pBuffer);
+    } else {
+      (*(openmaxStandPort->BufferProcessedCallback))(
+        openmaxStandPort->standCompContainer,
+        omx_base_component_Private->callbackData,
+        pBuffer);
+    }
+  }
+  /*Port is tunneled and supplier and didn't received all it's buffer then wait for the buffers*/
+  if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    while(openmaxStandPort->pBufferQueue->nelem!= openmaxStandPort->nNumAssignedBuffers){
+      tsem_down(openmaxStandPort->pBufferSem);
+      DEBUG(DEB_LEV_PARAMS, "In %s Got a buffer qelem=%d\n",__func__,openmaxStandPort->pBufferQueue->nelem);
+    }
+    tsem_reset(openmaxStandPort->pBufferSem);
+  }
+
+  pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
+  pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+  tsem_up(omx_base_component_Private->flush_condition);
+
+  DEBUG(DEB_LEV_FULL_SEQ, "Out %s Port Index=%d bIsPortFlushed=%d Component %s\n", __func__,
+    (int)openmaxStandPort->sPortParam.nPortIndex,(int)openmaxStandPort->bIsPortFlushed,omx_base_component_Private->name);
+
+  DEBUG(DEB_LEV_PARAMS, "In %s TFlag=%x Qelem=%d BSem=%d bMgmtsem=%d component=%s\n", __func__,
+    (int)openmaxStandPort->nTunnelFlags,
+    (int)openmaxStandPort->pBufferQueue->nelem,
+    (int)openmaxStandPort->pBufferSem->semval,
+    (int)omx_base_component_Private->bMgmtSem->semval,
+    omx_base_component_Private->name);
+
+  DEBUG(DEB_LEV_FUNCTION_NAME, "Out %s Port Index=%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+
+  return OMX_ErrorNone;
 }
 
 /** 
@@ -394,48 +535,7 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   OMX_S32                             offsetBuffer;
   OMX_BOOL                            allDataSent;
   omx_alsasink_component_PrivateType* omx_alsasink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_base_audio_PortType             *pPort = (omx_base_audio_PortType *) omx_alsasink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
-  OMX_HANDLETYPE                      hclkComponent;
-  OMX_TIME_CONFIG_TIMESTAMPTYPE       sClientTimeStamp;
-  OMX_ERRORTYPE                       err;
-  omx_base_clock_PortType*            pClockPort;
-  OMX_BUFFERHEADERTYPE*               clockBuffer;
-  OMX_TIME_MEDIATIMETYPE*             pMediaTime;
-
-  pClockPort = (omx_base_clock_PortType*)omx_alsasink_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
-  if(PORT_IS_TUNNELED(pClockPort)){
-    /* if  first time stamp is received then notify the clock component */  
-    if(inputbuffer->nInputPortIndex == OMX_BASE_SINK_INPUTPORT_INDEX && inputbuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-      DEBUG(DEB_LEV_FULL_SEQ,"In %s  first time stamp = %llx \n", __func__,inputbuffer->nTimeStamp);
-      inputbuffer->nFlags = 0;
-      hclkComponent = pClockPort->hTunneledComponent;
-      setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
-      sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
-      sClientTimeStamp.nTimestamp = inputbuffer->nTimeStamp;
-      err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeClientStartTime, &sClientTimeStamp);
-      if(err!=OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
-      }
   
-      if(!PORT_IS_BEING_FLUSHED(pPort) && !PORT_IS_BEING_FLUSHED(pClockPort)) {
-        tsem_down(pClockPort->pBufferSem); /* wait for state change notification from clock src*/
-
-        /* update the clock state and clock scale info into the alsa sink private data */
-        clockBuffer = dequeue(pClockPort->pBufferQueue);
-        pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;  
-        omx_alsasink_component_Private->eState = pMediaTime->eState;
-        omx_alsasink_component_Private->xScale = pMediaTime->xScale;
-        pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
-      }
-    }
-
-    /* do not send the data to alsa and return back, if the clock is not running or the scale is anything but 1*/
-    if(!(omx_alsasink_component_Private->eState==OMX_TIME_ClockStateRunning  && (omx_alsasink_component_Private->xScale>>16)==1)){ 
-      inputbuffer->nFilledLen=0;
-      return;
-    }
-  }
-
   /* Feed it to ALSA */
   frameSize = (omx_alsasink_component_Private->sPCMModeParam.nChannels * omx_alsasink_component_Private->sPCMModeParam.nBitPerSample) >> 3;
   DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n", 

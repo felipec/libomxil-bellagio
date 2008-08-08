@@ -99,9 +99,9 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
       }
       DEBUG(DEB_LEV_FULL_SEQ, "In %s signalling flush all condition \n", __func__);
       
+      tsem_up(omx_base_source_Private->flush_all_condition);
+      tsem_down(omx_base_source_Private->flush_condition);
       pthread_mutex_lock(&omx_base_source_Private->flush_mutex);
-      pthread_cond_signal(&omx_base_source_Private->flush_all_condition);
-      pthread_cond_wait(&omx_base_source_Private->flush_condition, &omx_base_source_Private->flush_mutex);
     }
     pthread_mutex_unlock(&omx_base_source_Private->flush_mutex);
 
@@ -247,9 +247,9 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
       DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
         __func__,outBufExchanged[0],isOutputBufferNeeded[0],outBufExchanged[1],isOutputBufferNeeded[1],pOutputSem[0]->semval,pOutputSem[1]->semval);
   
+      tsem_up(omx_base_source_Private->flush_all_condition);
+      tsem_down(omx_base_source_Private->flush_condition);
       pthread_mutex_lock(&omx_base_source_Private->flush_mutex);
-      pthread_cond_signal(&omx_base_source_Private->flush_all_condition);
-      pthread_cond_wait(&omx_base_source_Private->flush_condition,&omx_base_source_Private->flush_mutex);
     }
     pthread_mutex_unlock(&omx_base_source_Private->flush_mutex);
 

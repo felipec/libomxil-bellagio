@@ -47,7 +47,7 @@
 #define PORT_IS_TUNNELED(pPort)                                  (pPort->nTunnelFlags & TUNNEL_ESTABLISHED)
 #define PORT_IS_DEEP_TUNNELED(pPort)                             (pPort->nTunnelFlags & PROPRIETARY_COMMUNICATION_ESTABLISHED)
 #define PORT_IS_BUFFER_SUPPLIER(pPort)                           (pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER)
-#define PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort)                (pPort->nTunnelFlags== (TUNNEL_ESTABLISHED | TUNNEL_IS_SUPPLIER))
+#define PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(pPort)                ((pPort->nTunnelFlags & TUNNEL_ESTABLISHED) && (pPort->nTunnelFlags & TUNNEL_IS_SUPPLIER))
 
 /** The following enum values are used to characterize each buffer 
   * allocated or assigned to the component. A buffer list is 

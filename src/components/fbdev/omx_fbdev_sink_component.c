@@ -162,7 +162,8 @@ OMX_ERRORTYPE omx_fbdev_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   /** set the function pointers */
   omx_fbdev_sink_component_Private->destructor = omx_fbdev_sink_component_Destructor;
   omx_fbdev_sink_component_Private->BufferMgmtCallback = omx_fbdev_sink_component_BufferMgmtCallback;
-  omx_fbdev_sink_component_Private->ports[0]->Port_SendBufferFunction = omx_fbdev_sink_component_port_SendBufferFunction; 
+  pPort->Port_SendBufferFunction = omx_fbdev_sink_component_port_SendBufferFunction; 
+  pPort->FlushProcessingBuffers  = omx_fbdev_sink_component_port_FlushProcessingBuffers;
   openmaxStandComp->SetParameter = omx_fbdev_sink_component_SetParameter;
   openmaxStandComp->GetParameter = omx_fbdev_sink_component_GetParameter;
   omx_fbdev_sink_component_Private->messageHandler = omx_fbdev_sink_component_MessageHandler;
@@ -1057,13 +1058,11 @@ OMX_ERRORTYPE omx_fbdev_sink_component_port_SendBufferFunction(omx_base_PortType
   }
 
   pClockPort  = (omx_base_clock_PortType*)omx_base_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
-  if(PORT_IS_TUNNELED(pClockPort) && !PORT_IS_BEING_FLUSHED(openmaxStandPort)){
-    if(pBuffer->nInputPortIndex == OMX_BASE_SINK_INPUTPORT_INDEX && pBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME){
-      SendFrame = OMX_TRUE;
-    }else{
-       SendFrame = omx_fbdev_sink_component_ClockPortHandleFunction((omx_fbdev_sink_component_PrivateType*)omx_base_component_Private, pBuffer);
-       if(!SendFrame) pBuffer->nFilledLen=0; 
-    }
+  if(PORT_IS_TUNNELED(pClockPort) && !PORT_IS_BEING_FLUSHED(openmaxStandPort) &&
+      (omx_base_component_Private->transientState != OMX_TransStateExecutingToIdle) && 
+      (pBuffer->nFlags != OMX_BUFFERFLAG_EOS)){
+    SendFrame = omx_fbdev_sink_component_ClockPortHandleFunction((omx_fbdev_sink_component_PrivateType*)omx_base_component_Private, pBuffer);
+    if(!SendFrame) pBuffer->nFilledLen=0; 
   }
 
   /* And notify the buffer management thread we have a fresh new buffer to manage */
@@ -1091,29 +1090,66 @@ OMX_BOOL omx_fbdev_sink_component_ClockPortHandleFunction(omx_fbdev_sink_compone
   OMX_TIME_CONFIG_TIMESTAMPTYPE         sClientTimeStamp;
   OMX_ERRORTYPE                         err;
   OMX_BOOL                              SendFrame;
+  omx_base_video_PortType               *pVideoPort;
 
   pClockPort    = (omx_base_clock_PortType*) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
+  pVideoPort    = (omx_base_video_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   hclkComponent = pClockPort->hTunneledComponent; 
 
   SendFrame = OMX_TRUE;
+
+  DEBUG(DEB_LEV_FULL_SEQ, "In %s Clock Port is Tunneled. Sending Request\n", __func__);
+  /* if first time stamp is received then notify the clock component */  
+  if(pInputBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
+    DEBUG(DEB_LEV_FULL_SEQ," In %s  first time stamp = %llx \n", __func__,pInputBuffer->nTimeStamp);
+    pInputBuffer->nFlags = 0;
+    hclkComponent = pClockPort->hTunneledComponent;
+    setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
+    sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
+    sClientTimeStamp.nTimestamp = pInputBuffer->nTimeStamp;
+    err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeClientStartTime, &sClientTimeStamp);
+    if(err!=OMX_ErrorNone) {
+     DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
+    }
+    tsem_down(pClockPort->pBufferSem); /* wait for state change notification */
+
+    /* update the clock state and clock scale info into the fbdev private data */
+    if(pClockPort->pBufferQueue->nelem > 0) {
+      clockBuffer=dequeue(pClockPort->pBufferQueue);
+      pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
+      omx_fbdev_sink_component_Private->eState      = pMediaTime->eState;
+      omx_fbdev_sink_component_Private->xScale      = pMediaTime->xScale;
+      pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
+    }
+  }
+
+  /* do not send the data to sink and return back, if the clock is not running*/
+  if(!omx_fbdev_sink_component_Private->eState==OMX_TIME_ClockStateRunning){
+    pInputBuffer->nFilledLen=0;
+    SendFrame = OMX_FALSE;
+    return SendFrame;
+  }
+  
   /* check for any scale change information from the clock component */
   if(pClockPort->pBufferSem->semval>0) {
     tsem_down(pClockPort->pBufferSem);
-    clockBuffer = dequeue(pClockPort->pBufferQueue);
-    pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
-    if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
-      /* On scale change update the media time base */
-      sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
-      sClientTimeStamp.nTimestamp = pInputBuffer->nTimeStamp;
-      err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeCurrentVideoReference, &sClientTimeStamp);
-      if(err!=OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
+    if(pClockPort->pBufferQueue->nelem > 0) {
+      clockBuffer = dequeue(pClockPort->pBufferQueue);
+      pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
+      if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
+        /* On scale change update the media time base */
+        sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
+        sClientTimeStamp.nTimestamp = pInputBuffer->nTimeStamp;
+        err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeCurrentVideoReference, &sClientTimeStamp);
+        if(err!=OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
+        }
+        omx_fbdev_sink_component_Private->frameDropFlag = OMX_TRUE;
+        omx_fbdev_sink_component_Private->dropFrameCount = 0;
+        omx_fbdev_sink_component_Private->xScale = pMediaTime->xScale;
       }
-      omx_fbdev_sink_component_Private->frameDropFlag = OMX_TRUE;
-      omx_fbdev_sink_component_Private->dropFrameCount = 0;
-      omx_fbdev_sink_component_Private->xScale = pMediaTime->xScale;
+      pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
     }
-    pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
   }
 
   /* drop next seven frames on scale change
@@ -1141,7 +1177,8 @@ OMX_BOOL omx_fbdev_sink_component_ClockPortHandleFunction(omx_fbdev_sink_compone
 
   /* frame is not to be droppef so send the request for the timestamp for the data delivery */
   if(SendFrame){ 
-    if(PORT_IS_TUNNELED(pClockPort) && !PORT_IS_BEING_FLUSHED(pClockPort)) { 
+    if(!PORT_IS_BEING_FLUSHED(pVideoPort) && !PORT_IS_BEING_FLUSHED(pClockPort) &&
+        omx_fbdev_sink_component_Private->transientState != OMX_TransStateExecutingToIdle) { 
       setHeader(&pClockPort->sMediaTimeRequest, sizeof(OMX_TIME_CONFIG_MEDIATIMEREQUESTTYPE));
       pClockPort->sMediaTimeRequest.nMediaTimestamp = pInputBuffer->nTimeStamp;
       pClockPort->sMediaTimeRequest.nOffset         = 100; /*set the requested offset */
@@ -1151,41 +1188,144 @@ OMX_BOOL omx_fbdev_sink_component_ClockPortHandleFunction(omx_fbdev_sink_compone
       if(err!=OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
       }
-      if(/*!PORT_IS_BEING_FLUSHED(pPort) &&*/ !PORT_IS_BEING_FLUSHED(pClockPort)) {
+      if(!PORT_IS_BEING_FLUSHED(pVideoPort) && !PORT_IS_BEING_FLUSHED(pClockPort) &&
+          omx_fbdev_sink_component_Private->transientState != OMX_TransStateExecutingToIdle) {
         tsem_down(pClockPort->pBufferSem); /* wait for the request fullfillment */
-        clockBuffer = dequeue(pClockPort->pBufferQueue);
-        pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
-        if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
-         /* update the media time base */
-          setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE)); // do not need to setHeader again do once at the top
-          sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
-          sClientTimeStamp.nTimestamp = pInputBuffer->nTimeStamp;
-          err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeCurrentVideoReference, &sClientTimeStamp);
-          if(err!=OMX_ErrorNone) {
-            DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
+        if(pClockPort->pBufferQueue->nelem > 0) {
+          clockBuffer = dequeue(pClockPort->pBufferQueue);
+          pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
+          if(pMediaTime->eUpdateType==OMX_TIME_UpdateScaleChanged) {
+           /* update the media time base */
+            setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE)); // do not need to setHeader again do once at the top
+            sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
+            sClientTimeStamp.nTimestamp = pInputBuffer->nTimeStamp;
+            err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeCurrentVideoReference, &sClientTimeStamp);
+            if(err!=OMX_ErrorNone) {
+              DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
+            }
+            omx_fbdev_sink_component_Private->frameDropFlag  = OMX_TRUE;
+            omx_fbdev_sink_component_Private->dropFrameCount = 0;
+            omx_fbdev_sink_component_Private->xScale = pMediaTime->xScale;
           }
-          omx_fbdev_sink_component_Private->frameDropFlag  = OMX_TRUE;
-          omx_fbdev_sink_component_Private->dropFrameCount = 0;
-          omx_fbdev_sink_component_Private->xScale = pMediaTime->xScale;
-        }
-       if(pMediaTime->eUpdateType==OMX_TIME_UpdateRequestFulfillment){
-         if((pMediaTime->nOffset)>0) {
+          if(pMediaTime->eUpdateType==OMX_TIME_UpdateRequestFulfillment){
+            if((pMediaTime->nOffset)>0) {
 #ifdef AV_SYNC_LOG
-            fprintf(fd,"%lld %lld\n",pInputBuffer->nTimeStamp,pMediaTime->nWallTimeAtMediaTime);
+              fprintf(fd,"%lld %lld\n",pInputBuffer->nTimeStamp,pMediaTime->nWallTimeAtMediaTime);
 #endif
-            SendFrame=OMX_TRUE;
-         }else {
-           SendFrame = OMX_FALSE;
-         }
-       }
-       pClockPort->ReturnBufferFunction((omx_base_PortType *)pClockPort,clockBuffer);
-     }
-   }
- }
+              SendFrame=OMX_TRUE;
+            }else {
+              SendFrame = OMX_FALSE;
+            }
+          }
+          pClockPort->ReturnBufferFunction((omx_base_PortType *)pClockPort,clockBuffer);
+        }
+      }
+    }
+  }
 
   return(SendFrame);
 }
 
+
+/** @brief Releases buffers under processing.
+ * This function must be implemented in the derived classes, for the
+ * specific processing
+ */
+OMX_ERRORTYPE omx_fbdev_sink_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort) {
+  omx_base_component_PrivateType* omx_base_component_Private;
+  omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private;
+  OMX_BUFFERHEADERTYPE* pBuffer;
+  omx_base_clock_PortType               *pClockPort;
+  
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+  omx_base_component_Private        = (omx_base_component_PrivateType*)openmaxStandPort->standCompContainer->pComponentPrivate;
+  omx_fbdev_sink_component_Private  = ( omx_fbdev_sink_component_PrivateType*) omx_base_component_Private;
+
+  pClockPort    = (omx_base_clock_PortType*) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
+
+  if(openmaxStandPort->sPortParam.eDomain!=OMX_PortDomainOther) { /* clock buffers not used in the clients buffer managment function */
+    pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+    openmaxStandPort->bIsPortFlushed=OMX_TRUE;
+    /*Signal the buffer management thread of port flush,if it is waiting for buffers*/
+    if(omx_base_component_Private->bMgmtSem->semval==0) {
+      tsem_up(omx_base_component_Private->bMgmtSem);
+    }
+
+    if(omx_base_component_Private->state==OMX_StatePause ) {
+      /*Waiting at paused state*/
+      tsem_signal(omx_base_component_Private->bStateSem);
+    }
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+    /* Wait until flush is completed */
+    pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+    /*Dummy signal to clock port*/
+    if(pClockPort->pBufferSem->semval == 0) {
+      tsem_up(pClockPort->pBufferSem);
+    }
+    tsem_down(omx_base_component_Private->flush_all_condition);
+
+    if(pClockPort->pBufferSem->semval > 0) {
+      tsem_down(pClockPort->pBufferSem); 
+    }
+  }
+
+  tsem_reset(omx_base_component_Private->bMgmtSem);
+  
+  /* Flush all the buffers not under processing */
+  while (openmaxStandPort->pBufferSem->semval > 0) {
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s TFlag=%x Flusing Port=%d,Semval=%d Qelem=%d\n", 
+    __func__,(int)openmaxStandPort->nTunnelFlags,(int)openmaxStandPort->sPortParam.nPortIndex,
+    (int)openmaxStandPort->pBufferSem->semval,(int)openmaxStandPort->pBufferQueue->nelem);
+
+    tsem_down(openmaxStandPort->pBufferSem);
+    pBuffer = dequeue(openmaxStandPort->pBufferQueue);
+    if (PORT_IS_TUNNELED(openmaxStandPort) && !PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s: Comp %s is returning io:%d buffer\n", 
+        __func__,omx_base_component_Private->name,(int)openmaxStandPort->sPortParam.nPortIndex);
+      if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
+        ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->FillThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
+      } else {
+        ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->EmptyThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
+      }
+    } else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+      queue(openmaxStandPort->pBufferQueue,pBuffer);
+    } else {
+      (*(openmaxStandPort->BufferProcessedCallback))(
+        openmaxStandPort->standCompContainer,
+        omx_base_component_Private->callbackData,
+        pBuffer);
+    }
+  }
+  /*Port is tunneled and supplier and didn't received all it's buffer then wait for the buffers*/
+  if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    while(openmaxStandPort->pBufferQueue->nelem!= openmaxStandPort->nNumAssignedBuffers){
+      tsem_down(openmaxStandPort->pBufferSem);
+      DEBUG(DEB_LEV_PARAMS, "In %s Got a buffer qelem=%d\n",__func__,openmaxStandPort->pBufferQueue->nelem);
+    }
+    tsem_reset(openmaxStandPort->pBufferSem);
+  }
+
+  pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
+  pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+  tsem_up(omx_base_component_Private->flush_condition);
+
+  DEBUG(DEB_LEV_FULL_SEQ, "Out %s Port Index=%d bIsPortFlushed=%d Component %s\n", __func__,
+    (int)openmaxStandPort->sPortParam.nPortIndex,(int)openmaxStandPort->bIsPortFlushed,omx_base_component_Private->name);
+
+  DEBUG(DEB_LEV_PARAMS, "In %s TFlag=%x Qelem=%d BSem=%d bMgmtsem=%d component=%s\n", __func__,
+    (int)openmaxStandPort->nTunnelFlags,
+    (int)openmaxStandPort->pBufferQueue->nelem,
+    (int)openmaxStandPort->pBufferSem->semval,
+    (int)omx_base_component_Private->bMgmtSem->semval,
+    omx_base_component_Private->name);
+
+  DEBUG(DEB_LEV_FUNCTION_NAME, "Out %s Port Index=%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+
+  return OMX_ErrorNone;
+}
 
 /** buffer management callback function 
   * takes one input buffer and displays its contents 
@@ -1195,49 +1335,7 @@ void omx_fbdev_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   omx_fbdev_sink_component_PortType     *pPort = (omx_fbdev_sink_component_PortType *) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   static long                           old_time = 0, new_time = 0;
   long                                  timediff=0;
-  OMX_HANDLETYPE                        hclkComponent;
-  OMX_TIME_CONFIG_TIMESTAMPTYPE         sClientTimeStamp;
-  OMX_ERRORTYPE                         err;
-  omx_base_clock_PortType               *pClockPort;
-  OMX_BUFFERHEADERTYPE*                 clockBuffer;
-  OMX_TIME_MEDIATIMETYPE*               pMediaTime;
-
-//  static int                            count=0;
-//  static int                            frameDropFlag=0; /* flag=1 implies drop last few frames on a scale change notification */  
-
-  pClockPort = (omx_base_clock_PortType*) omx_fbdev_sink_component_Private->ports[OMX_BASE_SINK_CLOCKPORT_INDEX];
   
-  if(PORT_IS_TUNNELED(pClockPort)) {
-    DEBUG(DEB_LEV_FULL_SEQ, "In %s Clock Port is Tunneled. Sending Request\n", __func__);
-    /* if first time stamp is received then notify the clock component */  
-    if(pInputBuffer->nInputPortIndex == OMX_BASE_SINK_INPUTPORT_INDEX && pInputBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-      DEBUG(DEB_LEV_FULL_SEQ," In %s  first time stamp = %llx \n", __func__,pInputBuffer->nTimeStamp);
-      pInputBuffer->nFlags = 0;
-      hclkComponent = pClockPort->hTunneledComponent;
-      setHeader(&sClientTimeStamp, sizeof(OMX_TIME_CONFIG_TIMESTAMPTYPE));
-      sClientTimeStamp.nPortIndex = pClockPort->nTunneledPort;
-      sClientTimeStamp.nTimestamp = pInputBuffer->nTimeStamp;
-      err = OMX_SetConfig(hclkComponent, OMX_IndexConfigTimeClientStartTime, &sClientTimeStamp);
-      if(err!=OMX_ErrorNone) {
-       DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig in func=%s \n",err,__func__);
-      }
-      tsem_down(pClockPort->pBufferSem); /* wait for state change notification */
-
-      /* update the clock state and clock scale info into the fbdev private data */
-      clockBuffer=dequeue(pClockPort->pBufferQueue);
-      pMediaTime  = (OMX_TIME_MEDIATIMETYPE*)clockBuffer->pBuffer;
-      omx_fbdev_sink_component_Private->eState      = pMediaTime->eState;
-      omx_fbdev_sink_component_Private->xScale      = pMediaTime->xScale;
-      pClockPort->ReturnBufferFunction((omx_base_PortType*)pClockPort,clockBuffer);
-    }
-
-    /* do not send the data to sink and return back, if the clock is not running*/
-    if(!omx_fbdev_sink_component_Private->eState==OMX_TIME_ClockStateRunning){
-      pInputBuffer->nFilledLen=0;
-      return;
-    }
-  }
-
   OMX_COLOR_FORMATTYPE input_colorformat = pPort->sVideoParam.eColorFormat;
   OMX_S32 input_cpy_width = (OMX_S32) pPort->omxConfigCrop.nWidth;      //  Width (in columns) of the crop rectangle
   OMX_U32 input_cpy_height = pPort->omxConfigCrop.nHeight;          //  Height (in rows) of the crop rectangle

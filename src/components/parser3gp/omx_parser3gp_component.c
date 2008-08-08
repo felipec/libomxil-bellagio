@@ -391,7 +391,7 @@ void omx_parser3gp_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandC
   if(temp_buffer->nFilledLen==0) {  /* no data available in temporary buffer*/
      error = av_read_frame(omx_parser3gp_component_Private->avformatcontext, &omx_parser3gp_component_Private->pkt);
      if(error < 0) {
-       DEBUG(DEB_LEV_ERR,"In %s EOS - no more packet,state=%x\n",__func__, omx_parser3gp_component_Private->state);
+       DEBUG(DEB_LEV_FULL_SEQ,"In %s EOS - no more packet,state=%x\n",__func__, omx_parser3gp_component_Private->state);
        pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
      } else {
        stream_index = omx_parser3gp_component_Private->pkt.stream_index; 

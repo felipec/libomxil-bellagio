@@ -183,8 +183,8 @@ OMX_ERRORTYPE base_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPo
     }
     DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
     /* Wait until flush is completed */
-    pthread_cond_wait(&omx_base_component_Private->flush_all_condition,&omx_base_component_Private->flush_mutex);
     pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+    tsem_down(omx_base_component_Private->flush_all_condition);
   }
 
   tsem_reset(omx_base_component_Private->bMgmtSem);
@@ -223,11 +223,11 @@ OMX_ERRORTYPE base_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPo
     tsem_reset(openmaxStandPort->pBufferSem);
   }
 
-  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
-
   pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
-  pthread_cond_signal(&omx_base_component_Private->flush_condition);
+  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
   pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+  tsem_up(omx_base_component_Private->flush_condition);
 
   DEBUG(DEB_LEV_FULL_SEQ, "Out %s Port Index=%d bIsPortFlushed=%d Component %s\n", __func__,
     (int)openmaxStandPort->sPortParam.nPortIndex,(int)openmaxStandPort->bIsPortFlushed,omx_base_component_Private->name);
@@ -942,7 +942,26 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
     // store the current callbacks, if defined
     openmaxStandPort->hTunneledComponent = hTunneledComp;
     openmaxStandPort->nTunneledPort = nTunneledPort;
-    openmaxStandPort->nTunnelFlags = 0;
+    
+    /*Check for and set proprietary communication flag. 
+      In case a component support Deep Tunneling should set it's tunnel flag to PROPRIETARY_COMMUNICATION_ESTABLISHED */
+    if(PORT_IS_DEEP_TUNNELED(openmaxStandPort)) {
+      OMX_VENDOR_PROP_TUNNELSETUPTYPE pPropTunnelSetup;
+      pPropTunnelSetup.nPortIndex = nTunneledPort;
+
+      err = OMX_GetParameter(hTunneledComp, OMX_IndexVendorCompPropTunnelFlags, &pPropTunnelSetup);
+      if (err != OMX_ErrorNone) {
+        // compatibility not reached
+        DEBUG(DEB_LEV_ERR,"In %s Proprietary Tunneled Buffer Supplier nTunneledPort=%d error=0x%08x Line=%d \n",
+          __func__,(int)pPropTunnelSetup.nPortIndex,err,__LINE__);
+        openmaxStandPort->nTunnelFlags = 0;
+      } else {
+        openmaxStandPort->nTunnelFlags = PROPRIETARY_COMMUNICATION_ESTABLISHED;
+      }
+    } else {
+      openmaxStandPort->nTunnelFlags = 0;
+    }
+
     // Negotiation
     if (pTunnelSetup->nTunnelFlags & OMX_PORTTUNNELFLAG_READONLY) {
       // the buffer provider MUST be the output port provider
@@ -1002,6 +1021,24 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
       }
     }
 
+    /*Check for and set proprietary communication flag*/
+    if(PORT_IS_DEEP_TUNNELED(openmaxStandPort)) {
+      OMX_VENDOR_PROP_TUNNELSETUPTYPE pPropTunnelSetup;
+      pPropTunnelSetup.nPortIndex = nTunneledPort;
+
+      err = OMX_GetParameter(hTunneledComp, OMX_IndexVendorCompPropTunnelFlags, &pPropTunnelSetup);
+      if (err != OMX_ErrorNone) {
+        // compatibility not reached
+        DEBUG(DEB_LEV_ERR,"In %s Proprietary Tunneled Buffer Supplier nTunneledPort=%d error=0x%08x Line=%d \n",
+          __func__,(int)pPropTunnelSetup.nPortIndex,err,__LINE__);
+        openmaxStandPort->nTunnelFlags = 0;
+      } else {
+        openmaxStandPort->nTunnelFlags = PROPRIETARY_COMMUNICATION_ESTABLISHED;
+      }
+    } else {
+      openmaxStandPort->nTunnelFlags = 0;
+    }
+
     openmaxStandPort->nNumTunnelBuffer=param.nBufferCountMin;
 
     openmaxStandPort->hTunneledComponent = hTunneledComp;
@@ -1012,5 +1049,6 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
 
     openmaxStandPort->eBufferSupplier=OMX_BufferSupplyOutput;
   }
+
   return OMX_ErrorNone;
 }

@@ -59,6 +59,11 @@ typedef struct OMX_VENDOR_EXTRADATATYPE  {
   OMX_U8  *pData;     // Supporting data hint  
 } OMX_VENDOR_EXTRADATATYPE;
 
+typedef struct OMX_VENDOR_PROP_TUNNELSETUPTYPE  {
+  OMX_U32 nPortIndex;
+  OMX_TUNNELSETUPTYPE nTunnelSetup;   // Tunnel setup flags
+} OMX_VENDOR_PROP_TUNNELSETUPTYPE;
+
 /** this is the list of custom vendor index */
 typedef enum OMX_INDEXVENDORTYPE {
   /** only one index for file reader component input file */ 
@@ -66,6 +71,7 @@ typedef enum OMX_INDEXVENDORTYPE {
   OMX_IndexVendorParser3gpInputFilename = 0xFF000002,
   OMX_IndexVendorVideoExtraData = 0xFF000003,
   OMX_IndexVendorAudioExtraData = 0xFF000004,
+  OMX_IndexVendorCompPropTunnelFlags = 0xFF000005 /* Will use OMX_TUNNELSETUPTYPE structure*/
 } OMX_INDEXVENDORTYPE;
 
 /** This enum defines the transition states of the Component*/
@@ -128,8 +134,8 @@ CLASS(omx_base_component_PrivateType)
   OMX_U32 nGroupID; /**< @param nGroupID ID of a group of components that share the same logical chain */\
   OMX_MARKTYPE *pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
   pthread_mutex_t flush_mutex;  /** @param flush_mutex mutex for the flush condition from buffers */ \
-  pthread_cond_t flush_all_condition;  /** @param flush_all_condition condition for the flush all buffers */ \
-  pthread_cond_t flush_condition;  /** @param The flush_condition condition */ \
+  tsem_t* flush_all_condition;  /** @param flush_all_condition condition for the flush all buffers */ \
+  tsem_t* flush_condition;  /** @param The flush_condition condition */ \
   tsem_t* bMgmtSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
   tsem_t* bStateSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
   int messageHandlerThreadID; /** @param  messageHandlerThreadID The ID of the pthread that handles the messages for the components */ \

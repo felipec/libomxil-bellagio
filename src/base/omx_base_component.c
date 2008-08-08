@@ -144,8 +144,16 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   omx_base_component_Private->bufferMgmtThreadID = -1;
 
   pthread_mutex_init(&omx_base_component_Private->flush_mutex, NULL);
-  pthread_cond_init(&omx_base_component_Private->flush_all_condition, NULL);
-  pthread_cond_init(&omx_base_component_Private->flush_condition, NULL);
+
+  if(!omx_base_component_Private->flush_all_condition) {
+    omx_base_component_Private->flush_all_condition = calloc(1,sizeof(tsem_t));
+    tsem_init(omx_base_component_Private->flush_all_condition, 0);
+  }
+
+  if(!omx_base_component_Private->flush_condition) {
+    omx_base_component_Private->flush_condition = calloc(1,sizeof(tsem_t));
+    tsem_init(omx_base_component_Private->flush_condition, 0);
+  }
 
   for(i=0;i<NUM_DOMAINS;i++) {
     memset(&omx_base_component_Private->sPortTypesParam[i], 0, sizeof(OMX_PORT_PARAM_TYPE));
@@ -217,8 +225,18 @@ OMX_ERRORTYPE omx_base_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp)
   }
 
   pthread_mutex_destroy(&omx_base_component_Private->flush_mutex);
-  pthread_cond_destroy(&omx_base_component_Private->flush_all_condition);
-  pthread_cond_destroy(&omx_base_component_Private->flush_condition);
+
+  if(omx_base_component_Private->flush_all_condition){
+    tsem_deinit(omx_base_component_Private->flush_all_condition);
+    free(omx_base_component_Private->flush_all_condition);
+    omx_base_component_Private->flush_all_condition=NULL;
+  }
+
+  if(omx_base_component_Private->flush_condition){
+    tsem_deinit(omx_base_component_Private->flush_condition);
+    free(omx_base_component_Private->flush_condition);
+    omx_base_component_Private->flush_condition=NULL;
+  }
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"Out of %s\n",__func__);
   return OMX_ErrorNone;
@@ -736,6 +754,7 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
   omx_base_PortType *pPort;
   OMX_PORT_PARAM_TYPE* pPortDomains;
   OMX_ERRORTYPE err = OMX_ErrorNone;
+  OMX_VENDOR_PROP_TUNNELSETUPTYPE *pPropTunnelSetup;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   DEBUG(DEB_LEV_PARAMS, "Getting parameter %i\n", nParamIndex);
@@ -807,6 +826,25 @@ OMX_ERRORTYPE omx_base_component_GetParameter(
         pBufferSupplier->eBufferSupplier = OMX_BufferSupplyUnspecified;  
       }
     }
+    break;
+  case OMX_IndexVendorCompPropTunnelFlags:
+    pPropTunnelSetup = (OMX_VENDOR_PROP_TUNNELSETUPTYPE*)ComponentParameterStructure;
+    
+    if (pPropTunnelSetup->nPortIndex >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
+                                         omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +
+                                         omx_base_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts +
+                                         omx_base_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts)) {
+      
+      DEBUG(DEB_LEV_ERR,"In %s OMX_IndexVendorCompPropTunnelFlags nPortIndex=%d Line=%d \n",
+          __func__,(int)pPropTunnelSetup->nPortIndex,__LINE__);
+        
+      return OMX_ErrorBadPortIndex;
+    }
+
+    pPort = omx_base_component_Private->ports[pPropTunnelSetup->nPortIndex];
+
+    pPropTunnelSetup->nTunnelSetup.nTunnelFlags  = pPort->nTunnelFlags;
+    pPropTunnelSetup->nTunnelSetup.eSupplier     = pPort->eBufferSupplier;
     break;
   default:
     err = OMX_ErrorUnsupportedIndex;

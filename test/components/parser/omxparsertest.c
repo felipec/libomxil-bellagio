@@ -692,7 +692,7 @@ int main(int argc, char** argv) {
   }else {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Omx core is initialized \n");
   }
-/*
+
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
   test_OMX_ComponentNameEnum();
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
@@ -711,7 +711,7 @@ int main(int argc, char** argv) {
 
   DEBUG(DEFAULT_MESSAGES, "The component selected for video decoding is %s\n Role is decided by the decoder\n", VIDEO_COMPONENT_NAME_BASE);
   DEBUG(DEFAULT_MESSAGES, "The component selected for audio decoding is %s\n Role is decided by the decoder\n", AUDIO_COMPONENT_NAME_BASE);
-*/
+
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Using Parser3gp \n");
   /** parser3gp component --  gethandle*/
   err = OMX_GetHandle(&appPriv->parser3gphandle, PARSER_3GP, NULL /*appPriv */, &parser3gpcallbacks);
@@ -805,23 +805,23 @@ int main(int argc, char** argv) {
     }
   }
 
- /* disable the clock ports of the clients (audio, video and parser), if AVsync not enabled*/
- if(flagAVsync) {
-   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortEnable, 2, NULL);
-   if(err != OMX_ErrorNone) {
+  /* disable the clock ports of the clients (audio, video and parser), if AVsync not enabled*/
+  if(flagAVsync) {
+    err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortEnable, 2, NULL);
+    if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"parser clock port Enable failed\n");
       exit(1);
     }
-    tsem_down(appPriv->parser3gpEventSem); /* parser clock port disabled */
+    tsem_down(appPriv->parser3gpEventSem); /* parser clock port Enabled */
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Enabled\n", __func__);
 
-   if(flagIsDisplayRequested){
+    if(flagIsDisplayRequested){
       err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandPortEnable, 1, NULL);
       if(err != OMX_ErrorNone) {
          DEBUG(DEB_LEV_ERR,"audiosink clock port Enable failed\n");
          exit(1);
        }
-       tsem_down(appPriv->audioSinkEventSem); /* audio sink clock port disabled */
+       tsem_down(appPriv->audioSinkEventSem); /* audio sink clock port Enabled */
        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Audio Sink Clock Port Enabled\n", __func__);
    
       err = OMX_SendCommand(appPriv->videosinkhandle, OMX_CommandPortEnable, 1, NULL);
@@ -829,9 +829,9 @@ int main(int argc, char** argv) {
          DEBUG(DEB_LEV_ERR,"videosink clock port Enable failed\n");
          exit(1);
        }
-       tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port disabled */
+       tsem_down(appPriv->fbdevSinkEventSem); /* video sink clock port Enabled */
        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Video Sink Clock Port Enabled\n", __func__);
-   }
+    }
  }
 
   /** setting the input format in parser3gp */
@@ -877,24 +877,24 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "Setup Tunnel between clock and parser3gp successful\n");
     }
 
-   if(!flagSetupTunnel){
-   /* disable the clock port on parser and the clock port on the clock component tunneled to the parser, till clock is put in Idle state*/
-   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortDisable, 2, NULL);
-   if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"parser clock port disable failed\n");
-      exit(1);
-    }
-    tsem_down(appPriv->parser3gpEventSem); /* parser clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Disabled\n", __func__);
+    if(!flagSetupTunnel){
+      /* disable the clock port on parser and the clock port on the clock component tunneled to the parser, till clock is put in Idle state*/
+      err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandPortDisable, 2, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"parser clock port disable failed\n");
+        exit(1);
+      }
+      tsem_down(appPriv->parser3gpEventSem); /* parser clock port disabled */
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s parser Clock Port Disabled\n", __func__);
 
-   err = OMX_SendCommand(appPriv->clocksrchandle, OMX_CommandPortDisable, 2, NULL);
-   if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"clocksrc component's clock  port (tunneled to parser's clock port) disable failed\n");
-      exit(1);
+      err = OMX_SendCommand(appPriv->clocksrchandle, OMX_CommandPortDisable, 2, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"clocksrc component's clock  port (tunneled to parser's clock port) disable failed\n");
+        exit(1);
+      }
+      tsem_down(appPriv->clockEventSem); /* clocksrc clock port disabled */
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s clocksrc  Clock Port (connected to parser) Disabled\n", __func__);
     }
-    tsem_down(appPriv->clockEventSem); /* clocksrc clock port disabled */
-    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s clocksrc  Clock Port (connected to parser) Disabled\n", __func__);
-   }
   }
 
   if (flagSetupTunnel) {
@@ -1307,36 +1307,6 @@ int main(int argc, char** argv) {
     tsem_down(appPriv->clockEventSem);
   }
 
- /* putting the clock src in Executing state */
-  if(flagAVsync){
-    err = OMX_SendCommand(appPriv->clocksrchandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"clock src state executing failed\n");
-      exit(1);
-    }
-
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"waiting for  clock src state executing\n");
-    tsem_down(appPriv->clockEventSem);
-    DEBUG(DEFAULT_MESSAGES, "clock src in executing state\n");
-
-    /* set the audio as the master */ 
-    setHeader(&sRefClock, sizeof(OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE));
-    sRefClock.eClock = OMX_TIME_RefClockAudio;
-    OMX_SetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeActiveRefClock,&sRefClock);
-
-   /* set the clock state to OMX_TIME_ClockStateWaitingForStartTime */
-    setHeader(&sClockState, sizeof(OMX_TIME_CONFIG_CLOCKSTATETYPE));
-    err = OMX_GetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
-    sClockState.nWaitMask = OMX_CLOCKPORT1 || OMX_CLOCKPORT0;  /* wait for audio and video start time */
-    sClockState.eState = OMX_TIME_ClockStateWaitingForStartTime;
-    err = OMX_SetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
-    if(err!=OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig \n",err);
-      exit(1);
-    }
-    err = OMX_GetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
-  }
-
   err = OMX_SendCommand(appPriv->videodechandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
   if(err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR,"video decoder state executing failed\n");
@@ -1353,6 +1323,35 @@ int main(int argc, char** argv) {
   /*Wait for decoder state change to executing*/
   tsem_down(appPriv->audioDecoderEventSem);
 
+  /* putting the clock src in Executing state */
+  if(flagAVsync){
+    err = OMX_SendCommand(appPriv->clocksrchandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
+    if(err != OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"clock src state executing failed\n");
+      exit(1);
+    }
+
+    DEBUG(DEB_LEV_SIMPLE_SEQ,"waiting for  clock src state executing\n");
+    tsem_down(appPriv->clockEventSem);
+    DEBUG(DEFAULT_MESSAGES, "clock src in executing state\n");
+
+    /* set the audio as the master */ 
+    setHeader(&sRefClock, sizeof(OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE));
+    sRefClock.eClock = OMX_TIME_RefClockAudio;
+    OMX_SetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeActiveRefClock,&sRefClock);
+
+    /* set the clock state to OMX_TIME_ClockStateWaitingForStartTime */
+    setHeader(&sClockState, sizeof(OMX_TIME_CONFIG_CLOCKSTATETYPE));
+    err = OMX_GetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
+    sClockState.nWaitMask = OMX_CLOCKPORT1 || OMX_CLOCKPORT0;  /* wait for audio and video start time */
+    sClockState.eState = OMX_TIME_ClockStateWaitingForStartTime;
+    err = OMX_SetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig \n",err);
+      exit(1);
+    }
+    err = OMX_GetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
+  }
 
   if (flagIsDisplayRequested) {
     err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
@@ -1483,7 +1482,7 @@ int main(int argc, char** argv) {
       keyin = toupper(getchar());
       if(keyin == 'Q'|| keyin == 'q'){
         DEBUG(DEFAULT_MESSAGES,"Quitting \n");
-        bEOS = OMX_TRUE;
+        //bEOS = OMX_TRUE;
         break;
       }else{
         switch(keyin){
@@ -1522,22 +1521,38 @@ int main(int argc, char** argv) {
   tsem_down(appPriv->eofSem);
 
   DEBUG(DEFAULT_MESSAGES,"Received EOS \n");
+
+  /* putting the clock src in Executing state */
+  /*
+  if(flagAVsync){
+    // set the clock state to OMX_TIME_ClockStateWaitingForStartTime //
+    setHeader(&sClockState, sizeof(OMX_TIME_CONFIG_CLOCKSTATETYPE));
+    err = OMX_GetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
+    //sClockState.nWaitMask = OMX_CLOCKPORT1 || OMX_CLOCKPORT0;  // wait for audio and video start time //
+    sClockState.eState = OMX_TIME_ClockStateStopped;
+    err = OMX_SetConfig(appPriv->clocksrchandle, OMX_IndexConfigTimeClockState, &sClockState);
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetConfig \n",err);
+      exit(1);
+    }
+  }
+  */
   /*Send Idle Command to all components*/
+
+  if (flagAVsync) {
+    err = OMX_SendCommand(appPriv->clocksrchandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
+  } 
+
   DEBUG(DEFAULT_MESSAGES, "The execution of the decoding process is terminated\n");
   err = OMX_SendCommand(appPriv->parser3gphandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
   err = OMX_SendCommand(appPriv->videodechandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
   err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-
 
   if (flagIsDisplayRequested) {
     err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
     err = OMX_SendCommand(appPriv->videosinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
     err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
     err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-  }  
-
-  if (flagAVsync) {
-    err = OMX_SendCommand(appPriv->clocksrchandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
   }  
 
   tsem_down(appPriv->parser3gpEventSem);
@@ -2175,7 +2190,7 @@ OMX_ERRORTYPE colorconvEventHandler(
       tsem_up(appPriv->colorconvEventSem);
     }
   } else if(eEvent == OMX_EventBufferFlag) {
-    DEBUG(DEB_LEV_ERR, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
     if((int)Data2 == OMX_BUFFERFLAG_EOS) {
 //      tsem_up(appPriv->eofSem);
     }
@@ -2316,7 +2331,7 @@ OMX_ERRORTYPE fb_sinkEventHandler(
       tsem_up(appPriv->fbdevSinkEventSem);
     }
   } else if(eEvent == OMX_EventBufferFlag) {
-    DEBUG(DEB_LEV_ERR, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
+    DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
     if((int)Data2 == OMX_BUFFERFLAG_EOS) {
       tsem_up(appPriv->eofSem);
     }

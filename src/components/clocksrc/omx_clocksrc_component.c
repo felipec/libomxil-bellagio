@@ -598,6 +598,9 @@ OMX_ERRORTYPE omx_clocksrc_component_SetConfig(
       tsem_up(omx_clocksrc_component_Private->clockEventSem);
       DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for Scale Change Event for all ports\n");
       tsem_down(omx_clocksrc_component_Private->clockEventCompleteSem);
+    } else {
+       DEBUG(DEB_LEV_ERR,"In %s Clock State=%x Scale=%x Line=%d \n",
+          __func__,(int)omx_clocksrc_component_Private->sClockState.eState,(int)Scale,__LINE__);
     }
   break;
 
@@ -669,9 +672,9 @@ void* omx_clocksrc_BufferMgmtFunction (void* param) {
         }
       }
       
+      tsem_up(omx_clocksrc_component_Private->flush_all_condition);
+      tsem_down(omx_clocksrc_component_Private->flush_condition);
       pthread_mutex_lock(&omx_clocksrc_component_Private->flush_mutex);
-      pthread_cond_signal(&omx_clocksrc_component_Private->flush_all_condition);
-      pthread_cond_wait(&omx_clocksrc_component_Private->flush_condition,&omx_clocksrc_component_Private->flush_mutex);
 
       bPortsBeingFlushed = OMX_FALSE;
       for(i=0;i<omx_clocksrc_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts;i++) {
@@ -706,6 +709,8 @@ void* omx_clocksrc_BufferMgmtFunction (void* param) {
           if(isOutputBufferNeeded[i]==OMX_FALSE) {
             /*Output Buffer has been produced or EOS. So, return output buffer and get new buffer*/
             if(pOutputBuffer[i]->nFilledLen!=0) {
+              DEBUG(DEB_LEV_ERR, "In %s Returning Output nFilledLen=%d (line=%d)\n",
+                __func__,(int)pOutputBuffer[i]->nFilledLen,__LINE__);
               pOutPort[i]->ReturnBufferFunction((omx_base_PortType*)pOutPort[i],pOutputBuffer[i]);
               outBufExchanged[i]--;
               pOutputBuffer[i]=NULL;
@@ -722,38 +727,30 @@ void* omx_clocksrc_BufferMgmtFunction (void* param) {
        omx_clocksrc_component_Private->transientState == OMX_TransStateIdleToLoaded ||
        omx_clocksrc_component_Private->transientState == OMX_TransStateInvalid) {
 
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting (line %d)\n",__func__,__LINE__);
       break;
     }
 
     for(i=0;i<omx_clocksrc_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts;i++) {
       if(pOutPort[i]->sMediaTime.eUpdateType == OMX_TIME_UpdateClockStateChanged || 
          pOutPort[i]->sMediaTime.eUpdateType == OMX_TIME_UpdateScaleChanged      || 
-         pOutPort[i]->sMediaTime.eUpdateType == OMX_TIME_UpdateRequestFulfillment){  
+         pOutPort[i]->sMediaTime.eUpdateType == OMX_TIME_UpdateRequestFulfillment) {  
 
         if((isOutputBufferNeeded[i]==OMX_TRUE && pOutputSem[i]->semval==0) && 
           (omx_clocksrc_component_Private->state != OMX_StateLoaded && omx_clocksrc_component_Private->state != OMX_StateInvalid) 
           && PORT_IS_ENABLED(pOutPort[i])) {
           //Signalled from EmptyThisBuffer or FillThisBuffer or some where else
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for next output buffer %i\n",i);
+          DEBUG(DEB_LEV_FULL_SEQ, "Waiting for next output buffer %i\n",i);
           tsem_down(omx_clocksrc_component_Private->bMgmtSem);
         }
         if(omx_clocksrc_component_Private->state == OMX_StateLoaded  || 
            omx_clocksrc_component_Private->state == OMX_StateInvalid ||
            omx_clocksrc_component_Private->transientState == OMX_TransStateIdleToLoaded ||
            omx_clocksrc_component_Private->transientState == OMX_TransStateInvalid) {
-          DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
+          DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting (line %d)\n",__func__,__LINE__);
           break;
         }
-        pthread_mutex_lock(&omx_clocksrc_component_Private->flush_mutex);
-        bPortsBeingFlushed = OMX_FALSE;
-        for(j=0;j<omx_clocksrc_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts;j++) {
-          bPortsBeingFlushed |= PORT_IS_BEING_FLUSHED(pOutPort[j]);
-        }
-        pthread_mutex_unlock(&omx_clocksrc_component_Private->flush_mutex);
-        if(bPortsBeingFlushed) {
-          break;
-        }
+        
         if(pOutputSem[i]->semval>0 && isOutputBufferNeeded[i]==OMX_TRUE ) {
           tsem_down(pOutputSem[i]);
           if(pOutputQueue[i]->nelem>0){
@@ -764,6 +761,20 @@ void* omx_clocksrc_BufferMgmtFunction (void* param) {
               DEBUG(DEB_LEV_ERR, "Had NULL output buffer!!\n");
               break;
             }
+          }
+        } else {
+          DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Output buffer not available Port %d (line=%d)\n",__func__,(int)i,__LINE__);
+
+          /*Check if any dummy bMgmtSem signal and ports are flushing*/
+          pthread_mutex_lock(&omx_clocksrc_component_Private->flush_mutex);
+          bPortsBeingFlushed = OMX_FALSE;
+          for(j=0;j<omx_clocksrc_component_Private->sPortTypesParam[OMX_PortDomainOther].nPorts;j++) {
+            bPortsBeingFlushed |= PORT_IS_BEING_FLUSHED(pOutPort[j]);
+          }
+          pthread_mutex_unlock(&omx_clocksrc_component_Private->flush_mutex);
+          if(bPortsBeingFlushed) {
+            DEBUG(DEB_LEV_ERR, "In %s Ports are being flushed - breaking (line %d)\n",__func__,__LINE__);
+            break;
           }
         }
         /*Process Output buffer of Port i */
@@ -818,8 +829,8 @@ OMX_ERRORTYPE clocksrc_port_FlushProcessingBuffers(omx_base_PortType *openmaxSta
   }
   DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
   /* Wait until flush is completed */
-  pthread_cond_wait(&omx_clocksrc_component_Private->flush_all_condition,&omx_clocksrc_component_Private->flush_mutex);
   pthread_mutex_unlock(&omx_clocksrc_component_Private->flush_mutex);
+  tsem_down(omx_clocksrc_component_Private->flush_all_condition);
 
   tsem_reset(omx_clocksrc_component_Private->bMgmtSem);
   tsem_reset(omx_clocksrc_component_Private->clockEventSem);
@@ -858,11 +869,11 @@ OMX_ERRORTYPE clocksrc_port_FlushProcessingBuffers(omx_base_PortType *openmaxSta
     tsem_reset(openmaxStandPort->pBufferSem);
   }
 
-  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
-
   pthread_mutex_lock(&omx_clocksrc_component_Private->flush_mutex);
-  pthread_cond_signal(&omx_clocksrc_component_Private->flush_condition);
+  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
   pthread_mutex_unlock(&omx_clocksrc_component_Private->flush_mutex);
+
+  tsem_up(omx_clocksrc_component_Private->flush_condition);
 
   DEBUG(DEB_LEV_FULL_SEQ, "Out %s Port Index=%d bIsPortFlushed=%d Component %s\n", __func__,
     (int)openmaxStandPort->sPortParam.nPortIndex,(int)openmaxStandPort->bIsPortFlushed,omx_clocksrc_component_Private->name);

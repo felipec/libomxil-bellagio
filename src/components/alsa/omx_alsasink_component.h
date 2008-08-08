@@ -84,4 +84,6 @@ OMX_ERRORTYPE omx_alsasink_component_SetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure);
 
+OMX_ERRORTYPE omx_alsasink_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort);
+
 #endif

@@ -98,9 +98,9 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
       }
       DEBUG(DEB_LEV_FULL_SEQ, "In %s signalling flush all condition \n", __func__);
       
+      tsem_up(omx_base_sink_Private->flush_all_condition);
+      tsem_down(omx_base_sink_Private->flush_condition);
       pthread_mutex_lock(&omx_base_sink_Private->flush_mutex);
-      pthread_cond_signal(&omx_base_sink_Private->flush_all_condition);
-      pthread_cond_wait(&omx_base_sink_Private->flush_condition,&omx_base_sink_Private->flush_mutex);
     }
     pthread_mutex_unlock(&omx_base_sink_Private->flush_mutex);
 

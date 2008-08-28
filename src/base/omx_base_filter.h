@@ -1,10 +1,10 @@
 /**
   @file src/base/omx_base_filter.h
-  
+
   OpenMAX Base Filter component. This component does not perform any multimedia
-  processing. It derives from base component and contains two ports. It can be used 
+  processing. It derives from base component and contains two ports. It can be used
   as base class for codec and filter components.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -22,7 +22,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date$
   Revision $Rev$
   Author $Author$
@@ -38,7 +38,7 @@
 #include <OMX_Core.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <omx_base_component.h>
+#include "omx_base_component.h"
 
 /** OMX_BASE_FILTER_INPUTPORT_INDEX is the index of any input port for the derived components
  */
@@ -62,24 +62,24 @@ DERIVEDCLASS(omx_base_filter_PrivateType, omx_base_component_PrivateType)
   void (*BufferMgmtCallback)(OMX_COMPONENTTYPE* openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer);
 ENDCLASS(omx_base_filter_PrivateType)
 
-/** 
+/**
  * @brief The base filter contructor for the OpenMAX ST components
- * 
+ *
  * @param openmaxStandComp the ST component to be initialized
  * @param cComponentName the OpenMAX string that describes the component
- *  
+ *
  * @return OMX_ErrorInsufficientResources if a memory allocation fails
  */
 OMX_ERRORTYPE omx_base_filter_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName);
 
 /** @brief the base filter destructor for ST OpenMAX components
- * 
+ *
  * @param openmaxStandComp the ST OpenMAX component to be disposed
  */
 OMX_ERRORTYPE omx_base_filter_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 /** This is the central function for component processing. It
- * is executed in a separate thread, is synchronized with 
+ * is executed in a separate thread, is synchronized with
  * semaphores at each port, those are released each time a new buffer
  * is available on the given port.
  */

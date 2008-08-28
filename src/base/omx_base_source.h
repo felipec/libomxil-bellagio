@@ -1,8 +1,8 @@
 /**
   @file src/base/omx_base_source.h
-    
+
   OpenMAX base source component. This component does not perform any multimedia
-  processing. It derives from base component and contains a single port. It can be used 
+  processing. It derives from base component and contains a single port. It can be used
   as base class for source components.
 
   Copyright (C) 2007-2008 STMicroelectronics
@@ -36,7 +36,7 @@
 #include <OMX_Component.h>
 #include <OMX_Core.h>
 #include <pthread.h>
-#include <omx_base_component.h>
+#include "omx_base_component.h"
 #include <stdlib.h>
 
 
@@ -69,14 +69,14 @@ OMX_ERRORTYPE omx_base_source_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OM
 OMX_ERRORTYPE omx_base_source_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 /** This is the central function for component processing. It
- * is executed in a separate thread, is synchronized with 
+ * is executed in a separate thread, is synchronized with
  * semaphores at each port, those are released each time a new buffer
  * is available on the given port.
  */
 void* omx_base_source_BufferMgmtFunction(void* param);
 
 /** This is the central function for buffer processing of a two port source component.
-  * It is executed in a separate thread, is synchronized with 
+  * It is executed in a separate thread, is synchronized with
   * semaphores at each port, those are released each time a new buffer
   * is available on the given port.
   */

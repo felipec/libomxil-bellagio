@@ -1,10 +1,10 @@
 /**
   @file src/base/omx_base_sink.h
-    
+
   OpenMAX base sink component. This component does not perform any multimedia
-  processing. It derives from base component and contains a single port. It can be used 
+  processing. It derives from base component and contains a single port. It can be used
   as base class for sink components.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -36,7 +36,7 @@
 #include <OMX_Component.h>
 #include <OMX_Core.h>
 #include <pthread.h>
-#include <omx_base_component.h>
+#include "omx_base_component.h"
 #include <stdlib.h>
 
 
@@ -64,7 +64,7 @@ OMX_ERRORTYPE omx_base_sink_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_
 OMX_ERRORTYPE omx_base_sink_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
 
 /** This is the central function for component processing. It
- * is executed in a separate thread, is synchronized with 
+ * is executed in a separate thread, is synchronized with
  * semaphores at each port, those are released each time a new buffer
  * is available on the given port.
  */

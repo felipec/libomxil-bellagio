@@ -7,6 +7,7 @@ libomxbase_la_SOURCES = omx_base_component.c omx_base_component.h \
                         omx_base_source.c omx_base_source.h \
                         omx_base_audio_port.c omx_base_audio_port.h \
                         omx_base_video_port.c omx_base_video_port.h \
+                        omx_base_image_port.c omx_base_image_port.h \
                         omx_base_clock_port.c omx_base_clock_port.h \
                         omx_classmagic.h
 

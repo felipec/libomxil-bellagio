@@ -55,6 +55,7 @@ AC_CONFIG_FILES([
     src/components/parser3gp/Makefile
     src/components/clocksrc/Makefile
     src/components/camera/Makefile
+    src/components/jpeg/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile
@@ -65,6 +66,7 @@ AC_CONFIG_FILES([
     test/components/parser/Makefile
     test/components/camera/Makefile
     test/components/clocksrc/Makefile
+    test/components/jpeg/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #
@@ -168,6 +170,15 @@ AC_ARG_ENABLE(
         [whether to enable documentation generation])],
     [with_doc=$enableval],
     [with_doc=yes])
+
+#Check whether to create documentation 
+AC_ARG_ENABLE(
+    [jpegdec],
+    [AC_HELP_STRING(
+        [--disable-jpegdec],
+        [whether to disable jpeg decoder component])],
+    [with_jpegdec=$enableval],
+    [with_jpegdec=yes])
 
 ################################################################################
 # Check for programs                                                           #
@@ -299,6 +310,10 @@ if test "x$with_clocksrclog" = "xyes"; then
         AC_DEFINE([AV_SYNC_LOG], [1], [Clock Component Log])
 fi
 
+if test "x$with_jpegdec"= "xyes"; then
+AC_CHECK_LIB([jpeg], [jpeg_start_decompress], [with_jpegdec=yes],[with_jpegdec=no])
+fi
+
 ################################################################################
 # Check for types                                                              #
 ################################################################################
@@ -341,5 +356,6 @@ AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test x$with_vorbis = xyes])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xyes])
 AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xyes])
 AM_CONDITIONAL([WITH_CLOCKSRC], [test x$with_clocksrc = xyes])
+AM_CONDITIONAL([WITH_JPEG],[test x$with_jpegdec = xyes])
 
 AC_OUTPUT

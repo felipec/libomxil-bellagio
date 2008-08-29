@@ -641,6 +641,15 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
       {
         OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
         pComponentRole = ComponentParameterStructure;
+        if (omx_videodec_component_Private->state != OMX_StateLoaded && omx_videodec_component_Private->state != OMX_StateWaitForResources) {
+          DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_videodec_component_Private->state,__LINE__);
+          return OMX_ErrorIncorrectStateOperation;
+        }
+  
+        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 
+          break;
+        }
+
         if (!strcmp((char *)pComponentRole->cRole, VIDEO_DEC_MPEG4_ROLE)) {
           omx_videodec_component_Private->video_coding_type = OMX_VIDEO_CodingMPEG4;
         } else if (!strcmp((char *)pComponentRole->cRole, VIDEO_DEC_H264_ROLE)) {

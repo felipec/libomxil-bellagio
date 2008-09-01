@@ -224,6 +224,7 @@ if test "x$with_components" = "xno"; then
 	with_fbdev_videosink=no
 	with_audioeffects=no
 	with_videosrc=no
+	with_clocksrc=no
 fi
 
 # Define components default ldflags (man ld)

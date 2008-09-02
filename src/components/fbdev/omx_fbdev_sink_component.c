@@ -834,7 +834,12 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
           r = *(src_cpy_ptr + 0);
           g = *(src_cpy_ptr + 1);
           b = *(src_cpy_ptr + 2);
-
+          *(dest_cpy_ptr + 0) = ((b>>3) & 0x1f) | ((g<<3) & 0xE0); 
+          *(dest_cpy_ptr + 1) = ((g>>5) & 0x07) | (r & 0xf8); 
+          //last byte - all 1
+          src_cpy_ptr += cp_byte;     
+          dest_cpy_ptr += 2;     
+         /*
           *(dest_cpy_ptr + 0) = b; 
           *(dest_cpy_ptr + 1) = g; 
           *(dest_cpy_ptr + 2) = r;
@@ -842,8 +847,7 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
           *(dest_cpy_ptr + 3) = 0xff;
           src_cpy_ptr += cp_byte;     
           dest_cpy_ptr += 4;     
-
-          
+        */
         }
         dest_cpy_ptr = org_dst_cpy_ptr + dest_stride;
         src_cpy_ptr =  org_src_cpy_ptr + src_stride;
@@ -979,6 +983,31 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
           *(dest_cpy_ptr + 3) = 0xff; 
           src_cpy_ptr += cp_byte;     
           dest_cpy_ptr += 4;     
+        }
+        dest_cpy_ptr = org_dst_cpy_ptr + dest_stride;
+        src_cpy_ptr =  org_src_cpy_ptr + src_stride;
+      }
+    }
+    else if(fbpxlfmt == OMX_COLOR_Format16bitARGB1555 && colorformat == OMX_COLOR_Format24bitRGB888) 
+    {
+      cp_byte = 3;
+      for (i = 0; i < cpy_height; ++i) 
+      { 
+        // copy rows
+        org_src_cpy_ptr = src_cpy_ptr; 
+        org_dst_cpy_ptr = dest_cpy_ptr;
+        for(j = 0; j < cpy_byte_width; j += cp_byte) 
+        {
+          //extract source rgba components
+          r = *(src_cpy_ptr + 0);
+          g = *(src_cpy_ptr + 1);
+          b = *(src_cpy_ptr + 2);
+
+          *(dest_cpy_ptr + 0) = ((b>>3) & 0x1f) | ((g & 0x38)<<2); 
+          *(dest_cpy_ptr + 1) = ((g>>6) & 0x03) | ((r>>1) & 0x7c);
+
+          src_cpy_ptr += cp_byte;     
+          dest_cpy_ptr += 2;     
         }
         dest_cpy_ptr = org_dst_cpy_ptr + dest_stride;
         src_cpy_ptr =  org_src_cpy_ptr + src_stride;

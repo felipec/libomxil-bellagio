@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_audiodec_component.c
 
-  This component implements and MP3 decoder. The MP3 decoder is based on FFmpeg
+  This component implements an AUDIO(MP3/AAC/VORBIS/G726) decoder. The decoder is based on FFmpeg
   software library.
 
   Copyright (C) 2007-2008 STMicroelectronics

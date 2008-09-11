@@ -8,10 +8,9 @@ libomximage_jpeg_la_SOURCES = omx_jpegdec_component.c \
                               omx_jpegdec_component.h \
                               cderror.h \
                               cdjpeg.h \
-                              jinclude.h \
-                              jversion.h
+                              jinclude.h
 
-libomximage_jpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la -ljpeg
+libomximage_jpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la
 libomximage_jpeg_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 libomximage_jpeg_la_CFLAGS = -I$(top_srcdir)/include \
 				-I$(top_srcdir)/src \

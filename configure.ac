@@ -225,6 +225,7 @@ if test "x$with_components" = "xno"; then
 	with_audioeffects=no
 	with_videosrc=no
 	with_clocksrc=no
+	with_jpegdec=no
 fi
 
 # Define components default ldflags (man ld)
@@ -309,10 +310,6 @@ fi
 # Check for clock component log
 if test "x$with_clocksrclog" = "xyes"; then
         AC_DEFINE([AV_SYNC_LOG], [1], [Clock Component Log])
-fi
-
-if test "x$with_jpegdec" = "xyes"; then
-AC_CHECK_LIB([jpeg], [jpeg_start_decompress], [with_jpegdec=yes],[with_jpegdec=no])
 fi
 
 ################################################################################

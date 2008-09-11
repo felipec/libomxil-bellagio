@@ -348,7 +348,7 @@ OMX_ERRORTYPE BOSA_ST_ComponentNameEnum(
       break;
     }
     index++;
-    if (templateList[i]->name_specific_length > 1) {
+    if (templateList[i]->name_specific_length > 0) {
       for (j = 0; j<templateList[i]->name_specific_length; j++) {
         if (index == nIndex) {
           strncpy(cComponentName,templateList[i]->name_specific[j], nNameLength);

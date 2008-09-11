@@ -292,11 +292,9 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
   error = av_read_frame(omx_filereader_component_Private->avformatcontext, &omx_filereader_component_Private->pkt);
   if(error < 0) {
     DEBUG(DEB_LEV_FULL_SEQ,"In %s EOS - no more packet,state=%x\n",__func__,
-      omx_filereader_component_Private->state);
-    //if(omx_filereader_component_Private->bIsEOSSent == OMX_FALSE) { // Setting EOS for all packets, so that buffers are returned.
-      pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
-      omx_filereader_component_Private->bIsEOSSent = OMX_TRUE;
-    //}
+    omx_filereader_component_Private->state);
+    pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
+    omx_filereader_component_Private->bIsEOSSent = OMX_TRUE;
   } else {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"\n packet size : %d \n",omx_filereader_component_Private->pkt.size);
     /** copying the packetized data in the output buffer that will be decoded in the decoder component  */

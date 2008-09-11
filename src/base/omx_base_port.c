@@ -943,7 +943,7 @@ OMX_ERRORTYPE base_port_ComponentTunnelRequest(omx_base_PortType* openmaxStandPo
     openmaxStandPort->hTunneledComponent = hTunneledComp;
     openmaxStandPort->nTunneledPort = nTunneledPort;
     
-    /*Check for and set proprietary communication flag. 
+    /*Check for and set proprietary communication flag.
       In case a component support Deep Tunneling should set it's tunnel flag to PROPRIETARY_COMMUNICATION_ESTABLISHED */
     if(PORT_IS_DEEP_TUNNELED(openmaxStandPort)) {
       OMX_VENDOR_PROP_TUNNELSETUPTYPE pPropTunnelSetup;

@@ -88,14 +88,14 @@ typedef my_source_mgr * my_src_ptr;
 
 #define INPUT_BUF_SIZE  4096  /* choose an efficiently fread'able size */
 
-/** The Constructor 
+/** The Constructor
   *
   * @param openmaxStandComp the component handle to be constructed
   * @param cComponentName name of the component to be constructed
   */
 OMX_ERRORTYPE omx_jpegdec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
-  
-  OMX_ERRORTYPE err = OMX_ErrorNone;  
+
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   omx_jpegdec_component_PrivateType* omx_jpegdec_component_Private;
   omx_base_image_PortType *pInPort,*pOutPort;
   OMX_U32 i;
@@ -106,28 +106,28 @@ OMX_ERRORTYPE omx_jpegdec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
       return OMX_ErrorInsufficientResources;
     }
   }  else {
-    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", 
+    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n",
               __func__, (int)openmaxStandComp->pComponentPrivate);
   }
-  
+
   omx_jpegdec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_jpegdec_component_Private->ports = NULL;
 
   /** we could create our own port structures here
-    * fixme maybe the base class could use a "port factory" function pointer?  
+    * fixme maybe the base class could use a "port factory" function pointer?
     */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "constructor of mad decoder component is called\n");
 
-  /** Domain specific section for the ports. */  
+  /** Domain specific section for the ports. */
   /** first we set the parameter common to both formats
     * parameters related to input port which does not depend upon input image format
     */
   omx_jpegdec_component_Private->sPortTypesParam[OMX_PortDomainImage].nStartPortNumber = 0;
   omx_jpegdec_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts = 2;
 
-  /** Allocate Ports and call port constructor. */  
+  /** Allocate Ports and call port constructor. */
   if (omx_jpegdec_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts && !omx_jpegdec_component_Private->ports) {
     omx_jpegdec_component_Private->ports = calloc(omx_jpegdec_component_Private->sPortTypesParam[OMX_PortDomainImage].nPorts, sizeof(omx_base_PortType *));
     if (!omx_jpegdec_component_Private->ports) {
@@ -143,7 +143,7 @@ OMX_ERRORTYPE omx_jpegdec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
 
   base_image_port_Constructor(openmaxStandComp, &omx_jpegdec_component_Private->ports[0], 0, OMX_TRUE);
   base_image_port_Constructor(openmaxStandComp, &omx_jpegdec_component_Private->ports[1], 1, OMX_FALSE);
-    
+
   /** parameters related to input port */
   pInPort = (omx_base_image_PortType *) omx_jpegdec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
   pInPort->sPortParam.nBufferSize = DEFAULT_IN_BUFFER_SIZE;
@@ -180,8 +180,8 @@ OMX_ERRORTYPE omx_jpegdec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
   }
 
   /** general configuration irrespective of any image formats
-    *  setting values of other fields of omx_jpegdec_component_Private structure  
-    */ 
+    *  setting values of other fields of omx_jpegdec_component_Private structure
+    */
   omx_jpegdec_component_Private->jpegdecReady = OMX_FALSE;
   omx_jpegdec_component_Private->hMarkTargetComponent = NULL;
   omx_jpegdec_component_Private->nFlags = 0x0;
@@ -213,7 +213,7 @@ OMX_ERRORTYPE omx_jpegdec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCo
     free(omx_jpegdec_component_Private->jpegdecSyncSem);
     omx_jpegdec_component_Private->jpegdecSyncSem = NULL;
   }
-  
+
   if(omx_jpegdec_component_Private->jpegdecSyncSem1) {
     tsem_deinit(omx_jpegdec_component_Private->jpegdecSyncSem1);
     free(omx_jpegdec_component_Private->jpegdecSyncSem1);
@@ -277,7 +277,7 @@ OMX_ERRORTYPE omx_jpegdec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) 
 
   //omx_jpegdec_component_PrivateType* omx_jpegdec_component_Private = openmaxStandComp->pComponentPrivate;
   OMX_ERRORTYPE err = OMX_ErrorNone;
-   
+
   return err;
 }
 
@@ -316,8 +316,8 @@ OMX_ERRORTYPE omx_jpegdec_component_SetParameter(
     portIndex = pImagePortFormat->nPortIndex;
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pImagePortFormat, sizeof(OMX_IMAGE_PARAM_PORTFORMATTYPE));
-    if(err!=OMX_ErrorNone) { 
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
       break;
     }
     if (portIndex <= 1) {
@@ -342,7 +342,7 @@ OMX_ERRORTYPE omx_jpegdec_component_SetParameter(
     return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
   return err;
-  
+
 }
 
 /** this function gets the parameters regarding image formats and index */
@@ -351,7 +351,7 @@ OMX_ERRORTYPE omx_jpegdec_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure)  {
 
-  OMX_IMAGE_PARAM_PORTFORMATTYPE *pImagePortFormat;  
+  OMX_IMAGE_PARAM_PORTFORMATTYPE *pImagePortFormat;
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   omx_base_image_PortType *port;
   OMX_ERRORTYPE err = OMX_ErrorNone;
@@ -365,15 +365,15 @@ OMX_ERRORTYPE omx_jpegdec_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamImageInit:
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) {
       break;
     }
     memcpy(ComponentParameterStructure, &omx_jpegdec_component_Private->sPortTypesParam[OMX_PortDomainImage], sizeof(OMX_PORT_PARAM_TYPE));
-    break;    
+    break;
 
   case OMX_IndexParamImagePortFormat:
     pImagePortFormat = (OMX_IMAGE_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_IMAGE_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_IMAGE_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
       break;
     }
     if (pImagePortFormat->nPortIndex <= 1) {
@@ -382,11 +382,11 @@ OMX_ERRORTYPE omx_jpegdec_component_GetParameter(
     } else {
       return OMX_ErrorBadPortIndex;
     }
-    break;    
+    break;
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
       break;
     }
     if (omx_jpegdec_component_Private->image_coding_type == OMX_IMAGE_CodingJPEG) {
@@ -399,7 +399,7 @@ OMX_ERRORTYPE omx_jpegdec_component_GetParameter(
     return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
   return OMX_ErrorNone;
-  
+
 }
 
 /*
@@ -472,14 +472,14 @@ static int print_text_marker (j_decompress_ptr cinfo)
 }
 
 void omx_jpegdec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer, OMX_BUFFERHEADERTYPE* pOutputBuffer) {
-  omx_jpegdec_component_PrivateType* omx_jpegdec_component_Private = openmaxStandComp->pComponentPrivate; 
+  omx_jpegdec_component_PrivateType* omx_jpegdec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_base_image_PortType *pOutPort = (omx_base_image_PortType *)omx_jpegdec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   int width,height;
   JDIMENSION num_scanlines;
   static int count=0;
 
   omx_jpegdec_component_Private->pInBuffer = pInputBuffer;
-  
+
   DEBUG(DEB_LEV_ERR, "In %s: signalling buffer presence count=%d\n", __func__,count++);
 
   /*Signal fill_input_buffer*/
@@ -490,7 +490,7 @@ void omx_jpegdec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCom
     DEBUG(DEB_LEV_FULL_SEQ, "In %s: got some buffers to fill on output port\n", __func__);
 
     /* Get a new buffer from the output queue */
-    
+
     jpeg_data_src (&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private);
 
     jpeg_read_header (&omx_jpegdec_component_Private->cinfo, TRUE);
@@ -513,7 +513,7 @@ void omx_jpegdec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCom
     width = omx_jpegdec_component_Private->cinfo.output_width;
     height = omx_jpegdec_component_Private->cinfo.output_height;
 
-    
+
     if((pOutPort->sPortParam.format.image.nFrameWidth != width) ||
        (pOutPort->sPortParam.format.image.nFrameHeight != width)) {
       pOutPort->sPortParam.format.image.nFrameWidth=width;
@@ -525,10 +525,10 @@ void omx_jpegdec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCom
         (openmaxStandComp,
          omx_jpegdec_component_Private->callbackData,
          OMX_EventPortSettingsChanged, /* The command was completed */
-         0, 
+         0,
          1, /* This is the output port index */
          NULL);
-      
+
       if(pOutputBuffer->nAllocLen< pOutPort->sPortParam.nBufferSize){ // 54 File header length
         DEBUG(DEB_LEV_ERR, "Output Buffer AllocLen %d less than required ouput %d", (int)pOutputBuffer->nAllocLen, (int)pOutPort->sPortParam.nBufferSize);
         //omx_jpegdec_component_Private->dest_mgr->buffer= &(pOutputBuffer->pBuffer);
@@ -549,7 +549,7 @@ void omx_jpegdec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCom
             omx_jpegdec_component_Private->dest_mgr->buffer_height);
       (*omx_jpegdec_component_Private->dest_mgr->put_pixel_rows) (&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private->dest_mgr, num_scanlines);
     }
-    
+
     /* Finish decompression and release memory.
      * I must do it in this order because output module has allocated memory
      * of lifespan JPOOL_IMAGE; it needs to finish before releasing memory.
@@ -558,7 +558,7 @@ void omx_jpegdec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCom
 
     (*omx_jpegdec_component_Private->dest_mgr->finish_output_buf) (&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private->dest_mgr,(char *)pOutputBuffer->pBuffer);
 
-    
+
     (void) jpeg_finish_decompress(&omx_jpegdec_component_Private->cinfo);
     jpeg_destroy_decompress(&omx_jpegdec_component_Private->cinfo);
   }
@@ -575,7 +575,6 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
   omx_base_PortType *pOutPort=(omx_base_PortType *)omx_jpegdec_component_Private->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
   tsem_t* pInputSem = pInPort->pBufferSem;
   tsem_t* pOutputSem = pOutPort->pBufferSem;
-  queue_t* pInputQueue = pInPort->pBufferQueue;
   queue_t* pOutputQueue = pOutPort->pBufferQueue;
   OMX_BUFFERHEADERTYPE* pOutputBuffer=NULL;
   OMX_BUFFERHEADERTYPE* pInputBuffer=NULL;
@@ -584,18 +583,18 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
   static OMX_S32 first=1;
   JDIMENSION num_scanlines;
   OMX_S32 width, height;
-    
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  while(omx_jpegdec_component_Private->state == OMX_StateIdle || omx_jpegdec_component_Private->state == OMX_StateExecuting ||  
-        omx_jpegdec_component_Private->state == OMX_StatePause || 
+  while(omx_jpegdec_component_Private->state == OMX_StateIdle || omx_jpegdec_component_Private->state == OMX_StateExecuting ||
+        omx_jpegdec_component_Private->state == OMX_StatePause ||
         omx_jpegdec_component_Private->transientState == OMX_TransStateLoadedToIdle) {
 
     pthread_mutex_lock(&omx_jpegdec_component_Private->flush_mutex);
-    while( PORT_IS_BEING_FLUSHED(pInPort) || 
+    while( PORT_IS_BEING_FLUSHED(pInPort) ||
            PORT_IS_BEING_FLUSHED(pOutPort)) {
       pthread_mutex_unlock(&omx_jpegdec_component_Private->flush_mutex);
-      
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
+
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n",
         __func__,inBufExchanged,isInputBufferNeeded,outBufExchanged,isOutputBufferNeeded,pInputSem->semval,pOutputSem->semval);
 
       if(isOutputBufferNeeded==OMX_FALSE && PORT_IS_BEING_FLUSHED(pOutPort)) {
@@ -614,9 +613,9 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
         DEBUG(DEB_LEV_FULL_SEQ, "Ports are flushing,so returning input buffer\n");
       }
 
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n",
         __func__,inBufExchanged,isInputBufferNeeded,outBufExchanged,isOutputBufferNeeded,pInputSem->semval,pOutputSem->semval);
-  
+
       tsem_up(omx_jpegdec_component_Private->flush_all_condition);
       tsem_down(omx_jpegdec_component_Private->flush_condition);
       pthread_mutex_lock(&omx_jpegdec_component_Private->flush_mutex);
@@ -626,13 +625,13 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
     /* Wait for buffers to be available on the output port */
     DEBUG(DEB_LEV_FULL_SEQ, "In %s: waiting on output port for some buffers to fill \n", __func__);
 
-    if((isOutputBufferNeeded==OMX_TRUE /*&& pOutputSem->semval==0*/) && 
+    if((isOutputBufferNeeded==OMX_TRUE /*&& pOutputSem->semval==0*/) &&
       (omx_jpegdec_component_Private->state != OMX_StateLoaded && omx_jpegdec_component_Private->state != OMX_StateInvalid) &&
        !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
       //Signalled from EmptyThisBuffer or FillThisBuffer or some thing else
       DEBUG(DEB_LEV_FULL_SEQ, "Waiting for next input/output buffer\n");
       tsem_down(omx_jpegdec_component_Private->bMgmtSem);
-      
+
     }
     if(omx_jpegdec_component_Private->state == OMX_StateLoaded || omx_jpegdec_component_Private->state == OMX_StateInvalid) {
       DEBUG(DEB_LEV_FULL_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
@@ -658,7 +657,7 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
       DEBUG(DEB_LEV_FULL_SEQ, "In %s: got some buffers to fill on output port\n", __func__);
 
       /* Get a new buffer from the output queue */
-      
+
       jpeg_data_src (&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private);
 
       jpeg_read_header (&omx_jpegdec_component_Private->cinfo, TRUE);
@@ -687,10 +686,10 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
           (openmaxStandComp,
            omx_jpegdec_component_Private->callbackData,
            OMX_EventPortSettingsChanged, /* The command was completed */
-           0, 
+           0,
            1, /* This is the output port index */
            NULL);
-        
+
 
         if(pOutputBuffer->nAllocLen< pOutPort->sPortParam.nBufferSize){ // 54 File header length
           DEBUG(DEB_LEV_ERR, "Output Buffer AllocLen %d less than required ouput %d\n", (int)pOutputBuffer->nAllocLen, (int)pOutPort->sPortParam.nBufferSize);
@@ -699,16 +698,16 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
       }
       pOutputBuffer->nFilledLen= (width * height + width * height / 2)*2 +54;
     }
-    
+
     if(isOutputBufferNeeded==OMX_FALSE) {
-    
+
     /* Process data */
     while (omx_jpegdec_component_Private->cinfo.output_scanline < omx_jpegdec_component_Private->cinfo.output_height) {
       num_scanlines = jpeg_read_scanlines(&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private->dest_mgr->buffer,
             omx_jpegdec_component_Private->dest_mgr->buffer_height);
       (*omx_jpegdec_component_Private->dest_mgr->put_pixel_rows) (&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private->dest_mgr, num_scanlines);
     }
-    
+
     /* Finish decompression and release memory.
      * I must do it in this order because output module has allocated memory
      * of lifespan JPOOL_IMAGE; it needs to finish before releasing memory.
@@ -716,7 +715,7 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
     omx_jpegdec_component_Private->dest_mgr->buffer= &(pOutputBuffer->pBuffer);
 
     (*omx_jpegdec_component_Private->dest_mgr->finish_output_buf) (&omx_jpegdec_component_Private->cinfo, omx_jpegdec_component_Private->dest_mgr,(char *)pOutputBuffer->pBuffer);
-    
+
     (void) jpeg_finish_decompress(&omx_jpegdec_component_Private->cinfo);
     jpeg_destroy_decompress(&omx_jpegdec_component_Private->cinfo);
 
@@ -727,7 +726,7 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
       omx_jpegdec_component_Private->pMark.hMarkTargetComponent = NULL;
       omx_jpegdec_component_Private->pMark.pMarkData            = NULL;
     }
-    
+
     if(omx_jpegdec_component_Private->hMarkTargetComponent==(OMX_COMPONENTTYPE *)openmaxStandComp) {
       /*Clear the mark and generate an event*/
       (*(omx_jpegdec_component_Private->callbacks->EventHandler))
@@ -743,7 +742,7 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
       pOutputBuffer->pMarkData                = omx_jpegdec_component_Private->pMarkData;
       omx_jpegdec_component_Private->pMarkData= NULL;
     }
-    
+
 
     if(omx_jpegdec_component_Private->nFlags==OMX_BUFFERFLAG_EOS) {
       DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled\n");
@@ -766,9 +765,9 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
       isOutputBufferNeeded=OMX_TRUE;
     }
     }
-    
+
   }
-  
+
   return 0;
 }
 
@@ -840,7 +839,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   omx_base_PortType *pInPort=(omx_base_PortType *)omx_jpegdec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
   tsem_t* pInputSem = pInPort->pBufferSem;
   queue_t* pInputQueue = pInPort->pBufferQueue;
-  
+
 #if 0
   pInputBuffer = omx_jpegdec_component_Private->pInBuffer;
   /*Wait for signal from buffer management call back*/
@@ -849,7 +848,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   DEBUG(DEB_LEV_ERR, "In %s Buffer count=%d\n", __func__,count++);
   nbytes= pInputBuffer->nFilledLen;
   memcpy(src->buffer,pInputBuffer->pBuffer,nbytes);
-  
+
   pInputBuffer->nFilledLen = 0;
   /*Signal Buffer Management Call back*/
   tsem_up(jpegdecSyncSem1);
@@ -858,9 +857,9 @@ fill_input_buffer (j_decompress_ptr cinfo)
 Label1:
 
   tsem_down(omx_jpegdec_component_Private->bMgmtSem);
-      
-    
-  if(omx_jpegdec_component_Private->state == OMX_StateLoaded || 
+
+
+  if(omx_jpegdec_component_Private->state == OMX_StateLoaded ||
      omx_jpegdec_component_Private->state == OMX_StateInvalid ||
      omx_jpegdec_component_Private->transientState == OMX_TransStateIdleToLoaded) {
     DEBUG(DEB_LEV_FULL_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
@@ -903,7 +902,7 @@ Label1:
   }
 
   if(nbytes == 0) {
-    if(omx_jpegdec_component_Private->state != OMX_StateLoaded && 
+    if(omx_jpegdec_component_Private->state != OMX_StateLoaded &&
        omx_jpegdec_component_Private->state != OMX_StateInvalid &&
        omx_jpegdec_component_Private->transientState != OMX_TransStateIdleToLoaded) {
       goto Label1;
@@ -1024,7 +1023,7 @@ void jpeg_data_src (j_decompress_ptr cinfo, omx_jpegdec_component_PrivateType *o
 
 OMX_ERRORTYPE omx_jpegdec_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp, internalRequestMessageType *message)  {
 
-  omx_jpegdec_component_PrivateType* omx_jpegdec_component_Private = (omx_jpegdec_component_PrivateType*)openmaxStandComp->pComponentPrivate;  
+  omx_jpegdec_component_PrivateType* omx_jpegdec_component_Private = (omx_jpegdec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
   OMX_ERRORTYPE err;
   OMX_STATETYPE eCurrentState = omx_jpegdec_component_Private->state;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -1032,11 +1031,11 @@ OMX_ERRORTYPE omx_jpegdec_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStand
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateIdle) && (omx_jpegdec_component_Private->state == OMX_StateLoaded)) {
       err = omx_jpegdec_component_Init(openmaxStandComp);
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Init Failed Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Init Failed Error=%x\n",__func__,err);
         return err;
       }
-    } 
+    }
   }
   /** Execute the base message handling */
   err = omx_base_component_MessageHandler(openmaxStandComp, message);
@@ -1044,12 +1043,12 @@ OMX_ERRORTYPE omx_jpegdec_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStand
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateLoaded) && (eCurrentState == OMX_StateIdle)) {
       err = omx_jpegdec_component_Deinit(openmaxStandComp);
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Deinit Failed Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Deinit Failed Error=%x\n",__func__,err);
         return err;
       }
     }
   }
 
-  return err;  
+  return err;
 }

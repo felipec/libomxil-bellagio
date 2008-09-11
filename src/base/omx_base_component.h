@@ -132,7 +132,7 @@ CLASS(omx_base_component_PrivateType)
   tsem_t* messageSem;/**< the semaphore that coordinates the access to the message queue */\
   OMX_U32 nGroupPriority; /**< @param nGroupPriority Resource management field: component priority (common to a group of components) */\
   OMX_U32 nGroupID; /**< @param nGroupID ID of a group of components that share the same logical chain */\
-  OMX_MARKTYPE *pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
+  OMX_MARKTYPE pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
   pthread_mutex_t flush_mutex;  /** @param flush_mutex mutex for the flush condition from buffers */ \
   tsem_t* flush_all_condition;  /** @param flush_all_condition condition for the flush all buffers */ \
   tsem_t* flush_condition;  /** @param The flush_condition condition */ \

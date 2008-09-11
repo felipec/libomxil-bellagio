@@ -144,9 +144,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
           NULL);
         pOutputBuffer->nFlags = 0;
       }
-      if(omx_base_source_Private->pMark!=NULL){
-         omx_base_source_Private->pMark=NULL;
-      }
+      
       target_component = (OMX_COMPONENTTYPE*)pOutputBuffer->hMarkTargetComponent;
       if(target_component == (OMX_COMPONENTTYPE *)openmaxStandComp) {
         /*Clear the mark and generate an event*/
@@ -313,11 +311,14 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
       if(omx_base_source_Private->ports[i]->sPortParam.eDomain!=OMX_PortDomainOther){ /* clock ports are not to be processed */
         /*Process Output buffer of Port i */
         if(isOutputBufferNeeded[i]==OMX_FALSE) {
-          if(omx_base_source_Private->pMark!=NULL){
-            pOutputBuffer[i]->hMarkTargetComponent=omx_base_source_Private->pMark->hMarkTargetComponent;
-            pOutputBuffer[i]->pMarkData=omx_base_source_Private->pMark->pMarkData;
-            omx_base_source_Private->pMark=NULL;
+          
+          if(omx_base_source_Private->pMark.hMarkTargetComponent != NULL){
+            pOutputBuffer[i]->hMarkTargetComponent = omx_base_source_Private->pMark.hMarkTargetComponent;
+            pOutputBuffer[i]->pMarkData            = omx_base_source_Private->pMark.pMarkData;
+            omx_base_source_Private->pMark.hMarkTargetComponent = NULL;
+            omx_base_source_Private->pMark.pMarkData            = NULL;
           }
+
           target_component=(OMX_COMPONENTTYPE*)pOutputBuffer[i]->hMarkTargetComponent;
           if(target_component==(OMX_COMPONENTTYPE *)openmaxStandComp) {
             /*Clear the mark and generate an event*/

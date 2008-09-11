@@ -81,7 +81,6 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
   queue_t* pOutputQueue = pOutPort->pBufferQueue;
   OMX_BUFFERHEADERTYPE* pOutputBuffer=NULL;
   OMX_BUFFERHEADERTYPE* pInputBuffer=NULL;
-  OMX_COMPONENTTYPE* target_component;
   OMX_BOOL isInputBufferNeeded=OMX_TRUE,isOutputBufferNeeded=OMX_TRUE;
   int inBufExchanged=0,outBufExchanged=0;
 
@@ -175,29 +174,35 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       }
     }
 
+    if(isInputBufferNeeded==OMX_FALSE) {
+      if(pInputBuffer->hMarkTargetComponent != NULL){
+        if((OMX_COMPONENTTYPE*)pInputBuffer->hMarkTargetComponent ==(OMX_COMPONENTTYPE *)openmaxStandComp) {
+          /*Clear the mark and generate an event*/
+          (*(omx_base_filter_Private->callbacks->EventHandler))
+            (openmaxStandComp,
+            omx_base_filter_Private->callbackData,
+            OMX_EventMark, /* The command was completed */
+            1, /* The commands was a OMX_CommandStateSet */
+            0, /* The state has been changed in message->messageParam2 */
+            pInputBuffer->pMarkData);
+        } else {
+          /*If this is not the target component then pass the mark*/
+          omx_base_filter_Private->pMark.hMarkTargetComponent = pInputBuffer->hMarkTargetComponent;
+          omx_base_filter_Private->pMark.pMarkData            = pInputBuffer->pMarkData;
+        }
+        pInputBuffer->hMarkTargetComponent = NULL;
+      }
+    }
+
     if(isInputBufferNeeded==OMX_FALSE && isOutputBufferNeeded==OMX_FALSE) {
-       
-      if(omx_base_filter_Private->pMark!=NULL){
-        pOutputBuffer->hMarkTargetComponent=omx_base_filter_Private->pMark->hMarkTargetComponent;
-        pOutputBuffer->pMarkData=omx_base_filter_Private->pMark->pMarkData;
-        omx_base_filter_Private->pMark=NULL;
+
+      if(omx_base_filter_Private->pMark.hMarkTargetComponent != NULL){
+        pOutputBuffer->hMarkTargetComponent = omx_base_filter_Private->pMark.hMarkTargetComponent;
+        pOutputBuffer->pMarkData            = omx_base_filter_Private->pMark.pMarkData;
+        omx_base_filter_Private->pMark.hMarkTargetComponent = NULL;
+        omx_base_filter_Private->pMark.pMarkData            = NULL;
       }
-      target_component=(OMX_COMPONENTTYPE*)pInputBuffer->hMarkTargetComponent;
-      if(target_component==(OMX_COMPONENTTYPE *)openmaxStandComp) {
-        /*Clear the mark and generate an event*/
-        (*(omx_base_filter_Private->callbacks->EventHandler))
-          (openmaxStandComp,
-          omx_base_filter_Private->callbackData,
-          OMX_EventMark, /* The command was completed */
-          1, /* The commands was a OMX_CommandStateSet */
-          0, /* The state has been changed in message->messageParam2 */
-          pInputBuffer->pMarkData);
-      } else if(pInputBuffer->hMarkTargetComponent!=NULL){
-        /*If this is not the target component then pass the mark*/
-        pOutputBuffer->hMarkTargetComponent = pInputBuffer->hMarkTargetComponent;
-        pOutputBuffer->pMarkData = pInputBuffer->pMarkData;
-        pInputBuffer->pMarkData=NULL;
-      }
+
       pOutputBuffer->nTimeStamp = pInputBuffer->nTimeStamp;
       if(pInputBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {    
          DEBUG(DEB_LEV_FULL_SEQ, "Detected  START TIME flag in the input buffer filled len=%d\n", (int)pInputBuffer->nFilledLen);
@@ -205,18 +210,13 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
          pInputBuffer->nFlags = 0;
       }
 
-
       if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen != 0) {
         (*(omx_base_filter_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer, pOutputBuffer);
       } else {
         /*It no buffer management call back the explicitly consume input buffer*/
         pInputBuffer->nFilledLen = 0;
       }
-      /*Input Buffer has been completely consumed. So, get new input buffer*/
-      if(pInputBuffer->nFilledLen==0) {
-        isInputBufferNeeded = OMX_TRUE;
-      }
-
+      
       if(pInputBuffer->nFlags==OMX_BUFFERFLAG_EOS && pInputBuffer->nFilledLen==0) {
         DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pInputBuffer->nFilledLen);
         pOutputBuffer->nFlags=pInputBuffer->nFlags;
@@ -235,7 +235,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       }
 
       /*If EOS and Input buffer Filled Len Zero then Return output buffer immediately*/
-      if(pOutputBuffer->nFilledLen!=0 || pOutputBuffer->nFlags==OMX_BUFFERFLAG_EOS){
+      if(pOutputBuffer->nFilledLen!=0 || pOutputBuffer->nFlags==OMX_BUFFERFLAG_EOS) {
         pOutPort->ReturnBufferFunction(pOutPort,pOutputBuffer);
         outBufExchanged--;
         pOutputBuffer=NULL;
@@ -243,22 +243,19 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       }
     }
 
-    DEBUG(DEB_LEV_FULL_SEQ, "Input buffer arrived\n");
-
     if(omx_base_filter_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
       /*Waiting at paused state*/
       tsem_wait(omx_base_component_Private->bStateSem);
     }
 
     /*Input Buffer has been completely consumed. So, return input buffer*/
-    if(isInputBufferNeeded == OMX_TRUE && pInputBuffer!=NULL) {
+    if((isInputBufferNeeded == OMX_FALSE) && (pInputBuffer->nFilledLen==0)) {
       pInPort->ReturnBufferFunction(pInPort,pInputBuffer);
       inBufExchanged--;
       pInputBuffer=NULL;
-    }
+      isInputBufferNeeded=OMX_TRUE;
+    } 
   }
   DEBUG(DEB_LEV_SIMPLE_SEQ,"Exiting Buffer Management Thread\n");
   return NULL;
 }
-
-

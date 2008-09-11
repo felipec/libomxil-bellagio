@@ -143,9 +143,7 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
           NULL);
         pInputBuffer->nFlags=0;
       }
-      if(omx_base_sink_Private->pMark!=NULL){
-         omx_base_sink_Private->pMark=NULL;
-      }
+      
       target_component=(OMX_COMPONENTTYPE*)pInputBuffer->hMarkTargetComponent;
       if(target_component==(OMX_COMPONENTTYPE *)openmaxStandComp) {
         /*Clear the mark and generate an event*/

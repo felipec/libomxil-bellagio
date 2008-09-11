@@ -136,7 +136,8 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   omx_base_component_Private->callbackData = NULL;
   omx_base_component_Private->nGroupPriority = 0;
   omx_base_component_Private->nGroupID = 0;
-  omx_base_component_Private->pMark=NULL;
+  omx_base_component_Private->pMark.hMarkTargetComponent = NULL;
+  omx_base_component_Private->pMark.pMarkData            = NULL;
   omx_base_component_Private->openmaxStandComp=openmaxStandComp;
   omx_base_component_Private->DoStateSet = &omx_base_component_DoStateSet;
   omx_base_component_Private->messageHandler = omx_base_component_MessageHandler;
@@ -1572,7 +1573,8 @@ OMX_ERRORTYPE omx_base_component_MessageHandler(OMX_COMPONENTTYPE *openmaxStandC
   }
   break;
   case OMX_CommandMarkBuffer: {
-    omx_base_component_Private->pMark=(OMX_MARKTYPE *)message->pCmdData;
+    omx_base_component_Private->pMark.hMarkTargetComponent = ((OMX_MARKTYPE *)message->pCmdData)->hMarkTargetComponent;
+    omx_base_component_Private->pMark.pMarkData            = ((OMX_MARKTYPE *)message->pCmdData)->pMarkData;
   }
   break;
   default:

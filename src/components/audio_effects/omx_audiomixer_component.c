@@ -405,10 +405,10 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
 
       DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iF=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
         __func__,isBufferNeeded[0],isBufferNeeded[nOutputPortIndex],pSem[0]->semval,pSem[nOutputPortIndex]->semval);
- 
+  
       tsem_up(omx_audio_mixer_component_Private->flush_all_condition);
       tsem_down(omx_audio_mixer_component_Private->flush_condition);
-      pthread_mutex_lock(&omx_audio_mixer_component_Private->flush_mutex); 
+      pthread_mutex_lock(&omx_audio_mixer_component_Private->flush_mutex);
     }
     pthread_mutex_unlock(&omx_audio_mixer_component_Private->flush_mutex);
 
@@ -453,12 +453,12 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
 
     if(isBufferNeeded[nOutputPortIndex]==OMX_FALSE) {
        
-      if(omx_audio_mixer_component_Private->pMark!=NULL){
-        pBuffer[nOutputPortIndex]->hMarkTargetComponent=omx_audio_mixer_component_Private->pMark->hMarkTargetComponent;
-        pBuffer[nOutputPortIndex]->pMarkData=omx_audio_mixer_component_Private->pMark->pMarkData;
-        omx_audio_mixer_component_Private->pMark=NULL;
+      if(omx_audio_mixer_component_Private->pMark.hMarkTargetComponent != NULL){
+        pBuffer[nOutputPortIndex]->hMarkTargetComponent = omx_audio_mixer_component_Private->pMark.hMarkTargetComponent;
+        pBuffer[nOutputPortIndex]->pMarkData            = omx_audio_mixer_component_Private->pMark.pMarkData;
+        omx_audio_mixer_component_Private->pMark.hMarkTargetComponent = NULL;
+        omx_audio_mixer_component_Private->pMark.pMarkData            = NULL;
       }
-      
       for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++){ 
         if(isBufferNeeded[i]==OMX_FALSE && PORT_IS_ENABLED(pPort[i])) {
 

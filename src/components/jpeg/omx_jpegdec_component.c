@@ -721,10 +721,11 @@ void* omx_jpegdec_component_BufferMgmtFunction(void* param)
     jpeg_destroy_decompress(&omx_jpegdec_component_Private->cinfo);
 
 
-    if(omx_jpegdec_component_Private->pMark!=NULL){
-      pOutputBuffer->hMarkTargetComponent=omx_jpegdec_component_Private->hMarkTargetComponent;
-      pOutputBuffer->pMarkData=omx_jpegdec_component_Private->pMark->pMarkData;
-      omx_jpegdec_component_Private->pMark=NULL;
+    if(omx_jpegdec_component_Private->pMark.hMarkTargetComponent != NULL){
+      pOutputBuffer->hMarkTargetComponent = omx_jpegdec_component_Private->pMark.hMarkTargetComponent;
+      pOutputBuffer->pMarkData            = omx_jpegdec_component_Private->pMark.pMarkData;
+      omx_jpegdec_component_Private->pMark.hMarkTargetComponent = NULL;
+      omx_jpegdec_component_Private->pMark.pMarkData            = NULL;
     }
     
     if(omx_jpegdec_component_Private->hMarkTargetComponent==(OMX_COMPONENTTYPE *)openmaxStandComp) {

@@ -210,7 +210,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
          pInputBuffer->nFlags = 0;
       }
 
-      if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen != 0) {
+      if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen > 0) {
         (*(omx_base_filter_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer, pOutputBuffer);
       } else {
         /*It no buffer management call back the explicitly consume input buffer*/

@@ -158,7 +158,7 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
         /*If this is not the target component then pass the mark*/
         DEBUG(DEB_LEV_FULL_SEQ, "Can't Pass Mark. This is a Sink!!\n");
       }
-      if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer->nFilledLen != 0) {
+      if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer->nFilledLen > 0) {
         (*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer);
       }
       else {

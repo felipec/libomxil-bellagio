@@ -1,17 +1,24 @@
-omximage_jpegdir = $(plugindir)
+SUBDIRS = libjpeg-6c
 
-omximage_jpeg_LTLIBRARIES = libomximage_jpeg.la
+omximagejpegdir = $(plugindir)
 
-libomximage_jpeg_la_SOURCES = omx_jpegdec_component.c \
+omximagejpeg_LTLIBRARIES = libomximagejpeg.la
+
+libomximagejpeg_la_SOURCES = omx_jpegdec_component.c \
+                              omx_jpegenc_component.c \
                               library_entry_point.c \
                               wrbmp.c \
+                              rdbmp.c \
                               omx_jpegdec_component.h \
+                              omx_jpegenc_component.h \
                               cderror.h \
                               cdjpeg.h \
-                              jinclude.h
+                              jinclude.h \
+                              jversion.h
 
-libomximage_jpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la
-libomximage_jpeg_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-libomximage_jpeg_la_CFLAGS = -I$(top_srcdir)/include \
-				-I$(top_srcdir)/src \
-				-I$(top_srcdir)/src/base
+libomximagejpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la libjpeg-6c/libjpeg.la
+libomximagejpeg_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+libomximagejpeg_la_CFLAGS = -I$(top_srcdir)/include \
+                             -I$(top_srcdir)/src \
+                             -I$(top_srcdir)/src/base  \
+                             -I./libjpeg-6c 

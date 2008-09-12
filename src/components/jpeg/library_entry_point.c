@@ -33,6 +33,7 @@
 */
 
 #include <st_static_component_loader.h>
+#include <omx_jpegenc_component.h>
 #include <omx_jpegdec_component.h>
 
 /** The library entry point. It must have the same name for each
@@ -52,7 +53,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n",__func__);
   if (stComponents == NULL) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-    return 1; // Return Number of Component/s
+    return 2; // Return Number of Component/s
   }
   stComponents[0]->componentVersion.s.nVersionMajor = 1; 
   stComponents[0]->componentVersion.s.nVersionMinor = 1; 
@@ -82,6 +83,34 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[0]->name_specific[0], "OMX.st.image_decoder.jpeg");
   strcpy(stComponents[0]->role_specific[0], "image_decoder.jpeg");
 
+  stComponents[1]->componentVersion.s.nVersionMajor = 1; 
+  stComponents[1]->componentVersion.s.nVersionMinor = 1; 
+  stComponents[1]->componentVersion.s.nRevision = 1;
+  stComponents[1]->componentVersion.s.nStep = 1;
+
+  stComponents[1]->name = calloc(1,OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[1]->name == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+  strcpy(stComponents[1]->name, "OMX.st.image_encoder.jpeg");
+  stComponents[1]->name_specific_length = 1; 
+  stComponents[1]->constructor = omx_jpegenc_component_Constructor;  
+  
+  stComponents[1]->name_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
+  stComponents[1]->role_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
+
+  stComponents[1]->name_specific[0] = calloc(1,OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[1]->name_specific[0] == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+  stComponents[1]->role_specific[0] = calloc(1,OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[1]->role_specific[0] == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+
+  strcpy(stComponents[1]->name_specific[0], "OMX.st.image_encoder.jpeg");
+  strcpy(stComponents[1]->role_specific[0], "image_encoder.jpeg");
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-  return 1;
+  return 2;
 }

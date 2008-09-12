@@ -56,6 +56,7 @@ AC_CONFIG_FILES([
     src/components/clocksrc/Makefile
     src/components/camera/Makefile
     src/components/jpeg/Makefile
+		src/components/jpeg/libjpeg-6c/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile
@@ -173,12 +174,12 @@ AC_ARG_ENABLE(
 
 #Check whether to create documentation 
 AC_ARG_ENABLE(
-    [jpegdec],
+    [jpeg],
     [AC_HELP_STRING(
-        [--disable-jpegdec],
+        [--disable-jpeg],
         [whether to disable jpeg decoder component])],
-    [with_jpegdec=$enableval],
-    [with_jpegdec=yes])
+    [with_jpeg=$enableval],
+    [with_jpeg=yes])
 
 ################################################################################
 # Check for programs                                                           #
@@ -225,7 +226,7 @@ if test "x$with_components" = "xno"; then
 	with_audioeffects=no
 	with_videosrc=no
 	with_clocksrc=no
-	with_jpegdec=no
+	with_jpeg=no
 fi
 
 # Define components default ldflags (man ld)
@@ -354,6 +355,6 @@ AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test x$with_vorbis = xyes])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xyes])
 AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xyes])
 AM_CONDITIONAL([WITH_CLOCKSRC], [test x$with_clocksrc = xyes])
-AM_CONDITIONAL([WITH_JPEG],[test x$with_jpegdec = xyes])
+AM_CONDITIONAL([WITH_JPEG],[test x$with_jpeg = xyes])
 
 AC_OUTPUT

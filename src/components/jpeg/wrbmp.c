@@ -546,7 +546,7 @@ write_bmp_header_buf (j_decompress_ptr cinfo, bmp_dest_ptr dest,char* buf)
 		}
 		*/
 }
-METHODDEF(void)
+GLOBAL(void)
 finish_output_bmp_buf (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,char *buf)
 {
   bmp_dest_ptr dest = (bmp_dest_ptr) dinfo;
@@ -618,7 +618,7 @@ jinit_write_bmp (j_decompress_ptr cinfo, boolean is_os2)
 				  SIZEOF(bmp_dest_struct));
   dest->pub.start_output = start_output_bmp;
   dest->pub.finish_output = finish_output_bmp;
-	dest->pub.finish_output_buf = finish_output_bmp_buf;
+	//dest->pub.finish_output_buf = finish_output_bmp_buf;
   dest->is_os2 = is_os2;
 
   if (cinfo->out_color_space == JCS_GRAYSCALE) {

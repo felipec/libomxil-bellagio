@@ -43,7 +43,11 @@
 #include <string.h>
 #include <omx_base_filter.h>
 
-#include "cdjpeg.h"
+
+#ifndef _CDJPEG_H_
+#define _CDJPEG_H_
+#include "libjpeg-6c/cdjpeg.h"
+#endif
 
 /** Port private definition.
  * Contains component allocated buffer descriptions.
@@ -66,8 +70,6 @@
  */
 DERIVEDCLASS(omx_jpegdec_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_jpegdec_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
-  /* the jpeg line buffer */ \
-  OMX_U8 **line[3]; \
   struct jpeg_decompress_struct cinfo; \
   struct jpeg_error_mgr jerr; \
   struct jpeg_source_mgr jsrc; \

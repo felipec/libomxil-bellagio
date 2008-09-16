@@ -25,9 +25,9 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
 
-  $Date: 2008-07-08 11:20:46 +0200 (Tue, 08 Jul 2008) $
-  Revision $Rev: 1436 $
-  Author $Author: giulio_urlini $
+  $Date: 2008-09-11 13:48:00 +0200 (Thu, 11 Sep 2008) $
+  Revision $Rev: 1485 $
+  Author $Author: pankaj_sen $
 */
 
 #include <stdio.h>
@@ -268,7 +268,7 @@ void display_help() {
   printf("default directory $HOME/stream/audio\n");
   printf("Usage: omxaudiodecbatchtest [optional]dirname\n");
   printf("\n");
-  printf("       dirname: dirname from where audio files to be played [default $HOME/stream/audio]\n");
+  printf("       dirname: dirname from where audio files to be played\n");
   printf("       -s: Disable Seek\n");
   printf("       -t: Disable Tunnelling\n");
   printf("       -h: Displays this help\n");

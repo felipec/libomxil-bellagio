@@ -51,15 +51,16 @@
 #include <ffmpeg/avformat.h>
 #endif
 
-#define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
-#define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3"
-#define AUDIO_DEC_VORBIS_NAME "OMX.st.audio_decoder.ogg"
-#define AUDIO_DEC_AAC_NAME "OMX.st.audio_decoder.aac" 
-#define AUDIO_DEC_G726_NAME "OMX.st.audio_decoder.g726"
-#define AUDIO_DEC_MP3_ROLE "audio_decoder.mp3"
-#define AUDIO_DEC_VORBIS_ROLE "audio_decoder.ogg"
-#define AUDIO_DEC_AAC_ROLE "audio_decoder.aac"   
-#define AUDIO_DEC_G726_ROLE "audio_decoder.g726"
+#define AUDIO_DEC_BASE_NAME     "OMX.st.audio_decoder"
+#define AUDIO_DEC_MP3_NAME      "OMX.st.audio_decoder.mp3"
+#define AUDIO_DEC_VORBIS_NAME   "OMX.st.audio_decoder.ogg"
+#define AUDIO_DEC_AAC_NAME      "OMX.st.audio_decoder.aac" 
+#define AUDIO_DEC_G726_NAME     "OMX.st.audio_decoder.g726"
+
+#define AUDIO_DEC_MP3_ROLE      "audio_decoder.mp3"
+#define AUDIO_DEC_VORBIS_ROLE   "audio_decoder.ogg"
+#define AUDIO_DEC_AAC_ROLE      "audio_decoder.aac"   
+#define AUDIO_DEC_G726_ROLE     "audio_decoder.g726"
 
 /** AudioDec component private structure.
  */

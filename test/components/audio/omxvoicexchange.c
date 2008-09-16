@@ -22,8 +22,8 @@
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
   
-  $Date: 2008-02-12 12:06:30 +0530 (Tue, 12 Feb 2008) $
-  Revision $Rev: 1298 $
+  $Date: 2008-09-11 12:14:48 +0200 (Thu, 11 Sep 2008) $
+  Revision $Rev: 1484 $
   Author $Author: pankaj_sen $
 */
 
@@ -757,7 +757,7 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
           i++;
           if(len <0 || len > pBuffer->nAllocLen) {
             DEBUG(DEB_LEV_ERR,"In while breaking len=%d at offset=%d,fillen=%d,s_n=%d,i=%d\n",
-              len,packet_offset,pBuffer->nFilledLen,s_n,i);
+              len,packet_offset,(int)pBuffer->nFilledLen,s_n,i);
             break;
           }
           packet_offset += offset;

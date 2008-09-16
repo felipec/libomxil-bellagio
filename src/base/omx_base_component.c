@@ -490,7 +490,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
         i < omx_base_component_Private->sPortTypesParam[j].nStartPortNumber +
           omx_base_component_Private->sPortTypesParam[j].nPorts; i++) {
           pPort = omx_base_component_Private->ports[i];
-          if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort)) {
+          if (PORT_IS_TUNNELED(pPort) && PORT_IS_BUFFER_SUPPLIER(pPort) && PORT_IS_ENABLED(pPort)) {
             for(k=0;k<pPort->nNumTunnelBuffer;k++) {
               tsem_up(pPort->pBufferSem);
               /*signal buffer management thread availability of buffers*/

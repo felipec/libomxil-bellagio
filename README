@@ -1,5 +1,5 @@
 Bellagio OpenMAX Integration Layer 1.1.1 project
-Release 0.9.0
+Release 0.9.1
 
 This is an Open Source implementation of the OpenMAX Integration Layer
 (IL) API ver. 1.1.1, specified by the Khronos group (see
@@ -14,6 +14,7 @@ CORE FUNCTIONALITIES
 - A component loader for Symbian
 - A framework of components and ports base 
   implementations for Bellagio Hierarchy
+
 AUDIO
 - OMX ALSA sink component
 - OMX ALSA source component
@@ -46,6 +47,9 @@ VIDEO
 - OMX video encoder encoding input YUV format file or video captured
   using camera component in MPEG-4 video format to produce output .m4v
   file.
+
+IMAGING
+- An OpenmAX jpeg encoder and decoder
 
 PARSER
 - OMX 3GP parser component. Parses input file/stream for audio and

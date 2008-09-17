@@ -1,4 +1,4 @@
-AC_INIT([OpenMAX Bellagio], [0.9.0], [], [libomxil-bellagio])
+AC_INIT([OpenMAX Bellagio], [0.9.1], [], [libomxil-bellagio])
 AM_INIT_AUTOMAKE([tar-ustar])
 
 # Prerequisite autoconf version

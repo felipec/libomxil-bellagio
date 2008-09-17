@@ -61,8 +61,11 @@ make
 %{_libdir}/bellagio/libomxmad.so
 %{_libdir}/bellagio/libomxparser3gp.so
 %{_libdir}/bellagio/libomxvorbis.so
+%{_libdir}/bellagio/libomximagejpeg.so
 
 %changelog
+* Wed Sep 17 2008 Giulio Urlini
+- added jpeg encoder/decoder
 * Mon Jul 07 2008 Giulio Urlini
 - added clock source, video source, camera, frame buffer writer
 * Thu Mar 06 2008 Marc-Andre Lureau

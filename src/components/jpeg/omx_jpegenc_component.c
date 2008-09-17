@@ -44,7 +44,6 @@ static OMX_U32 nojpegencInstance=0;
 #define JMESSAGE(code,string)  string ,
 
 static const char * const cdjpeg_message_table[] = {
-#include "cderror.h"
   NULL
 };
 

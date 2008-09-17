@@ -10,11 +10,7 @@ libomximagejpeg_la_SOURCES = omx_jpegdec_component.c \
                               wrbmp.c \
                               rdbmp.c \
                               omx_jpegdec_component.h \
-                              omx_jpegenc_component.h \
-                              cderror.h \
-                              cdjpeg.h \
-                              jinclude.h \
-                              jversion.h
+                              omx_jpegenc_component.h
 
 libomximagejpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la libjpeg-6c/libjpeg.la
 libomximagejpeg_la_LDFLAGS = $(PLUGIN_LDFLAGS)

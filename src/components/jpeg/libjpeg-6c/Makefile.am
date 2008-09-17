@@ -45,4 +45,6 @@ libjpeg_la_SOURCES = $(LIBSOURCES) $(SYSDEPSOURCES)
 
 include_extradir = $(includedir)
 
-include_extra_HEADERS =  jconfig.h jpeglib.h jmorecfg.h jerror.h
+include_extra_HEADERS =  jconfig.h jpeglib.h jmorecfg.h jerror.h \
+                         jpegint.h jdct.h jversion.h jmemsys.h \
+												 transupp.h

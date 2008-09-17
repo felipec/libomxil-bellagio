@@ -21,7 +21,7 @@ audio_use_case_tunnel_SOURCES = audio_use_case_tunnel.c omxaudiodectest.h
 audio_use_case_tunnel_LDADD = $(bellagio_LDADD) $(common_LDADD) -lpthread
 audio_use_case_tunnel_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)
 
-omxvoicexchange = omxvoicexchange.c omxvoicexchange.h 
+omxvoicexchange_SOURCES = omxvoicexchange.c omxvoicexchange.h 
 omxvoicexchange_LDADD =  $(bellagio_LDADD) $(common_LDADD) -lpthread 
 omxvoicexchange_CFLAGS= $(bellagio_CFLAGS) $(common_CFLAGS)
 

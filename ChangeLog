@@ -1,3 +1,9 @@
+Changes in 0.9.1:
+Added omx_base_image_port base class
+Added symbian support skipped in the last delivery
+Added a jpeg encoder/decoder component
+Added some tests
+
 Changes in 0.9.0:
 The main additions to this delivery are:
 

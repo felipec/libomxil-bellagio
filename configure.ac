@@ -154,6 +154,15 @@ AC_ARG_ENABLE(
     [with_clocksrclog=$enableval],
     [with_clocksrclog=no])
 
+#Check whether to create documentation 
+AC_ARG_ENABLE(
+    [jpeg],
+    [AC_HELP_STRING(
+        [--disable-jpeg],
+        [whether to disable jpeg decoder component])],
+    [with_jpeg=$enableval],
+    [with_jpeg=yes])
+
 #Check whether to disable all components
 AC_ARG_ENABLE(
     [components],
@@ -171,15 +180,6 @@ AC_ARG_ENABLE(
         [whether to enable documentation generation])],
     [with_doc=$enableval],
     [with_doc=yes])
-
-#Check whether to create documentation 
-AC_ARG_ENABLE(
-    [jpeg],
-    [AC_HELP_STRING(
-        [--disable-jpeg],
-        [whether to disable jpeg decoder component])],
-    [with_jpeg=$enableval],
-    [with_jpeg=yes])
 
 ################################################################################
 # Check for programs                                                           #

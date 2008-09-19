@@ -216,8 +216,13 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   /* filling up the OMX_VENDOR_EXTRADATATYPE structure */
   pExtraData = calloc(1,sizeof(OMX_VENDOR_EXTRADATATYPE));
   pExtraData->nPortIndex = 0; //output port index
-  pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
-  pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
+  if(omx_filereader_component_Private->avformatcontext->streams[0]) {
+    pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
+    pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata; 
+  } else {
+    pExtraData->nDataSize = 0;
+    pExtraData->pData     = 0;
+  }
 
   (*(omx_filereader_component_Private->callbacks->EventHandler))
     (openmaxStandComp,

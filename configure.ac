@@ -56,7 +56,7 @@ AC_CONFIG_FILES([
     src/components/clocksrc/Makefile
     src/components/camera/Makefile
     src/components/jpeg/Makefile
-		src/components/jpeg/libjpeg-6c/Makefile
+    src/components/jpeg/libjpeg-6c/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile

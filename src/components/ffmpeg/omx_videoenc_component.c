@@ -222,17 +222,45 @@ OMX_ERRORTYPE omx_videoenc_component_ffmpegLibInit(omx_videoenc_component_Privat
   omx_videoenc_component_Private->picture = avcodec_alloc_frame ();
 
   /* put sample parameters */
-  omx_videoenc_component_Private->avCodecContext->bit_rate = 400000; /* bit per second */
+  omx_videoenc_component_Private->avCodecContext->bit_rate = 200000; /* bit per second */
+  omx_videoenc_component_Private->avCodecContext->bit_rate_tolerance = 4000000; /* bit per second */
   omx_videoenc_component_Private->avCodecContext->width  = inPort->sPortParam.format.video.nFrameWidth;  
   omx_videoenc_component_Private->avCodecContext->height = inPort->sPortParam.format.video.nFrameHeight;
 
   /* frames per second */
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Frame Rate=%d\n",(int)inPort->sPortParam.format.video.xFramerate);
   omx_videoenc_component_Private->avCodecContext->time_base= (AVRational){1,inPort->sPortParam.format.video.xFramerate};
-  omx_videoenc_component_Private->avCodecContext->gop_size = 5; /* emit one intra frame every ten frames */
-  omx_videoenc_component_Private->avCodecContext->max_b_frames=1;
+  omx_videoenc_component_Private->avCodecContext->gop_size = omx_videoenc_component_Private->pVideoMpeg4.nPFrames + 1; /* emit one intra frame every twelve frames */
   omx_videoenc_component_Private->avCodecContext->pix_fmt = PIX_FMT_YUV420P;
+  omx_videoenc_component_Private->avCodecContext->strict_std_compliance = FF_COMPLIANCE_NORMAL;
+  omx_videoenc_component_Private->avCodecContext->sample_fmt = SAMPLE_FMT_S16;
+  omx_videoenc_component_Private->avCodecContext->qmin = 2;
+  omx_videoenc_component_Private->avCodecContext->qmax = 31;
+  omx_videoenc_component_Private->avCodecContext->workaround_bugs |= FF_BUG_AUTODETECT;
+  
 
+  if(omx_videoenc_component_Private->pVideoMpeg4.eProfile == OMX_VIDEO_MPEG4ProfileAdvancedScalable) {
+    omx_videoenc_component_Private->avCodecContext->max_b_frames = omx_videoenc_component_Private->pVideoMpeg4.nBFrames;
+  }
+
+  if(omx_videoenc_component_Private->pVideoMpeg4.bACPred == OMX_TRUE) {
+    omx_videoenc_component_Private->avCodecContext->flags != CODEC_FLAG_AC_PRED;
+  }
+
+#if 0 /*Add checking with bit rate and M4V levels*/
+  switch(omx_videoenc_component_Private->pVideoMpeg4.eLevel) {
+  case OMX_VIDEO_MPEG4Level0:                   /**< Level 0 */
+  case OMX_VIDEO_MPEG4Level0b:                  /**< Level 0b */
+  case OMX_VIDEO_MPEG4Level1:                   /**< Level 1 */
+  case OMX_VIDEO_MPEG4Level2:                   /**< Level 2 */
+  case OMX_VIDEO_MPEG4Level3:                   /**< Level 3 */
+  case OMX_VIDEO_MPEG4Level4:                   /**< Level 4 */
+  case OMX_VIDEO_MPEG4Level4a:                  /**< Level 4a */
+  case OMX_VIDEO_MPEG4Level5:                   /**< Level 5 */
+  case default: 
+    break;
+  }
+#endif
   if (avcodec_open(omx_videoenc_component_Private->avCodecContext, omx_videoenc_component_Private->avCodec) < 0) {
     DEBUG(DEB_LEV_ERR, "Could not open encoder\n");
     return OMX_ErrorInsufficientResources;
@@ -277,8 +305,8 @@ void SetInternalVideoEncParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
     omx_videoenc_component_Private->pVideoMpeg4.nPortIndex = 1; 
     omx_videoenc_component_Private->pVideoMpeg4.nSliceHeaderSpacing = 0;
     omx_videoenc_component_Private->pVideoMpeg4.bSVH = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoMpeg4.bGov = OMX_FALSE;
-    omx_videoenc_component_Private->pVideoMpeg4.nPFrames = 0;
+    omx_videoenc_component_Private->pVideoMpeg4.bGov = OMX_TRUE;
+    omx_videoenc_component_Private->pVideoMpeg4.nPFrames = 11;
     omx_videoenc_component_Private->pVideoMpeg4.nBFrames = 0;
     omx_videoenc_component_Private->pVideoMpeg4.nIDCVLCThreshold = 0;
     omx_videoenc_component_Private->pVideoMpeg4.bACPred = OMX_FALSE;

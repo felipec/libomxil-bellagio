@@ -35,6 +35,7 @@
 
 #include <st_static_component_loader.h>
 #include <omx_fbdev_sink_component.h>
+#include <omx_video_scheduler_component.h>
 
 /** @brief The library entry point. It must have the same name for each
   * library of the components loaded by the ST static component loader.
@@ -55,7 +56,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
 
   if (stComponents == NULL) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-    return 1; // Return Number of Components - one for fbdev sink component
+    return 2; // Return Number of Components - one for fbdev sink component
   }
 
   /** component 1 - fbdev sink component */
@@ -89,7 +90,40 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   }
   strcpy(stComponents[0]->name_specific[0], "OMX.st.fbdev.fbdev_sink");
   strcpy(stComponents[0]->role_specific[0], "fbdev.fbdev_sink");
+ /* component 2 - video scheduler component */
+  stComponents[1]->componentVersion.s.nVersionMajor = 1; 
+  stComponents[1]->componentVersion.s.nVersionMinor = 1; 
+  stComponents[1]->componentVersion.s.nRevision = 1;
+  stComponents[1]->componentVersion.s.nStep = 1;
+
+  stComponents[1]->name = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[1]->name == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+  strcpy(stComponents[1]->name, "OMX.st.video.scheduler");
+  stComponents[1]->name_specific_length = 1; 
+  stComponents[1]->constructor =  omx_video_scheduler_component_Constructor;
+
+
+  stComponents[1]->name_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));  
+  stComponents[1]->role_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));  
+
+  for(i=0;i<stComponents[1]->name_specific_length;i++) {
+    stComponents[1]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[1]->name_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+  for(i=0;i<stComponents[1]->name_specific_length;i++) {
+    stComponents[1]->role_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[1]->role_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+
+  strcpy(stComponents[1]->name_specific[0], "OMX.st.video.scheduler");
+  strcpy(stComponents[1]->role_specific[0], "video.scheduler");
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
-  return 1; 
+  return 2; 
 }

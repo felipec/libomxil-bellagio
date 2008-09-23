@@ -1251,7 +1251,6 @@ OMX_BOOL omx_fbdev_sink_component_ClockPortHandleFunction(omx_fbdev_sink_compone
       }
     }
   }
-
   return(SendFrame);
 }
 

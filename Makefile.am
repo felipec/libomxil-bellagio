@@ -59,7 +59,7 @@ EXTRA_DIST = libomxil-bellagio.spec \
              src/loaders/loaders_symbian/symbianecomloader/inc/BellagioOpenMaxSymbianLoaderImplUid.hrh \
              src/loaders/loaders_symbian/symbianecomloader/inc/nrc_symbian_component_loader.h \
              src/loaders/loaders_symbian/symbianecomloader/sis/BellagioOpenMaxSymbianLoader.pkg \
-             src/loaders/loaders_symbian/symbianecomloader/src/BellagioOpenMaxSymbianLoader.cpp \    
+             src/loaders/loaders_symbian/symbianecomloader/src/BellagioOpenMaxSymbianLoader.cpp \
              src/loaders/loaders_symbian/symbianecomloader/src/nrc_symbian_component_loader.cpp \
              src/loaders/loaders_symbian/symbianecomloader/src/BellagioOpenMaxSymbianLoaderImplFactory.cpp \
              \

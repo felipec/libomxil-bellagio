@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 The Khronos Group Inc. 
+ * Copyright (c) 2008 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Component.h - OpenMax IL version 1.1.1
+/** OMX_Component.h - OpenMax IL version 1.1.2
  *  The OMX_Component header file contains the definitions used to define
  *  the public interface of a component.  This header file is intended to
  *  be used by both the application and the component.
@@ -52,6 +52,8 @@ typedef enum OMX_PORTDOMAINTYPE {
     OMX_PortDomainVideo, 
     OMX_PortDomainImage, 
     OMX_PortDomainOther,
+    OMX_PortDomainKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_PortDomainVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_PortDomainMax = 0x7ffffff
 } OMX_PORTDOMAINTYPE;
 
@@ -95,6 +97,8 @@ typedef struct OMX_PARAM_U32TYPE {
 typedef enum OMX_SUSPENSIONPOLICYTYPE {
     OMX_SuspensionDisabled, /**< No suspension; v1.0 behavior */
     OMX_SuspensionEnabled,  /**< Suspension allowed */   
+    OMX_SuspensionPolicyKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_SuspensionPolicyStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_SuspensionPolicyMax = 0x7fffffff
 } OMX_SUSPENSIONPOLICYTYPE;
 
@@ -109,6 +113,8 @@ typedef struct OMX_PARAM_SUSPENSIONPOLICYTYPE {
 typedef enum OMX_SUSPENSIONTYPE {
     OMX_NotSuspended, /**< component is not suspended */
     OMX_Suspended,    /**< component is suspended */
+    OMX_SuspensionKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_SuspensionVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_SuspendMax = 0x7FFFFFFF
 } OMX_SUSPENSIONTYPE;
 
@@ -191,6 +197,8 @@ typedef enum OMX_METADATACHARSETTYPE {
     OMX_MetadataCharsetISO2022JP1,
     OMX_MetadataCharsetISOEUCJP,
     OMX_MetadataCharsetSMS7Bit,
+    OMX_MetadataCharsetKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_MetadataCharsetVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_MetadataCharsetTypeMax= 0x7FFFFFFF
 } OMX_METADATACHARSETTYPE;
 
@@ -201,6 +209,8 @@ typedef enum OMX_METADATASCOPETYPE
     OMX_MetadataScopeTopLevel,
     OMX_MetadataScopePortLevel,
     OMX_MetadataScopeNodeLevel,
+    OMX_MetadataScopeKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_MetadataScopeVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_MetadataScopeTypeMax = 0x7fffffff
 } OMX_METADATASCOPETYPE;
 
@@ -210,6 +220,8 @@ typedef enum OMX_METADATASEARCHMODETYPE
     OMX_MetadataSearchValueSizeByIndex,
     OMX_MetadataSearchItemByIndex,
     OMX_MetadataSearchNextItemByKey,
+    OMX_MetadataSearchKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */ 
+    OMX_MetadataSearchVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_MetadataSearchTypeMax = 0x7fffffff
 } OMX_METADATASEARCHMODETYPE;
 /** @ingroup metadata */
@@ -448,7 +460,7 @@ typedef struct OMX_COMPONENTTYPE
             provided by the component with the output port.
         @return OMX_ERRORTYPE
             If the command successfully executes, the return code will be
-            OMX_NoError.  Otherwise the appropriate OMX error will be returned.
+            OMX_ErrorNone.  Otherwise the appropriate OMX error will be returned.
         @ingroup tun
     */
 
@@ -523,7 +535,7 @@ typedef struct OMX_COMPONENTTYPE
             to determine the context of the call
         @return OMX_ERRORTYPE
             If the command successfully executes, the return code will be
-            OMX_NoError.  Otherwise the appropriate OMX error will be returned.
+            OMX_ErrorNone.  Otherwise the appropriate OMX error will be returned.
      */
     OMX_ERRORTYPE (*SetCallbacks)(
             OMX_IN  OMX_HANDLETYPE hComponent,
@@ -539,7 +551,7 @@ typedef struct OMX_COMPONENTTYPE
             handle returned by the call to the GetHandle function.
         @return OMX_ERRORTYPE
             If the command successfully executes, the return code will be
-            OMX_NoError.  Otherwise the appropriate OMX error will be returned.
+            OMX_ErrorNone.  Otherwise the appropriate OMX error will be returned.
      */
     OMX_ERRORTYPE (*ComponentDeInit)(
             OMX_IN  OMX_HANDLETYPE hComponent);

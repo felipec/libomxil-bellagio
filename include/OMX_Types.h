@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 The Khronos Group Inc. 
+ * Copyright (c) 2008 The Khronos Group Inc. 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,7 +21,7 @@
  *
  */
 
-/** OMX_Types.h - OpenMax IL version 1.1.1
+/** OMX_Types.h - OpenMax IL version 1.1.2
  *  The OMX_Types header file contains the primitive type definitions used by 
  *  the core, the application and the component.  This file may need to be
  *  modified to be used on systems that do not have "char" set to 8 bits, 
@@ -35,36 +35,34 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/** The OMX_API and OMX_APIENTRY are platform specific definitions used 
- *  to declare OMX function prototypes.  They are modified to meet the 
- *  requirements for a particular platform */ 
-
+/** The OMX_API and OMX_APIENTRY are platform specific definitions used
+ *  to declare OMX function prototypes.  They are modified to meet the
+ *  requirements for a particular platform */
 #ifdef __SYMBIAN32__   
-#   ifdef __OMX_EXPORTS 
-#       define OMX_API __declspec(dllexport) 
-#   else 
-#       ifdef _WIN32 
+#   ifdef __OMX_EXPORTS
+#       define OMX_API __declspec(dllexport)
+#   else
+#       ifdef _WIN32
 #           define OMX_API __declspec(dllexport) 
-#       else 
-#           define OMX_API __declspec(dllimport) 
-#       endif 
-#   endif 
-#else 
-#   ifdef _WIN32 
-#      ifdef __OMX_EXPORTS 
-#          define OMX_API __declspec(dllexport) 
-#      else 
-#          define OMX_API __declspec(dllimport) 
-#      endif 
-#   else 
-#      ifdef __OMX_EXPORTS 
-#          define OMX_API 
-#      else 
-#          define OMX_API extern 
-#      endif 
-#   endif 
-#endif 
-
+#       else
+#           define OMX_API __declspec(dllimport)
+#       endif
+#   endif
+#else
+#   ifdef _WIN32
+#      ifdef __OMX_EXPORTS
+#          define OMX_API __declspec(dllexport)
+#      else
+#          define OMX_API __declspec(dllimport)
+#      endif
+#   else
+#      ifdef __OMX_EXPORTS
+#          define OMX_API
+#      else
+#          define OMX_API extern
+#      endif
+#   endif
+#endif
 
 #ifndef OMX_APIENTRY
 #define OMX_APIENTRY 

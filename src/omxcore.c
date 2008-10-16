@@ -1,9 +1,9 @@
 /**
   @file src/omxcore.c
-  
+
   OpenMAX Integration Layer Core. This library implements the OpenMAX core
   responsible for environment setup, components tunneling and communication.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -21,7 +21,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date$
   Revision $Rev$
   Author $Author$
@@ -46,7 +46,7 @@
 #include "omxcore.h"
 #include "omx_create_loaders.h"
 
-/** The static field initialized is equal to 0 if the core is not initialized. 
+/** The static field initialized is equal to 0 if the core is not initialized.
  * It is equal to 1 whern the OMX_Init has been called
  */
 static int initialized;
@@ -55,7 +55,7 @@ static int initialized;
  */
 static int bosa_loaders;
 
-/** The pointer to the loaders list. This list contains the all the different component loaders 
+/** The pointer to the loaders list. This list contains the all the different component loaders
  * present in the system or added by the IL Client with the BOSA_AddComponentLoader function.
  * The component loader is a implementation specific way to handle a set of components. The implementation
  * of the IL core accesses to the loaders in a standard way, but the different loaders can handle
@@ -64,32 +64,32 @@ static int bosa_loaders;
  */
 BOSA_COMPONENTLOADER **loadersList = NULL;
 
-OMX_ERRORTYPE BOSA_AddComponentLoader(BOSA_COMPONENTLOADER *pLoader) 
+OMX_ERRORTYPE BOSA_AddComponentLoader(BOSA_COMPONENTLOADER *pLoader)
 {
   BOSA_COMPONENTLOADER **newLoadersList = NULL;
   assert(pLoader);
-  
+
   bosa_loaders++;
   newLoadersList = realloc(loadersList, bosa_loaders * sizeof(BOSA_COMPONENTLOADER *));
-  
+
   if (!newLoadersList)
     return OMX_ErrorInsufficientResources;
 
   loadersList = newLoadersList;
-  
+
   loadersList[bosa_loaders - 1] = pLoader;
-  
+
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Loader added at index %d\n", bosa_loaders - 1);
-  
-  return OMX_ErrorNone;  
+
+  return OMX_ErrorNone;
 }
 
 /** @brief The OMX_Init standard function
- * 
- * This function calls the init function of each componente loader added. If there 
+ *
+ * This function calls the init function of each componente loader added. If there
  * is no component loaders present, the ST default component loader (static libraries)
  * is loaded as default component loader.
- * 
+ *
  * @return OMX_ErrorNone
  */
 OMX_ERRORTYPE OMX_Init() {
@@ -100,17 +100,19 @@ OMX_ERRORTYPE OMX_Init() {
   if(initialized == 0) {
     initialized = 1;
 
-    createComponentLoaders();
-    
-    for (i = 0; i < bosa_loaders; i++) 
+    if (createComponentLoaders()) {
+    	return OMX_ErrorInsufficientResources;
+    }
+
+    for (i = 0; i < bosa_loaders; i++)
     {
       err = loadersList[i]->BOSA_InitComponentLoader(loadersList[i]);
-      if (err != OMX_ErrorNone) 
+      if (err != OMX_ErrorNone)
       {
         DEBUG(DEB_LEV_ERR, "A Component loader constructor fails. Exiting\n");
         return OMX_ErrorInsufficientResources;
       }
-    }    
+    }
   }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
@@ -118,7 +120,7 @@ OMX_ERRORTYPE OMX_Init() {
 }
 
 /** @brief The OMX_Deinit standard function
- * 
+ *
  * In this function the Deinit function for each component loader is performed
  */
 OMX_ERRORTYPE OMX_Deinit() {
@@ -130,7 +132,7 @@ OMX_ERRORTYPE OMX_Deinit() {
       free(loadersList[i]);
       loadersList[i] = 0;
     }
-  }  
+  }
   free(loadersList);
   loadersList = 0;
   initialized = 0;
@@ -140,22 +142,22 @@ OMX_ERRORTYPE OMX_Deinit() {
 }
 
 /** @brief the OMX_GetHandle standard function
- * 
+ *
  * This function will scan inside any component loader to search for
- * the requested component. If there are more components with the same name 
+ * the requested component. If there are more components with the same name
  * the first component is returned. The existence of multiple components with
  * the same name is not contemplated in OpenMAX specification. The assumption is
  * that this behavior is NOT allowed.
- * 
+ *
  * @return OMX_ErrorNone if a component has been found
- *         OMX_ErrorComponentNotFound if the requested component has not been found 
+ *         OMX_ErrorComponentNotFound if the requested component has not been found
  *                                    in any loader
  */
 OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
   OMX_IN  OMX_STRING cComponentName,
   OMX_IN  OMX_PTR pAppData,
   OMX_IN  OMX_CALLBACKTYPE* pCallBacks) {
-  
+
   OMX_ERRORTYPE err = OMX_ErrorNone;
   int i;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
@@ -181,25 +183,25 @@ OMX_ERRORTYPE OMX_GetHandle(OMX_OUT OMX_HANDLETYPE* pHandle,
 }
 
 /** @brief The OMX_FreeHandle standard function
- * 
+ *
  * This function executes the BOSA_DestroyComponent of the component loaders
- * 
+ *
  * @param hComponent the component handle to be freed
- * 
+ *
  * @return The error of the BOSA_DestroyComponent function or OMX_ErrorNone
  */
-OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent) 
+OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
 {
   int i;
     OMX_ERRORTYPE err;
 
-    for (i = 0; i < bosa_loaders; i++) 
+    for (i = 0; i < bosa_loaders; i++)
     {
     err = loadersList[i]->BOSA_DestroyComponent(
           loadersList[i],
           hComponent);
 
-    if (err == OMX_ErrorNone) 
+    if (err == OMX_ErrorNone)
     {
       // the component has been found and destroyed
       return OMX_ErrorNone;
@@ -210,25 +212,25 @@ OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
 }
 
 /** @brief the OMX_ComponentNameEnum standard function
- * 
- * This function build a complete list of names from all the loaders. 
- * For each loader the index is from 0 to max, but this function must provide a single 
- * list, with a common index. This implementation orders the loaders and the 
+ *
+ * This function build a complete list of names from all the loaders.
+ * For each loader the index is from 0 to max, but this function must provide a single
+ * list, with a common index. This implementation orders the loaders and the
  * related list of components.
  */
-OMX_ERRORTYPE 
+OMX_ERRORTYPE
 OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
                       OMX_IN OMX_U32 nNameLength,
-                      OMX_IN OMX_U32 nIndex) 
+                      OMX_IN OMX_U32 nIndex)
 {
   OMX_ERRORTYPE err = OMX_ErrorNone;
-  int i = 0; 
+  int i = 0;
     int index = 0;
     int offset = 0;
-  
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
-  for (i = 0; i < bosa_loaders; i++) 
+  for (i = 0; i < bosa_loaders; i++)
     {
         offset = 0;
 
@@ -242,7 +244,7 @@ OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
                 return err;
             }
             offset++;
-            index++;       
+            index++;
         }
     }
 
@@ -251,14 +253,14 @@ OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
 }
 
 /** @brief the OMX_SetupTunnel standard function
- * 
+ *
  * The implementation of this function is described in the OpenMAX spec
- * 
+ *
  * @param hOutput component handler that controls the output port of the tunnel
  * @param nPortOutput index of the output port of the tunnel
  * @param hInput component handler that controls the input port of the tunnel
  * @param nPortInput index of the input port of the tunnel
- * 
+ *
  * @return OMX_ErrorBadParameter, OMX_ErrorPortsNotCompatible, tunnel rejected by a component
  * or OMX_ErrorNone if the tunnel has been established
  */
@@ -271,7 +273,7 @@ OMX_ERRORTYPE OMX_SetupTunnel(
   OMX_ERRORTYPE err;
   OMX_COMPONENTTYPE* component;
   OMX_TUNNELSETUPTYPE* tunnelSetup;
-  
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   tunnelSetup = malloc(sizeof(OMX_TUNNELSETUPTYPE));
   component = (OMX_COMPONENTTYPE*)hOutput;
@@ -292,7 +294,7 @@ OMX_ERRORTYPE OMX_SetupTunnel(
   DEBUG(DEB_LEV_PARAMS, "First stage of tunneling acheived:\n");
   DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
   DEBUG(DEB_LEV_PARAMS, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
-  
+
   component = (OMX_COMPONENTTYPE*)hInput;
   if (hInput) {
     err = (component->ComponentTunnelRequest)(hInput, nPortInput, hOutput, nPortOutput, tunnelSetup);
@@ -324,14 +326,14 @@ OMX_ERRORTYPE OMX_SetupTunnel(
 }
 
 /** @brief the OMX_GetRolesOfComponent standard function
- */ 
-OMX_ERRORTYPE OMX_GetRolesOfComponent ( 
-  OMX_IN      OMX_STRING CompName, 
+ */
+OMX_ERRORTYPE OMX_GetRolesOfComponent (
+  OMX_IN      OMX_STRING CompName,
   OMX_INOUT   OMX_U32 *pNumRoles,
   OMX_OUT     OMX_U8 **roles) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
   int i;
-  
+
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   for (i = 0; i < bosa_loaders; i++) {
     err = loadersList[i]->BOSA_GetRolesOfComponent(
@@ -348,16 +350,16 @@ OMX_ERRORTYPE OMX_GetRolesOfComponent (
 }
 
 /** @brief the OMX_GetComponentsOfRole standard function
- * 
+ *
  * This function searches in all the component loaders any component
  * supporting the requested role
- * 
+ *
  * @param role See spec
  * @param pNumComps See spec
  * @param compNames See spec
- * 
+ *
  */
-OMX_ERRORTYPE OMX_GetComponentsOfRole ( 
+OMX_ERRORTYPE OMX_GetComponentsOfRole (
   OMX_IN      OMX_STRING role,
   OMX_INOUT   OMX_U32 *pNumComps,
   OMX_INOUT   OMX_U8  **compNames) {
@@ -365,7 +367,7 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
   int i,j;
   int only_number_requested = 0, full_number=0;
   OMX_U32 temp_num_comp = 0;
-  
+
   OMX_U8 **tempCompNames;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   if (compNames == NULL) {
@@ -398,7 +400,7 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
         DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s\n", __func__);
         return OMX_ErrorComponentNotFound;
       }
-      
+
       for (j = 0; j<temp_num_comp; j++) {
         if (full_number + j < *pNumComps) {
           strncpy((char *)compNames[full_number + j], (const char *)tempCompNames[j], 128);
@@ -418,6 +420,6 @@ OMX_API OMX_ERRORTYPE   OMX_GetContentPipe(
     OMX_IN OMX_STRING szURI) {
     (void)hPipe;
     (void)szURI;
-  return OMX_ErrorUndefined;      
+  return OMX_ErrorUndefined;
 }
 

@@ -20,7 +20,7 @@ be registered with the
 command\.
 
 By default, this will create a file named
-.I "registry"
+.I ".omxregister"
 under the home
 .B XDG
 data directory with all the components found in

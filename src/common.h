@@ -30,6 +30,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+int makedir(const char *newdir);
+char* allRegistryGetFilename(char* registry_name);
 char *registryGetFilename(void);
 
 typedef struct nameList {

@@ -88,7 +88,7 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 		while (!currentgiven) {
 			if (*(currentpath + index) == '\0') {
 				pathconsumed = 1;
-			}		
+			}
 			if ((*(currentpath + index) == ':') || (*(currentpath + index) =='\0')) {
 				currentgiven = 1;
 				if (*(currentpath + index - 1) != '/') {
@@ -256,50 +256,6 @@ static void usage(const char *app) {
 			app, registry_filename, OMXILCOMPONENTSPATH);
 
   free(registry_filename);
-}
-
-static int makedir (const char *newdir)
-{
-  char *buffer;
-  char *p;
-  int err;
-  size_t len;
-
-  buffer = strdup(newdir);
-  len = strlen(buffer);
-
-  if (len == 0) {
-    free(buffer);
-    return 1;
-  }
-  if (buffer[len-1] == '/') {
-    buffer[len-1] = '\0';
-  }
-
-	err = mkdir(buffer, 0755);
-	if (err == 0 || (( err == -1) && (errno == EEXIST))) {
-		free(buffer);
-		return 0;
-	}
-
-  p = buffer+1;
-  while (1) {
-		char hold;
-
-		while(*p && *p != '\\' && *p != '/')
-			p++;
-		hold = *p;
-		*p = 0;
-		if ((mkdir(buffer, 0755) == -1) && (errno == ENOENT)) {
-			free(buffer);
-			return 1;
-		}
-		if (hold == 0)
-			break;
-		*p++ = hold;
-	}
-  free(buffer);
-  return 0;
 }
 
 /** @brief execution of registration function

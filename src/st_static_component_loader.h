@@ -30,7 +30,6 @@
 #define __ST_STATIC_COMPONENT_LOADER_H__
 
 #include "omxcore.h"
-//struct BOSA_COMPONENTLOADER * st_static_loader;
 
 /** @brief the private data structure handled by the ST static loader that described
  * an OpenMAX component
@@ -52,7 +51,6 @@ typedef struct stLoaderComponentType{
 /** @brief The initialization of the ST specific component loader.
  */
 void st_static_setup_component_loader(BOSA_COMPONENTLOADER * st_static_loader);
-//void st_static_InitComponentLoader();
 
 /** @brief The constructor of the ST specific component loader.
  *

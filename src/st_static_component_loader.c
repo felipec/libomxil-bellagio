@@ -52,6 +52,10 @@ void *handleLibList[100];
  */
 OMX_U32 numLib=0;
 
+/** @brief The initialization of the ST specific component loader.
+ *
+ * This function allocates memory for the component loader and initialize other function pointer
+ */
 void st_static_setup_component_loader(BOSA_COMPONENTLOADER * st_static_loader) {
 	  st_static_loader->BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;
 	  st_static_loader->BOSA_DeInitComponentLoader = &BOSA_ST_DeInitComponentLoader;
@@ -62,23 +66,6 @@ void st_static_setup_component_loader(BOSA_COMPONENTLOADER * st_static_loader) {
 	  st_static_loader->BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
 
 }
-/** @brief The initialization of the ST specific component loader.
- *
- * This function allocates memory for the component loader and initialize other function pointer
- */
-/*void st_static_InitComponentLoader() {
-
-  st_static_loader = calloc(1, sizeof(BOSA_COMPONENTLOADER));
-  assert(st_static_loader);
-
-  st_static_loader->BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;
-  st_static_loader->BOSA_DeInitComponentLoader = &BOSA_ST_DeInitComponentLoader;
-  st_static_loader->BOSA_CreateComponent = &BOSA_ST_CreateComponent;
-  st_static_loader->BOSA_DestroyComponent = &BOSA_ST_DestroyComponent;
-  st_static_loader->BOSA_ComponentNameEnum = &BOSA_ST_ComponentNameEnum;
-  st_static_loader->BOSA_GetRolesOfComponent = &BOSA_ST_GetRolesOfComponent;
-  st_static_loader->BOSA_GetComponentsOfRole = &BOSA_ST_GetComponentsOfRole;
-}*/
 
 /** @brief the ST static loader contructor
  *

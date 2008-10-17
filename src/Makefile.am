@@ -1,6 +1,6 @@
 # Build order is important
 # First base, then core, finally components
-SUBDIRS = base . components
+SUBDIRS = base . components loaders
 
 bin_PROGRAMS = omxregister-bellagio
 omxregister_bellagio_SOURCES = omxregister.c common.c common.h

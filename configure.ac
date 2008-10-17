@@ -43,6 +43,8 @@ AC_CONFIG_FILES([
     include/Makefile
     src/Makefile
     src/base/Makefile
+    src/loaders/Makefile
+    src/loaders/loaders_linux/Makefile
     src/components/Makefile
     src/components/alsa/Makefile
     src/components/ffmpeg/Makefile

@@ -65,7 +65,7 @@ static void mem_init_destination(j_compress_ptr cinfo)
 static boolean mem_empty_output_buffer(j_compress_ptr cinfo)
 { 
     DEBUG(DEB_LEV_ERR,"jpeg mem overflow!\n");
-    exit(1);
+    return TRUE;
 }
 
 static void mem_term_destination(j_compress_ptr cinfo) 

@@ -308,7 +308,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
       DEBUG(DEB_LEV_SIMPLE_SEQ, "in processing the first header buffer\n");      
       if(ogg_sync_pageout(&omx_vorbisdec_component_Private->oy, &omx_vorbisdec_component_Private->og) != 1)  {
         DEBUG(DEB_LEV_ERR, "this input stream is not an Ogg stream\n");
-        exit(1);
+        return;
       }  
       ogg_stream_init(&omx_vorbisdec_component_Private->os, ogg_page_serialno(&omx_vorbisdec_component_Private->og));    
       vorbis_info_init(&omx_vorbisdec_component_Private->vi);
@@ -316,18 +316,18 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
 
       if(ogg_stream_pagein(&omx_vorbisdec_component_Private->os, &omx_vorbisdec_component_Private->og) < 0)  {
         DEBUG(DEB_LEV_ERR, "Error reading first page of Ogg bitstream data.\n");
-        exit(1);
+        return;
       }
       if(ogg_stream_packetout(&omx_vorbisdec_component_Private->os, &omx_vorbisdec_component_Private->op) != 1)  {
         DEBUG(DEB_LEV_ERR, "Error reading initial header packet.\n");
-        exit(1);
+        return;
       }
       
       omx_vorbisdec_component_Private->packetNumber++;
 
       if(vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi, &omx_vorbisdec_component_Private->vc, &omx_vorbisdec_component_Private->op) < 0)  {
         DEBUG(DEB_LEV_ERR, "This Ogg bitstream does not contain Vorbis audio data\n");
-        exit(1);
+        return;
       }  
     }
 
@@ -352,7 +352,7 @@ void omx_vorbisdec_component_BufferMgmtCallbackVorbis(OMX_COMPONENTTYPE *openmax
           /* Uh oh; data at some point was corrupted or missing!
             We can't tolerate that in a header.  Die. */
             DEBUG(DEB_LEV_ERR,"Corrupt secondary header.  Exiting.\n");
-            exit(1);
+            break;
           }//end if
           omx_vorbisdec_component_Private->packetNumber++;
           vorbis_synthesis_headerin(&omx_vorbisdec_component_Private->vi,&omx_vorbisdec_component_Private->vc,&omx_vorbisdec_component_Private->op);

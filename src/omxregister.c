@@ -131,7 +131,7 @@ static int buildComponentsList(FILE* omxregistryfp, char *componentspath, int ve
 						DEBUG(DEB_LEV_ERR, "could not load %s: %s\n", lib_absolute_path, dlerror());
 					} else {
 						if ((fptr = dlsym(handle, "omx_component_library_Setup")) == NULL) {
-							DEBUG(DEB_LEV_ERR, "the library %s is not compatible with ST static component loader - %s\n", lib_absolute_path, dlerror());
+							DEBUG(DEB_LEV_SIMPLE_SEQ, "the library %s is not compatible with ST static component loader - %s\n", lib_absolute_path, dlerror());
 							continue;
 						}
 						if (verbose) {

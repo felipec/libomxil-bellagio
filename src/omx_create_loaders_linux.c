@@ -40,6 +40,11 @@
 
 #define OMX_LOADERS_FILENAME ".omxloaders"
 
+#ifndef INSTALL_PATH_STR
+#define INSTALL_PATH_STR "/usr/local/lib"
+#endif
+#define DEFAULT_LOADER_LIBRARY_NAME "/bellagio/libstbaseloader.so"
+
 int createComponentLoaders() {
 	// load component loaders
 	BOSA_COMPONENTLOADER *loader;
@@ -51,9 +56,9 @@ int createComponentLoaders() {
 	size_t len = 0;
 	int read;
 	char *omxloader_registry_filename;
+	char *omxloader_default_location;
 	char *dir, *dirp;
 	int onlyDefault = 0;
-	int isNewFile = 0;
 
 	omxloader_registry_filename = allRegistryGetFilename(OMX_LOADERS_FILENAME);
 
@@ -76,12 +81,19 @@ int createComponentLoaders() {
 	/* test the existence of the file */
 	loaderFP = fopen(omxloader_registry_filename, "r");
 	if (loaderFP == NULL){
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "The registry file for loaders does not exists. Create it with the default loader\n");
+		DEBUG(DEB_LEV_SIMPLE_SEQ, "The registry file for loaders does not exist. Create it with the default loader\n");
 		loaderFP = fopen(omxloader_registry_filename, "w");
 		if (loaderFP == NULL){
 			DEBUG(DEB_LEV_ERR, "Cannot create OpenMAX registry file %s\n", omxloader_registry_filename);
 			onlyDefault = 1;
 		}
+		omxloader_default_location = malloc(strlen(INSTALL_PATH_STR) + strlen(DEFAULT_LOADER_LIBRARY_NAME) + 2);
+		strcpy(omxloader_default_location, INSTALL_PATH_STR);
+		strcat(omxloader_default_location, DEFAULT_LOADER_LIBRARY_NAME);
+		fwrite(omxloader_default_location, 1, strlen(omxloader_default_location), loaderFP);
+		fwrite("\n", 1, 1, loaderFP);
+		fclose(loaderFP);
+		loaderFP = fopen(omxloader_registry_filename, "r");
 	}
 	if (onlyDefault) {
 		loader = calloc(1, sizeof(BOSA_COMPONENTLOADER));
@@ -100,16 +112,13 @@ int createComponentLoaders() {
 			DEBUG(DEB_LEV_ERR, "not enough memory for this loader\n");
 			return OMX_ErrorInsufficientResources;
 	}
-	st_static_setup_component_loader(loader);
-	BOSA_AddComponentLoader(loader);
-
 	// dlopen all loaders defined in .omxloaders file
-	while((read = getline(&libraryFileName, &len, loaderFP)) != -1)
-	{
-		// strip delimeter, the dlopen doesn't like it
-		if(libraryFileName[read-1] == '\n')
-			libraryFileName[read-1] = 0;
+	while((read = getline(&libraryFileName, &len, loaderFP)) != -1) {
 
+		// strip delimeter, the dlopen doesn't like it
+		if(libraryFileName[read-1] == '\n') {
+			libraryFileName[read-1] = 0;
+		}
 		handle = dlopen(libraryFileName, RTLD_NOW);
 
 	    if (!handle)

@@ -57,7 +57,6 @@ OMX_U32 numLib=0;
  * This function allocates memory for the component loader and initialize other function pointer
  */
 void setup_component_loader(BOSA_COMPONENTLOADER * st_base_loader) {
-    DEBUG(DEB_LEV_ERR, "--1-- setup in %s\n", __func__);
 	  st_base_loader->BOSA_InitComponentLoader = &BOSA_ST_InitComponentLoader;
 	  st_base_loader->BOSA_DeInitComponentLoader = &BOSA_ST_DeInitComponentLoader;
 	  st_base_loader->BOSA_CreateComponent = &BOSA_ST_CreateComponent;

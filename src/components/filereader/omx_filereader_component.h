@@ -79,9 +79,7 @@ DERIVEDCLASS(omx_filereader_component_PrivateType, omx_base_source_PrivateType)
   /** @param semaphore for avformat syncrhonization */ \
   tsem_t* avformatSyncSem; \
   /** @param avformatReady boolean flag that is true when the audio format has been initialized */ \
-  OMX_BOOL avformatReady;  \
-  /** @param bIsEOSSent boolean flag is true when EOS has sent */ \
-  OMX_BOOL bIsEOSSent;  
+  OMX_BOOL avformatReady; 
 ENDCLASS(omx_filereader_component_PrivateType)
 
 /* Component private entry points declaration */

@@ -207,22 +207,14 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   
   DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Extra data size=%d\n",__func__,omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size);
 
-  /** initialization for buff mgmt callback function */
-  omx_filereader_component_Private->bIsEOSSent = OMX_FALSE;
-
   /** send callback regarding codec context extradata which will be required to 
     * open the codec in the audio decoder component 
     */      
   /* filling up the OMX_VENDOR_EXTRADATATYPE structure */
   pExtraData = calloc(1,sizeof(OMX_VENDOR_EXTRADATATYPE));
   pExtraData->nPortIndex = 0; //output port index
-  if(omx_filereader_component_Private->avformatcontext->streams[0]) {
-    pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
-    pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata; 
-  } else {
-    pExtraData->nDataSize = 0;
-    pExtraData->pData     = 0;
-  }
+  pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
+  pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
 
   (*(omx_filereader_component_Private->callbacks->EventHandler))
     (openmaxStandComp,
@@ -296,10 +288,12 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
 
   error = av_read_frame(omx_filereader_component_Private->avformatcontext, &omx_filereader_component_Private->pkt);
   if(error < 0) {
-    DEBUG(DEB_LEV_FULL_SEQ,"In %s EOS - no more packet,state=%x\n",__func__,
-    omx_filereader_component_Private->state);
-    pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
-    omx_filereader_component_Private->bIsEOSSent = OMX_TRUE;
+    DEBUG(DEB_LEV_FULL_SEQ,"In %s EOS - no more packet,state=%x\n",__func__, omx_filereader_component_Private->state);
+    if(omx_filereader_component_Private->bIsEOSReached == OMX_FALSE) {
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s Sending EOS\n", __func__);
+      pOutputBuffer->nFlags = OMX_BUFFERFLAG_EOS;
+      omx_filereader_component_Private->bIsEOSReached = OMX_TRUE;
+    }
   } else {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"\n packet size : %d \n",omx_filereader_component_Private->pkt.size);
     /** copying the packetized data in the output buffer that will be decoded in the decoder component  */
@@ -373,7 +367,6 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
       omx_filereader_component_Private->sInputFileName = calloc(1,nFileNameLength);
     }
     strcpy(omx_filereader_component_Private->sInputFileName, (char *)ComponentParameterStructure);
-    omx_filereader_component_Private->bIsEOSSent = OMX_FALSE;
     /** determine the audio coding type */ 
     for(i = 0; omx_filereader_component_Private->sInputFileName[i] != '\0'; i++);
     if(omx_filereader_component_Private->sInputFileName[i - 1] == '3') {

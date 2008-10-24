@@ -143,6 +143,7 @@ OMX_ERRORTYPE omx_base_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp
   omx_base_component_Private->messageHandler = omx_base_component_MessageHandler;
   omx_base_component_Private->destructor = omx_base_component_Destructor;
   omx_base_component_Private->bufferMgmtThreadID = -1;
+  omx_base_component_Private->bIsEOSReached = OMX_FALSE;
 
   pthread_mutex_init(&omx_base_component_Private->flush_mutex, NULL);
 
@@ -464,8 +465,9 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
     case OMX_StatePause:
       err = OMX_ErrorSameState;
       break;
-    case OMX_StateExecuting:
     case OMX_StateIdle:
+      omx_base_component_Private->bIsEOSReached = OMX_FALSE;
+    case OMX_StateExecuting:
       omx_base_component_Private->state = OMX_StatePause;
       break;
     default:
@@ -482,7 +484,8 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
       err = OMX_ErrorInvalidState;
       break;
     case OMX_StateIdle:
-      omx_base_component_Private->state=OMX_StateExecuting;
+      omx_base_component_Private->state = OMX_StateExecuting;
+      omx_base_component_Private->bIsEOSReached = OMX_FALSE;
       /*Send Tunneled Buffer to the Neighbouring Components*/
       /* for all ports */
       for(j = 0; j < NUM_DOMAINS; j++) {

@@ -228,6 +228,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
           1, /* The commands was a OMX_CommandStateSet */
           pOutputBuffer->nFlags, /* The state has been changed in message->messageParam2 */
           NULL);
+        omx_base_filter_Private->bIsEOSReached = OMX_TRUE;
       }
       if(omx_base_filter_Private->state==OMX_StatePause && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
         /*Waiting at paused state*/
@@ -235,7 +236,7 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
       }
 
       /*If EOS and Input buffer Filled Len Zero then Return output buffer immediately*/
-      if(pOutputBuffer->nFilledLen!=0 || pOutputBuffer->nFlags==OMX_BUFFERFLAG_EOS) {
+      if((pOutputBuffer->nFilledLen != 0) || (pOutputBuffer->nFlags==OMX_BUFFERFLAG_EOS) || (omx_base_filter_Private->bIsEOSReached == OMX_TRUE)) {
         pOutPort->ReturnBufferFunction(pOutPort,pOutputBuffer);
         outBufExchanged--;
         pOutputBuffer=NULL;

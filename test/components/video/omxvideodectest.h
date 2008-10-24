@@ -48,10 +48,10 @@ typedef struct appPrivateType{
   tsem_t* decoderEventSem;
   tsem_t* eofSem;
   tsem_t* colorconvEventSem;
-  tsem_t* fbdevSinkEventSem;
+  tsem_t* videoSinkEventSem;
   OMX_HANDLETYPE videodechandle;
   OMX_HANDLETYPE colorconv_handle;
-  OMX_HANDLETYPE fbdev_sink_handle;
+  OMX_HANDLETYPE video_sink_handle;
 }appPrivateType;
 
 #define BUFFER_IN_SIZE 2*8192 
@@ -101,7 +101,7 @@ OMX_ERRORTYPE colorconvFillBufferDone(
   OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
 /** callback prototypes for sink */
-OMX_ERRORTYPE fb_sinkEventHandler(
+OMX_ERRORTYPE video_sinkEventHandler(
   OMX_OUT OMX_HANDLETYPE hComponent,
   OMX_OUT OMX_PTR pAppData,
   OMX_OUT OMX_EVENTTYPE eEvent,
@@ -109,7 +109,7 @@ OMX_ERRORTYPE fb_sinkEventHandler(
   OMX_OUT OMX_U32 Data2,
   OMX_OUT OMX_PTR pEventData);
 
-OMX_ERRORTYPE fb_sinkEmptyBufferDone(
+OMX_ERRORTYPE video_sinkEmptyBufferDone(
   OMX_OUT OMX_HANDLETYPE hComponent,
   OMX_OUT OMX_PTR pAppData,
   OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);

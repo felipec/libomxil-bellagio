@@ -59,6 +59,7 @@ AC_CONFIG_FILES([
     src/components/camera/Makefile
     src/components/jpeg/Makefile
     src/components/jpeg/libjpeg-6c/Makefile
+    src/components/xvideo/Makefile
     m4/Makefile
     test/Makefile
     test/components/Makefile
@@ -165,6 +166,15 @@ AC_ARG_ENABLE(
     [with_jpeg=$enableval],
     [with_jpeg=yes])
 
+#Check whether fbdev_videosink component has been requested
+AC_ARG_ENABLE(
+    [xvideosink],
+    [AC_HELP_STRING(
+        [--disable-xvideosink],
+        [whether to disable the X video sink])],
+    [with_xvideosink=$enableval],
+    [with_xvideosink=yes])
+
 #Check whether to disable all components
 AC_ARG_ENABLE(
     [components],
@@ -182,6 +192,7 @@ AC_ARG_ENABLE(
         [whether to enable documentation generation])],
     [with_doc=$enableval],
     [with_doc=yes])
+
 
 ################################################################################
 # Check for programs                                                           #
@@ -229,6 +240,7 @@ if test "x$with_components" = "xno"; then
 	with_videosrc=no
 	with_clocksrc=no
 	with_jpeg=no
+	with_xvideosink=no
 fi
 
 # Define components default ldflags (man ld)
@@ -249,6 +261,11 @@ fi
 # Check if Video Frame buffer header file is present
 if test "x$with_fbdev_videosink" = "xyes"; then
 	AC_CHECK_HEADER([linux/fb.h], [with_fbdev_videosink=yes], [with_fbdev_videosink=no])
+fi
+
+# Check if X-Video header file is present
+if test "x$with_xvideosink" = "xyes"; then
+	AC_CHECK_HEADER([X11/Xlib.h], [with_xvideosink=yes], [with_xvideosink=no])
 fi
 
 ################################################################################
@@ -273,6 +290,11 @@ fi
 # Check for FFmpeg component dependencies
 if test "x$with_ffmpeg" = "xyes"; then
 	PKG_CHECK_MODULES([FFMPEG], [libavcodec libavformat libavutil libswscale], [with_ffmpeg=yes], [with_ffmpeg=no])
+fi
+
+# Check if X-Video sink component dependencies 
+if test "x$with_xvideosink" = "xyes"; then
+	PKG_CHECK_MODULES([X11], [x11,xv,xext],[with_xvideosink=yes], [with_xvideosink=no])
 fi
 
 # Check for FFmpeg API version
@@ -350,6 +372,7 @@ fi
 ################################################################################
 AM_CONDITIONAL([WITH_V4L2_VIDEOSOURCE], [test x$with_videosrc = xyes])
 AM_CONDITIONAL([WITH_FBDEV_VIDEOSINK], [test x$with_fbdev_videosink = xyes])
+AM_CONDITIONAL([WITH_XVIDEOSINK], [test x$with_xvideosink = xyes])
 AM_CONDITIONAL([WITH_ALSA], [test x$with_alsa = xyes])
 AM_CONDITIONAL([WITH_FFMPEGCOMPONENTS], [test x$with_ffmpeg = xyes])
 AM_CONDITIONAL([WITH_MADCOMPONENTS], [test x$with_mad = xyes])

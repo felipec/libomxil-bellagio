@@ -41,9 +41,9 @@
 #define OMX_LOADERS_FILENAME ".omxloaders"
 
 #ifndef INSTALL_PATH_STR
-#define INSTALL_PATH_STR "/usr/local/lib"
+#define INSTALL_PATH_STR "/usr/local/lib/bellagio"
 #endif
-#define DEFAULT_LOADER_LIBRARY_NAME "/bellagio/libstbaseloader.so"
+#define DEFAULT_LOADER_LIBRARY_NAME "/libstbaseloader.so"
 
 int createComponentLoaders() {
 	// load component loaders

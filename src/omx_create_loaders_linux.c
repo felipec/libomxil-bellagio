@@ -59,6 +59,7 @@ int createComponentLoaders() {
 	char *omxloader_default_location;
 	char *dir, *dirp;
 	int onlyDefault = 0;
+	int oneAtLeast = 0;
 
 	omxloader_registry_filename = allRegistryGetFilename(OMX_LOADERS_FILENAME);
 
@@ -124,13 +125,13 @@ int createComponentLoaders() {
 	    if (!handle)
 		{
 			DEBUG(DEB_LEV_ERR, "library %s dlopen error: %s\n", libraryFileName, dlerror());
-			return OMX_ErrorUndefined;
+			continue;
 	    }
 
 	    if ((functionPointer = dlsym(handle, "setup_component_loader")) == NULL)
 		{
 				DEBUG(DEB_LEV_ERR, "the library %s is not compatible - %s\n", libraryFileName, dlerror());
-				return OMX_ErrorUndefined;
+				continue;
 		}
 	    fptr = functionPointer;
 
@@ -147,8 +148,12 @@ int createComponentLoaders() {
 
 		/* add loader to core */
 		BOSA_AddComponentLoader(loader);
+		oneAtLeast = 1;
 	}
-
+	if (!oneAtLeast) {
+		st_static_setup_component_loader(loader);
+		BOSA_AddComponentLoader(loader);
+	}
 	if (libraryFileName)
 	{
 		free(libraryFileName);

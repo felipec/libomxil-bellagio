@@ -30,7 +30,7 @@
 #ifndef __ST_BASE_COMPONENT_LOADER_H__
 #define __ST_BASE_COMPONENT_LOADER_H__
 
-#include <bellagio/omxcore.h>
+#include <omxcore.h>
 
 /** @brief the private data structure handled by the ST base loader that described
  * an OpenMAX component

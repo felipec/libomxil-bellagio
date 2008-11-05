@@ -822,6 +822,7 @@ OMX_ERRORTYPE clocksrc_port_FlushProcessingBuffers(omx_base_PortType *openmaxSta
     tsem_up(omx_clocksrc_component_Private->bMgmtSem);
   }
   tsem_up(omx_clocksrc_component_Private->clockEventSem);
+  tsem_up(omx_clocksrc_component_Private->clockEventCompleteSem);
 
   if(omx_clocksrc_component_Private->state==OMX_StatePause ) {
     /*Waiting at paused state*/

@@ -99,7 +99,7 @@ OMX_ERRORTYPE omx_video_scheduler_component_Constructor(OMX_COMPONENTTYPE *openm
     if (!omx_video_scheduler_component_Private->ports[CLOCKPORT_INDEX]) {
       return OMX_ErrorInsufficientResources;
     }
-    base_clock_port_Constructor(openmaxStandComp, &omx_video_scheduler_component_Private->ports[CLOCKPORT_INDEX], 1, OMX_TRUE);
+    base_clock_port_Constructor(openmaxStandComp, &omx_video_scheduler_component_Private->ports[CLOCKPORT_INDEX], 2, OMX_TRUE);
     omx_video_scheduler_component_Private->ports[CLOCKPORT_INDEX]->sPortParam.bEnabled = OMX_FALSE;
   }
 
@@ -125,7 +125,7 @@ OMX_ERRORTYPE omx_video_scheduler_component_Constructor(OMX_COMPONENTTYPE *openm
   omx_video_scheduler_component_Private->BufferMgmtCallback = omx_video_scheduler_component_BufferMgmtCallback;
 
   inPort->Port_SendBufferFunction =  omx_video_scheduler_component_port_SendBufferFunction;
-//  pPort->FlushProcessingBuffers  = omx_fbdev_sink_component_port_FlushProcessingBuffers;
+  inPort->FlushProcessingBuffers  = omx_video_scheduler_component_port_FlushProcessingBuffers;
   openmaxStandComp->SetParameter  = omx_video_scheduler_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_video_scheduler_component_GetParameter;
 
@@ -239,7 +239,8 @@ OMX_ERRORTYPE omx_video_scheduler_component_port_SendBufferFunction(omx_base_Por
   }
 
   /* And notify the buffer management thread we have a fresh new buffer to manage */
-  if(!PORT_IS_BEING_FLUSHED(openmaxStandPort) && !(PORT_IS_BEING_DISABLED(openmaxStandPort) && PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort))){
+  if(!PORT_IS_BEING_FLUSHED(openmaxStandPort) && !(PORT_IS_BEING_DISABLED(openmaxStandPort) && PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) 
+      && omx_base_component_Private->transientState != OMX_TransStateExecutingToIdle){
       queue(openmaxStandPort->pBufferQueue, pBuffer);
       tsem_up(openmaxStandPort->pBufferSem);
       DEBUG(DEB_LEV_FULL_SEQ, "In %s Signalling bMgmtSem Port Index=%d\n",__func__, (int)portIndex);
@@ -401,6 +402,103 @@ OMX_BOOL omx_video_scheduler_component_ClockPortHandleFunction(
   return(SendFrame);
 }
 
+
+/** @brief Releases buffers under processing.
+ * This function must be implemented in the derived classes, for the
+ * specific processing
+ */
+OMX_ERRORTYPE  omx_video_scheduler_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort) {
+  omx_base_component_PrivateType*              omx_base_component_Private;
+  omx_video_scheduler_component_PrivateType*   omx_video_scheduler_component_Private;
+  OMX_BUFFERHEADERTYPE*                        pBuffer;
+  omx_base_clock_PortType                      *pClockPort;
+  
+  DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
+  omx_base_component_Private             = (omx_base_component_PrivateType*)openmaxStandPort->standCompContainer->pComponentPrivate;
+  omx_video_scheduler_component_Private  = ( omx_video_scheduler_component_PrivateType*) omx_base_component_Private;
+
+  pClockPort    = (omx_base_clock_PortType*) omx_video_scheduler_component_Private->ports[CLOCKPORT_INDEX];
+
+  if(openmaxStandPort->sPortParam.eDomain!=OMX_PortDomainOther) { /* clock buffers not used in the clients buffer managment function */
+    pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+    openmaxStandPort->bIsPortFlushed=OMX_TRUE;
+    /*Signal the buffer management thread of port flush,if it is waiting for buffers*/
+    if(omx_base_component_Private->bMgmtSem->semval==0) {
+      tsem_up(omx_base_component_Private->bMgmtSem);
+    }
+
+    if(omx_base_component_Private->state==OMX_StatePause ) {
+      /*Waiting at paused state*/
+      tsem_signal(omx_base_component_Private->bStateSem);
+    }
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for flush all condition port index =%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+    /* Wait until flush is completed */
+    pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+    /*Dummy signal to clock port*/
+    if(pClockPort->pBufferSem->semval == 0) {
+      tsem_up(pClockPort->pBufferSem);
+      tsem_reset(pClockPort->pBufferSem);
+    }
+    tsem_down(omx_base_component_Private->flush_all_condition);
+  }
+
+  tsem_reset(omx_base_component_Private->bMgmtSem);
+  
+  /* Flush all the buffers not under processing */
+  while (openmaxStandPort->pBufferSem->semval > 0) {
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s TFlag=%x Flusing Port=%d,Semval=%d Qelem=%d\n", 
+    __func__,(int)openmaxStandPort->nTunnelFlags,(int)openmaxStandPort->sPortParam.nPortIndex,
+    (int)openmaxStandPort->pBufferSem->semval,(int)openmaxStandPort->pBufferQueue->nelem);
+
+    tsem_down(openmaxStandPort->pBufferSem);
+    pBuffer = dequeue(openmaxStandPort->pBufferQueue);
+    if (PORT_IS_TUNNELED(openmaxStandPort) && !PORT_IS_BUFFER_SUPPLIER(openmaxStandPort)) {
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s: Comp %s is returning io:%d buffer\n", 
+        __func__,omx_base_component_Private->name,(int)openmaxStandPort->sPortParam.nPortIndex);
+      if (openmaxStandPort->sPortParam.eDir == OMX_DirInput) {
+        ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->FillThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
+      } else {
+        ((OMX_COMPONENTTYPE*)(openmaxStandPort->hTunneledComponent))->EmptyThisBuffer(openmaxStandPort->hTunneledComponent, pBuffer);
+      }
+    } else if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+      queue(openmaxStandPort->pBufferQueue,pBuffer);
+    } else {
+      (*(openmaxStandPort->BufferProcessedCallback))(
+        openmaxStandPort->standCompContainer,
+        omx_base_component_Private->callbackData,
+        pBuffer);
+    }
+  }
+  /*Port is tunneled and supplier and didn't received all it's buffer then wait for the buffers*/
+  if (PORT_IS_TUNNELED_N_BUFFER_SUPPLIER(openmaxStandPort)) {
+    while(openmaxStandPort->pBufferQueue->nelem!= openmaxStandPort->nNumAssignedBuffers){
+      tsem_down(openmaxStandPort->pBufferSem);
+      DEBUG(DEB_LEV_PARAMS, "In %s Got a buffer qelem=%d\n",__func__,openmaxStandPort->pBufferQueue->nelem);
+    }
+    tsem_reset(openmaxStandPort->pBufferSem);
+  }
+
+  pthread_mutex_lock(&omx_base_component_Private->flush_mutex);
+  openmaxStandPort->bIsPortFlushed=OMX_FALSE;
+  pthread_mutex_unlock(&omx_base_component_Private->flush_mutex);
+
+  tsem_up(omx_base_component_Private->flush_condition);
+
+  DEBUG(DEB_LEV_FULL_SEQ, "Out %s Port Index=%d bIsPortFlushed=%d Component %s\n", __func__,
+    (int)openmaxStandPort->sPortParam.nPortIndex,(int)openmaxStandPort->bIsPortFlushed,omx_base_component_Private->name);
+
+  DEBUG(DEB_LEV_PARAMS, "In %s TFlag=%x Qelem=%d BSem=%d bMgmtsem=%d component=%s\n", __func__,
+    (int)openmaxStandPort->nTunnelFlags,
+    (int)openmaxStandPort->pBufferQueue->nelem,
+    (int)openmaxStandPort->pBufferSem->semval,
+    (int)omx_base_component_Private->bMgmtSem->semval,
+    omx_base_component_Private->name);
+
+  DEBUG(DEB_LEV_FUNCTION_NAME, "Out %s Port Index=%d\n", __func__,(int)openmaxStandPort->sPortParam.nPortIndex);
+
+  return OMX_ErrorNone;
+}
 
 /** This function is used to process the input buffer and provide one output buffer
   */

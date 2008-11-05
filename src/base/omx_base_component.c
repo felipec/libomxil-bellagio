@@ -397,19 +397,18 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
             /** Allocate here the buffers needed for the tunneling */
             err= pPort->Port_AllocateTunnelBuffer(pPort, i, omx_base_component_Private->ports[i]->sPortParam.nBufferSize);
             if(err!=OMX_ErrorNone) { 
-              DEBUG(DEB_LEV_ERR, "In %s Allocating Tunnel Buffer Error=%x\n",__func__,err); 
               return err; 
             } 
           }
         } else {
           if(PORT_IS_ENABLED(pPort)) {
-            DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. port enabled %i,  port populated %i\n", 
-              __func__, pPort->sPortParam.bEnabled,pPort->sPortParam.bPopulated);
+            DEBUG(DEB_LEV_FULL_SEQ, "In %s: wait for buffers. port enabled %i,  port populated %i\n", __func__, pPort->sPortParam.bEnabled,pPort->sPortParam.bPopulated);
             tsem_down(pPort->pAllocSem);
             pPort->sPortParam.bPopulated = OMX_TRUE;
           }
-          else 
+          else{ 
             DEBUG(DEB_LEV_ERR, "In %s: Port %i Disabled So no wait\n",__func__,(int)i);
+          }
         }
         DEBUG(DEB_LEV_SIMPLE_SEQ, "---> Tunnel status : port %d flags  0x%x\n",(int)i, (int)pPort->nTunnelFlags);
         }
@@ -439,6 +438,7 @@ OMX_ERRORTYPE omx_base_component_DoStateSet(OMX_COMPONENTTYPE *openmaxStandComp,
           pPort = omx_base_component_Private->ports[i];
           if(PORT_IS_ENABLED(pPort)) {
             pPort->FlushProcessingBuffers(pPort);
+          }else {
           }
         }
       }
@@ -1724,6 +1724,7 @@ OMX_ERRORTYPE omx_base_component_ComponentTunnelRequest(
 
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)((OMX_COMPONENTTYPE*)hComponent)->pComponentPrivate;
   omx_base_PortType *pPort; 
+
   
   if (nPort >= (omx_base_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts +
                 omx_base_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts +

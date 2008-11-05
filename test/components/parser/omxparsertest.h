@@ -60,6 +60,7 @@ typedef struct appPrivateType{
   tsem_t* clockEventSem;
   tsem_t* videoDecoderEventSem;
   tsem_t* colorconvEventSem;
+  tsem_t* videoschdEventSem;
   tsem_t* fbdevSinkEventSem;
   tsem_t* audioDecoderEventSem;
   tsem_t* audioSinkEventSem;
@@ -73,6 +74,7 @@ typedef struct appPrivateType{
   OMX_HANDLETYPE volumehandle;
   OMX_HANDLETYPE parser3gphandle;
   OMX_HANDLETYPE clocksrchandle;
+  OMX_HANDLETYPE videoschd_handle;
 }appPrivateType;
 
 #define BUFFER_IN_SIZE 4096    
@@ -118,6 +120,25 @@ OMX_ERRORTYPE colorconvEmptyBufferDone(
   OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
 
 OMX_ERRORTYPE colorconvFillBufferDone(
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+
+/** callback prototypes for video scheduler */
+OMX_ERRORTYPE videoschdEventHandler(
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_EVENTTYPE eEvent,
+  OMX_OUT OMX_U32 Data1,
+  OMX_OUT OMX_U32 Data2,
+  OMX_OUT OMX_PTR pEventData);
+
+OMX_ERRORTYPE videoschdEmptyBufferDone(
+  OMX_OUT OMX_HANDLETYPE hComponent,
+  OMX_OUT OMX_PTR pAppData,
+  OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);
+
+OMX_ERRORTYPE videoschdFillBufferDone(
   OMX_OUT OMX_HANDLETYPE hComponent,
   OMX_OUT OMX_PTR pAppData,
   OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer);

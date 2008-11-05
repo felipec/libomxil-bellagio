@@ -85,4 +85,5 @@ OMX_ERRORTYPE omx_video_scheduler_component_port_SendBufferFunction(
   omx_base_PortType *openmaxStandPort,
   OMX_BUFFERHEADERTYPE* pBuffer);
 
+OMX_ERRORTYPE omx_video_scheduler_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort);  
 #endif

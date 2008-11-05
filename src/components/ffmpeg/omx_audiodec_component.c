@@ -322,7 +322,7 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     strcpy(pPort->sPortParam.format.audio.cMIMEType, "audio/aac");
     pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingAAC;
 
-    setHeader(&omx_audiodec_component_Private->pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE)); /* MONA -  comented */
+    setHeader(&omx_audiodec_component_Private->pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE)); 
     omx_audiodec_component_Private->pAudioAac.nPortIndex = 0;
     omx_audiodec_component_Private->pAudioAac.nChannels = 2;
     omx_audiodec_component_Private->pAudioAac.nBitRate = 28000;

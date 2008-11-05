@@ -461,11 +461,9 @@ OMX_ERRORTYPE omx_alsasink_component_port_FlushProcessingBuffers(omx_base_PortTy
     /*Dummy signal to clock port*/
     if(pClockPort->pBufferSem->semval == 0) {
       tsem_up(pClockPort->pBufferSem);
+      tsem_reset(pClockPort->pBufferSem); 
     }
     tsem_down(omx_base_component_Private->flush_all_condition);
-    if(pClockPort->pBufferSem->semval > 0) {
-      tsem_down(pClockPort->pBufferSem); 
-    }
   }
 
   tsem_reset(omx_base_component_Private->bMgmtSem);

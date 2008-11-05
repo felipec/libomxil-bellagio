@@ -285,7 +285,7 @@ OMX_ERRORTYPE OMX_SetupTunnel(
   if (hOutput){
     err = (component->ComponentTunnelRequest)(hOutput, nPortOutput, hInput, nPortInput, tunnelSetup);
     if (err != OMX_ErrorNone) {
-    DEBUG(DEB_LEV_ERR, "Tunneling failed: output port rejects it - err = %i\n", err);
+    DEBUG(DEB_LEV_ERR, "Tunneling failed: output port rejects it - err = %x \n", err);
     free(tunnelSetup);
     tunnelSetup = NULL;
     return err;

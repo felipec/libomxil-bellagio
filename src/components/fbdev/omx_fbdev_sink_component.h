@@ -169,6 +169,6 @@ void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U3
  *  instance, to compute the duration of call. */
 long GetTime();
 
-OMX_ERRORTYPE omx_fbdev_sink_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort);
+//OMX_ERRORTYPE omx_fbdev_sink_component_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPort);  /* Mona TOBEDEL */
 
 #endif

@@ -461,7 +461,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
 
   if (omx_base_component_Private->transientState != OMX_TransStateLoadedToIdle) {
     if (!openmaxStandPort->bIsTransientToEnabled) {
-      DEBUG(DEB_LEV_ERR, "In %s: The port of Comp %s is not allowed to receive buffers\n", __func__,omx_base_component_Private->name);
+      DEBUG(DEB_LEV_ERR, "In %s: The port of Comp %s is not allowed to receive buffers \n", __func__,omx_base_component_Private->name);
       return OMX_ErrorIncorrectStateTransition;
     }
   }
@@ -624,8 +624,8 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
         eError=OMX_UseBuffer(openmaxStandPort->hTunneledComponent,&openmaxStandPort->pInternalBufferStorage[i],
                              openmaxStandPort->nTunneledPort,NULL,nSizeBytes,pBuffer); 
         if(eError!=OMX_ErrorNone) {
-          DEBUG(DEB_LEV_FULL_SEQ,"Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d\n",
-          i,omx_base_component_Private->name,(int)numRetry);
+          DEBUG(DEB_LEV_FULL_SEQ,"in %s Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d eError=%08x tunneledport=%d \n",
+          __func__,i,omx_base_component_Private->name,(int)numRetry,eError,openmaxStandPort->nTunneledPort);
 
           if((eError ==  OMX_ErrorIncorrectStateTransition) && numRetry<TUNNEL_USE_BUFFER_RETRY) {
             DEBUG(DEB_LEV_FULL_SEQ,"Waiting for next try %i \n",(int)numRetry);

@@ -467,7 +467,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
   }
 
   if(nSizeBytes < openmaxStandPort->sPortParam.nBufferSize) {
-    DEBUG(DEB_LEV_ERR, "In %s: Port %d Given Buffer Size %lu is less than Minimum Buffer Size %lu\n", __func__, nPortIndex, nSizeBytes, openmaxStandPort->sPortParam.nBufferSize);
+    DEBUG(DEB_LEV_ERR, "In %s: Port %d Given Buffer Size %u is less than Minimum Buffer Size %u\n", __func__, (int)nPortIndex, (int)nSizeBytes, (int)openmaxStandPort->sPortParam.nBufferSize);
     return OMX_ErrorIncorrectStateTransition;
   }
   
@@ -593,8 +593,9 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
   OMX_COMPONENTTYPE* omxComponent = openmaxStandPort->standCompContainer;
   omx_base_component_PrivateType* omx_base_component_Private = (omx_base_component_PrivateType*)omxComponent->pComponentPrivate;
   OMX_U8* pBuffer=NULL;
-  OMX_ERRORTYPE eError=OMX_ErrorNone;
-  OMX_U32 numRetry=0;
+  OMX_ERRORTYPE eError=OMX_ErrorNone,err;
+  OMX_U32 numRetry=0,nBufferSize = nSizeBytes;
+  OMX_PARAM_PORTDEFINITIONTYPE sPortDef;
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
 
   if (nPortIndex != openmaxStandPort->sPortParam.nPortIndex) {
@@ -612,19 +613,27 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
       return OMX_ErrorIncorrectStateTransition;
     }
   }
+
+  /*Get nBufferSize of the peer port and allocate which one is bigger*/
+  setHeader(&sPortDef, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
+  sPortDef.nPortIndex = openmaxStandPort->nTunneledPort;
+  err = OMX_GetParameter(openmaxStandPort->hTunneledComponent, OMX_IndexParamPortDefinition, &sPortDef);
+  if(err == OMX_ErrorNone) {
+    nBufferSize = (sPortDef.nBufferSize > nSizeBytes) ? sPortDef.nBufferSize: nSizeBytes;
+  }
   
   for(i=0; i < openmaxStandPort->sPortParam.nBufferCountActual; i++){
     if (openmaxStandPort->bBufferStateAllocated[i] == BUFFER_FREE) {
-      pBuffer = calloc(1,nSizeBytes);
+      pBuffer = calloc(1,nBufferSize);
       if(pBuffer==NULL) {
         return OMX_ErrorInsufficientResources;
       }
       /*Retry more than once, if the tunneled component is not in Loaded->Idle State*/
       while(numRetry <TUNNEL_USE_BUFFER_RETRY) {
         eError=OMX_UseBuffer(openmaxStandPort->hTunneledComponent,&openmaxStandPort->pInternalBufferStorage[i],
-                             openmaxStandPort->nTunneledPort,NULL,nSizeBytes,pBuffer); 
+                             openmaxStandPort->nTunneledPort,NULL,nBufferSize,pBuffer); 
         if(eError!=OMX_ErrorNone) {
-          DEBUG(DEB_LEV_FULL_SEQ,"in %s Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d eError=%08x tunneledport=%d \n",
+          DEBUG(DEB_LEV_FULL_SEQ,"In %s Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d eError=%08x tunneledport=%d \n",
           __func__,i,omx_base_component_Private->name,(int)numRetry,eError,openmaxStandPort->nTunneledPort);
 
           if((eError ==  OMX_ErrorIncorrectStateTransition) && numRetry<TUNNEL_USE_BUFFER_RETRY) {

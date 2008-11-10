@@ -98,29 +98,32 @@ ENDCLASS(omx_xvideo_sink_component_PortType)
   */
 DERIVEDCLASS(omx_xvideo_sink_component_PrivateType, omx_base_sink_PrivateType)
 #define omx_xvideo_sink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS \
-  OMX_BOOL                     frameDropFlag;\
-  int                          dropFrameCount; \
-  int xv_port; \
-  int screen; \
-  int CompletionType; \
-  unsigned int ver; \
-  unsigned int rel; \
-  unsigned int req; \
-  unsigned int ev; \
-  unsigned int err; \
-  unsigned int adapt; \
-  Display *dpy; \
-  Window window; \
-  XSizeHints hint; \
-  XSetWindowAttributes xswa; \
-  XWindowAttributes attribs; \
-  XVisualInfo vinfo; \
-  XEvent event; \
-  GC gc; \
-  XvAdaptorInfo *ai; \
-  XvImage *yuv_image; \
-  XShmSegmentInfo yuv_shminfo; \
-  Atom wmDeleteWindow;
+  OMX_BOOL                    bIsXVideoInit;\
+  tsem_t*                     xvideoSyncSem; \
+  OMX_S32                     dropFrameCount; \
+  OMX_S32                     xv_port; \
+  OMX_S32                     screen; \
+  OMX_S32                     CompletionType; \
+  unsigned int                ver; \
+  unsigned int                rel; \
+  unsigned int                req; \
+  unsigned int                ev; \
+  unsigned int                err; \
+  unsigned int                adapt; \
+  Display                     *dpy; \
+  Window                      window; \
+  XSizeHints                  hint; \
+  XSetWindowAttributes        xswa; \
+  XWindowAttributes           attribs; \
+  XVisualInfo                 vinfo; \
+  XEvent                      event; \
+  GC                          gc; \
+  XvAdaptorInfo               *ai; \
+  XvImage                     *yuv_image; \
+  XShmSegmentInfo             yuv_shminfo; \
+  Atom                        wmDeleteWindow; \
+  long                        old_time; \
+  long                        new_time;
 ENDCLASS(omx_xvideo_sink_component_PrivateType)
 
 /* Component private entry points declaration */

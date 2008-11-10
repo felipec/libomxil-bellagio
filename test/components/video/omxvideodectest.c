@@ -90,6 +90,7 @@ int flagIsColorConvRequested;
 int flagIsSinkRequested;
 int flagIsFormatRequested;
 int flagSetupTunnel;
+int flagIsXVideoSinkRequested;
 
 static OMX_BOOL bEOS = OMX_FALSE;
 
@@ -264,7 +265,7 @@ int find_resolution(char* searchname) {
 /** help display */
 void display_help() {
   printf("\n");
-  printf("Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-s] input_filename\n");
+  printf("Usage: omxvideodectest -o outfile [-t] [-c] [-h] [-f input_fmt] [-x] [-s] input_filename\n");
   printf("\n");
   printf("       -o outfile: If this option is specified, the output is written to user specified outfile\n");
   printf("                   Else, the output is written in the same directory of input file\n");
@@ -286,13 +287,15 @@ void display_help() {
   printf("              - OMX_COLOR_Format16bitRGB565  \n");
   printf("              - OMX_COLOR_Format16bitBGR565  \n");
   printf("\n");
-  printf("       -s: Uses the video sink component to display the output of the color converter(.rgb file)\n");
-  printf("       input_filename is the user specified input file name\n");
+  printf("       -s: Uses the video sink component to display the output of the color converter(.rgb file)\n\n");
+  printf("       -x: Use XVideo Sink instead of FrameBuffer Sink\n");
+  printf("           -c option, if specified will be ignored\n");
   printf("\n");
   printf("       -t: Tunneling option - if this option is selected then by default the color converter and \n");
   printf("           video sink components are selected even if those two options are not specified - \n");
   printf("           the components are tunneled between themselves\n");
   printf("\n");
+  printf("       input_filename: User specified input file name\n\n");
   exit(1);
 }
 
@@ -442,6 +445,7 @@ int main(int argc, char** argv) {
     flagSetupTunnel = 0;
     flagIsSinkRequested = 0;
     flagIsFormatRequested = 0;
+    flagIsXVideoSinkRequested = 0;
 
     argn_dec = 1;
     while (argn_dec < argc) {
@@ -469,6 +473,9 @@ int main(int argc, char** argv) {
             break;
           case 'f' :
             flagIsFormatRequested = 1;
+            break;
+          case 'x' :
+            flagIsXVideoSinkRequested = 1;
             break;
           default:
             display_help();
@@ -555,6 +562,14 @@ int main(int argc, char** argv) {
           DEBUG(DEB_LEV_ERR,"\n color conv option is not selected - so the output file is %s \n", output_file);
         }
       }
+    }
+
+    
+    if(flagIsXVideoSinkRequested) {
+      flagIsSinkRequested = 1;
+      flagIsColorConvRequested = 0;
+    } else if(flagIsSinkRequested && !flagIsColorConvRequested){
+      flagIsXVideoSinkRequested = 1;
     }
 
     /** if color converter component is not selected then sink component will not work, even if specified */
@@ -684,7 +699,7 @@ int main(int argc, char** argv) {
         DEBUG(DEFAULT_MESSAGES, "Found The video sink component for color converter \n");
       }
     }
-  } else if(flagIsSinkRequested) {
+  } else if(flagIsXVideoSinkRequested) {
     err = OMX_GetHandle(&appPriv->video_sink_handle, "OMX.st.video.xvideo_sink", NULL, &video_sink_callbacks);
     if(err != OMX_ErrorNone){
       DEBUG(DEB_LEV_ERR, "No X-video sink component component found. Exiting...\n");
@@ -708,7 +723,7 @@ int main(int argc, char** argv) {
   /** if tunneling option is given then set up the tunnel between the components */
   if (flagSetupTunnel) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Setting up Tunnel\n");
-    if(flagIsColorConvRequested) { 
+    if(flagIsColorConvRequested) {
       err = OMX_SetupTunnel(appPriv->videodechandle, 1, appPriv->colorconv_handle, 0);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Set up Tunnel between video dec & color conv Failed\n");
@@ -719,7 +734,7 @@ int main(int argc, char** argv) {
         DEBUG(DEB_LEV_ERR, "Set up Tunnel between color conv & video sink Failed\n");
         exit(1);
       }
-    } else {
+    } else if(flagIsXVideoSinkRequested) {
       err = OMX_SetupTunnel(appPriv->videodechandle, 1, appPriv->video_sink_handle, 0);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Set up Tunnel between video dec & X-video sink Failed\n");
@@ -808,22 +823,7 @@ int main(int argc, char** argv) {
       * the signal is called in every execution
       */
     tsem_down(appPriv->decoderEventSem);
-    /** disable the ports */
-    if(flagIsColorConvRequested) {
-      err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandPortDisable, OMX_ALL, NULL);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"color conv all port disable failed\n");
-        exit(1);
-      }
-    } 
-    if(flagIsSinkRequested) {
-      err = OMX_SendCommand(appPriv->video_sink_handle, OMX_CommandPortDisable, 0, NULL);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"video sink input port disable failed\n");
-        exit(1);
-      }
-    }
-
+    
     /** wait for port disable events to be finished */
     if(flagIsColorConvRequested) {
       tsem_down(appPriv->colorconvEventSem);
@@ -1279,6 +1279,23 @@ OMX_ERRORTYPE videodecEventHandler(
           DEBUG(DEB_LEV_ERR,"video decoder port disable failed\n");
           exit(1);
         }
+
+        /** disable the ports */
+        if(flagIsColorConvRequested) {
+          err = OMX_SendCommand(appPriv->colorconv_handle, OMX_CommandPortDisable, OMX_ALL, NULL);
+          if(err != OMX_ErrorNone) {
+            DEBUG(DEB_LEV_ERR,"color conv all port disable failed\n");
+            exit(1);
+          }
+        } 
+        
+        if(flagIsSinkRequested) {
+          err = OMX_SendCommand(appPriv->video_sink_handle, OMX_CommandPortDisable, 0, NULL);
+          if(err != OMX_ErrorNone) {
+            DEBUG(DEB_LEV_ERR,"video sink input port disable failed\n");
+            exit(1);
+          }
+        }
         // dummy up signal - caught in main thread to resume processing from there
         tsem_up(appPriv->decoderEventSem);
       }
@@ -1375,7 +1392,7 @@ OMX_ERRORTYPE videodecEventHandler(
         if(flagIsColorConvRequested) { 
           err = OMX_FillThisBuffer(appPriv->colorconv_handle, pOutBufferColorConv[0]);
           err = OMX_FillThisBuffer(appPriv->colorconv_handle, pOutBufferColorConv[1]);
-          DEBUG(DEB_ALL_MESS, "---> After fill this buffer function calls to the color conv output buffers\n");
+          DEBUG(DEB_LEV_SIMPLE_SEQ, "---> After fill this buffer function calls to the color conv output buffers\n");
         }
       }
     }

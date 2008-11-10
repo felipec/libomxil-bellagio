@@ -161,6 +161,15 @@ OMX_ERRORTYPE omx_xvideo_sink_component_Constructor(OMX_COMPONENTTYPE *openmaxSt
   openmaxStandComp->GetParameter = omx_xvideo_sink_component_GetParameter;
   omx_xvideo_sink_component_Private->messageHandler = omx_xvideo_sink_component_MessageHandler;
 
+  omx_xvideo_sink_component_Private->bIsXVideoInit = OMX_FALSE;
+  if(!omx_xvideo_sink_component_Private->xvideoSyncSem) {
+    omx_xvideo_sink_component_Private->xvideoSyncSem = calloc(1,sizeof(tsem_t));
+    if(omx_xvideo_sink_component_Private->xvideoSyncSem == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+    tsem_init(omx_xvideo_sink_component_Private->xvideoSyncSem, 0);
+  }
+  
  /* testing the A/V sync */
 #ifdef AV_SYNC_LOG
  fd = fopen("video_timestamps.out","w");
@@ -191,6 +200,12 @@ OMX_ERRORTYPE omx_xvideo_sink_component_Destructor(OMX_COMPONENTTYPE *openmaxSta
     omx_xvideo_sink_component_Private->ports=NULL;
   }
 
+  if(omx_xvideo_sink_component_Private->xvideoSyncSem) {
+    tsem_deinit(omx_xvideo_sink_component_Private->xvideoSyncSem); 
+    free(omx_xvideo_sink_component_Private->xvideoSyncSem);
+    omx_xvideo_sink_component_Private->xvideoSyncSem = NULL;
+  }
+
 #ifdef AV_SYNC_LOG
    if(fd != NULL) {
       fclose(fd);
@@ -213,7 +228,7 @@ OMX_ERRORTYPE omx_xvideo_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp
   omx_xvideo_sink_component_PortType* pPort = (omx_xvideo_sink_component_PortType *) omx_xvideo_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
   int yuv_width  = pPort->sPortParam.format.video.nFrameWidth;
   int yuv_height = pPort->sPortParam.format.video.nFrameHeight;
-  int err,i;
+  unsigned int err,i;
 
   omx_xvideo_sink_component_Private->dpy = XOpenDisplay(NULL);
   omx_xvideo_sink_component_Private->screen = DefaultScreen(omx_xvideo_sink_component_Private->dpy);
@@ -293,15 +308,22 @@ OMX_ERRORTYPE omx_xvideo_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp
                                                                   GUID_I420_PLANAR, 0, yuv_width,
                                                                   yuv_height, &omx_xvideo_sink_component_Private->yuv_shminfo);
   
-  omx_xvideo_sink_component_Private->yuv_shminfo.shmid = shmget(IPC_PRIVATE, omx_xvideo_sink_component_Private->yuv_image->data_size, IPC_CREAT | 0777);
-  omx_xvideo_sink_component_Private->yuv_shminfo.shmaddr = (char *) shmat(omx_xvideo_sink_component_Private->yuv_shminfo.shmid, 0, 0);
-  omx_xvideo_sink_component_Private->yuv_image->data = omx_xvideo_sink_component_Private->yuv_shminfo.shmaddr;
+  omx_xvideo_sink_component_Private->yuv_shminfo.shmid    = shmget(IPC_PRIVATE, omx_xvideo_sink_component_Private->yuv_image->data_size, IPC_CREAT | 0777);
+  omx_xvideo_sink_component_Private->yuv_shminfo.shmaddr  = (char *) shmat(omx_xvideo_sink_component_Private->yuv_shminfo.shmid, 0, 0);
+  omx_xvideo_sink_component_Private->yuv_image->data      = omx_xvideo_sink_component_Private->yuv_shminfo.shmaddr;
   omx_xvideo_sink_component_Private->yuv_shminfo.readOnly = False;
 
   if (!XShmAttach(omx_xvideo_sink_component_Private->dpy, &omx_xvideo_sink_component_Private->yuv_shminfo)) {
     printf("XShmAttach go boom boom!\n");
     return OMX_ErrorUndefined;
   }
+
+  omx_xvideo_sink_component_Private->old_time = 0;
+  omx_xvideo_sink_component_Private->new_time = 0;
+
+  omx_xvideo_sink_component_Private->bIsXVideoInit = OMX_TRUE;
+  /*Signal XVideo Initialized*/
+  tsem_up(omx_xvideo_sink_component_Private->xvideoSyncSem);
 
   return OMX_ErrorNone;
 }
@@ -310,9 +332,20 @@ OMX_ERRORTYPE omx_xvideo_sink_component_Init(OMX_COMPONENTTYPE *openmaxStandComp
   * It deallocates the frame buffer memory, and closes frame buffer
   */
 OMX_ERRORTYPE omx_xvideo_sink_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
-  //omx_xvideo_sink_component_PrivateType* omx_xvideo_sink_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_xvideo_sink_component_PrivateType* omx_xvideo_sink_component_Private = openmaxStandComp->pComponentPrivate;
 
+  omx_xvideo_sink_component_Private->bIsXVideoInit = OMX_FALSE;
   
+  XShmDetach(omx_xvideo_sink_component_Private->dpy,&omx_xvideo_sink_component_Private->yuv_shminfo);
+
+  shmdt(omx_xvideo_sink_component_Private->yuv_shminfo.shmaddr);
+
+  XFreeGC(omx_xvideo_sink_component_Private->dpy,omx_xvideo_sink_component_Private->gc);
+
+  XFreeColormap(omx_xvideo_sink_component_Private->dpy,omx_xvideo_sink_component_Private->xswa.colormap);
+
+  XCloseDisplay(omx_xvideo_sink_component_Private->dpy);
+
   return OMX_ErrorNone;
 }
 
@@ -322,25 +355,29 @@ OMX_ERRORTYPE omx_xvideo_sink_component_Deinit(OMX_COMPONENTTYPE *openmaxStandCo
   */
 void omx_xvideo_sink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* pInputBuffer) {
   omx_xvideo_sink_component_PrivateType* omx_xvideo_sink_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_xvideo_sink_component_PortType     *pPort = (omx_xvideo_sink_component_PortType *) omx_xvideo_sink_component_Private->ports[OMX_BASE_SINK_INPUTPORT_INDEX];
-  static long                           old_time = 0, new_time = 0;
   long                                  timediff=0;
   int d;
   unsigned int ud, width, height;
   Window _dw;
   
+  if (omx_xvideo_sink_component_Private->bIsXVideoInit == OMX_FALSE) {
+    DEBUG(DEB_LEV_FULL_SEQ, "In %s waiting for Xvideo Init\n",__func__);
+    //tsem_down(omx_xvideo_sink_component_Private->xvideoSyncSem);
+    //omx_xvideo_sink_component_Private->bIsXVideoInit = OMX_TRUE;
+    return;
+  }
+
   /** getting current time */
-  new_time = GetTime();
-  if(old_time == 0) {
-    old_time = new_time;
+  omx_xvideo_sink_component_Private->new_time = GetTime();
+  if(omx_xvideo_sink_component_Private->old_time == 0) {
+    omx_xvideo_sink_component_Private->old_time = omx_xvideo_sink_component_Private->new_time;
   } else {
-    timediff = nFrameProcessTime - ((new_time - old_time) * 1000);
+    timediff = nFrameProcessTime - ((omx_xvideo_sink_component_Private->new_time - omx_xvideo_sink_component_Private->old_time) * 1000);
     if(timediff>0) {
       usleep(timediff);
     }
-    old_time = GetTime();
+    omx_xvideo_sink_component_Private->old_time = GetTime();
   }
-
 
   /**  Copy image data into in_buffer */
   

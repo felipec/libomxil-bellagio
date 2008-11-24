@@ -46,6 +46,8 @@
 
 #define NUM_DOMAINS 4
 
+#define OMX_BUFFERFLAG_KEY_FRAME 0x11000000
+
 /* Check if Component is deinitalizing*/
 #define IS_COMPONENT_DEINIT(component_Private, exit_condition)  \
                 pthread_mutex_lock(&component_Private->exit_mutex)      ,\

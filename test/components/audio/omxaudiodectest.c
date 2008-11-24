@@ -37,6 +37,7 @@
 #define VORBIS_TYPE_SEL 2
 #define AAC_TYPE_SEL    3 
 #define G726_TYPE_SEL   4 
+#define AMR_TYPE_SEL    5 
 #define COMPONENT_NAME_BASE "OMX.st.audio_decoder"
 #define BASE_ROLE "audio_decoder.ogg"
 #define COMPONENT_NAME_BASE_LEN 20
@@ -416,6 +417,13 @@ int main(int argc, char** argv) {
       display_help();
     }
     flagUsingFFMpeg = 0; //Explicitly not using filereader in case of G726
+  } else if(*(input_file+index -1) == 'r') {   
+    selectedType = AMR_TYPE_SEL;
+    DEBUG(DEFAULT_MESSAGES, "AMR\n");
+    if(flagIsMadRequested || flagSingleOGGSelected) {
+      DEBUG(DEB_LEV_ERR, "ERROR:Wrong Format(MAD/VORBIS) Selected\n");
+      display_help();
+    }
   } else {
     DEBUG(DEB_LEV_ERR, "The input audio format is not supported - exiting\n");
     exit(1);
@@ -486,6 +494,8 @@ int main(int argc, char** argv) {
     strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".aac");
   } else if (selectedType == G726_TYPE_SEL) {   
     strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".g726");
+  } else if (selectedType == AMR_TYPE_SEL) {   
+    strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".amrnb");
   }
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {

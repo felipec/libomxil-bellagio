@@ -59,6 +59,7 @@ AC_CONFIG_FILES([
     src/components/camera/Makefile
     src/components/jpeg/Makefile
     src/components/jpeg/libjpeg-6c/Makefile
+    src/components/muxer/Makefile
     src/components/xvideo/Makefile
     m4/Makefile
     test/Makefile
@@ -71,6 +72,7 @@ AC_CONFIG_FILES([
     test/components/camera/Makefile
     test/components/clocksrc/Makefile
     test/components/jpeg/Makefile
+    test/components/muxer/Makefile
 ])
 ################################################################################
 # Define the extra arguments the user can pass to the configure script         #
@@ -174,6 +176,15 @@ AC_ARG_ENABLE(
         [whether to disable the X video sink])],
     [with_xvideosink=$enableval],
     [with_xvideosink=yes])
+
+#Check whether amr components have been requested
+AC_ARG_ENABLE(
+    [amr],
+    [AC_HELP_STRING(
+        [--enable-amr],
+        [whether to enable AMR components compilation : FFMpeg library should be compiled with --enable-libamr-nb])],
+    [with_amr=$enableval],
+    [with_amr=no])
 
 #Check whether to disable all components
 AC_ARG_ENABLE(
@@ -305,9 +316,10 @@ if test "x$with_ffmpeg" = "xyes"; then
 	LDFLAGS="${LDFLAGS} ${FFMPEG_LIBS}"
 
         # Check for FFmpeg audio decoder API version
-	AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API])
+	#AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API])
 	AC_CHECK_LIB([avcodec], [avcodec_decode_audio2],
-		     [AC_DEFINE([FFMPEG_DECODER_VERSION], [2])])
+		     [AC_DEFINE([FFMPEG_DECODER_VERSION], [2], [FFmpeg audio2 decoder API])],
+                     [AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API ])])
 
 	# Check for location of FFmpeg library headers. These were moved
 	# in FFmpeg r12194 (2008-02-25). For example, instead of
@@ -335,6 +347,11 @@ fi
 # Check for clock component log
 if test "x$with_clocksrclog" = "xyes"; then
         AC_DEFINE([AV_SYNC_LOG], [1], [Clock Component Log])
+fi
+
+# Check for amr flag 
+if test "x$with_amr" = "xyes"; then
+        AC_DEFINE([DE_AMR_SUPPORT], [1], [Enable AMR Components])
 fi
 
 ################################################################################
@@ -380,6 +397,7 @@ AM_CONDITIONAL([WITH_VORBISCOMPONENTS], [test x$with_vorbis = xyes])
 AM_CONDITIONAL([WITH_AUDIOEFFECTS], [test x$with_audioeffects = xyes])
 AM_CONDITIONAL([WITH_VIDEOSRC], [test x$with_videosrc = xyes])
 AM_CONDITIONAL([WITH_CLOCKSRC], [test x$with_clocksrc = xyes])
+AM_CONDITIONAL([WITH_AMR_SUPPORT], [test x$with_amr = xyes])
 AM_CONDITIONAL([WITH_JPEG],[test x$with_jpeg = xyes])
 
 AC_OUTPUT

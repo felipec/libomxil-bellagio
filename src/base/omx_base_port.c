@@ -177,7 +177,7 @@ OMX_ERRORTYPE base_port_FlushProcessingBuffers(omx_base_PortType *openmaxStandPo
       tsem_up(omx_base_component_Private->bMgmtSem);
     }
 
-    if(omx_base_component_Private->state==OMX_StatePause ) {
+    if(omx_base_component_Private->state != OMX_StateExecuting ) {
       /*Waiting at paused state*/
       tsem_signal(omx_base_component_Private->bStateSem);
     }
@@ -633,8 +633,8 @@ OMX_ERRORTYPE base_port_AllocateTunnelBuffer(omx_base_PortType *openmaxStandPort
         eError=OMX_UseBuffer(openmaxStandPort->hTunneledComponent,&openmaxStandPort->pInternalBufferStorage[i],
                              openmaxStandPort->nTunneledPort,NULL,nBufferSize,pBuffer); 
         if(eError!=OMX_ErrorNone) {
-          DEBUG(DEB_LEV_FULL_SEQ,"In %s Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d eError=%08x tunneledport=%d \n",
-          __func__,i,omx_base_component_Private->name,(int)numRetry,eError,openmaxStandPort->nTunneledPort);
+          DEBUG(DEB_LEV_FULL_SEQ,"Tunneled Component Couldn't Use buffer %i From Comp=%s Retry=%d\n",
+          i,omx_base_component_Private->name,(int)numRetry);
 
           if((eError ==  OMX_ErrorIncorrectStateTransition) && numRetry<TUNNEL_USE_BUFFER_RETRY) {
             DEBUG(DEB_LEV_FULL_SEQ,"Waiting for next try %i \n",(int)numRetry);

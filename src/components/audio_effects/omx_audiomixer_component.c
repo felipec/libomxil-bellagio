@@ -69,6 +69,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_Constructor(OMX_COMPONENTTYPE *openmaxSt
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
   /*Assuming 2 input and 1 output portd*/
+  omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
   omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = MAX_PORTS;
 
   /** Allocate Ports and call port constructor. */  
@@ -324,7 +325,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
       if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
         break;
       }
-      if (pAudioPortFormat->nPortIndex <= 1) {
+      if (pAudioPortFormat->nPortIndex <= omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts) {
         port= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pAudioPortFormat->nPortIndex];
         memcpy(pAudioPortFormat, &port->sAudioParam, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
       } else {
@@ -350,6 +351,27 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
   return err;
 }
 
+int checkAnyPortBeingFlushed(omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private) {
+  omx_base_PortType *pPort;
+  int ret = OMX_FALSE,i;
+
+  if(omx_audio_mixer_component_Private->state == OMX_StateLoaded || 
+     omx_audio_mixer_component_Private->state == OMX_StateInvalid) {
+    return 0;
+  }
+
+  pthread_mutex_lock(&omx_audio_mixer_component_Private->flush_mutex);
+  for (i=0; i < omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts; i++) {
+    pPort = omx_audio_mixer_component_Private->ports[i];
+    if(PORT_IS_BEING_FLUSHED(pPort)) {
+      ret = OMX_TRUE;
+      break;
+    }
+  }
+  pthread_mutex_unlock(&omx_audio_mixer_component_Private->flush_mutex);
+
+  return ret;
+}
 /** This is the central function for component processing,overridden for audio mixer. It
   * is executed in a separate thread, is synchronized with 
   * semaphores at each port, those are released each time a new buffer
@@ -380,16 +402,10 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   while(omx_audio_mixer_component_Private->state == OMX_StateIdle || omx_audio_mixer_component_Private->state == OMX_StateExecuting ||  omx_audio_mixer_component_Private->state == OMX_StatePause || 
-    omx_audio_mixer_component_Private->transientState == OMX_TransStateLoadedToIdle){
+    omx_audio_mixer_component_Private->transientState == OMX_TransStateLoadedToIdle) {
 
     /*Wait till the ports are being flushed*/
-    pthread_mutex_lock(&omx_audio_mixer_component_Private->flush_mutex);
-    while( PORT_IS_BEING_FLUSHED(pPort[0]) || 
-           PORT_IS_BEING_FLUSHED(pPort[1]) || 
-           PORT_IS_BEING_FLUSHED(pPort[2]) || 
-           PORT_IS_BEING_FLUSHED(pPort[3]) || 
-           PORT_IS_BEING_FLUSHED(pPort[nOutputPortIndex])) {
-      pthread_mutex_unlock(&omx_audio_mixer_component_Private->flush_mutex);
+    while( checkAnyPortBeingFlushed(omx_audio_mixer_component_Private) ) {
       
       DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iF=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
         __func__,isBufferNeeded[0],isBufferNeeded[nOutputPortIndex],pSem[0]->semval,pSem[nOutputPortIndex]->semval);
@@ -408,9 +424,12 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
   
       tsem_up(omx_audio_mixer_component_Private->flush_all_condition);
       tsem_down(omx_audio_mixer_component_Private->flush_condition);
-      pthread_mutex_lock(&omx_audio_mixer_component_Private->flush_mutex);
     }
-    pthread_mutex_unlock(&omx_audio_mixer_component_Private->flush_mutex);
+    
+    if(omx_audio_mixer_component_Private->state == OMX_StateLoaded || omx_audio_mixer_component_Private->state == OMX_StateInvalid) {
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
+      break;
+    }
 
     /*No buffer to process. So wait here*/
     for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++){ 
@@ -423,11 +442,7 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
       
       }
       /*Don't wait for buffers, if any port is flushing*/
-      if(PORT_IS_BEING_FLUSHED(pPort[0]) || 
-         PORT_IS_BEING_FLUSHED(pPort[1]) || 
-         PORT_IS_BEING_FLUSHED(pPort[2]) || 
-         PORT_IS_BEING_FLUSHED(pPort[3]) || 
-         PORT_IS_BEING_FLUSHED(pPort[nOutputPortIndex])){
+      if(checkAnyPortBeingFlushed(omx_audio_mixer_component_Private)) {
         break;
       }
       if(omx_audio_mixer_component_Private->state == OMX_StateLoaded || omx_audio_mixer_component_Private->state == OMX_StateInvalid) {
@@ -484,7 +499,7 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
 
           if(pBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS && pBuffer[i]->nFilledLen==0) {
             DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pBuffer[i]->nFilledLen);
-            //pBuffer[nOutputPortIndex]->nFlags=pBuffer[i]->nFlags;
+            pBuffer[nOutputPortIndex]->nFlags = pBuffer[i]->nFlags;
             pBuffer[i]->nFlags=0;
             (*(omx_audio_mixer_component_Private->callbacks->EventHandler))
               (openmaxStandComp,
@@ -509,11 +524,7 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
       }      
       
       if(omx_audio_mixer_component_Private->state==OMX_StatePause && 
-        !(PORT_IS_BEING_FLUSHED(pPort[0]) || 
-          PORT_IS_BEING_FLUSHED(pPort[1]) || 
-          PORT_IS_BEING_FLUSHED(pPort[2]) || 
-          PORT_IS_BEING_FLUSHED(pPort[3]) || 
-          PORT_IS_BEING_FLUSHED(pPort[nOutputPortIndex]))) {
+        !(checkAnyPortBeingFlushed(omx_audio_mixer_component_Private))) {
         /*Waiting at paused state*/
         tsem_wait(omx_audio_mixer_component_Private->bStateSem);
       }
@@ -530,11 +541,7 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
     DEBUG(DEB_LEV_FULL_SEQ, "Input buffer arrived\n");
 
     if(omx_audio_mixer_component_Private->state==OMX_StatePause && 
-      !(PORT_IS_BEING_FLUSHED(pPort[0]) || 
-        PORT_IS_BEING_FLUSHED(pPort[1]) || 
-        PORT_IS_BEING_FLUSHED(pPort[2]) || 
-        PORT_IS_BEING_FLUSHED(pPort[3]) || 
-        PORT_IS_BEING_FLUSHED(pPort[nOutputPortIndex]))) {
+      !(checkAnyPortBeingFlushed(omx_audio_mixer_component_Private))) {
       /*Waiting at paused state*/
       tsem_wait(omx_audio_mixer_component_Private->bStateSem);
     }

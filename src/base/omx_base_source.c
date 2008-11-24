@@ -158,6 +158,11 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
         DEBUG(DEB_LEV_FULL_SEQ, "Pass Mark. This is a Source!!\n");
       }
 
+      if(omx_base_source_Private->state != OMX_StateExecuting && !PORT_IS_BEING_FLUSHED(pOutPort)) {
+        DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_source_Private->state);
+        tsem_wait(omx_base_source_Private->bStateSem);
+      }
+
       if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer->nFilledLen == 0) {
         (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer);
       } else {
@@ -349,6 +354,12 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
             //pOutputBuffer[i]->pMarkData=NULL;
             DEBUG(DEB_LEV_FULL_SEQ, "Pass Mark. This is a Source!!\n");
           }
+
+          if(omx_base_source_Private->state != OMX_StateExecuting && !(PORT_IS_BEING_FLUSHED(pOutPort[0]) || PORT_IS_BEING_FLUSHED(pOutPort[1]))) {
+            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_source_Private->state);
+            tsem_wait(omx_base_source_Private->bStateSem);
+          }
+
 
           if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer[i]->nFilledLen == 0) {
             //(*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[0], pOutputBuffer[1]);

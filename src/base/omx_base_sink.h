@@ -40,8 +40,9 @@
 #include <stdlib.h>
 
 
-#define OMX_BASE_SINK_INPUTPORT_INDEX   0     /* The index of the input port for the derived components */
-#define OMX_BASE_SINK_CLOCKPORT_INDEX   1     /* The index of the clock port for the dervied components */
+#define OMX_BASE_SINK_INPUTPORT_INDEX    0     /* The index of the input port for the derived components */
+#define OMX_BASE_SINK_CLOCKPORT_INDEX    1     /* The index of the clock port for the derived components */
+#define OMX_BASE_SINK_INPUTPORT_INDEX_1  1     /* The index of the 2nd input port for the derived components */
 
 /** OMX_BASE_SINK_ALLPORT_INDEX as the standard specifies, the -1 value for port index is used to point to all the ports
  */
@@ -69,5 +70,7 @@ OMX_ERRORTYPE omx_base_sink_Destructor(OMX_COMPONENTTYPE *openmaxStandComp);
  * is available on the given port.
  */
 void* omx_base_sink_BufferMgmtFunction(void* param);
+
+void* omx_base_sink_twoport_BufferMgmtFunction (void* param);
 
 #endif

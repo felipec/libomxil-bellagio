@@ -8,6 +8,11 @@ libomxffmpeg_la_SOURCES = omx_audiodec_component.c omx_audiodec_component.h \
                           omx_ffmpeg_colorconv_component.c omx_ffmpeg_colorconv_component.h \
                           library_entry_point.c
 
+if WITH_AMR_SUPPORT
+libomxffmpeg_la_SOURCES += omx_amr_audiodec_component.c omx_amr_audiodec_component.h \
+                           omx_amr_audioenc_component.c omx_amr_audioenc_component.h
+endif
+
 libomxffmpeg_la_LIBADD = $(top_builddir)/src/libomxil-bellagio.la $(FFMPEG_LIBS)
 libomxffmpeg_la_LDFLAGS = $(PLUGIN_LDFLAGS)
 libomxffmpeg_la_CFLAGS = $(FFMPEG_CFLAGS) \

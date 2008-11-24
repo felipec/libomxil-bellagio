@@ -1,1 +1,1 @@
-SUBDIRS = common audio video audio_effects parser camera clocksrc jpeg
+SUBDIRS = common audio video audio_effects parser camera clocksrc jpeg muxer

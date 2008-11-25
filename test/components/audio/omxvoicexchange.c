@@ -1,9 +1,9 @@
 /**
   @file test/components/audio/omxvoicexchange.c
-  
-  This test application is supposed to exchange voice over the network 
+
+  This test application is supposed to exchange voice over the network
   using some client server mechanism.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -21,7 +21,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date: 2008-09-11 12:14:48 +0200 (Thu, 11 Sep 2008) $
   Revision $Rev: 1484 $
   Author $Author: pankaj_sen $
@@ -34,24 +34,24 @@
 #define BASE_ROLE "alsa.alsasrc"
 #define COMPONENT_NAME_BASE_LEN 20
 
-OMX_CALLBACKTYPE audiosrccallbacks = { 
+OMX_CALLBACKTYPE audiosrccallbacks = {
     .EventHandler = audiosrcEventHandler,
     .EmptyBufferDone = NULL,
     .FillBufferDone = NULL
     };
 
-OMX_CALLBACKTYPE audioenccallbacks = { 
+OMX_CALLBACKTYPE audioenccallbacks = {
     .EventHandler = audioencEventHandler,
     .EmptyBufferDone = NULL,
     .FillBufferDone = audioencFillBufferDone
     };
 
-OMX_CALLBACKTYPE audiodeccallbacks = { 
+OMX_CALLBACKTYPE audiodeccallbacks = {
     .EventHandler = audiodecEventHandler,
     .EmptyBufferDone = audiodecEmptyBufferDone,
     .FillBufferDone = NULL
     };
-OMX_CALLBACKTYPE alsasinkcallbacks = { 
+OMX_CALLBACKTYPE alsasinkcallbacks = {
     .EventHandler = audiosinkEventHandler,
     .EmptyBufferDone = NULL,
     .FillBufferDone = NULL
@@ -73,7 +73,8 @@ int rate = 0,channel=0;
 char *output_file;
 FILE *outfile;
 
-int s_sockfd, s_newsockfd, s_portno=0, s_clilen,s_n;
+int s_sockfd, s_newsockfd, s_portno=0, s_n;
+unsigned int s_clilen;
 char s_buffer[BUFFER_OUT_SIZE];
 struct sockaddr_in s_serv_addr, s_cli_addr;
 
@@ -180,7 +181,7 @@ int main(int argc, char** argv) {
   }
 
   /* Initialize application private data */
-  appPriv = malloc(sizeof(appPrivateType)); 
+  appPriv = malloc(sizeof(appPrivateType));
   appPriv->audiosrcEventSem  = malloc(sizeof(tsem_t));
   appPriv->audioencEventSem  = malloc(sizeof(tsem_t));
   appPriv->audiodecEventSem  = malloc(sizeof(tsem_t));
@@ -192,7 +193,7 @@ int main(int argc, char** argv) {
   tsem_init(appPriv->audiodecEventSem, 0);
   tsem_init(appPriv->audiosinkEventSem, 0);
   tsem_init(appPriv->eofSem, 0);
-  
+
   err = OMX_Init();
   if (err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "The OpenMAX core can not be initialized. Exiting...\n");
@@ -204,25 +205,25 @@ int main(int argc, char** argv) {
   if(err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "No audio source component found. Exiting...\n");
     exit(1);
-  } 
+  }
 
   err = OMX_GetHandle(&appPriv->audioencHandle, "OMX.st.audio_encoder.g726", NULL, &audioenccallbacks);
   if(err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "No audio encoder component found. Exiting...\n");
     exit(1);
-  } 
+  }
 
   err = OMX_GetHandle(&appPriv->audiodecHandle, "OMX.st.audio_decoder.g726", NULL, &audiodeccallbacks);
   if(err != OMX_ErrorNone) {
     DEBUG(DEB_LEV_ERR, "No audio decoder component found. Exiting...\n");
     exit(1);
-  } 
+  }
 
   err = OMX_GetHandle(&appPriv->audiosinkHandle, "OMX.st.alsa.alsasink", NULL, &alsasinkcallbacks);
   if(err != OMX_ErrorNone){
     DEBUG(DEB_LEV_ERR, "No audio sink component component found. Exiting...\n");
     exit(1);
-  } 
+  }
 
   /*Set Sample Rate and Channel*/
   if(rate > 0 || channel >0)  {
@@ -248,8 +249,8 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "Err in SetParameter OMX_AUDIO_PARAM_PCMMODETYPE in AlsaSink. Exiting...\n");
       exit(1);
     }
-  } 
-  
+  }
+
   /** if tunneling option is given then set up the tunnel between the components */
   DEBUG(DEFAULT_MESSAGES, "Setting up Tunnel\n");
   err = OMX_SetupTunnel(appPriv->audiosrcHandle, 0, appPriv->audioencHandle, 0);
@@ -262,7 +263,7 @@ int main(int argc, char** argv) {
     DEBUG(DEB_LEV_ERR, "Set up Tunnel between decoder component & audio sink Failed\n");
     exit(1);
   }
-  
+
   /** sending commands to go to idle state */
   err = OMX_SendCommand(appPriv->audiosrcHandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
   err = OMX_SendCommand(appPriv->audioencHandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
@@ -298,11 +299,11 @@ int main(int argc, char** argv) {
   DEBUG(DEFAULT_MESSAGES, "All Components state transitioned to Idle\n");
 
   DEBUG(DEFAULT_MESSAGES, "Client IP=%s, Server Port=%d\n",ipaddress,s_portno);
-  if(flagIsMaster) { 
+  if(flagIsMaster) {
     DEBUG(DEFAULT_MESSAGES, "In the Master\n");
     /*Client Code*/
     c_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (c_sockfd < 0) 
+    if (c_sockfd < 0)
         error("ERROR opening socket");
     c_server = gethostbyname(ipaddress);
     if (c_server == NULL) {
@@ -311,32 +312,32 @@ int main(int argc, char** argv) {
     }
     bzero((char *) &c_serv_addr, sizeof(c_serv_addr));
     c_serv_addr.sin_family = AF_INET;
-    bcopy((char *)c_server->h_addr, 
+    bcopy((char *)c_server->h_addr,
            (char *)&c_serv_addr.sin_addr.s_addr,
            c_server->h_length);
     c_serv_addr.sin_port = htons(c_portno);
 
     /*Server Code*/
     s_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (s_sockfd < 0) 
+    if (s_sockfd < 0)
       error("ERROR opening socket");
     bzero((char *) &s_serv_addr, sizeof(s_serv_addr));
     s_serv_addr.sin_family = AF_INET;
     s_serv_addr.sin_addr.s_addr = INADDR_ANY;
     s_serv_addr.sin_port = htons(s_portno);
     if (bind(s_sockfd, (struct sockaddr *) &s_serv_addr,
-            sizeof(s_serv_addr)) < 0) 
+            sizeof(s_serv_addr)) < 0)
             error("ERROR on binding");
-  
+
     listen(s_sockfd,5);
     s_clilen = sizeof(s_cli_addr);
-    s_newsockfd = accept(s_sockfd, 
-               (struct sockaddr *) &s_cli_addr, 
+    s_newsockfd = accept(s_sockfd,
+               (struct sockaddr *) &s_cli_addr,
                &s_clilen);
 
     sleep(1);
     /*Client Connect to server*/
-    if (connect(c_sockfd,&c_serv_addr,sizeof(c_serv_addr)) < 0)  {
+    if (connect(c_sockfd,(__CONST_SOCKADDR_ARG)&c_serv_addr,sizeof(c_serv_addr)) < 0)  {
       error("ERROR connecting");
     }
     DEBUG(DEFAULT_MESSAGES, "Please enter the message: ");
@@ -345,35 +346,35 @@ int main(int argc, char** argv) {
     bzero(s_buffer,256);
     strcpy(s_buffer,"I am the Master");
     s_n = write(c_sockfd,s_buffer,strlen(s_buffer));
-    if (s_n < 0) 
+    if (s_n < 0)
          error("ERROR writing to socket");
-    
+
     bzero(s_buffer,256);
-    DEBUG(DEFAULT_MESSAGES, "Master waiting for read \n"); 
+    DEBUG(DEFAULT_MESSAGES, "Master waiting for read \n");
     s_n = read(s_newsockfd,s_buffer,255);
-    if (s_n < 0) 
+    if (s_n < 0)
          error("ERROR reading from socket");
     DEBUG(DEFAULT_MESSAGES, "%s\n",s_buffer);
 
     DEBUG(DEFAULT_MESSAGES, "Master read write complete\n");
-             
+
   } else {
     DEBUG(DEFAULT_MESSAGES, "In the Slave\n");
     /*Server Code*/
     s_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (s_sockfd < 0) 
+    if (s_sockfd < 0)
       error("ERROR opening socket");
     bzero((char *) &s_serv_addr, sizeof(s_serv_addr));
     s_serv_addr.sin_family = AF_INET;
     s_serv_addr.sin_addr.s_addr = INADDR_ANY;
     s_serv_addr.sin_port = htons(s_portno);
     if (bind(s_sockfd, (struct sockaddr *) &s_serv_addr,
-            sizeof(s_serv_addr)) < 0) 
+            sizeof(s_serv_addr)) < 0)
             error("ERROR on binding");
 
     /*Client Code*/
     c_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (c_sockfd < 0) 
+    if (c_sockfd < 0)
         error("ERROR opening socket");
     c_server = gethostbyname(ipaddress);
     if (c_server == NULL) {
@@ -382,46 +383,46 @@ int main(int argc, char** argv) {
     }
     bzero((char *) &c_serv_addr, sizeof(c_serv_addr));
     c_serv_addr.sin_family = AF_INET;
-    bcopy((char *)c_server->h_addr, 
+    bcopy((char *)c_server->h_addr,
            (char *)&c_serv_addr.sin_addr.s_addr,
            c_server->h_length);
     c_serv_addr.sin_port = htons(c_portno);
-    if (connect(c_sockfd,&c_serv_addr,sizeof(c_serv_addr)) < 0) {
+    if (connect(c_sockfd,(__CONST_SOCKADDR_ARG)&c_serv_addr,sizeof(c_serv_addr)) < 0) {
       error("ERROR connecting");
     }
     DEBUG(DEFAULT_MESSAGES, "Please enter the message: ");
     bzero(c_buffer,BUFFER_OUT_SIZE);
 
     /*Server Listen on socket Code*/
-      
+
     listen(s_sockfd,5);
     s_clilen = sizeof(s_cli_addr);
-    s_newsockfd = accept(s_sockfd, 
-               (struct sockaddr *) &s_cli_addr, 
+    s_newsockfd = accept(s_sockfd,
+               (struct sockaddr *) &s_cli_addr,
                &s_clilen);
 
-    DEBUG(DEFAULT_MESSAGES, "Slave writing to master \n"); 
+    DEBUG(DEFAULT_MESSAGES, "Slave writing to master \n");
 
     bzero(c_buffer,256);
     strcpy(c_buffer,"I am the Slave");
     c_n = write(c_sockfd,c_buffer,strlen(c_buffer));
-    if (c_n < 0) 
+    if (c_n < 0)
          error("ERROR writing to socket");
-    
+
     bzero(c_buffer,256);
-    DEBUG(DEFAULT_MESSAGES, "Slave waiting for read \n"); 
+    DEBUG(DEFAULT_MESSAGES, "Slave waiting for read \n");
     c_n = read(s_newsockfd,c_buffer,255);
-    if (c_n < 0) 
+    if (c_n < 0)
          error("ERROR reading from socket");
     DEBUG(DEFAULT_MESSAGES, "%s\n",c_buffer);
- 
+
   }
 
   /*
-  // Maser         Slave 
+  // Maser         Slave
   // s_newsockfd   s_newsockfd
   //           \  /
-  //            \/    
+  //            \/
   //            /\
   //           /  \
   // c_sockfd       c_sockfd
@@ -449,7 +450,7 @@ int main(int argc, char** argv) {
   for(i=0;i<2;i++) {
     bzero(s_buffer,BUFFER_OUT_SIZE);
     s_n = read(s_newsockfd,s_buffer,read_buffer_size);
-    if (s_n < 0) 
+    if (s_n < 0)
          error("ERROR reading from socket");
 
     len = *((int*)&s_buffer[0]);
@@ -470,11 +471,11 @@ int main(int argc, char** argv) {
         packet_offset += offset;
         if((s_n - packet_offset) <len) {
           break;
-        }          
+        }
       }
     }
   }
-  
+
   err = OMX_EmptyThisBuffer(appPriv->audiodecHandle, pInAudioDecBuffer[0]);
   err = OMX_EmptyThisBuffer(appPriv->audiodecHandle, pInAudioDecBuffer[1]);
   if(err != OMX_ErrorNone) {
@@ -503,7 +504,7 @@ int main(int argc, char** argv) {
   tsem_down(appPriv->audioencEventSem);
   tsem_down(appPriv->audiodecEventSem);
   tsem_down(appPriv->audiosinkEventSem);
-  
+
   DEBUG(DEFAULT_MESSAGES, "All audio components Transitioned to Idle\n");
 
   err = OMX_SendCommand(appPriv->audiosrcHandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
@@ -576,7 +577,7 @@ OMX_ERRORTYPE audiosrcEventHandler(
           break;
       }
       tsem_up(appPriv->audiosrcEventSem);
-    }      
+    }
   } else if(eEvent == OMX_EventBufferFlag) {
     DEBUG(DEB_LEV_ERR, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
     if((int)Data2 == OMX_BUFFERFLAG_EOS) {
@@ -622,7 +623,7 @@ OMX_ERRORTYPE audioencEventHandler(
           break;
       }
       tsem_up(appPriv->audioencEventSem);
-    }      
+    }
   } else if(eEvent == OMX_EventBufferFlag) {
     DEBUG(DEB_LEV_ERR, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
     if((int)Data2 == OMX_BUFFERFLAG_EOS) {
@@ -657,7 +658,7 @@ OMX_ERRORTYPE audioencFillBufferDone(
         inputBufferDropped++;
         return OMX_ErrorNone;
       }
-            
+
       err = OMX_FillThisBuffer(appPriv->audioencHandle, pBuffer);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
@@ -785,7 +786,7 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
   return OMX_ErrorNone;
-}  
+}
 
 
 /** Callbacks implementation of the audio source component*/
@@ -822,7 +823,7 @@ OMX_ERRORTYPE audiosinkEventHandler(
         case OMX_StateWaitForResources:
           DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
           break;
-      }    
+      }
       tsem_up(appPriv->audiosinkEventSem);
     }
   } else if(eEvent == OMX_EventBufferFlag) {
@@ -834,6 +835,6 @@ OMX_ERRORTYPE audiosinkEventHandler(
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)Data2);
   }
-  return err; 
+  return err;
 }
 

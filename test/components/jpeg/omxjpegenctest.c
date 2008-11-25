@@ -1,13 +1,13 @@
-/** 
+/**
   @file test/components/image/omxjpegenctest.c
- 
+
   OpenMAX Integration Layer JPEG component test program
-  
+
   This test program operates the OMX IL jpeg encoder component
   which encodes an jpeg file.
   Input file is given as the first argument and output
   is written to another file.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -25,7 +25,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date: 2008-09-11 11:37:30 +0200 (Thu, 11 Sep 2008) $
   Revision $Rev: 1481 $
   Author $Author: pankaj_sen $
@@ -74,17 +74,14 @@ int flagInputReceived;
 OMX_S32 fd;
 FILE *infile ,*outfile;
 char *input_file;
-static OMX_BOOL bEOS=OMX_FALSE;
 
 int main(int argc, char** argv){
   OMX_S32 argn_dec;
-  int data_read,buffer_size=0;
+  int buffer_size=0;
   OMX_STRING compName="OMX.st.image_encoder.jpeg";
   OMX_ERRORTYPE err;
   void* input_data;
 
-  OMX_U8 last_char=0x00,next2last_char=0x00;
-  OMX_PORT_PARAM_TYPE param;
   OMX_CALLBACKTYPE callbacks = { .EventHandler = jpegEncEventHandler,
                        .EmptyBufferDone = jpegEncEmptyBufferDone,
                        .FillBufferDone = jpegEncFillBufferDone,
@@ -99,7 +96,7 @@ int main(int argc, char** argv){
 
   /* Initialize application private data */
   appPriv = malloc(sizeof(appPrivateType));
-  
+
   if(argc < 3){
     display_help();
   } else {
@@ -151,7 +148,7 @@ int main(int argc, char** argv){
     if (flagOutputReceived) {
       DEBUG(DEFAULT_MESSAGES, " %s\n", appPriv->output_file);
     }
-    
+
   }
 
   tsem_init(&appPriv->stateSem, 0);
@@ -172,14 +169,14 @@ int main(int argc, char** argv){
   else
     DEBUG(DEB_LEV_PARAMS, "Input file mapped at %08X\n", (int)input_data);
 
-  DEBUG(DEB_LEV_ERR, "Input file size= %d\n", ifStat.st_size);
-  
+  DEBUG(DEB_LEV_ERR, "Input file size= %d\n", (int)ifStat.st_size);
+
   err = OMX_Init();
-  
+
   /** Ask the core for a handle to the mpeg2 component
    */
   err = OMX_GetHandle(&appPriv->handle, compName, NULL , &callbacks);
-  
+
   if(appPriv->handle==NULL) {
     DEBUG(DEB_LEV_ERR,"No %s template found\n",compName);
     exit(1);
@@ -193,7 +190,7 @@ int main(int argc, char** argv){
     &componentVersion,
     &specVersion,
     &uuid);
-  
+
   DEBUG(DEB_LEV_PARAMS, "Component name is %s\n", name);
   DEBUG(DEB_LEV_PARAMS, "Spec      version is %i.%i.%i.%i\n",
     specVersion.s.nVersionMajor,
@@ -206,7 +203,7 @@ int main(int argc, char** argv){
     componentVersion.s.nRevision,
     componentVersion.s.nStep);
 
-  
+
   err = OMX_SendCommand(appPriv->handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 
   appPriv->pInBuffer[0]=appPriv->pInBuffer[1]=appPriv->pOutBuffer[0]=appPriv->pOutBuffer[1]=NULL;
@@ -218,16 +215,16 @@ int main(int argc, char** argv){
   err = OMX_AllocateBuffer(appPriv->handle, &(appPriv->pOutBuffer[0]), 1, NULL, OUTPUT_BUFFER_SIZE);
   appPriv->cInBufIndex=0;
 
-  
+
   /*Wait till state has been changed*/
   tsem_down(&appPriv->stateSem);
-  
+
   OMX_FillThisBuffer(appPriv->handle, appPriv->pOutBuffer[0]);
 
   err = OMX_SendCommand(appPriv->handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
   /*Wait till state has been changed*/
   tsem_down(&appPriv->stateSem);
-  
+
   /* Get input file handle */
 
   //data_read = read(fd, appPriv->pInBuffer[0]->pBuffer, buffer_size);
@@ -242,12 +239,12 @@ int main(int argc, char** argv){
   tsem_down(&appPriv->eosSem);
 
   DEBUG(DEB_LEV_SIMPLE_SEQ,"Finished all buffers filesize=%d \n",(int)filesize);
-  
+
   err = OMX_SendCommand(appPriv->handle, OMX_CommandStateSet,OMX_StateIdle, NULL);
-  
+
   /*Wait till state has been changed*/
   tsem_down(&appPriv->stateSem);
-  
+
   DEBUG(DEB_LEV_SIMPLE_SEQ,"State Transitioned to Idle \n");
 
   err = OMX_SendCommand(appPriv->handle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
@@ -260,7 +257,7 @@ int main(int argc, char** argv){
   DEBUG(DEB_LEV_SIMPLE_SEQ,"Wait State Transitioning to Loaded \n");
   /*Wait till state has been changed*/
   tsem_down(&appPriv->stateSem);
-  
+
   /*Free handle*/
   err = OMX_FreeHandle(appPriv->handle);
 
@@ -276,17 +273,17 @@ int main(int argc, char** argv){
   tsem_deinit(&appPriv->eosSem);
 
   free(appPriv);
-  
+
   return 0;
 }
 
 /* Callbacks implementation */
 
 OMX_ERRORTYPE jpegEncEventHandler(
-        OMX_IN OMX_HANDLETYPE hComponent, 
-        OMX_IN OMX_PTR pAppData, 
-        OMX_IN OMX_EVENTTYPE eEvent, 
-        OMX_IN OMX_U32 nData1, 
+        OMX_IN OMX_HANDLETYPE hComponent,
+        OMX_IN OMX_PTR pAppData,
+        OMX_IN OMX_EVENTTYPE eEvent,
+        OMX_IN OMX_U32 nData1,
         OMX_IN OMX_U32 nData2,
         OMX_IN OMX_PTR pEventData)
 {
@@ -302,10 +299,10 @@ OMX_ERRORTYPE jpegEncEventHandler(
       setHeader(&param, sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
       param.nPortIndex = 1;
       err = OMX_GetParameter(hComponent, OMX_IndexParamPortDefinition, &param);
-      
+
       appPriv->frame_width=param.format.video.nFrameWidth;
       appPriv->frame_height=param.format.video.nFrameHeight;
-      
+
       DEBUG(DEB_LEV_PARAMS,"New width=%d height=%d bs=%d\n",(int)appPriv->frame_width,(int)appPriv->frame_height,(int)param.nBufferSize);
       appPriv->outframe_buffer_size=param.nBufferSize;
     } else if (nData2 == 0) {
@@ -326,9 +323,9 @@ OMX_ERRORTYPE jpegEncEmptyBufferDone(
   OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)
 {
 
-  OMX_ERRORTYPE err;
-  int data_read=0;
-  static int iBufferDropped=0;
+//  OMX_ERRORTYPE err;
+//  int data_read=0;
+//  static int iBufferDropped=0;
   DEBUG(DEB_LEV_ERR, "Hi there, I am in the %s callback.\n", __func__);
 
   /*
@@ -365,19 +362,19 @@ OMX_ERRORTYPE jpegEncFillBufferDone(
 {
   OMX_S32 buffer_ts;
   buffer_ts = (OMX_S32)pBuffer->nTickCount;
-  
-  /* Output data to file */
-  outfile=fopen(appPriv->output_file,"w");  
 
-  DEBUG(DEB_ALL_MESS, "In %s Buffer Len=%d\n", __func__,pBuffer->nFilledLen);
+  /* Output data to file */
+  outfile=fopen(appPriv->output_file,"w");
+
+  DEBUG(DEB_ALL_MESS, "In %s Buffer Len=%d\n", __func__, (int)pBuffer->nFilledLen);
 
   fwrite(pBuffer->pBuffer,sizeof(OMX_U8),pBuffer->nFilledLen,outfile);
 
   fclose(outfile);
-  
+
   /*Signal the condition indicating Fill Buffer Done has been called*/
   tsem_up(&appPriv->eosSem);
-  
+
   return OMX_ErrorNone;
 }
 

@@ -34,7 +34,7 @@
 
 OMX_ERRORTYPE omx_base_source_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
 
-  OMX_ERRORTYPE err = OMX_ErrorNone;  
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   omx_base_source_PrivateType* omx_base_source_Private;
 
   if (openmaxStandComp->pComponentPrivate) {
@@ -47,7 +47,7 @@ OMX_ERRORTYPE omx_base_source_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, O
   }
 
   // we could create our own port structures here
-  // fixme maybe the base class could use a "port factory" function pointer?  
+  // fixme maybe the base class could use a "port factory" function pointer?
   err = omx_base_component_Constructor(openmaxStandComp, cComponentName);
 
   /* here we can override whatever defaults the base_component constructor set
@@ -64,7 +64,7 @@ OMX_ERRORTYPE omx_base_source_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
 }
 
 /** This is the central function for component processing. It
-  * is executed in a separate thread, is synchronized with 
+  * is executed in a separate thread, is synchronized with
   * semaphores at each port, those are released each time a new buffer
   * is available on the given port.
   */
@@ -82,7 +82,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
   int outBufExchanged = 0;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s \n", __func__);
-  while(omx_base_component_Private->state == OMX_StateIdle || omx_base_component_Private->state == OMX_StateExecuting ||  
+  while(omx_base_component_Private->state == OMX_StateIdle || omx_base_component_Private->state == OMX_StateExecuting ||
     omx_base_component_Private->state == OMX_StatePause || omx_base_component_Private->transientState == OMX_TransStateLoadedToIdle){
 
     /*Wait till the ports are being flushed*/
@@ -98,7 +98,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
         DEBUG(DEB_LEV_FULL_SEQ, "Ports are flushing,so returning output buffer\n");
       }
       DEBUG(DEB_LEV_FULL_SEQ, "In %s signalling flush all condition \n", __func__);
-      
+
       tsem_up(omx_base_source_Private->flush_all_condition);
       tsem_down(omx_base_source_Private->flush_condition);
       pthread_mutex_lock(&omx_base_source_Private->flush_mutex);
@@ -106,7 +106,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
     pthread_mutex_unlock(&omx_base_source_Private->flush_mutex);
 
     /*No buffer to process. So wait here*/
-    if((isOutputBufferNeeded==OMX_TRUE && pOutputSem->semval==0) && 
+    if((isOutputBufferNeeded==OMX_TRUE && pOutputSem->semval==0) &&
       (omx_base_source_Private->state != OMX_StateLoaded && omx_base_source_Private->state != OMX_StateInvalid)) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for output buffer \n");
       tsem_down(omx_base_source_Private->bMgmtSem);
@@ -130,7 +130,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
         }
       }
     }
-    
+
     if(isOutputBufferNeeded == OMX_FALSE) {
       if(pOutputBuffer->nFlags == OMX_BUFFERFLAG_EOS) {
         pOutputBuffer->nFlags = 0;
@@ -142,7 +142,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
         omx_base_source_Private->pMark.hMarkTargetComponent = NULL;
         omx_base_source_Private->pMark.pMarkData            = NULL;
       }
-            
+
       target_component = (OMX_COMPONENTTYPE*)pOutputBuffer->hMarkTargetComponent;
       if(target_component == (OMX_COMPONENTTYPE *)openmaxStandComp) {
         /*Clear the mark and generate an event*/
@@ -176,7 +176,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
 
       if(pOutputBuffer->nFlags == OMX_BUFFERFLAG_EOS) {
         DEBUG(DEB_LEV_SIMPLE_SEQ, "Detected EOS flags in output buffer\n");
-        
+
         (*(omx_base_component_Private->callbacks->EventHandler))
           (openmaxStandComp,
           omx_base_component_Private->callbackData,
@@ -192,7 +192,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
       if((pOutputBuffer->nFilledLen != 0) || (pOutputBuffer->nFlags==OMX_BUFFERFLAG_EOS) || (omx_base_source_Private->bIsEOSReached == OMX_TRUE)) {
 
         if(pOutputBuffer->nFlags==OMX_BUFFERFLAG_EOS)
-          DEBUG(DEB_LEV_ERR, "In %s nFlags=%x Name=%s \n", __func__,pOutputBuffer->nFlags,omx_base_source_Private->name);
+          DEBUG(DEB_LEV_ERR, "In %s nFlags=%x Name=%s \n", __func__, (int)pOutputBuffer->nFlags, omx_base_source_Private->name);
 
         pOutPort->ReturnBufferFunction(pOutPort, pOutputBuffer);
         outBufExchanged--;
@@ -207,7 +207,7 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
 }
 
 /** This is the central function for buffer processing of a two port source component.
-  * It is executed in a separate thread, is synchronized with 
+  * It is executed in a separate thread, is synchronized with
   * semaphores at each port, those are released each time a new buffer
   * is available on the given port.
   */
@@ -235,16 +235,16 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
   outBufExchanged[0]=outBufExchanged[1]=0;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  while(omx_base_source_Private->state == OMX_StateIdle || omx_base_source_Private->state == OMX_StateExecuting ||  omx_base_source_Private->state == OMX_StatePause || 
+  while(omx_base_source_Private->state == OMX_StateIdle || omx_base_source_Private->state == OMX_StateExecuting ||  omx_base_source_Private->state == OMX_StatePause ||
     omx_base_source_Private->transientState == OMX_TransStateLoadedToIdle){
 
     /*Wait till the ports are being flushed*/
     pthread_mutex_lock(&omx_base_source_Private->flush_mutex);
-    while( PORT_IS_BEING_FLUSHED(pOutPort[0]) || 
+    while( PORT_IS_BEING_FLUSHED(pOutPort[0]) ||
            PORT_IS_BEING_FLUSHED(pOutPort[1])) {
       pthread_mutex_unlock(&omx_base_source_Private->flush_mutex);
-      
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
+
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n",
         __func__,outBufExchanged[0],isOutputBufferNeeded[0],outBufExchanged[1],isOutputBufferNeeded[1],pOutputSem[0]->semval,pOutputSem[1]->semval);
 
       if(isOutputBufferNeeded[1]==OMX_FALSE && PORT_IS_BEING_FLUSHED(pOutPort[1])) {
@@ -263,9 +263,9 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
         DEBUG(DEB_LEV_FULL_SEQ, "Ports are flushing,so returning output 0 buffer\n");
       }
 
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iE=%d,iF=%d,oE=%d,oF=%d iSemVal=%d,oSemval=%d\n",
         __func__,outBufExchanged[0],isOutputBufferNeeded[0],outBufExchanged[1],isOutputBufferNeeded[1],pOutputSem[0]->semval,pOutputSem[1]->semval);
-  
+
       tsem_up(omx_base_source_Private->flush_all_condition);
       tsem_down(omx_base_source_Private->flush_condition);
       pthread_mutex_lock(&omx_base_source_Private->flush_mutex);
@@ -273,30 +273,30 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
     pthread_mutex_unlock(&omx_base_source_Private->flush_mutex);
 
     /*No buffer to process. So wait here*/
-    if((isOutputBufferNeeded[0]==OMX_TRUE && pOutputSem[0]->semval==0) && 
+    if((isOutputBufferNeeded[0]==OMX_TRUE && pOutputSem[0]->semval==0) &&
       (omx_base_source_Private->state != OMX_StateLoaded && omx_base_source_Private->state != OMX_StateInvalid)) {
       //Signalled from EmptyThisBuffer or FillThisBuffer or some thing else
       DEBUG(DEB_LEV_FULL_SEQ, "Waiting for next output buffer 0\n");
       tsem_down(omx_base_source_Private->bMgmtSem);
-      
+
     }
     if(omx_base_source_Private->state == OMX_StateLoaded || omx_base_source_Private->state == OMX_StateInvalid) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
       break;
     }
-    if((isOutputBufferNeeded[1]==OMX_TRUE && pOutputSem[1]->semval==0) && 
+    if((isOutputBufferNeeded[1]==OMX_TRUE && pOutputSem[1]->semval==0) &&
       (omx_base_source_Private->state != OMX_StateLoaded && omx_base_source_Private->state != OMX_StateInvalid) &&
        !(PORT_IS_BEING_FLUSHED(pOutPort[0]) || PORT_IS_BEING_FLUSHED(pOutPort[1]))) {
       //Signalled from EmptyThisBuffer or FillThisBuffer or some thing else
       DEBUG(DEB_LEV_FULL_SEQ, "Waiting for next output buffer 1\n");
       tsem_down(omx_base_source_Private->bMgmtSem);
-      
+
     }
     if(omx_base_source_Private->state == OMX_StateLoaded || omx_base_source_Private->state == OMX_StateInvalid) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
       break;
     }
- 
+
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for output buffer 0 semval=%d \n",pOutputSem[0]->semval);
     if(pOutputSem[0]->semval>0 && isOutputBufferNeeded[0]==OMX_TRUE ) {
       tsem_down(pOutputSem[0]);
@@ -332,7 +332,7 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
       if(omx_base_source_Private->ports[i]->sPortParam.eDomain!=OMX_PortDomainOther){ /* clock ports are not to be processed */
         /*Process Output buffer of Port i */
         if(isOutputBufferNeeded[i]==OMX_FALSE) {
-          
+
           /*Pass the Mark to all outgoing buffers*/
           if(omx_base_source_Private->pMark.hMarkTargetComponent != NULL){
             pOutputBuffer[i]->hMarkTargetComponent = omx_base_source_Private->pMark.hMarkTargetComponent;
@@ -368,7 +368,7 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
             /*If no buffer management call back then don't produce any output buffer*/
             pOutputBuffer[i]->nFilledLen = 0;
           }
-      
+
           if(pOutputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS && pOutputBuffer[i]->nFilledLen==0) {
             DEBUG(DEB_LEV_FULL_SEQ, "Detected EOS flags in input buffer filled len=%d\n", (int)pOutputBuffer[i]->nFilledLen);
             (*(omx_base_source_Private->callbacks->EventHandler))

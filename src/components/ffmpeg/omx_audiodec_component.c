@@ -227,7 +227,7 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
   /*Find the  decoder corresponding to the audio type specified by IL client*/
   omx_audiodec_component_Private->avCodec = avcodec_find_decoder(target_codecID);
   if (omx_audiodec_component_Private->avCodec == NULL) {
-    DEBUG(DEB_LEV_ERR, "Codec %x Not found\n",target_codecID);
+    DEBUG(DEB_LEV_ERR, "Codec %x Not found\n", (int)target_codecID);
     return OMX_ErrorInsufficientResources;
   }
 
@@ -322,7 +322,7 @@ void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStan
     strcpy(pPort->sPortParam.format.audio.cMIMEType, "audio/aac");
     pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingAAC;
 
-    setHeader(&omx_audiodec_component_Private->pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE)); 
+    setHeader(&omx_audiodec_component_Private->pAudioAac,sizeof(OMX_AUDIO_PARAM_AACPROFILETYPE));
     omx_audiodec_component_Private->pAudioAac.nPortIndex = 0;
     omx_audiodec_component_Private->pAudioAac.nChannels = 2;
     omx_audiodec_component_Private->pAudioAac.nBitRate = 28000;

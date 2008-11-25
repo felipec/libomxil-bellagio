@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_videodec_component.c
-  
-  This component implements H.264 / MPEG-4 AVC video decoder. 
+
+  This component implements H.264 / MPEG-4 AVC video decoder.
   The H.264 / MPEG-4 AVC Video decoder is based on the FFmpeg software library.
 
   Copyright (C) 2007-2008 STMicroelectronics
@@ -41,10 +41,10 @@ static OMX_U32 noVideoDecInstance = 0;
 /** The output decoded color format */
 #define OUTPUT_DECODED_COLOR_FMT OMX_COLOR_FormatYUV420Planar
 
-#define DEFAULT_WIDTH 352   
-#define DEFAULT_HEIGHT 288   
-/** define the max input buffer size */   
-#define DEFAULT_VIDEO_OUTPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*3/2   // YUV 420P 
+#define DEFAULT_WIDTH 352
+#define DEFAULT_HEIGHT 288
+/** define the max input buffer size */
+#define DEFAULT_VIDEO_OUTPUT_BUF_SIZE DEFAULT_WIDTH*DEFAULT_HEIGHT*3/2   // YUV 420P
 
 /** The Constructor of the video decoder component
   * @param openmaxStandComp the component handle to be constructed
@@ -52,7 +52,7 @@ static OMX_U32 noVideoDecInstance = 0;
   */
 OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
 
-  OMX_ERRORTYPE eError = OMX_ErrorNone;  
+  OMX_ERRORTYPE eError = OMX_ErrorNone;
   omx_videodec_component_PrivateType* omx_videodec_component_Private;
   omx_base_video_PortType *inPort,*outPort;
   OMX_U32 i;
@@ -93,10 +93,10 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   base_video_port_Constructor(openmaxStandComp, &omx_videodec_component_Private->ports[1], 1, OMX_FALSE);
 
   /** here we can override whatever defaults the base_component constructor set
-    * e.g. we can override the function pointers in the private struct  
+    * e.g. we can override the function pointers in the private struct
     */
 
-  /** Domain specific section for the ports.   
+  /** Domain specific section for the ports.
     * first we set the parameter common to both formats
     */
   //common parameters related to input port
@@ -115,16 +115,16 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   outPort->sVideoParam.xFramerate = 25;
 
   /** now it's time to know the video coding type of the component */
-  if(!strcmp(cComponentName, VIDEO_DEC_MPEG4_NAME)) { 
+  if(!strcmp(cComponentName, VIDEO_DEC_MPEG4_NAME)) {
     omx_videodec_component_Private->video_coding_type = OMX_VIDEO_CodingMPEG4;
-  } else if(!strcmp(cComponentName, VIDEO_DEC_H264_NAME)) { 
+  } else if(!strcmp(cComponentName, VIDEO_DEC_H264_NAME)) {
     omx_videodec_component_Private->video_coding_type = OMX_VIDEO_CodingAVC;
   } else if (!strcmp(cComponentName, VIDEO_DEC_BASE_NAME)) {
     omx_videodec_component_Private->video_coding_type = OMX_VIDEO_CodingUnused;
   } else {
-    // IL client specified an invalid component name 
+    // IL client specified an invalid component name
     return OMX_ErrorInvalidComponentName;
-  }  
+  }
 
   if(!omx_videodec_component_Private->avCodecSyncSem) {
     omx_videodec_component_Private->avCodecSyncSem = calloc(1,sizeof(tsem_t));
@@ -145,7 +145,7 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   }
 
   /** general configuration irrespective of any video formats
-    * setting other parameters of omx_videodec_component_private  
+    * setting other parameters of omx_videodec_component_private
     */
   omx_videodec_component_Private->avCodec = NULL;
   omx_videodec_component_Private->avCodecContext= NULL;
@@ -177,27 +177,27 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
 OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_videodec_component_PrivateType* omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;
   OMX_U32 i;
-  
+
   if(omx_videodec_component_Private->extradata) {
     free(omx_videodec_component_Private->extradata);
     omx_videodec_component_Private->extradata=NULL;
   }
 
   if(omx_videodec_component_Private->avCodecSyncSem) {
-    tsem_deinit(omx_videodec_component_Private->avCodecSyncSem); 
+    tsem_deinit(omx_videodec_component_Private->avCodecSyncSem);
     free(omx_videodec_component_Private->avCodecSyncSem);
     omx_videodec_component_Private->avCodecSyncSem = NULL;
   }
 
-  /* frees port/s */   
-  if (omx_videodec_component_Private->ports) {   
-    for (i=0; i < omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {   
-      if(omx_videodec_component_Private->ports[i])   
-        omx_videodec_component_Private->ports[i]->PortDestructor(omx_videodec_component_Private->ports[i]);   
-    }   
-    free(omx_videodec_component_Private->ports);   
-    omx_videodec_component_Private->ports=NULL;   
-  } 
+  /* frees port/s */
+  if (omx_videodec_component_Private->ports) {
+    for (i=0; i < omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo].nPorts; i++) {
+      if(omx_videodec_component_Private->ports[i])
+        omx_videodec_component_Private->ports[i]->PortDestructor(omx_videodec_component_Private->ports[i]);
+    }
+    free(omx_videodec_component_Private->ports);
+    omx_videodec_component_Private->ports=NULL;
+  }
 
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "Destructor of video decoder component is called\n");
@@ -209,11 +209,11 @@ OMX_ERRORTYPE omx_videodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 }
 
 
-/** It initializates the FFmpeg framework, and opens an FFmpeg videodecoder of type specified by IL client 
-  */ 
+/** It initializates the FFmpeg framework, and opens an FFmpeg videodecoder of type specified by IL client
+  */
 OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_PrivateType* omx_videodec_component_Private) {
 
-  OMX_U32 target_codecID;  
+  OMX_U32 target_codecID;
   avcodec_init();
   av_register_all();
 
@@ -223,7 +223,7 @@ OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_Privat
     case OMX_VIDEO_CodingMPEG4 :
       target_codecID = CODEC_ID_MPEG4;
       break;
-    case OMX_VIDEO_CodingAVC : 
+    case OMX_VIDEO_CodingAVC :
       target_codecID = CODEC_ID_H264;
       break;
     default :
@@ -244,7 +244,6 @@ OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_Privat
   omx_videodec_component_Private->avFrame = avcodec_alloc_frame();
   if(omx_videodec_component_Private->extradata_size >0) {
     omx_videodec_component_Private->avCodecContext->extradata = omx_videodec_component_Private->extradata;
-    omx_videodec_component_Private->avCodecContext->extradata_size = (int)omx_videodec_component_Private->extradata_size;
   } else {
     omx_videodec_component_Private->avCodecContext->flags |= CODEC_FLAG_TRUNCATED;
   }
@@ -278,12 +277,12 @@ void omx_videodec_component_ffmpegLibDeInit(omx_videodec_component_PrivateType* 
 
 }
 
-/** internal function to set codec related parameters in the private type structure 
+/** internal function to set codec related parameters in the private type structure
   */
 void SetInternalVideoParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
 
   omx_videodec_component_PrivateType* omx_videodec_component_Private;
-  omx_base_video_PortType *inPort ; 
+  omx_base_video_PortType *inPort ;
 
   omx_videodec_component_Private = openmaxStandComp->pComponentPrivate;;
 
@@ -291,8 +290,8 @@ void SetInternalVideoParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
     strcpy(omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.video.cMIMEType,"video/mpeg4");
     omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.video.eCompressionFormat = OMX_VIDEO_CodingMPEG4;
 
-    setHeader(&omx_videodec_component_Private->pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));    
-    omx_videodec_component_Private->pVideoMpeg4.nPortIndex = 0;                                                                    
+    setHeader(&omx_videodec_component_Private->pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));
+    omx_videodec_component_Private->pVideoMpeg4.nPortIndex = 0;
     omx_videodec_component_Private->pVideoMpeg4.nSliceHeaderSpacing = 0;
     omx_videodec_component_Private->pVideoMpeg4.bSVH = OMX_FALSE;
     omx_videodec_component_Private->pVideoMpeg4.bGov = OMX_FALSE;
@@ -330,17 +329,17 @@ void SetInternalVideoParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
     omx_videodec_component_Private->pVideoAvc.bFrameMBsOnly = OMX_FALSE;
     omx_videodec_component_Private->pVideoAvc.nRefIdx10ActiveMinus1 = 0;
     omx_videodec_component_Private->pVideoAvc.nRefIdx11ActiveMinus1 = 0;
-    omx_videodec_component_Private->pVideoAvc.bEnableUEP = OMX_FALSE;  
-    omx_videodec_component_Private->pVideoAvc.bEnableFMO = OMX_FALSE;  
-    omx_videodec_component_Private->pVideoAvc.bEnableASO = OMX_FALSE;  
-    omx_videodec_component_Private->pVideoAvc.bEnableRS = OMX_FALSE;   
+    omx_videodec_component_Private->pVideoAvc.bEnableUEP = OMX_FALSE;
+    omx_videodec_component_Private->pVideoAvc.bEnableFMO = OMX_FALSE;
+    omx_videodec_component_Private->pVideoAvc.bEnableASO = OMX_FALSE;
+    omx_videodec_component_Private->pVideoAvc.bEnableRS = OMX_FALSE;
 
-    omx_videodec_component_Private->pVideoAvc.bMBAFF = OMX_FALSE;               
-    omx_videodec_component_Private->pVideoAvc.bEntropyCodingCABAC = OMX_FALSE;  
-    omx_videodec_component_Private->pVideoAvc.bWeightedPPrediction = OMX_FALSE; 
-    omx_videodec_component_Private->pVideoAvc.nWeightedBipredicitonMode = 0; 
+    omx_videodec_component_Private->pVideoAvc.bMBAFF = OMX_FALSE;
+    omx_videodec_component_Private->pVideoAvc.bEntropyCodingCABAC = OMX_FALSE;
+    omx_videodec_component_Private->pVideoAvc.bWeightedPPrediction = OMX_FALSE;
+    omx_videodec_component_Private->pVideoAvc.nWeightedBipredicitonMode = 0;
     omx_videodec_component_Private->pVideoAvc.bconstIpred = OMX_FALSE;
-    omx_videodec_component_Private->pVideoAvc.bDirect8x8Inference = OMX_FALSE;  
+    omx_videodec_component_Private->pVideoAvc.bDirect8x8Inference = OMX_FALSE;
     omx_videodec_component_Private->pVideoAvc.bDirectSpatialTemporal = OMX_FALSE;
     omx_videodec_component_Private->pVideoAvc.nCabacInitIdc = 0;
     omx_videodec_component_Private->pVideoAvc.eLoopFilterMode = OMX_VIDEO_AVCLoopFilterDisable;
@@ -367,7 +366,7 @@ OMX_ERRORTYPE omx_videodec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   return eError;
 }
 
-/** The Deinitialization function of the video decoder  
+/** The Deinitialization function of the video decoder
   */
 OMX_ERRORTYPE omx_videodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
 
@@ -380,7 +379,7 @@ OMX_ERRORTYPE omx_videodec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp)
   }
 
   return eError;
-} 
+}
 
 /** Executes all the required steps after an output buffer frame-size has changed.
 */
@@ -438,10 +437,10 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
     }
     omx_videodec_component_Private->avCodecContext->frame_number++;
 
-    nLen = avcodec_decode_video(omx_videodec_component_Private->avCodecContext, 
-          omx_videodec_component_Private->avFrame, 
+    nLen = avcodec_decode_video(omx_videodec_component_Private->avCodecContext,
+          omx_videodec_component_Private->avFrame,
           (int*)&internalOutputFilled,
-          omx_videodec_component_Private->inputCurrBuffer, 
+          omx_videodec_component_Private->inputCurrBuffer,
           omx_videodec_component_Private->inputCurrLength);
 
     if (nLen < 0) {
@@ -462,7 +461,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
             break;
           default :
             DEBUG(DEB_LEV_ERR, "Video formats other than MPEG-4 AVC not supported\nCodec not found\n");
-            break;           
+            break;
         }
 
         UpdateFrameSize (openmaxStandComp);
@@ -471,9 +470,9 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
         (*(omx_videodec_component_Private->callbacks->EventHandler))
           (openmaxStandComp,
            omx_videodec_component_Private->callbackData,
-           OMX_EventPortSettingsChanged, // The command was completed 
+           OMX_EventPortSettingsChanged, // The command was completed
            nLen,  //to adjust the file pointer to resume the correct decode process
-           0, // This is the input port index 
+           0, // This is the input port index
            NULL);
       }
     }
@@ -487,7 +486,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       if(pInputBuffer->nFilledLen == 0) {
         omx_videodec_component_Private->isNewBuffer = 1;
       }
-      
+
       nSize = avpicture_get_size (omx_videodec_component_Private->eOutFramePixFmt,
                                   omx_videodec_component_Private->avCodecContext->width,
                                   omx_videodec_component_Private->avCodecContext->height);
@@ -498,21 +497,21 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       }
 
       avpicture_fill (&pic, (unsigned char*)(outputCurrBuffer),
-                      omx_videodec_component_Private->eOutFramePixFmt, 
-                      omx_videodec_component_Private->avCodecContext->width, 
+                      omx_videodec_component_Private->eOutFramePixFmt,
+                      omx_videodec_component_Private->avCodecContext->width,
                       omx_videodec_component_Private->avCodecContext->height);
 
       if ( !imgConvertYuvCtx ) {
-        imgConvertYuvCtx = sws_getContext( omx_videodec_component_Private->avCodecContext->width, 
-                                              omx_videodec_component_Private->avCodecContext->height, 
+        imgConvertYuvCtx = sws_getContext( omx_videodec_component_Private->avCodecContext->width,
+                                              omx_videodec_component_Private->avCodecContext->height,
                                               omx_videodec_component_Private->avCodecContext->pix_fmt,
                                               omx_videodec_component_Private->avCodecContext->width,
                                               omx_videodec_component_Private->avCodecContext->height,
                                               omx_videodec_component_Private->eOutFramePixFmt, SWS_FAST_BILINEAR, NULL, NULL, NULL );
       }
 
-      sws_scale(imgConvertYuvCtx, omx_videodec_component_Private->avFrame->data, 
-                omx_videodec_component_Private->avFrame->linesize, 0, 
+      sws_scale(imgConvertYuvCtx, omx_videodec_component_Private->avFrame->data,
+                omx_videodec_component_Private->avFrame->linesize, 0,
                 omx_videodec_component_Private->avCodecContext->height, pic.data, pic.linesize );
 
       if (imgConvertYuvCtx ) {
@@ -520,18 +519,18 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
       }
 
       DEBUG(DEB_LEV_FULL_SEQ, "nSize=%d,frame linesize=%d,height=%d,pic linesize=%d PixFmt=%d\n",nSize,
-        omx_videodec_component_Private->avFrame->linesize[0], 
-        omx_videodec_component_Private->avCodecContext->height, 
+        omx_videodec_component_Private->avFrame->linesize[0],
+        omx_videodec_component_Private->avCodecContext->height,
         pic.linesize[0],omx_videodec_component_Private->eOutFramePixFmt);
 
       pOutputBuffer->nFilledLen += nSize;
 
     } else {
       /**  This condition becomes true when the input buffer has completely be consumed.
-        * In this case is immediately switched because there is no real buffer consumption 
+        * In this case is immediately switched because there is no real buffer consumption
         */
       pInputBuffer->nFilledLen = 0;
-      /** Few bytes may be left in the input buffer but can't generate one output frame. 
+      /** Few bytes may be left in the input buffer but can't generate one output frame.
         *  Request for new Input Buffer
         */
       omx_videodec_component_Private->isNewBuffer = 1;
@@ -540,7 +539,7 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 
     nOutputFilled = 1;
   }
-  DEBUG(DEB_LEV_FULL_SEQ, "One output buffer %x nLen=%d is full returning in video decoder\n", 
+  DEBUG(DEB_LEV_FULL_SEQ, "One output buffer %x nLen=%d is full returning in video decoder\n",
             (int)pOutputBuffer->pBuffer, (int)pOutputBuffer->nFilledLen);
 }
 
@@ -581,10 +580,10 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
         portIndex = pVideoPortFormat->nPortIndex;
         /*Check Structure Header and verify component state*/
         eError = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
-        if(eError!=OMX_ErrorNone) { 
-          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError); 
+        if(eError!=OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError);
           break;
-        } 
+        }
         if (portIndex <= 1) {
           port = (omx_base_video_PortType *)omx_videodec_component_Private->ports[portIndex];
           memcpy(&port->sVideoParam, pVideoPortFormat, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE));
@@ -594,7 +593,7 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
             switch(port->sVideoParam.eColorFormat) {
               case OMX_COLOR_Format24bitRGB888 :
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB24;
-                break; 
+                break;
               case OMX_COLOR_Format24bitBGR888 :
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR24;
                 break;
@@ -603,13 +602,13 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
                 break;
               case OMX_COLOR_Format32bitARGB8888 :
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB32;
-                break; 
+                break;
               case OMX_COLOR_Format16bitARGB1555 :
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB555;
                 break;
               case OMX_COLOR_Format16bitRGB565 :
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_RGB565;
-                break; 
+                break;
               case OMX_COLOR_Format16bitBGR565 :
                 omx_videodec_component_Private->eOutFramePixFmt = PIX_FMT_BGR565;
                 break;
@@ -630,10 +629,10 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
         pVideoAvc = ComponentParameterStructure;
         portIndex = pVideoAvc->nPortIndex;
         eError = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
-        if(eError!=OMX_ErrorNone) { 
-          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError); 
+        if(eError!=OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError);
           break;
-        } 
+        }
         memcpy(&omx_videodec_component_Private->pVideoAvc, pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
         break;
       }
@@ -645,8 +644,8 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
           DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_videodec_component_Private->state,__LINE__);
           return OMX_ErrorIncorrectStateOperation;
         }
-  
-        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 
+
+        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
           break;
         }
 
@@ -666,10 +665,10 @@ OMX_IN  OMX_PTR ComponentParameterStructure) {
         pVideoMpeg4 = ComponentParameterStructure;
         portIndex = pVideoMpeg4->nPortIndex;
         eError = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));
-        if(eError!=OMX_ErrorNone) { 
-          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError); 
+        if(eError!=OMX_ErrorNone) {
+          DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,eError);
           break;
-        } 
+        }
         if (pVideoMpeg4->nPortIndex == 0) {
           memcpy(&omx_videodec_component_Private->pVideoMpeg4, pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));
         } else {
@@ -700,16 +699,16 @@ OMX_ERRORTYPE omx_videodec_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
     case OMX_IndexParamVideoInit:
-      if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+      if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) {
         break;
       }
       memcpy(ComponentParameterStructure, &omx_videodec_component_Private->sPortTypesParam[OMX_PortDomainVideo], sizeof(OMX_PORT_PARAM_TYPE));
-      break;    
+      break;
     case OMX_IndexParamVideoPortFormat:
       {
-        OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;  
+        OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
         pVideoPortFormat = ComponentParameterStructure;
-        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
           break;
         }
         if (pVideoPortFormat->nPortIndex <= 1) {
@@ -718,7 +717,7 @@ OMX_ERRORTYPE omx_videodec_component_GetParameter(
         } else {
           return OMX_ErrorBadPortIndex;
         }
-        break;    
+        break;
       }
     case OMX_IndexParamVideoMpeg4:
       {
@@ -727,7 +726,7 @@ OMX_ERRORTYPE omx_videodec_component_GetParameter(
         if (pVideoMpeg4->nPortIndex != 0) {
           return OMX_ErrorBadPortIndex;
         }
-        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE))) != OMX_ErrorNone) { 
+        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE))) != OMX_ErrorNone) {
           break;
         }
         memcpy(pVideoMpeg4, &omx_videodec_component_Private->pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));
@@ -735,12 +734,12 @@ OMX_ERRORTYPE omx_videodec_component_GetParameter(
       }
     case OMX_IndexParamVideoAvc:
       {
-        OMX_VIDEO_PARAM_AVCTYPE * pVideoAvc; 
+        OMX_VIDEO_PARAM_AVCTYPE * pVideoAvc;
         pVideoAvc = ComponentParameterStructure;
         if (pVideoAvc->nPortIndex != 0) {
           return OMX_ErrorBadPortIndex;
         }
-        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_AVCTYPE))) != OMX_ErrorNone) { 
+        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_AVCTYPE))) != OMX_ErrorNone) {
           break;
         }
         memcpy(pVideoAvc, &omx_videodec_component_Private->pVideoAvc, sizeof(OMX_VIDEO_PARAM_AVCTYPE));
@@ -750,7 +749,7 @@ OMX_ERRORTYPE omx_videodec_component_GetParameter(
       {
         OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
         pComponentRole = ComponentParameterStructure;
-        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 
+        if ((eError = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
           break;
         }
         if (omx_videodec_component_Private->video_coding_type == OMX_VIDEO_CodingMPEG4) {
@@ -784,19 +783,19 @@ OMX_ERRORTYPE omx_videodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
         }
         omx_videodec_component_Private->avcodecReady = OMX_TRUE;
       }
-    } 
+    }
     else if ((message->messageParam == OMX_StateIdle ) && (omx_videodec_component_Private->state == OMX_StateLoaded)) {
       err = omx_videodec_component_Init(openmaxStandComp);
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s Video Decoder Init Failed Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s Video Decoder Init Failed Error=%x\n",__func__,err);
         return err;
-      } 
+      }
     } else if ((message->messageParam == OMX_StateLoaded) && (omx_videodec_component_Private->state == OMX_StateIdle)) {
       err = omx_videodec_component_Deinit(openmaxStandComp);
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s Video Decoder Deinit Failed Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s Video Decoder Deinit Failed Error=%x\n",__func__,err);
         return err;
-      } 
+      }
     }
   }
   // Execute the base message handling

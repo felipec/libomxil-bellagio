@@ -105,7 +105,7 @@ jpeg_write_scanlines (j_compress_ptr cinfo, JSAMPARRAY scanlines,
     num_lines = rows_left;
 
   row_ctr = 0;
-  (*cinfo->main->process_data) (cinfo, scanlines, &row_ctr, num_lines);
+  (*cinfo->main_jc->process_data) (cinfo, scanlines, &row_ctr, num_lines);
   cinfo->next_scanline += row_ctr;
   return row_ctr;
 }

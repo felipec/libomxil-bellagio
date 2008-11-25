@@ -114,7 +114,7 @@ output_pass_setup (j_decompress_ptr cinfo)
       }
       /* Process some data */
       last_scanline = cinfo->output_scanline;
-      (*cinfo->main->process_data) (cinfo, (JSAMPARRAY) NULL,
+      (*cinfo->main_jc->process_data) (cinfo, (JSAMPARRAY) NULL,
 				    &cinfo->output_scanline, (JDIMENSION) 0);
       if (cinfo->output_scanline == last_scanline)
 	return FALSE;		/* No progress made, must suspend */
@@ -170,7 +170,7 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
 
   /* Process some data */
   row_ctr = 0;
-  (*cinfo->main->process_data) (cinfo, scanlines, &row_ctr, max_lines);
+  (*cinfo->main_jc->process_data) (cinfo, scanlines, &row_ctr, max_lines);
   cinfo->output_scanline += row_ctr;
   return row_ctr;
 }

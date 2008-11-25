@@ -292,7 +292,7 @@ OMX_ERRORTYPE OMX_SetupTunnel(
     }
   }
   DEBUG(DEB_LEV_PARAMS, "First stage of tunneling acheived:\n");
-  DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", (int)tunnelSetup->eSupplier);
+  DEBUG(DEB_LEV_PARAMS, "       - supplier proposed = %i\n", tunnelSetup->eSupplier);
   DEBUG(DEB_LEV_PARAMS, "       - flags             = %i\n", (int)tunnelSetup->nTunnelFlags);
 
   component = (OMX_COMPONENTTYPE*)hInput;

@@ -170,7 +170,7 @@ write_bmp_header (j_decompress_ptr cinfo, bmp_dest_ptr dest)
   INT32 headersize, bfSize;
   int bits_per_pixel, cmap_entries;
 
-	
+
 
   /* Compute colormap size and total file size */
   if (cinfo->out_color_space == JCS_RGB) {
@@ -191,7 +191,7 @@ write_bmp_header (j_decompress_ptr cinfo, bmp_dest_ptr dest)
   /* File size */
   headersize = 14 + 40 + cmap_entries * 4; /* Header and colormap */
   bfSize = headersize + (INT32) dest->row_width * (INT32) cinfo->output_height;
-  
+
   /* Set unused fields of header to 0 */
   MEMZERO(bmpfileheader, SIZEOF(bmpfileheader));
   MEMZERO(bmpinfoheader, SIZEOF(bmpinfoheader));
@@ -258,7 +258,7 @@ write_os2_header (j_decompress_ptr cinfo, bmp_dest_ptr dest)
   /* File size */
   headersize = 14 + 12 + cmap_entries * 3; /* Header and colormap */
   bfSize = headersize + (INT32) dest->row_width * (INT32) cinfo->output_height;
-  
+
   /* Set unused fields of header to 0 */
   MEMZERO(bmpfileheader, SIZEOF(bmpfileheader));
   MEMZERO(bmpcoreheader, SIZEOF(bmpcoreheader));
@@ -282,7 +282,7 @@ write_os2_header (j_decompress_ptr cinfo, bmp_dest_ptr dest)
   if (JFWRITE(dest->pub.output_file, bmpcoreheader, 12) != (size_t) 12)
     ERREXIT(cinfo, JERR_FILE_WRITE);
 
-	
+
 
   if (cmap_entries > 0)
     write_colormap(cinfo, dest, cmap_entries, 3);
@@ -333,7 +333,7 @@ write_colormap (j_decompress_ptr cinfo, bmp_dest_ptr dest,
 	putc(0, outfile);
     }
   }
-  /* Pad colormap with zeros to ensure specified number of colormap entries */ 
+  /* Pad colormap with zeros to ensure specified number of colormap entries */
   if (i > map_colors)
     ERREXIT1(cinfo, JERR_TOO_MANY_COLORS, i);
   for (; i < map_colors; i++) {
@@ -355,7 +355,7 @@ finish_output_bmp (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
   JDIMENSION row;
   register JDIMENSION col;
   cd_progress_ptr progress = (cd_progress_ptr) cinfo->progress;
-	
+
 
   /* Write the header and colormap */
   if (dest->is_os2)
@@ -389,91 +389,11 @@ finish_output_bmp (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
 }
 
 LOCAL(void)
-write_colormap_buf (j_decompress_ptr cinfo, bmp_dest_ptr dest,
-		int map_colors, int map_entry_size,char *buf)
-{
-  JSAMPARRAY colormap = cinfo->colormap;
-  int num_colors = cinfo->actual_number_of_colors;
-  FILE * outfile = dest->pub.output_file;
-	JSAMPARRAY outbuffer= dest->pub.buffer;
-  int i,k=54;
-
-  if (colormap != NULL) {
-    if (cinfo->out_color_components == 3) {
-      /* Normal case with RGB colormap */
-      for (i = 0; i < num_colors; i++) {
-				
-				*(buf+k)=GETJSAMPLE(colormap[2][i]);
-				k++;
-				*(buf+k)=GETJSAMPLE(colormap[1][i]);
-				k++;
-				*(buf+k)=GETJSAMPLE(colormap[0][i]);
-				k++;
-				if (map_entry_size == 4){
-					//putc(0, outfile);
-					*(buf+k)=0;
-					k++;
-				}
-      }
-    } else {
-      /* Grayscale colormap (only happens with grayscale quantization) */
-      for (i = 0; i < num_colors; i++) {
-				
-				*(buf+k)=GETJSAMPLE(colormap[0][i]);
-				k++;
-				*(buf+k)=GETJSAMPLE(colormap[0][i]);
-				k++;
-				*(buf+k)=GETJSAMPLE(colormap[0][i]);
-				k++;
-				if (map_entry_size == 4) {
-					*(buf+k)=0;
-					k++;
-				}
-      }
-    }
-  } else {
-    /* If no colormap, must be grayscale data.  Generate a linear "map". */
-    for (i = 0; i < 256; i++) {
-						
-			*(buf+k)=i;
-			k++;
-			*(buf+k)=i;
-			k++;
-			*(buf+k)=i;
-			k++;
-      if (map_entry_size == 4) {
-				//putc(0, outfile);
-				*(buf+k)=0;
-				k++;
-			}
-    }
-  }
-  /* Pad colormap with zeros to ensure specified number of colormap entries */ 
-  if (i > map_colors)
-    ERREXIT1(cinfo, JERR_TOO_MANY_COLORS, i);
-  for (; i < map_colors; i++) {
-				
-		*(buf+k)=0;
-		k++;
-		*(buf+k)=0;
-		k++;
-		*(buf+k)=0;
-		k++;
-    if (map_entry_size == 4) {
-			//putc(0, outfile);
-			*(buf+k)=0;
-			k++;
-		}
-  }
-}
-
-LOCAL(void)
 write_bmp_header_buf (j_decompress_ptr cinfo, bmp_dest_ptr dest,char* buf)
 /* Write a Windows-style BMP file header, including colormap if needed */
 {
   char bmpfileheader[14];
   char bmpinfoheader[40];
-	char bmpheader[54];
 #define PUT_2B(array,offset,value)  \
 	(array[offset] = (char) ((value) & 0xFF), \
 	 array[offset+1] = (char) (((value) >> 8) & 0xFF))
@@ -483,11 +403,9 @@ write_bmp_header_buf (j_decompress_ptr cinfo, bmp_dest_ptr dest,char* buf)
 	 array[offset+2] = (char) (((value) >> 16) & 0xFF), \
 	 array[offset+3] = (char) (((value) >> 24) & 0xFF))
   INT32 headersize, bfSize;
-  int bits_per_pixel, cmap_entries,i;
-	JSAMPARRAY buffer=dest->pub.buffer;
-	char **buffer1;
+  int bits_per_pixel, cmap_entries;
 
-	
+
   /* Compute colormap size and total file size */
   if (cinfo->out_color_space == JCS_RGB) {
     if (cinfo->quantize_colors) {
@@ -507,7 +425,7 @@ write_bmp_header_buf (j_decompress_ptr cinfo, bmp_dest_ptr dest,char* buf)
   /* File size */
   headersize = 14 + 40 + cmap_entries * 4; /* Header and colormap */
   bfSize = headersize + (INT32) dest->row_width * (INT32) cinfo->output_height;
-  
+
   /* Set unused fields of header to 0 */
   MEMZERO(bmpfileheader, SIZEOF(bmpfileheader));
   MEMZERO(bmpinfoheader, SIZEOF(bmpinfoheader));
@@ -534,7 +452,7 @@ write_bmp_header_buf (j_decompress_ptr cinfo, bmp_dest_ptr dest,char* buf)
   PUT_2B(bmpinfoheader, 32, cmap_entries); /* biClrUsed */
   /* we leave biClrImportant = 0 */
 
-		
+
 	memcpy(&(**dest->pub.buffer),&bmpfileheader,14);
 	memcpy(&(*(*dest->pub.buffer+14)),&bmpinfoheader,40);
 
@@ -550,21 +468,16 @@ GLOBAL(void)
 finish_output_bmp_buf (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,char *buf)
 {
   bmp_dest_ptr dest = (bmp_dest_ptr) dinfo;
-  register FILE * outfile = dest->pub.output_file;
   JSAMPARRAY image_ptr;
 
-	JSAMPARRAY outputbuffer = dest->pub.buffer;
   register JSAMPROW data_ptr;
   JDIMENSION row;
   register JDIMENSION col;
   cd_progress_ptr progress = (cd_progress_ptr) cinfo->progress;
-	JSAMPARRAY buffer=dest->pub.buffer;
-	char **buffer1;
-	int i;
 	char *buf1;
-	
+
 	buf1=buf;
-	
+
   /* Write the header and colormap */
 	/*
   if (dest->is_os2)
@@ -572,7 +485,7 @@ finish_output_bmp_buf (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,char *buf)
   else
 	*/
   write_bmp_header_buf(cinfo, dest,buf);
-	
+
   /* Write the file body from our virtual array */
   for (row = cinfo->output_height; row > 0; row--) {
     if (progress != NULL) {
@@ -590,7 +503,7 @@ finish_output_bmp_buf (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,char *buf)
     }
   }
 
-		
+
   if (progress != NULL)
     progress->completed_extra_passes++;
 

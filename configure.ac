@@ -5,6 +5,7 @@ AM_INIT_AUTOMAKE([tar-ustar])
 AC_PREREQ([2.59])
 
 AC_CONFIG_HEADERS([config.h])
+CFLAGS="${CFLAGS} -Werror"
 
 ################################################################################
 # Set the shared versioning info, according to section 6.3 of the libtool info #

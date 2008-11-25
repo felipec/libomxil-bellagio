@@ -1,10 +1,10 @@
 /**
   @file test/components/video/omxvideocapturetest.c
-  
-  Test application that uses a OpenMAX component, a generic video videosrc. 
+
+  Test application that uses a OpenMAX component, a generic video videosrc.
   The application receives an video stream (.yuv) captured using a camera.
   The capture picture is then stored into a file, which can be seen by a yuv viewer.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -22,7 +22,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date: 2008-02-13 16:34:49 +0100 (Wed, 13 Feb 2008) $
   Revision $Rev: 1304 $
   Author $Author: giulio_urlini $
@@ -59,16 +59,6 @@ FILE *outfile;
 
 int flagIsOutputExpected;
 static OMX_BOOL bEOS = OMX_FALSE;
-
-static void setHeader(OMX_PTR header, OMX_U32 size) {
-  OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
-  *((OMX_U32*)header) = size;
-
-  ver->s.nVersionMajor = VERSIONMAJOR;
-  ver->s.nVersionMinor = VERSIONMINOR;
-  ver->s.nRevision = VERSIONREVISION;
-  ver->s.nStep = VERSIONSTEP;
-}
 
 /** help display */
 void display_help() {
@@ -129,9 +119,9 @@ int main(int argc, char** argv) {
           } else {
             output_file = malloc(strlen(argv[argn_dec]) * sizeof(char) + 1);
             strcpy(output_file,argv[argn_dec]);
-          }          
+          }
           flagIsOutputExpected = 0;
-        } 
+        }
       }
       argn_dec++;
     }
@@ -141,24 +131,24 @@ int main(int argc, char** argv) {
     output_file = malloc(30);
     strcpy(output_file,"default_camera_out.rgb");
   }
- 
+
   outfile = fopen(output_file, "wb");
   if(outfile == NULL) {
     DEBUG(DEB_LEV_ERR, "Error in opening output file %s\n", output_file);
     exit(1);
   }
-  
+
   /** setting input picture width to a default value (vga format) for allocation of video videosrc buffers */
-  out_width = 176;    
-  out_height = 144;   
+  out_width = 176;
+  out_height = 144;
 
   /* Initialize application private data */
-  appPriv = malloc(sizeof(appPrivateType));  
+  appPriv = malloc(sizeof(appPrivateType));
   appPriv->videosrcEventSem = malloc(sizeof(tsem_t));
   appPriv->eofSem = malloc(sizeof(tsem_t));
   tsem_init(appPriv->videosrcEventSem, 0);
   tsem_init(appPriv->eofSem, 0);
-  
+
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Init the Omx core\n");
   err = OMX_Init();
   if (err != OMX_ErrorNone) {
@@ -167,14 +157,14 @@ int main(int argc, char** argv) {
   } else {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Omx core is initialized \n");
   }
-  
+
   test_OpenClose(COMPONENT_NAME);
   DEBUG(DEFAULT_MESSAGES, "------------------------------------\n");
-  
+
 
   full_component_name = (OMX_STRING) malloc(sizeof(char*) * OMX_MAX_STRINGNAME_SIZE);
   strcpy(full_component_name, COMPONENT_NAME);
-  
+
 
   DEBUG(DEFAULT_MESSAGES, "The component selected for capturing is %s\n", full_component_name);
 
@@ -197,19 +187,19 @@ int main(int argc, char** argv) {
   pOutBuffer1 = pOutBuffer2 = NULL;
   err = OMX_AllocateBuffer(appPriv->videosrchandle, &pOutBuffer1, 0, NULL, buffer_out_size);
   err = OMX_AllocateBuffer(appPriv->videosrchandle, &pOutBuffer2, 0, NULL, buffer_out_size);
-  
+
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Before locking on idle wait semaphore\n");
   tsem_down(appPriv->videosrcEventSem);
   DEBUG(DEB_LEV_SIMPLE_SEQ, "videosrc Sem free\n");
-  
+
   /** sending command to video videosrc component to go to executing state */
   err = OMX_SendCommand(appPriv->videosrchandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
   tsem_down(appPriv->videosrcEventSem);
 
   err = OMX_FillThisBuffer(appPriv->videosrchandle, pOutBuffer1);
   err = OMX_FillThisBuffer(appPriv->videosrchandle, pOutBuffer2);
- 
+
   DEBUG(DEFAULT_MESSAGES,"Waiting for  EOS\n");
 
   /*Capture video for 10 seconds*/
@@ -223,39 +213,39 @@ int main(int argc, char** argv) {
 
   /** state change of all components from executing to idle */
   err = OMX_SendCommand(appPriv->videosrchandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
-  
+
   tsem_down(appPriv->videosrcEventSem);
-  
+
 
   DEBUG(DEFAULT_MESSAGES, "All video components Transitioned to Idle\n");
 
   /** sending command to all components to go to loaded state */
   err = OMX_SendCommand(appPriv->videosrchandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
-  
+
 
   /** freeing buffers of video videosrc input ports */
   DEBUG(DEB_LEV_PARAMS, "Free Video dec output ports\n");
   err = OMX_FreeBuffer(appPriv->videosrchandle, 0, pOutBuffer1);
   err = OMX_FreeBuffer(appPriv->videosrchandle, 0, pOutBuffer2);
- 
+
   tsem_down(appPriv->videosrcEventSem);
   DEBUG(DEB_LEV_SIMPLE_SEQ, "All components released\n");
 
   OMX_FreeHandle(appPriv->videosrchandle);
-  
+
   DEBUG(DEB_LEV_SIMPLE_SEQ, "video dec freed\n");
 
   OMX_Deinit();
 
   DEBUG(DEFAULT_MESSAGES, "All components freed. Closing...\n");
   free(appPriv->videosrcEventSem);
-  
+
   free(appPriv->eofSem);
   free(appPriv);
 
   /** closing the output file */
   fclose(outfile);
-  
+
   return 0;
 }
 
@@ -294,10 +284,10 @@ OMX_ERRORTYPE videosrcEventHandler(
         case OMX_StateWaitForResources:
           DEBUG(DEB_LEV_SIMPLE_SEQ, "OMX_StateWaitForResources\n");
           break;
-      }    
+      }
       tsem_up(appPriv->videosrcEventSem);
     }
-    
+
   } else if(eEvent == OMX_EventPortSettingsChanged) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "\n port settings change event handler in %s \n", __func__);
   } else if(eEvent == OMX_EventBufferFlag) {
@@ -309,7 +299,7 @@ OMX_ERRORTYPE videosrcEventHandler(
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param2 is %i\n", (int)Data2);
   }
-  return err; 
+  return err;
 }
 
 OMX_ERRORTYPE videosrcFillBufferDone(
@@ -321,11 +311,11 @@ OMX_ERRORTYPE videosrcFillBufferDone(
 
   if(pBuffer != NULL){
     if(!bEOS) {
-      /** if there is color conv component in processing state then send this buffer, in non tunneled case 
+      /** if there is color conv component in processing state then send this buffer, in non tunneled case
         * else in non tunneled case, write the output buffer contents in the specified output file
         */
       if(pBuffer->nFilledLen > 0) {
-          fwrite(pBuffer->pBuffer, sizeof(char),  pBuffer->nFilledLen, outfile);    
+          fwrite(pBuffer->pBuffer, sizeof(char),  pBuffer->nFilledLen, outfile);
           pBuffer->nFilledLen = 0;
       }
       if(pBuffer->nFlags == OMX_BUFFERFLAG_EOS) {
@@ -341,7 +331,7 @@ OMX_ERRORTYPE videosrcFillBufferDone(
   } else {
     DEBUG(DEB_LEV_ERR, "Ouch! In %s: had NULL buffer to output...\n", __func__);
   }
-  return OMX_ErrorNone;  
+  return OMX_ErrorNone;
 }
 
 

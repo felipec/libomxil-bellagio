@@ -256,14 +256,14 @@ typedef huff_entropy_decoder * huff_entropy_ptr;
 
 
 static const int jpeg_zigzag_order[8][8] = {
-   0,  1,  5,  6, 14, 15, 27, 28,
-   2,  4,  7, 13, 16, 26, 29, 42,
-   3,  8, 12, 17, 25, 30, 41, 43,
-   9, 11, 18, 24, 31, 40, 44, 53,
-  10, 19, 23, 32, 39, 45, 52, 54,
-  20, 22, 33, 38, 46, 51, 55, 60,
-  21, 34, 37, 47, 50, 56, 59, 61,
-  35, 36, 48, 49, 57, 58, 62, 63
+		{0,  1,  5,  6, 14, 15, 27, 28},
+		{2,  4,  7, 13, 16, 26, 29, 42},
+		{3,  8, 12, 17, 25, 30, 41, 43},
+		{9, 11, 18, 24, 31, 40, 44, 53},
+		{10, 19, 23, 32, 39, 45, 52, 54},
+		{20, 22, 33, 38, 46, 51, 55, 60},
+		{21, 34, 37, 47, 50, 56, 59, 61},
+		{35, 36, 48, 49, 57, 58, 62, 63}
 };
 
 
@@ -303,7 +303,7 @@ jpeg_make_d_derived_tbl (j_decompress_ptr cinfo, boolean isDC, int tblno,
 				  SIZEOF(d_derived_tbl));
   dtbl = *pdtbl;
   dtbl->pub = htbl;		/* fill in back link */
-  
+
   /* Figure C.1: make table of Huffman code length for each symbol */
 
   p = 0;
@@ -316,10 +316,10 @@ jpeg_make_d_derived_tbl (j_decompress_ptr cinfo, boolean isDC, int tblno,
   }
   huffsize[p] = 0;
   numsymbols = p;
-  
+
   /* Figure C.2: generate the codes themselves */
   /* We also validate that the counts represent a legal Huffman code tree. */
-  
+
   code = 0;
   si = huffsize[0];
   p = 0;
@@ -624,7 +624,7 @@ process_restart (j_decompress_ptr cinfo)
 /*
  * Huffman MCU decoding.
  * Each of these routines decodes and returns one MCU's worth of
- * Huffman-compressed coefficients. 
+ * Huffman-compressed coefficients.
  * The coefficients are reordered from zigzag order into natural array order,
  * but are not dequantized.
  *
@@ -646,7 +646,7 @@ process_restart (j_decompress_ptr cinfo)
 
 METHODDEF(boolean)
 decode_mcu_DC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
-{   
+{
   huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
   int Al = cinfo->Al;
   register int s, r;
@@ -717,7 +717,7 @@ decode_mcu_DC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 
 METHODDEF(boolean)
 decode_mcu_AC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
-{   
+{
   huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
   int Se = cinfo->Se;
   int Al = cinfo->Al;
@@ -802,7 +802,7 @@ decode_mcu_AC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 
 METHODDEF(boolean)
 decode_mcu_DC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
-{   
+{
   huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
   int p1 = 1 << cinfo->Al;	/* 1 in the bit position being coded */
   int blkn;
@@ -851,7 +851,7 @@ decode_mcu_DC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 
 METHODDEF(boolean)
 decode_mcu_AC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
-{   
+{
   huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
   int Se = cinfo->Se;
   int p1 = 1 << cinfo->Al;	/* 1 in the bit position being coded */

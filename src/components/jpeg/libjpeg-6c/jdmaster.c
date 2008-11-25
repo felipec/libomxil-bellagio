@@ -327,7 +327,7 @@ jpeg_calc_output_dimensions (j_decompress_ptr cinfo)
  * For most steps we can mathematically guarantee that the initial value
  * of x is within MAXJSAMPLE+1 of the legal range, so a table running from
  * -(MAXJSAMPLE+1) to 2*MAXJSAMPLE+1 is sufficient.  But for the initial
- * limiting step (just after the IDCT), a wildly out-of-range value is 
+ * limiting step (just after the IDCT), a wildly out-of-range value is
  * possible if the input data is corrupt.  To avoid any chance of indexing
  * off the end of memory and getting a bad-pointer trap, we perform the
  * post-IDCT limiting thus:
@@ -548,7 +548,7 @@ prepare_for_output_pass (j_decompress_ptr cinfo)
     master->pub.is_dummy_pass = FALSE;
     (*cinfo->cquantize->start_pass) (cinfo, FALSE);
     (*cinfo->post->start_pass) (cinfo, JBUF_CRANK_DEST);
-    (*cinfo->main->start_pass) (cinfo, JBUF_CRANK_DEST);
+    (*cinfo->main_jc->start_pass) (cinfo, JBUF_CRANK_DEST);
 #else
     ERREXIT(cinfo, JERR_NOT_COMPILED);
 #endif /* QUANT_2PASS_SUPPORTED */
@@ -574,7 +574,7 @@ prepare_for_output_pass (j_decompress_ptr cinfo)
 	(*cinfo->cquantize->start_pass) (cinfo, master->pub.is_dummy_pass);
       (*cinfo->post->start_pass) (cinfo,
 	    (master->pub.is_dummy_pass ? JBUF_SAVE_AND_PASS : JBUF_PASS_THRU));
-      (*cinfo->main->start_pass) (cinfo, JBUF_PASS_THRU);
+      (*cinfo->main_jc->start_pass) (cinfo, JBUF_PASS_THRU);
     }
   }
 

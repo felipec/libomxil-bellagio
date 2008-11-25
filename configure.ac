@@ -71,7 +71,6 @@ AC_CONFIG_FILES([
     test/components/audio_effects/Makefile
     test/components/parser/Makefile
     test/components/camera/Makefile
-    test/components/clocksrc/Makefile
     test/components/jpeg/Makefile
     test/components/muxer/Makefile
 ])

@@ -334,9 +334,13 @@ OMX_ERRORTYPE omx_mux_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
   }
 
   if (!(omx_mux_component_Private->avoutputformat->flags & AVFMT_NOFILE)) {
-      /* close the output file */
-      url_fclose(omx_mux_component_Private->avformatcontext->pb);
-  }
+       /* close the output file */
+#if FFMPEG_LIBNAME_HEADERS
+       url_fclose(omx_mux_component_Private->avformatcontext->pb);
+#else
+      url_fclose(&omx_mux_component_Private->avformatcontext->pb);
+#endif
+   }
 
   /* free the stream */
   av_free(omx_mux_component_Private->avformatcontext);

@@ -244,6 +244,7 @@ OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_Privat
   omx_videodec_component_Private->avFrame = avcodec_alloc_frame();
   if(omx_videodec_component_Private->extradata_size >0) {
     omx_videodec_component_Private->avCodecContext->extradata = omx_videodec_component_Private->extradata;
+    omx_videodec_component_Private->avCodecContext->extradata_size = (int)omx_videodec_component_Private->extradata_size;
   } else {
     omx_videodec_component_Private->avCodecContext->flags |= CODEC_FLAG_TRUNCATED;
   }

@@ -44,8 +44,6 @@ AC_CONFIG_FILES([
     include/Makefile
     src/Makefile
     src/base/Makefile
-    src/loaders/Makefile
-    src/loaders/loaders_linux/Makefile
     src/components/Makefile
     src/components/alsa/Makefile
     src/components/ffmpeg/Makefile
@@ -316,7 +314,6 @@ if test "x$with_ffmpeg" = "xyes"; then
 	LDFLAGS="${LDFLAGS} ${FFMPEG_LIBS}"
 
         # Check for FFmpeg audio decoder API version
-	#AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API])
 	AC_CHECK_LIB([avcodec], [avcodec_decode_audio2],
 		     [AC_DEFINE([FFMPEG_DECODER_VERSION], [2], [FFmpeg audio2 decoder API])],
                      [AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API ])])

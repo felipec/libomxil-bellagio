@@ -27,7 +27,7 @@
   Author $Author$
 
 */
- 
+
 #include <omxcore.h>
 #include <omx_base_audio_port.h>
 #include <omx_maddec_component.h>
@@ -49,33 +49,33 @@ static OMX_U32 noMadDecInstance=0;
 /** This is the temporary buffer size used for last portion of input buffer storage */
 #define TEMP_BUFFER_SIZE DEFAULT_IN_BUFFER_SIZE * 2
 
-/** this function initializates the mad framework, and opens an mad decoder of type specified by IL client */ 
+/** this function initializates the mad framework, and opens an mad decoder of type specified by IL client */
 OMX_ERRORTYPE omx_maddec_component_madLibInit(omx_maddec_component_PrivateType* omx_maddec_component_Private) {
-  
+
   mad_stream_init (omx_maddec_component_Private->stream);
   mad_frame_init (omx_maddec_component_Private->frame);
   mad_synth_init (omx_maddec_component_Private->synth);
   tsem_up (omx_maddec_component_Private->madDecSyncSem);
-  return OMX_ErrorNone;  
+  return OMX_ErrorNone;
 }
 
 
 /** this function Deinitializates the mad framework, and close the mad decoder */
 void omx_maddec_component_madLibDeInit(omx_maddec_component_PrivateType* omx_maddec_component_Private) {
-  
+
   mad_synth_finish (omx_maddec_component_Private->synth);
   mad_frame_finish (omx_maddec_component_Private->frame);
   mad_stream_finish (omx_maddec_component_Private->stream);
 }
 
-/** The Constructor 
+/** The Constructor
   *
   * @param openmaxStandComp the component handle to be constructed
   * @param cComponentName name of the component to be constructed
   */
 OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
-  
-  OMX_ERRORTYPE err = OMX_ErrorNone;  
+
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   omx_maddec_component_PrivateType* omx_maddec_component_Private;
   omx_base_audio_PortType *inPort,*outPort;
   OMX_U32 i;
@@ -86,28 +86,28 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
       return OMX_ErrorInsufficientResources;
     }
   }  else {
-    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", 
+    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n",
               __func__, (int)openmaxStandComp->pComponentPrivate);
   }
-  
+
   omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_maddec_component_Private->ports = NULL;
 
   /** we could create our own port structures here
-    * fixme maybe the base class could use a "port factory" function pointer?  
+    * fixme maybe the base class could use a "port factory" function pointer?
     */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "constructor of mad decoder component is called\n");
 
-  /** Domain specific section for the ports. */  
+  /** Domain specific section for the ports. */
   /** first we set the parameter common to both formats
     * parameters related to input port which does not depend upon input audio format
     */
   omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
   omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 2;
 
-  /** Allocate Ports and call port constructor. */  
+  /** Allocate Ports and call port constructor. */
   if (omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_maddec_component_Private->ports) {
     omx_maddec_component_Private->ports = calloc(omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_maddec_component_Private->ports) {
@@ -123,22 +123,22 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
 
   base_audio_port_Constructor(openmaxStandComp, &omx_maddec_component_Private->ports[0], 0, OMX_TRUE);
   base_audio_port_Constructor(openmaxStandComp, &omx_maddec_component_Private->ports[1], 1, OMX_FALSE);
-  
-  
+
+
   /** parameters related to input port */
   inPort = (omx_base_audio_PortType *) omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
-  
+
   inPort->sPortParam.nBufferSize = DEFAULT_IN_BUFFER_SIZE;
   strcpy(inPort->sPortParam.format.audio.cMIMEType, "audio/mpeg");
   inPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
 
   inPort->sAudioParam.eEncoding = OMX_AUDIO_CodingMP3;
 
-  setHeader(&omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));    
-  omx_maddec_component_Private->pAudioMp3.nPortIndex = 0;                                                                    
-  omx_maddec_component_Private->pAudioMp3.nChannels = 2;                                                                    
-  omx_maddec_component_Private->pAudioMp3.nBitRate = 28000;                                                                  
-  omx_maddec_component_Private->pAudioMp3.nSampleRate = 44100;                                                               
+  setHeader(&omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+  omx_maddec_component_Private->pAudioMp3.nPortIndex = 0;
+  omx_maddec_component_Private->pAudioMp3.nChannels = 2;
+  omx_maddec_component_Private->pAudioMp3.nBitRate = 28000;
+  omx_maddec_component_Private->pAudioMp3.nSampleRate = 44100;
   omx_maddec_component_Private->pAudioMp3.nAudioBandWidth = 0;
   omx_maddec_component_Private->pAudioMp3.eChannelMode = OMX_AUDIO_ChannelModeStereo;
   omx_maddec_component_Private->pAudioMp3.eFormat=OMX_AUDIO_MP3StreamFormatMP1Layer3;
@@ -164,7 +164,7 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   omx_maddec_component_Private->pAudioPcmMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
 
   /** now it's time to know the audio coding type of the component */
-  if(!strcmp(cComponentName, AUDIO_DEC_MP3_NAME))  {   
+  if(!strcmp(cComponentName, AUDIO_DEC_MP3_NAME))  {
     omx_maddec_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
   }  else if (!strcmp(cComponentName, AUDIO_DEC_BASE_NAME)) {
     omx_maddec_component_Private->audio_coding_type = OMX_AUDIO_CodingUnused;
@@ -182,8 +182,8 @@ OMX_ERRORTYPE omx_maddec_component_Constructor(OMX_COMPONENTTYPE *openmaxStandCo
   }
 
   /** general configuration irrespective of any audio formats
-    *  setting values of other fields of omx_maddec_component_Private structure  
-    */ 
+    *  setting values of other fields of omx_maddec_component_Private structure
+    */
   omx_maddec_component_Private->maddecReady = OMX_FALSE;
   omx_maddec_component_Private->BufferMgmtCallback = omx_maddec_component_BufferMgmtCallback;
   omx_maddec_component_Private->messageHandler = omx_mad_decoder_MessageHandler;
@@ -216,11 +216,11 @@ void omx_maddec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandC
   strcpy(omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.cMIMEType, "audio/mpeg");
   omx_maddec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX]->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingMP3;
 
-  setHeader(&omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));    
-  omx_maddec_component_Private->pAudioMp3.nPortIndex = 0;                                                                    
-  omx_maddec_component_Private->pAudioMp3.nChannels = 2;                                                                    
-  omx_maddec_component_Private->pAudioMp3.nBitRate = 28000;                                                                  
-  omx_maddec_component_Private->pAudioMp3.nSampleRate = 44100;                                                               
+  setHeader(&omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
+  omx_maddec_component_Private->pAudioMp3.nPortIndex = 0;
+  omx_maddec_component_Private->pAudioMp3.nChannels = 2;
+  omx_maddec_component_Private->pAudioMp3.nBitRate = 28000;
+  omx_maddec_component_Private->pAudioMp3.nSampleRate = 44100;
   omx_maddec_component_Private->pAudioMp3.nAudioBandWidth = 0;
   omx_maddec_component_Private->pAudioMp3.eChannelMode = OMX_AUDIO_ChannelModeStereo;
   omx_maddec_component_Private->pAudioMp3.eFormat=OMX_AUDIO_MP3StreamFormatMP1Layer3;
@@ -245,7 +245,7 @@ OMX_ERRORTYPE omx_maddec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCom
     free(omx_maddec_component_Private->madDecSyncSem);
     omx_maddec_component_Private->madDecSyncSem = NULL;
   }
-  
+
   /** freeing mad decoder structures */
   if(omx_maddec_component_Private->stream != NULL) {
     free(omx_maddec_component_Private->stream);
@@ -323,14 +323,14 @@ OMX_ERRORTYPE omx_maddec_component_Deinit(OMX_COMPONENTTYPE *openmaxStandComp) {
     free(omx_maddec_component_Private->temporary_buffer);
     omx_maddec_component_Private->temporary_buffer = NULL;
   }
-  
+
   return err;
 }
 
 /** The following utility routine performs simple rounding, clipping, and
   * scaling of MAD's high-resolution samples down to 16 bits. It does not
   * perform any dithering or noise shaping, which would be recommended to
-  * obtain any exceptional audio quality. 
+  * obtain any exceptional audio quality.
   */
 static inline int scale_int (mad_fixed_t sample) {
 
@@ -356,13 +356,13 @@ static inline int scale_int (mad_fixed_t sample) {
 
 /** This function is the buffer management callback function for MP3 decoding
   * is used to process the input buffer and provide one output buffer
-  *  
+  *
   * @param openmaxStandComp the component handle
   * @param inputbuffer is the input buffer containing the input MP3 content
   * @param outputbuffer is the output buffer on which the output pcm content will be written
   */
 void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* inputbuffer, OMX_BUFFERHEADERTYPE* outputbuffer) {
-  omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;  
+  omx_maddec_component_PrivateType* omx_maddec_component_Private = openmaxStandComp->pComponentPrivate;
   OMX_U32 nchannels;
   int count;
   int consumed = 0;
@@ -371,7 +371,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
   mad_fixed_t const *left_ch, *right_ch;
   unsigned short *outdata;
   int tocopy;
- 
+
   outputbuffer->nFilledLen = 0;
   outputbuffer->nOffset=0;
 
@@ -413,7 +413,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
   /* added separate header decoding to catch errors earlier, also fixes
    * some weird decoding errors... */
   DEBUG(DEB_LEV_SIMPLE_SEQ,"decoding the header now\n");
-  
+
   if (mad_header_decode (&(omx_maddec_component_Private->frame->header), omx_maddec_component_Private->stream) == -1) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"mad_header_decode had an error: %s\n",
         mad_stream_errorstr (omx_maddec_component_Private->stream));
@@ -488,7 +488,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
     omx_maddec_component_Private->temporary_buffer->pBuffer += consumed;
     omx_maddec_component_Private->temporary_buffer->nFilledLen -= consumed;
     return;
-  } 
+  }
 
   /* if we're not resyncing/in error, check if caps need to be set again */
   nsamples = MAD_NSBSAMPLES (&omx_maddec_component_Private->frame->header) *
@@ -497,7 +497,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
 
   if((omx_maddec_component_Private->pAudioPcmMode.nSamplingRate != omx_maddec_component_Private->frame->header.samplerate) ||
     ( omx_maddec_component_Private->pAudioPcmMode.nChannels!=nchannels)) {
-    DEBUG(DEB_LEV_FULL_SEQ, "---->Sending Port Settings Change Event\n");
+    DEBUG(DEB_LEV_FULL_SEQ, "Sending Port Settings Change Event\n");
 
     switch(omx_maddec_component_Private->audio_coding_type)  {
     case OMX_AUDIO_CodingMP3 :
@@ -513,7 +513,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
       break;
     default :
       DEBUG(DEB_LEV_ERR, "Audio formats other than MP3 not supported\nCodec not found\n");
-      break;                       
+      break;
     }
 
     /*Send Port Settings changed call back*/
@@ -521,7 +521,7 @@ void omx_maddec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp
     (openmaxStandComp,
     omx_maddec_component_Private->callbackData,
     OMX_EventPortSettingsChanged, /* The command was completed */
-    0, 
+    0,
     1, /* This is the output port index */
     NULL);
   }
@@ -592,8 +592,8 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
     portIndex = pAudioPortFormat->nPortIndex;
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    if(err!=OMX_ErrorNone) { 
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
       break;
     }
     if (portIndex <= 1) {
@@ -609,13 +609,13 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
     portIndex = pAudioPcmMode->nPortIndex;
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-    if(err!=OMX_ErrorNone) { 
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
       break;
     }
-    memcpy(&omx_maddec_component_Private->pAudioPcmMode, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));          
+    memcpy(&omx_maddec_component_Private->pAudioPcmMode, pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
     break;
-    
+
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
     if (!strcmp( (char*) pComponentRole->cRole, AUDIO_DEC_MP3_ROLE)) {
@@ -630,12 +630,12 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
     pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*) ComponentParameterStructure;
     portIndex = pAudioMp3->nPortIndex;
     err = omx_base_component_ParameterSanityCheck(hComponent,portIndex,pAudioMp3,sizeof(OMX_AUDIO_PARAM_MP3TYPE));
-    if(err!=OMX_ErrorNone) { 
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+    if(err!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
       break;
     }
     if (pAudioMp3->nPortIndex == 0) {
-      memcpy(&omx_maddec_component_Private->pAudioMp3, pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE)); 
+      memcpy(&omx_maddec_component_Private->pAudioMp3, pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
     }  else {
       return OMX_ErrorBadPortIndex;
     }
@@ -645,7 +645,7 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
     return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
   return err;
-  
+
 }
 
 /** this function gets the parameters regarding audio formats and index */
@@ -654,7 +654,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure)  {
 
-  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;  
+  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
   OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
@@ -670,15 +670,15 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) {
       break;
     }
     memcpy(ComponentParameterStructure, &omx_maddec_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
-    break;    
+    break;
 
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
       break;
     }
     if (pAudioPortFormat->nPortIndex <= 1) {
@@ -687,11 +687,11 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
     } else {
       return OMX_ErrorBadPortIndex;
     }
-    break;    
+    break;
 
   case OMX_IndexParamAudioPcm:
     pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) {
       break;
     }
     if (pAudioPcmMode->nPortIndex > 1) {
@@ -705,7 +705,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
     if (pAudioMp3->nPortIndex != 0) {
       return OMX_ErrorBadPortIndex;
     }
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_MP3TYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_MP3TYPE))) != OMX_ErrorNone) {
       break;
     }
     memcpy(pAudioMp3, &omx_maddec_component_Private->pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
@@ -713,7 +713,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
       break;
     }
     if (omx_maddec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
@@ -726,13 +726,13 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
     return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
   return OMX_ErrorNone;
-  
+
 }
 
 /** message handling of mad decoder */
 OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp, internalRequestMessageType *message)  {
 
-  omx_maddec_component_PrivateType* omx_maddec_component_Private = (omx_maddec_component_PrivateType*)openmaxStandComp->pComponentPrivate;  
+  omx_maddec_component_PrivateType* omx_maddec_component_Private = (omx_maddec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
   OMX_ERRORTYPE err;
   OMX_STATETYPE eCurrentState = omx_maddec_component_Private->state;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n", __func__);
@@ -740,8 +740,8 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateIdle) && (omx_maddec_component_Private->state == OMX_StateLoaded)) {
       err = omx_maddec_component_Init(openmaxStandComp);
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Init Failed Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Init Failed Error=%x\n",__func__,err);
         return err;
       }
     } else if ((message->messageParam == OMX_StateExecuting) && (omx_maddec_component_Private->state == OMX_StateIdle)) {
@@ -764,8 +764,8 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateLoaded) && (eCurrentState == OMX_StateIdle)) {
       err = omx_maddec_component_Deinit(openmaxStandComp);
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Deinit Failed Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s MAD Decoder Deinit Failed Error=%x\n",__func__,err);
         return err;
       }
     }else if ((message->messageParam == OMX_StateIdle) && (eCurrentState == OMX_StateExecuting)) {
@@ -774,6 +774,6 @@ OMX_ERRORTYPE omx_mad_decoder_MessageHandler(OMX_COMPONENTTYPE* openmaxStandComp
     }
   }
 
-  return err;  
+  return err;
 }
- 
+

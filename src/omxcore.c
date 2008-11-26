@@ -39,9 +39,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <OMX_Types.h>
 #include <OMX_Core.h>
-#include <OMX_Component.h>
 
 #include "omxcore.h"
 #include "omx_create_loaders.h"

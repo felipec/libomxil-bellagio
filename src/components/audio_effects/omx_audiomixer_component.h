@@ -1,7 +1,7 @@
 /**
   @file src/components/audio_effects/omx_audiomixer_component.h
 
-  OpenMAX audio_mixer control component. This component implements a mixer that 
+  OpenMAX audio_mixer control component. This component implements a mixer that
   mixes multiple audio PCM streams and produces a single output stream.
 
   Copyright (C) 2008  STMicroelectronics
@@ -53,7 +53,7 @@ DERIVEDCLASS(omx_audio_mixer_component_PortType, omx_base_audio_PortType)
   /** @param sVolume Audio Volume adjustment for a port */ \
   OMX_AUDIO_CONFIG_VOLUMETYPE sVolume; \
   /** @param sChannelVolume Audio Volume adjustment for a channel */ \
-  OMX_AUDIO_CONFIG_CHANNELVOLUMETYPE sChannelVolume[MAX_CHANNEL]; 
+  OMX_AUDIO_CONFIG_CHANNELVOLUMETYPE sChannelVolume[MAX_CHANNEL];
 ENDCLASS(omx_audio_mixer_component_PortType)
 
 /** Twoport component private structure.
@@ -61,7 +61,7 @@ ENDCLASS(omx_audio_mixer_component_PortType)
 */
 DERIVEDCLASS(omx_audio_mixer_component_PrivateType, omx_base_filter_PrivateType)
 #define omx_audio_mixer_component_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
-  /** This class is empty for the time being */ 
+  /** This class is empty for the time being */
 ENDCLASS(omx_audio_mixer_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -94,7 +94,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetConfig(
   OMX_IN  OMX_PTR pComponentConfigStructure);
 
 /** This is the central function for component processing, overridden for audio mixer. It
-  * is executed in a separate thread, is synchronized with 
+  * is executed in a separate thread, is synchronized with
   * semaphores at each port, those are released each time a new buffer
   * is available on the given port.
   */

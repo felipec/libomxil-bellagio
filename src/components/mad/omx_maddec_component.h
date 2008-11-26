@@ -40,7 +40,7 @@
 #include <omx_base_filter.h>
 
 //specific include files
-#include <mad.h>  
+#include <mad.h>
 
 #define AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME "OMX.st.audio_decoder.mp3.mad"

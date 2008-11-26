@@ -37,7 +37,7 @@
 /** Number of AlsaSrc Instance*/
 static OMX_U32 noAlsasrcInstance=0;
 
-/** The Constructor 
+/** The Constructor
  */
 OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,OMX_STRING cComponentName) {
   int err;
@@ -55,7 +55,7 @@ OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
 
   omx_alsasrc_component_Private = openmaxStandComp->pComponentPrivate;
   omx_alsasrc_component_Private->ports = NULL;
-  
+
   omxErr = omx_base_source_Constructor(openmaxStandComp,cComponentName);
   if (omxErr != OMX_ErrorNone) {
     return OMX_ErrorInsufficientResources;
@@ -64,7 +64,7 @@ OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
   omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
   omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = 1;
 
-  /** Allocate Ports and call port constructor. */  
+  /** Allocate Ports and call port constructor. */
   if (omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_alsasrc_component_Private->ports) {
     omx_alsasrc_component_Private->ports = calloc(omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_alsasrc_component_Private->ports) {
@@ -82,8 +82,8 @@ OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
 
   pPort = (omx_base_audio_PortType *) omx_alsasrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
 
-  // set the pPort params, now that the ports exist  
-  /** Domain specific section for the ports. */  
+  // set the pPort params, now that the ports exist
+  /** Domain specific section for the ports. */
   pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
   /*Input pPort buffer size is equal to the size of the output buffer of the previous component*/
   pPort->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
@@ -112,7 +112,7 @@ OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
   if(noAlsasrcInstance > MAX_COMPONENT_ALSASRC) {
     return OMX_ErrorInsufficientResources;
   }
-  
+
   //char *device = "plughw:0,0"; /* default device */
   /* Allocate the playback handle and the hardware parameter structure */
   if ((err = snd_pcm_open (&omx_alsasrc_component_Private->playback_handle, "default", SND_PCM_STREAM_CAPTURE, 0)) < 0) {
@@ -151,7 +151,7 @@ OMX_ERRORTYPE omx_alsasrc_component_Constructor(OMX_COMPONENTTYPE *openmaxStandC
   return OMX_ErrorNone;
 }
 
-/** The Destructor 
+/** The Destructor
  */
 OMX_ERRORTYPE omx_alsasrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_alsasrc_component_PrivateType* omx_alsasrc_component_Private = openmaxStandComp->pComponentPrivate;
@@ -180,7 +180,7 @@ OMX_ERRORTYPE omx_alsasrc_component_Destructor(OMX_COMPONENTTYPE *openmaxStandCo
 
 }
 
-/** 
+/**
  * This function plays the input buffer. When fully consumed it returns.
  */
 void omx_alsasrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandComp, OMX_BUFFERHEADERTYPE* outputbuffer) {
@@ -190,7 +190,7 @@ void omx_alsasrc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCom
 
   /* Feed it to ALSA */
   frameSize = (omx_alsasrc_component_Private->sPCMModeParam.nChannels * omx_alsasrc_component_Private->sPCMModeParam.nBitPerSample) >> 3;
-  DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n", 
+  DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n",
   (int)frameSize, (int)omx_alsasrc_component_Private->sPCMModeParam.nChannels, (int)outputbuffer->nFilledLen);
 
   if(outputbuffer->nAllocLen < frameSize){
@@ -253,10 +253,10 @@ OMX_ERRORTYPE omx_alsasrc_component_SetParameter(
     portIndex = pAudioPortFormat->nPortIndex;
     /*Check Structure Header and verify component state*/
     omxErr = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-    if(omxErr!=OMX_ErrorNone) { 
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n", __func__, omxErr); 
+    if(omxErr!=OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n", __func__, omxErr);
       break;
-    } 
+    }
     if (portIndex < 1) {
       memcpy(&pPort->sAudioParam,pAudioPortFormat,sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
@@ -271,10 +271,10 @@ OMX_ERRORTYPE omx_alsasrc_component_SetParameter(
       portIndex = sPCMModeParam->nPortIndex;
       /*Check Structure Header and verify component state*/
       omxErr = omx_base_component_ParameterSanityCheck(hComponent, portIndex, sPCMModeParam, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-      if(omxErr!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n", __func__, omxErr); 
+      if(omxErr!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n", __func__, omxErr);
         break;
-      } 
+      }
 
       omx_alsasrc_component_Private->AudioPCMConfigured  = 1;
       if(sPCMModeParam->nPortIndex != omx_alsasrc_component_Private->sPCMModeParam.nPortIndex){
@@ -437,11 +437,11 @@ OMX_ERRORTYPE omx_alsasrc_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure)
 {
-  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;  
+  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_alsasrc_component_PrivateType* omx_alsasrc_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_base_audio_PortType *pPort = (omx_base_audio_PortType *) omx_alsasrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];  
+  omx_base_audio_PortType *pPort = (omx_base_audio_PortType *) omx_alsasrc_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -449,14 +449,14 @@ OMX_ERRORTYPE omx_alsasrc_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
   case OMX_IndexParamAudioInit:
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) {
       break;
     }
     memcpy(ComponentParameterStructure, &omx_alsasrc_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
-    break;    
+    break;
   case OMX_IndexParamAudioPortFormat:
     pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
       break;
     }
     if (pAudioPortFormat->nPortIndex < 1) {
@@ -464,13 +464,13 @@ OMX_ERRORTYPE omx_alsasrc_component_GetParameter(
     } else {
       return OMX_ErrorBadPortIndex;
     }
-    break;    
+    break;
   case OMX_IndexParamAudioPcm:
     if(((OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure)->nPortIndex !=
       omx_alsasrc_component_Private->sPCMModeParam.nPortIndex) {
       return OMX_ErrorBadParameter;
     }
-    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) {
       break;
     }
     memcpy(ComponentParameterStructure, &omx_alsasrc_component_Private->sPCMModeParam, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));

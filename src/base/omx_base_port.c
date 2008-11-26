@@ -26,7 +26,6 @@
   Author $Author$
 */
 
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <omxcore.h>
@@ -355,7 +354,7 @@ OMX_ERRORTYPE base_port_EnablePort(omx_base_PortType *openmaxStandPort) {
 
 /** @brief Called by the standard allocate buffer, it implements a base functionality.
  *
- * This function can be overriden if the allocation of the buffer is not a simply calloc call.
+ * This function can be overriden if the allocation of the buffer is not a simply alloc call.
  * The parameters are the same as the standard function, except for the handle of the port
  * instead of the handler of the component
  * When the buffers needed by this port are all assigned or allocated, the variable
@@ -461,7 +460,7 @@ OMX_ERRORTYPE base_port_UseBuffer(
 
   if (omx_base_component_Private->transientState != OMX_TransStateLoadedToIdle) {
     if (!openmaxStandPort->bIsTransientToEnabled) {
-      DEBUG(DEB_LEV_ERR, "In %s: The port of Comp %s is not allowed to receive buffers \n", __func__,omx_base_component_Private->name);
+      DEBUG(DEB_LEV_ERR, "In %s: The port of Comp %s is not allowed to receive buffers\n", __func__,omx_base_component_Private->name);
       return OMX_ErrorIncorrectStateTransition;
     }
   }

@@ -411,7 +411,7 @@ void omx_videoenc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
                                 omx_videoenc_component_Private->picture);
 
     if (nLen < 0) {
-      DEBUG(DEB_LEV_ERR, "----> A general error or simply frame not encoded?\n");
+      DEBUG(DEB_LEV_ERR, "A general error or simply frame not encoded?\n");
     }
 
     pInputBuffer->nFilledLen = 0;

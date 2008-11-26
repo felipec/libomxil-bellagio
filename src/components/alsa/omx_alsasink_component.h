@@ -40,12 +40,12 @@
 
 /** Alsasinkport component private structure.
  * see the define above
- * @param sPCMModeParam Audio PCM specific OpenMAX parameter  
- * @param AudioPCMConfigured boolean flag to check if the audio has been configured 
+ * @param sPCMModeParam Audio PCM specific OpenMAX parameter
+ * @param AudioPCMConfigured boolean flag to check if the audio has been configured
  * @param playback_handle ALSA specif handle for audio player
  * @param xScale the scale of the media clock
  * @param eState the state of the media clock
- * @param hw_params ALSA specif hardware parameters 
+ * @param hw_params ALSA specif hardware parameters
  */
 DERIVEDCLASS(omx_alsasink_component_PrivateType, omx_base_sink_PrivateType)
 #define omx_alsasink_component_PrivateType_FIELDS omx_base_sink_PrivateType_FIELDS \
@@ -66,7 +66,7 @@ void omx_alsasink_component_BufferMgmtCallback(
   OMX_BUFFERHEADERTYPE* inputbuffer);
 
 OMX_ERRORTYPE omx_alsasink_component_port_SendBufferFunction(
-  omx_base_PortType *openmaxStandPort, 
+  omx_base_PortType *openmaxStandPort,
   OMX_BUFFERHEADERTYPE* pBuffer);
 
 /* to handle the communication at the clock port */

@@ -1,10 +1,10 @@
 /**
 	@file test/components/common/user_debug_levels.h
-	
-	Define the level of debug prints on standard err. The different levels can 
+
+	Define the level of debug prints on standard err. The different levels can
 	be composed with binary OR.
 	The debug levels defined here belong to the test applications
-	
+
 	Copyright (C) 2007-2008 STMicroelectronics
 	Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -22,7 +22,7 @@
 	along with this library; if not, write to the Free Software Foundation, Inc.,
 	51 Franklin St, Fifth Floor, Boston, MA
 	02110-1301  USA
-	
+
 	$Date$
 	Revision $Rev$
 	Author $Author$
@@ -33,18 +33,18 @@
 /** Remove all debug output lines
  */
 #define DEB_LEV_NO_OUTPUT  0
-/** Messages explaing the reason of critical errors 
+/** Messages explaing the reason of critical errors
  */
-#define DEB_LEV_ERR        1 
+#define DEB_LEV_ERR        1
 /** Messages showing values related to the test and the component/s used
  */
 #define DEB_LEV_PARAMS     2
-/** Messages representing steps in the execution. These are the simple messages, because 
- * they avoid iterations 
+/** Messages representing steps in the execution. These are the simple messages, because
+ * they avoid iterations
  */
 #define DEB_LEV_SIMPLE_SEQ 4
-/** Messages representing steps in the execution. All the steps are described, 
- * also with iterations. With this level of output the performance is 
+/** Messages representing steps in the execution. All the steps are described,
+ * also with iterations. With this level of output the performance is
  * seriously compromised
  */
 #define DEB_LEV_FULL_SEQ   8
@@ -53,7 +53,7 @@
  */
 #define DEB_LEV_FUNCTION_NAME 16
 
-/** Messages that are the default test application output. These message should be 
+/** Messages that are the default test application output. These message should be
 	* shown every time
 	*/
 #define DEFAULT_MESSAGES 32

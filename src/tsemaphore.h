@@ -32,7 +32,7 @@
 #define __TSEMAPHORE_H__
 
 /** The structure contains the semaphore value, mutex and green light flag
- */ 
+ */
 typedef struct tsem_t{
   pthread_cond_t condition;
   pthread_mutex_t mutex;
@@ -40,46 +40,46 @@ typedef struct tsem_t{
 }tsem_t;
 
 /** Initializes the semaphore at a given value
- * 
+ *
  * @param tsem the semaphore to initialize
- * 
+ *
  * @param val the initial value of the semaphore
  */
 void tsem_init(tsem_t* tsem, unsigned int val);
 
 /** Destroy the semaphore
- *  
+ *
  * @param tsem the semaphore to destroy
  */
 void tsem_deinit(tsem_t* tsem);
 
 /** Decreases the value of the semaphore. Blocks if the semaphore
  * value is zero.
- * 
+ *
  * @param tsem the semaphore to decrease
  */
 void tsem_down(tsem_t* tsem);
 
 /** Increases the value of the semaphore
- * 
+ *
  * @param tsem the semaphore to increase
  */
 void tsem_up(tsem_t* tsem);
 
 /** Reset the value of the semaphore
- * 
+ *
  * @param tsem the semaphore to reset
  */
 void tsem_reset(tsem_t* tsem);
 
 /** Wait on the condition.
- * 
+ *
  * @param tsem the semaphore to wait
  */
 void tsem_wait(tsem_t* tsem);
 
 /** Signal the condition,if waiting
- * 
+ *
  * @param tsem the semaphore to signal
  */
 void tsem_signal(tsem_t* tsem);

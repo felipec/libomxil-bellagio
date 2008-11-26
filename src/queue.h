@@ -30,7 +30,7 @@
 #define __TQUEUE_H__
 
 #include <pthread.h>
-/** Maximum number of elements in a queue 
+/** Maximum number of elements in a queue
  */
 #define MAX_QUEUE_ELEMENTS 10
 /** Output port queue element. Contains an OMX buffer header type
@@ -51,40 +51,40 @@ typedef struct queue_t{
 } queue_t;
 
 /** Initialize a queue descriptor
- * 
- * @param queue The queue descriptor to initialize. 
+ *
+ * @param queue The queue descriptor to initialize.
  * The user needs to allocate the queue
  */
 void queue_init(queue_t* queue);
 
 /** Deinitialize a queue descriptor
  * flushing all of its internal data
- * 
+ *
  * @param queue the queue descriptor to dump
  */
 void queue_deinit(queue_t* queue);
 
 /** Enqueue an element to the given queue descriptor
- * 
+ *
  * @param queue the queue descritpor where to queue data
- * 
+ *
  * @param data the data to be enqueued
  */
 void queue(queue_t* queue, void* data);
 
 /** Dequeue an element from the given queue descriptor
- * 
+ *
  * @param queue the queue descriptor from which to dequeue the element
- * 
+ *
  * @return the element that has bee dequeued. If the queue is empty
  *  a NULL value is returned
  */
 void* dequeue(queue_t* queue);
 
 /** Returns the number of elements hold in the queue
- * 
+ *
  * @param queue the requested queue
- * 
+ *
  * @return the number of elements in the queue
  */
 int getquenelem(queue_t* queue);

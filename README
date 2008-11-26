@@ -379,7 +379,7 @@ AMR NB/WB - http://rpmfind.net/linux/rpm2html/search.php?query=amr
 FFmpeg    - http://www.filewatcher.com/m/ffmpeg-0.4.9-p20080326.tar.bz2.2505113.0.0.html
 
 FFmpegConfigure Option Used:- 
-./configure --prefix=/home/psen/usr --arch=x86_32 --extra-cflags="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables" --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libfaad --enable-libfaac --enable-libgsm --enable-libxvid --enable-libx264 --enable-liba52 --enable-liba52bin --disable-static --enable-shared --enable-gpl --disable-debug --disable-optimizations --disable-stripping  --enable-libamr-nb --enable-nonfree --enable-libamr-wb
+./configure --arch=x86_32 --extra-cflags="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables" --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libfaad --enable-libfaac --enable-libgsm --enable-libxvid --enable-libx264 --enable-liba52 --enable-liba52bin --disable-static --enable-shared --enable-gpl --disable-debug --disable-optimizations --disable-stripping  --enable-libamr-nb --enable-nonfree --enable-libamr-wb
 
 
 

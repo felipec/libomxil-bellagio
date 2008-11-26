@@ -1,13 +1,13 @@
 /**
   @file src/components/alsa/library_entry_point.c
-  
+
   The library entry point. It must have the same name for each
-  library fo the components loaded by th ST static component loader.
+  library for the components loaded by the ST static component loader.
   This function fills the version, the component name and if existing also the roles
   and the specific names for each role. This base function is only an explanation.
   For each library it must be implemented, and it must fill data of any component
   in the library
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -25,7 +25,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date$
   Revision $Rev$
   Author $Author$
@@ -37,17 +37,17 @@
 #include <omx_alsasrc_component.h>
 
 /** The library entry point. It must have the same name for each
- * library fo the components loaded by th ST static component loader.
- * 
+ * library for the components loaded by the ST static component loader.
+ *
  * This function fills the version, the component name and if existing also the roles
  * and the specific names for each role. This base function is only an explanation.
  * For each library it must be implemented, and it must fill data of any component
  * in the library
- * 
- * @param stComponents pointer to an array of components descriptors.If NULL, the 
+ *
+ * @param stComponents pointer to an array of components descriptors.If NULL, the
  * function will return only the number of components contained in the library
- * 
- * @return number of components contained in the library 
+ *
+ * @return number of components contained in the library
  */
  int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   OMX_U32 i;
@@ -57,8 +57,8 @@
     return 2; // Return Number of Component/s
   }
 
-  stComponents[0]->componentVersion.s.nVersionMajor = 1; 
-  stComponents[0]->componentVersion.s.nVersionMinor = 1; 
+  stComponents[0]->componentVersion.s.nVersionMajor = 1;
+  stComponents[0]->componentVersion.s.nVersionMinor = 1;
   stComponents[0]->componentVersion.s.nRevision = 1;
   stComponents[0]->componentVersion.s.nStep = 1;
 
@@ -68,10 +68,10 @@
   }
   strcpy(stComponents[0]->name, "OMX.st.alsa.alsasink");
   stComponents[0]->name_specific_length = 1;
-  stComponents[0]->constructor = omx_alsasink_component_Constructor;  
+  stComponents[0]->constructor = omx_alsasink_component_Constructor;
 
-  stComponents[0]->name_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));  
-  stComponents[0]->role_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));  
+  stComponents[0]->name_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));
+  stComponents[0]->role_specific = calloc(stComponents[0]->name_specific_length,sizeof(char *));
 
   for(i=0;i<stComponents[0]->name_specific_length;i++) {
     stComponents[0]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
@@ -88,9 +88,9 @@
 
   strcpy(stComponents[0]->name_specific[0], "OMX.st.alsa.alsasink");
   strcpy(stComponents[0]->role_specific[0], "alsa.alsasink");
-  
-  stComponents[1]->componentVersion.s.nVersionMajor = 1; 
-  stComponents[1]->componentVersion.s.nVersionMinor = 1; 
+
+  stComponents[1]->componentVersion.s.nVersionMajor = 1;
+  stComponents[1]->componentVersion.s.nVersionMinor = 1;
   stComponents[1]->componentVersion.s.nRevision = 1;
   stComponents[1]->componentVersion.s.nStep = 1;
 
@@ -100,10 +100,10 @@
   }
   strcpy(stComponents[1]->name, "OMX.st.alsa.alsasrc");
   stComponents[1]->name_specific_length = 1;
-  stComponents[1]->constructor = omx_alsasrc_component_Constructor;  
+  stComponents[1]->constructor = omx_alsasrc_component_Constructor;
 
-  stComponents[1]->name_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
-  stComponents[1]->role_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));  
+  stComponents[1]->name_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));
+  stComponents[1]->role_specific = calloc(stComponents[1]->name_specific_length,sizeof(char *));
 
   for(i=0;i<stComponents[1]->name_specific_length;i++) {
     stComponents[1]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);

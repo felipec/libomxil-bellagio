@@ -1,7 +1,7 @@
 /**
   @file src/components/ffmpeg/omx_videoenc_component.h
-  
-  This component implements an MPEG-4 video encoder. 
+
+  This component implements an MPEG-4 video encoder.
   The MPEG-4 Video encoder is based on the FFmpeg software library.
 
   Copyright (C) 2007-2008 STMicroelectronics

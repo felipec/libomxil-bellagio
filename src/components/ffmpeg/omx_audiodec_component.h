@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omx_base_filter.h>
- 
+
 /* Specific include files for FFmpeg*/
 #if FFMPEG_LIBNAME_HEADERS
 #include <libavcodec/avcodec.h>
@@ -54,12 +54,12 @@
 #define AUDIO_DEC_BASE_NAME     "OMX.st.audio_decoder"
 #define AUDIO_DEC_MP3_NAME      "OMX.st.audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_NAME   "OMX.st.audio_decoder.ogg"
-#define AUDIO_DEC_AAC_NAME      "OMX.st.audio_decoder.aac" 
+#define AUDIO_DEC_AAC_NAME      "OMX.st.audio_decoder.aac"
 #define AUDIO_DEC_G726_NAME     "OMX.st.audio_decoder.g726"
 
 #define AUDIO_DEC_MP3_ROLE      "audio_decoder.mp3"
 #define AUDIO_DEC_VORBIS_ROLE   "audio_decoder.ogg"
-#define AUDIO_DEC_AAC_ROLE      "audio_decoder.aac"   
+#define AUDIO_DEC_AAC_ROLE      "audio_decoder.aac"
 #define AUDIO_DEC_G726_ROLE     "audio_decoder.g726"
 
 /** AudioDec component private structure.
@@ -117,7 +117,7 @@ void omx_audiodec_component_BufferMgmtCallback(
   OMX_COMPONENTTYPE *openmaxStandComp,
   OMX_BUFFERHEADERTYPE* inputbuffer,
   OMX_BUFFERHEADERTYPE* outputbuffer);
-  
+
 OMX_ERRORTYPE omx_audiodec_component_GetParameter(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nParamIndex,

@@ -1,11 +1,11 @@
 # Build order is important
 # First base, then core, finally components
-SUBDIRS = base . components loaders
+SUBDIRS = base . components
 
 bin_PROGRAMS = omxregister-bellagio
 omxregister_bellagio_SOURCES = omxregister.c common.c common.h
 omxregister_bellagio_CFLAGS = -DOMXILCOMPONENTSPATH=\"$(plugindir)/\" \
-			      -I$(top_srcdir)/include
+			      -I$(top_srcdir)/include -lomxil-bellagio
 
 lib_LTLIBRARIES = libomxil-bellagio.la
 libomxil_bellagio_la_SOURCES = component_loader.h \
@@ -29,6 +29,7 @@ include_extra_HEADERS = $(srcdir)/omxcore.h \
 			$(srcdir)/st_static_component_loader.h \
 			$(srcdir)/tsemaphore.h \
 			$(srcdir)/omx_comp_debug_levels.h \
+			$(srcdir)/common.h \
 			$(srcdir)/base/omx_base_component.h \
 			$(srcdir)/base/omx_base_port.h \
 			$(srcdir)/base/omx_base_audio_port.h \

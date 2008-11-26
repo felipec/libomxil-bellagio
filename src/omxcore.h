@@ -1,9 +1,9 @@
 /**
   @file src/omxcore.h
-  
+
   OpenMAX Integration Layer Core. This library implements the OpenMAX core
   responsible for environment setup, components tunneling and communication.
-  
+
   Copyright (C) 2007-2008 STMicroelectronics
   Copyright (C) 2007-2008 Nokia Corporation and/or its subsidiary(-ies).
 
@@ -21,7 +21,7 @@
   along with this library; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA
   02110-1301  USA
-  
+
   $Date$
   Revision $Rev$
   Author $Author$

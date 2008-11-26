@@ -26,7 +26,6 @@
   Author $Author$
 */
 
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <omxcore.h>
@@ -35,24 +34,24 @@
 #include "omx_base_component.h"
 #include "omx_base_video_port.h"
 
-/** 
+/**
   * @brief The base contructor for the generic OpenMAX ST Video port
-  * 
+  *
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the component.
-  * It takes care of constructing the instance of the port and 
+  * It takes care of constructing the instance of the port and
   * every object needed by the base port.
   *
   * @param openmaxStandComp pointer to the Handle of the component
   * @param openmaxStandPort the ST port to be initialized
   * @param nPortIndex Index of the port to be constructed
   * @param isInput specifices if the port is an input or an output
-  * 
+  *
   * @return OMX_ErrorInsufficientResources if a memory allocation fails
   */
 
 OMX_ERRORTYPE base_video_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput) {
-  
+
   omx_base_video_PortType *omx_base_video_Port;
 
   if (!(*openmaxStandPort)) {
@@ -90,7 +89,7 @@ OMX_ERRORTYPE base_video_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   omx_base_video_Port->sPortParam.format.video.eColorFormat = OMX_COLOR_FormatUnused;
   omx_base_video_Port->sPortParam.format.video.pNativeWindow = NULL;
 
-  
+
   omx_base_video_Port->sPortParam.nBufferSize = (isInput == OMX_TRUE)?DEFAULT_IN_BUFFER_SIZE:MAX_VIDEO_OUTPUT_BUF_SIZE ;
 
   omx_base_video_Port->PortDestructor = &base_video_port_Destructor;
@@ -98,16 +97,16 @@ OMX_ERRORTYPE base_video_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   return OMX_ErrorNone;
 }
 
-/** 
+/**
   * @brief The base video port destructor for the generic OpenMAX ST Video port
-  * 
+  *
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the port.
   * It takes care of destructing the instance of the port
-  * 
+  *
   * @param openmaxStandPort the ST port to be destructed
-  * 
-  * @return OMX_ErrorNone 
+  *
+  * @return OMX_ErrorNone
   */
 
 OMX_ERRORTYPE base_video_port_Destructor(omx_base_PortType *openmaxStandPort){

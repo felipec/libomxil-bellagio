@@ -418,7 +418,7 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 #endif
   if((omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate != omx_audiodec_component_Private->avCodecContext->sample_rate) ||
      ( omx_audiodec_component_Private->pAudioPcmMode.nChannels!=omx_audiodec_component_Private->avCodecContext->channels)) {
-    DEBUG(DEB_LEV_FULL_SEQ, "---->Sending Port Settings Change Event\n");
+    DEBUG(DEB_LEV_FULL_SEQ, "Sending Port Settings Change Event\n");
     /* has MP3 dependency--requires modification */
     //switch for different audio formats---parameter settings accordingly
     switch(omx_audiodec_component_Private->audio_coding_type)  {

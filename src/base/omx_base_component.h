@@ -30,6 +30,7 @@
 #ifndef _OMX_BASE_COMPONENT_H_
 #define _OMX_BASE_COMPONENT_H_
 
+#include <stdlib.h>
 #include <pthread.h>
 
 #include "tsemaphore.h"
@@ -47,13 +48,6 @@
 #define NUM_DOMAINS 4
 
 #define OMX_BUFFERFLAG_KEY_FRAME 0x11000000
-
-/* Check if Component is deinitalizing*/
-#define IS_COMPONENT_DEINIT(component_Private, exit_condition)  \
-                pthread_mutex_lock(&component_Private->exit_mutex)      ,\
-                exit_condition = component_Private->bIsComponentDeinit ,\
-                pthread_mutex_unlock(&component_Private->exit_mutex) ,\
-                (exit_condition == OMX_TRUE) ? OMX_TRUE:OMX_FALSE \
 
 typedef struct OMX_VENDOR_EXTRADATATYPE  {
   OMX_U32 nPortIndex;
@@ -115,41 +109,41 @@ typedef struct internalRequestMessageType {
  */
 CLASS(omx_base_component_PrivateType)
 #define omx_base_component_PrivateType_FIELDS \
-  OMX_COMPONENTTYPE *openmaxStandComp; /**< The OpenMAX standard data structure describing a component */ \
-  omx_base_PortType **ports; /** @param ports The ports of the component */ \
-  OMX_PORT_PARAM_TYPE sPortTypesParam[NUM_DOMAINS]; /** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
-  char uniqueID; /**< ID code that identifies an ST static component*/ \
-  char* name; /**< component name */\
-  OMX_STATETYPE state; /**< The state of the component */ \
-  OMX_TRANS_STATETYPE transientState; /**< The transient state in case of transition between \
+	OMX_COMPONENTTYPE *openmaxStandComp; /**< The OpenMAX standard data structure describing a component */ \
+	omx_base_PortType **ports; /** @param ports The ports of the component */ \
+	OMX_PORT_PARAM_TYPE sPortTypesParam[NUM_DOMAINS]; /** @param sPortTypesParam OpenMAX standard parameter that contains a short description of the available ports */ \
+	char uniqueID; /**< ID code that identifies an ST static component*/ \
+	char* name; /**< component name */\
+	OMX_STATETYPE state; /**< The state of the component */ \
+	OMX_TRANS_STATETYPE transientState; /**< The transient state in case of transition between \
                               Loaded/waitForResources - Idle. It is equal to  \
                               Invalid if the state or transition are not corect \
                               Loaded when the transition is from Idle to Loaded \
                               Idle when the transition is from Loaded to Idle */ \
-  OMX_CALLBACKTYPE* callbacks; /**< pointer to every client callback function, \
+	OMX_CALLBACKTYPE* callbacks; /**< pointer to every client callback function, \
                                 as specified by the standard*/ \
-  OMX_PTR callbackData;/**< Private data that can be send with \
+	OMX_PTR callbackData;/**< Private data that can be send with \
                         the client callbacks. Not specified by the standard */ \
-  queue_t* messageQueue;/**< the queue of all the messages recevied by the component */\
-  tsem_t* messageSem;/**< the semaphore that coordinates the access to the message queue */\
-  OMX_U32 nGroupPriority; /**< @param nGroupPriority Resource management field: component priority (common to a group of components) */\
-  OMX_U32 nGroupID; /**< @param nGroupID ID of a group of components that share the same logical chain */\
-  OMX_BOOL bIsEOSReached; /** @param bIsEOSReached boolean flag is true when EOS has been reached */ \
-  OMX_MARKTYPE pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
-  pthread_mutex_t flush_mutex;  /** @param flush_mutex mutex for the flush condition from buffers */ \
-  tsem_t* flush_all_condition;  /** @param flush_all_condition condition for the flush all buffers */ \
-  tsem_t* flush_condition;  /** @param The flush_condition condition */ \
-  tsem_t* bMgmtSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
-  tsem_t* bStateSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
-  int messageHandlerThreadID; /** @param  messageHandlerThreadID The ID of the pthread that handles the messages for the components */ \
-  pthread_t messageHandlerThread; /** @param  messageHandlerThread This field contains the reference to the thread that receives messages for the components */ \
-  int bufferMgmtThreadID; /** @param  bufferMgmtThreadID The ID of the pthread that process buffers */ \
-  pthread_t bufferMgmtThread; /** @param  bufferMgmtThread This field contains the reference to the thread that process buffers */ \
-  void *loader; /**< pointer to the loader that created this component, used for destruction */ \
-  void* (*BufferMgmtFunction)(void* param); /** @param BufferMgmtFunction This function processes input output buffers */ \
-  OMX_ERRORTYPE (*messageHandler)(OMX_COMPONENTTYPE*,internalRequestMessageType*);/** This function receives messages from the message queue. It is needed for each Linux ST OpenMAX component */ \
-  OMX_ERRORTYPE (*DoStateSet)(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32); /**< @param DoStateSet internal function called when a generic state transition is requested*/ \
-  OMX_ERRORTYPE (*destructor)(OMX_COMPONENTTYPE *openmaxStandComp); /** Component Destructor*/
+	queue_t* messageQueue;/**< the queue of all the messages recevied by the component */\
+	tsem_t* messageSem;/**< the semaphore that coordinates the access to the message queue */\
+	OMX_U32 nGroupPriority; /**< @param nGroupPriority Resource management field: component priority (common to a group of components) */\
+	OMX_U32 nGroupID; /**< @param nGroupID ID of a group of components that share the same logical chain */\
+	OMX_BOOL bIsEOSReached; /** @param bIsEOSReached boolean flag is true when EOS has been reached */ \
+	OMX_MARKTYPE pMark; /**< @param pMark This field holds the private data associated with a mark request, if any */\
+	pthread_mutex_t flush_mutex;  /** @param flush_mutex mutex for the flush condition from buffers */ \
+	tsem_t* flush_all_condition;  /** @param flush_all_condition condition for the flush all buffers */ \
+	tsem_t* flush_condition;  /** @param The flush_condition condition */ \
+	tsem_t* bMgmtSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
+	tsem_t* bStateSem;/**< @param bMgmtSem the semaphore that control BufferMgmtFunction processing */\
+	int messageHandlerThreadID; /** @param  messageHandlerThreadID The ID of the pthread that handles the messages for the components */ \
+	pthread_t messageHandlerThread; /** @param  messageHandlerThread This field contains the reference to the thread that receives messages for the components */ \
+	int bufferMgmtThreadID; /** @param  bufferMgmtThreadID The ID of the pthread that process buffers */ \
+	pthread_t bufferMgmtThread; /** @param  bufferMgmtThread This field contains the reference to the thread that process buffers */ \
+	void *loader; /**< pointer to the loader that created this component, used for destruction */ \
+	void* (*BufferMgmtFunction)(void* param); /** @param BufferMgmtFunction This function processes input output buffers */ \
+	OMX_ERRORTYPE (*messageHandler)(OMX_COMPONENTTYPE*,internalRequestMessageType*);/** This function receives messages from the message queue. It is needed for each Linux ST OpenMAX component */ \
+	OMX_ERRORTYPE (*DoStateSet)(OMX_COMPONENTTYPE *openmaxStandComp, OMX_U32); /**< @param DoStateSet internal function called when a generic state transition is requested*/ \
+	OMX_ERRORTYPE (*destructor)(OMX_COMPONENTTYPE *openmaxStandComp); /** Component Destructor*/
 ENDCLASS(omx_base_component_PrivateType)
 
 /**

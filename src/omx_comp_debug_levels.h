@@ -1,7 +1,7 @@
 /**
   @file src/omx_comp_debug_levels.h
 
-  Define the level of debug prints on standard err. The different levels can 
+  Define the level of debug prints on standard err. The different levels can
   be composed with binary OR.
   The debug levels defined here belong to OpenMAX components and IL core
 
@@ -38,21 +38,21 @@
  */
 #define DEB_LEV_NO_OUTPUT  0
 
-/** Messages explaing the reason of critical errors 
+/** Messages explaing the reason of critical errors
  */
 #define DEB_LEV_ERR        1
- 
+
 /** Messages showing values related to the test and the component/s used
  */
 #define DEB_LEV_PARAMS     2
 
-/** Messages representing steps in the execution. These are the simple messages, because 
- * they avoid iterations 
+/** Messages representing steps in the execution. These are the simple messages, because
+ * they avoid iterations
  */
 #define DEB_LEV_SIMPLE_SEQ 4
 
-/** Messages representing steps in the execution. All the steps are described, 
- * also with iterations. With this level of output the performances are 
+/** Messages representing steps in the execution. All the steps are described,
+ * also with iterations. With this level of output the performances are
  * seriously compromised
  */
 #define DEB_LEV_FULL_SEQ   8
@@ -71,7 +71,7 @@
 #if DEBUG_LEVEL > 0
 #define DEBUG(n, fmt, args...) do { if (DEBUG_LEVEL & (n)){fprintf(stderr, "OMX-" fmt, ##args);} } while (0)
 #else
-#define DEBUG(n, fmt, args...) 
+#define DEBUG(n, fmt, args...)
 #endif
 
 #endif

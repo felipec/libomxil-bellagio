@@ -34,7 +34,6 @@
 #include <string.h>
 #include "component_loader.h"
 #include "omx_create_loaders.h"
-#include "omxcore.h"
 #include "st_static_component_loader.h"
 #include "common.h"
 
@@ -56,7 +55,6 @@ int createComponentLoaders() {
 	size_t len = 0;
 	int read;
 	char *omxloader_registry_filename;
-	char *omxloader_default_location;
 	char *dir, *dirp;
 	int onlyDefault = 0;
 	int oneAtLeast = 0;
@@ -78,23 +76,10 @@ int createComponentLoaders() {
 		}
 	}
 	free(dir);
-
 	/* test the existence of the file */
 	loaderFP = fopen(omxloader_registry_filename, "r");
 	if (loaderFP == NULL){
-		DEBUG(DEB_LEV_SIMPLE_SEQ, "The registry file for loaders does not exist. Create it with the default loader\n");
-		loaderFP = fopen(omxloader_registry_filename, "w");
-		if (loaderFP == NULL){
-			DEBUG(DEB_LEV_ERR, "Cannot create OpenMAX registry file %s\n", omxloader_registry_filename);
-			onlyDefault = 1;
-		}
-		omxloader_default_location = malloc(strlen(INSTALL_PATH_STR) + strlen(DEFAULT_LOADER_LIBRARY_NAME) + 2);
-		strcpy(omxloader_default_location, INSTALL_PATH_STR);
-		strcat(omxloader_default_location, DEFAULT_LOADER_LIBRARY_NAME);
-		fwrite(omxloader_default_location, 1, strlen(omxloader_default_location), loaderFP);
-		fwrite("\n", 1, 1, loaderFP);
-		fclose(loaderFP);
-		loaderFP = fopen(omxloader_registry_filename, "r");
+		onlyDefault = 1;
 	}
 	if (onlyDefault) {
 		loader = calloc(1, sizeof(BOSA_COMPONENTLOADER));

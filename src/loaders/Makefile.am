@@ -1,2 +1,0 @@
-SUBDIRS = loaders_linux
-

@@ -26,7 +26,6 @@
   Author $Author$
 */
 
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <omxcore.h>
@@ -36,24 +35,24 @@
 #include "omx_base_component.h"
 #include "omx_base_image_port.h"
 
-/** 
+/**
   * @brief The base contructor for the generic OpenMAX ST Image port
-  * 
+  *
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the component.
-  * It takes care of constructing the instance of the port and 
+  * It takes care of constructing the instance of the port and
   * every object needed by the base port.
   *
   * @param openmaxStandComp pointer to the Handle of the component
   * @param openmaxStandPort the ST port to be initialized
   * @param nPortIndex Index of the port to be constructed
   * @param isInput specifices if the port is an input or an output
-  * 
+  *
   * @return OMX_ErrorInsufficientResources if a memory allocation fails
   */
 
 OMX_ERRORTYPE base_image_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,omx_base_PortType **openmaxStandPort,OMX_U32 nPortIndex, OMX_BOOL isInput) {
-  
+
   omx_base_image_PortType *omx_base_image_Port;
 
   if (!(*openmaxStandPort)) {
@@ -72,7 +71,7 @@ OMX_ERRORTYPE base_image_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   omx_base_image_Port->sImageParam.nPortIndex = nPortIndex;
   omx_base_image_Port->sImageParam.nIndex = 0;
   omx_base_image_Port->sImageParam.eCompressionFormat = OMX_IMAGE_CodingUnused;
-  
+
   omx_base_image_Port->sPortParam.eDomain = OMX_PortDomainImage;
   omx_base_image_Port->sPortParam.format.image.cMIMEType = malloc(DEFAULT_MIME_STRING_LENGTH);
   strcpy(omx_base_image_Port->sPortParam.format.image.cMIMEType, "raw/image");
@@ -87,16 +86,16 @@ OMX_ERRORTYPE base_image_port_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,om
   return OMX_ErrorNone;
 }
 
-/** 
+/**
   * @brief The base image port destructor for the generic OpenMAX ST Image port
-  * 
+  *
   * This function is executed by the component that uses a port.
   * The parameter contains the info about the port.
   * It takes care of destructing the instance of the port
-  * 
+  *
   * @param openmaxStandPort the ST port to be destructed
-  * 
-  * @return OMX_ErrorNone 
+  *
+  * @return OMX_ErrorNone
   */
 
 OMX_ERRORTYPE base_image_port_Destructor(omx_base_PortType *openmaxStandPort){

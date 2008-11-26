@@ -445,14 +445,14 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
           omx_videodec_component_Private->inputCurrLength);
 
     if (nLen < 0) {
-      DEBUG(DEB_LEV_ERR, "----> A general error or simply frame not decoded?\n");
+      DEBUG(DEB_LEV_ERR, "A general error or simply frame not decoded?\n");
     }
 
     {
       omx_base_video_PortType *inPort = (omx_base_video_PortType *)omx_videodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
       if((inPort->sPortParam.format.video.nFrameWidth != omx_videodec_component_Private->avCodecContext->width) ||
          (inPort->sPortParam.format.video.nFrameHeight != omx_videodec_component_Private->avCodecContext->height)) {
-        DEBUG(DEB_LEV_SIMPLE_SEQ, "---->Sending Port Settings Change Event in video decoder\n");
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "Sending Port Settings Change Event in video decoder\n");
 
         switch(omx_videodec_component_Private->video_coding_type) {
           case OMX_VIDEO_CodingMPEG4 :

@@ -95,7 +95,7 @@ DERIVEDCLASS(omx_ffmpeg_colorconv_component_PrivateType, omx_base_filter_Private
   /** @param in_alloc_size Allocated size of the input buffer */ \
   unsigned int in_alloc_size; \
   /** @param conv_alloc_size Allocated size of the conversion buffer */ \
-  unsigned int conv_alloc_size; 
+  unsigned int conv_alloc_size;
 ENDCLASS(omx_ffmpeg_colorconv_component_PrivateType)
 
 /* Component private entry points declaration */
@@ -137,10 +137,10 @@ enum PixelFormat find_ffmpeg_pxlfmt(OMX_COLOR_FORMATTYPE omx_pxlfmt);
 OMX_S32 calcStride(OMX_U32 width, OMX_COLOR_FORMATTYPE omx_pxlfmt);
 
 /** image copy function */
-void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U32 src_height, 
+void omx_img_copy(OMX_U8* src_ptr, OMX_S32 src_stride, OMX_U32 src_width, OMX_U32 src_height,
                   OMX_S32 src_offset_x, OMX_S32 src_offset_y,
-                  OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height, 
-                  OMX_S32 dest_offset_x, OMX_S32 dest_offset_y, 
+                  OMX_U8* dest_ptr, OMX_S32 dest_stride, OMX_U32 dest_width,  OMX_U32 dest_height,
+                  OMX_S32 dest_offset_x, OMX_S32 dest_offset_y,
                   OMX_S32 cpy_width, OMX_U32 cpy_height, OMX_COLOR_FORMATTYPE colorformat );
 
 

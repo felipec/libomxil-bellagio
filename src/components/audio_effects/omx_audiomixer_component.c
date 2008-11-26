@@ -1,7 +1,7 @@
 /**
   @file src/components/audio_effects/omx_audiomixer_component.c
 
-  OpenMAX audio mixer control component. This component implements a mixer that 
+  OpenMAX audio mixer control component. This component implements a mixer that
   mixes multiple audio PCM streams and produces a single output stream.
 
   Copyright (C) 2008  STMicroelectronics
@@ -47,7 +47,7 @@ static OMX_U32 noAudioMixerCompInstance = 0;
 
 
 OMX_ERRORTYPE omx_audio_mixer_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
-  OMX_ERRORTYPE err = OMX_ErrorNone;  
+  OMX_ERRORTYPE err = OMX_ErrorNone;
   omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private;
   omx_audio_mixer_component_PortType *pPort;//,*inPort1, *outPort;
   OMX_U32 i;
@@ -64,7 +64,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_Constructor(OMX_COMPONENTTYPE *openmaxSt
 
   omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
   omx_audio_mixer_component_Private->ports = NULL;
-  
+
   /** Calling base filter constructor */
   err = omx_base_filter_Constructor(openmaxStandComp, cComponentName);
 
@@ -72,7 +72,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_Constructor(OMX_COMPONENTTYPE *openmaxSt
   omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nStartPortNumber = 0;
   omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts = MAX_PORTS;
 
-  /** Allocate Ports and call port constructor. */  
+  /** Allocate Ports and call port constructor. */
   if (omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts && !omx_audio_mixer_component_Private->ports) {
     omx_audio_mixer_component_Private->ports = calloc(omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts, sizeof(omx_base_PortType *));
     if (!omx_audio_mixer_component_Private->ports) {
@@ -90,14 +90,14 @@ OMX_ERRORTYPE omx_audio_mixer_component_Constructor(OMX_COMPONENTTYPE *openmaxSt
   for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++) {
     base_audio_port_Constructor(openmaxStandComp, &omx_audio_mixer_component_Private->ports[i], i, OMX_TRUE);
   }
-  
+
   /* construct one output port */
   base_audio_port_Constructor(openmaxStandComp, &omx_audio_mixer_component_Private->ports[omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1], omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1, OMX_FALSE);
-  
-  /** Domain specific section for the ports. */  
+
+  /** Domain specific section for the ports. */
   for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++) {
     pPort = (omx_audio_mixer_component_PortType *) omx_audio_mixer_component_Private->ports[i];
-    
+
     pPort->sPortParam.nBufferSize = DEFAULT_OUT_BUFFER_SIZE;
     pPort->gain = GAIN_VALUE; //100.0f; // default gain
 
@@ -113,7 +113,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_Constructor(OMX_COMPONENTTYPE *openmaxSt
 
     setHeader(&pPort->sVolume,sizeof(OMX_AUDIO_CONFIG_VOLUMETYPE));
     pPort->sVolume.nPortIndex = i;
-    pPort->sVolume.bLinear = OMX_TRUE;           /**< Is the volume to be set in linear (0.100) 
+    pPort->sVolume.bLinear = OMX_TRUE;           /**< Is the volume to be set in linear (0.100)
                                      or logarithmic scale (mB) */
     pPort->sVolume.sVolume.nValue = (OMX_S32)GAIN_VALUE;
     pPort->sVolume.sVolume.nMin = 0;   /**< minimum for value (i.e. nValue >= nMin) */
@@ -168,7 +168,7 @@ void omx_audio_mixer_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStan
   OMX_U32 i,sampleCount = pInBuffer->nFilledLen / 2; // signed 16 bit samples assumed
   omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
   omx_audio_mixer_component_PortType* pPort;
-  
+
   for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++) {
     pPort = (omx_audio_mixer_component_PortType*)omx_audio_mixer_component_Private->ports[i];
     if(PORT_IS_ENABLED(pPort)){
@@ -210,13 +210,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetConfig(
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   switch (nIndex) {
-    case OMX_IndexConfigAudioVolume : 
+    case OMX_IndexConfigAudioVolume :
       pVolume = (OMX_AUDIO_CONFIG_VOLUMETYPE*) pComponentConfigStructure;
       if(pVolume->sVolume.nValue > 100) {
         err =  OMX_ErrorBadParameter;
         break;
       }
-      
+
       if (pVolume->nPortIndex <= omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts) {
         pPort= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pVolume->nPortIndex];
         DEBUG(DEB_LEV_SIMPLE_SEQ, "Port %i Gain=%d\n",(int)pVolume->nPortIndex,(int)pVolume->sVolume.nValue);
@@ -242,7 +242,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetConfig(
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   switch (nIndex) {
-    case OMX_IndexConfigAudioVolume : 
+    case OMX_IndexConfigAudioVolume :
       pVolume = (OMX_AUDIO_CONFIG_VOLUMETYPE*) pComponentConfigStructure;
       if (pVolume->nPortIndex <= omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts) {
         pPort= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pVolume->nPortIndex];
@@ -280,8 +280,8 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetParameter(
       pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
       portIndex = pAudioPortFormat->nPortIndex;
       err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
-      if(err!=OMX_ErrorNone) { 
-        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
         break;
       }
       if (portIndex <= omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts) {
@@ -290,7 +290,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetParameter(
       } else {
         err = OMX_ErrorBadPortIndex;
       }
-      break;  
+      break;
     default:
       err = omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
@@ -302,7 +302,7 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
-  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;  
+  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
   OMX_ERRORTYPE err = OMX_ErrorNone;
   omx_audio_mixer_component_PortType *port;
@@ -315,14 +315,14 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
   /* Check which structure we are being fed and fill its header */
   switch(nParamIndex) {
     case OMX_IndexParamAudioInit:
-      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) { 
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PORT_PARAM_TYPE))) != OMX_ErrorNone) {
         break;
       }
       memcpy(ComponentParameterStructure, &omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio], sizeof(OMX_PORT_PARAM_TYPE));
-      break;    
+      break;
     case OMX_IndexParamAudioPortFormat:
       pAudioPortFormat = (OMX_AUDIO_PARAM_PORTFORMATTYPE*)ComponentParameterStructure;
-      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) { 
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
         break;
       }
       if (pAudioPortFormat->nPortIndex <= omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts) {
@@ -331,16 +331,16 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
       } else {
         err = OMX_ErrorBadPortIndex;
       }
-      break;    
+      break;
     case OMX_IndexParamAudioPcm:
       pAudioPcmMode = (OMX_AUDIO_PARAM_PCMMODETYPE*)ComponentParameterStructure;
-      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) { 
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE))) != OMX_ErrorNone) {
         break;
       }
 
       if (pAudioPcmMode->nPortIndex <= omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts) {
         port= (omx_audio_mixer_component_PortType *)omx_audio_mixer_component_Private->ports[pAudioPcmMode->nPortIndex];
-        memcpy(pAudioPcmMode, &port->pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE)); 
+        memcpy(pAudioPcmMode, &port->pAudioPcmMode, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
       } else {
         err = OMX_ErrorBadPortIndex;
       }
@@ -355,7 +355,7 @@ int checkAnyPortBeingFlushed(omx_audio_mixer_component_PrivateType* omx_audio_mi
   omx_base_PortType *pPort;
   int ret = OMX_FALSE,i;
 
-  if(omx_audio_mixer_component_Private->state == OMX_StateLoaded || 
+  if(omx_audio_mixer_component_Private->state == OMX_StateLoaded ||
      omx_audio_mixer_component_Private->state == OMX_StateInvalid) {
     return 0;
   }
@@ -372,15 +372,16 @@ int checkAnyPortBeingFlushed(omx_audio_mixer_component_PrivateType* omx_audio_mi
 
   return ret;
 }
+
 /** This is the central function for component processing,overridden for audio mixer. It
-  * is executed in a separate thread, is synchronized with 
+  * is executed in a separate thread, is synchronized with
   * semaphores at each port, those are released each time a new buffer
   * is available on the given port.
   */
 void* omx_audio_mixer_BufferMgmtFunction (void* param) {
   OMX_COMPONENTTYPE* openmaxStandComp = (OMX_COMPONENTTYPE*)param;
   omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private = (omx_audio_mixer_component_PrivateType*)openmaxStandComp->pComponentPrivate;
-  
+
   omx_base_PortType *pPort[MAX_PORTS];
   tsem_t* pSem[MAX_PORTS];
   queue_t* pQueue[MAX_PORTS];
@@ -401,13 +402,13 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
 
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
-  while(omx_audio_mixer_component_Private->state == OMX_StateIdle || omx_audio_mixer_component_Private->state == OMX_StateExecuting ||  omx_audio_mixer_component_Private->state == OMX_StatePause || 
+  while(omx_audio_mixer_component_Private->state == OMX_StateIdle || omx_audio_mixer_component_Private->state == OMX_StateExecuting ||  omx_audio_mixer_component_Private->state == OMX_StatePause ||
     omx_audio_mixer_component_Private->transientState == OMX_TransStateLoadedToIdle) {
 
     /*Wait till the ports are being flushed*/
     while( checkAnyPortBeingFlushed(omx_audio_mixer_component_Private) ) {
-      
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iF=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
+
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond iF=%d,oF=%d iSemVal=%d,oSemval=%d\n",
         __func__,isBufferNeeded[0],isBufferNeeded[nOutputPortIndex],pSem[0]->semval,pSem[nOutputPortIndex]->semval);
 
       for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++){
@@ -419,27 +420,27 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
         }
       }
 
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iF=%d,oF=%d iSemVal=%d,oSemval=%d\n", 
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond iF=%d,oF=%d iSemVal=%d,oSemval=%d\n",
         __func__,isBufferNeeded[0],isBufferNeeded[nOutputPortIndex],pSem[0]->semval,pSem[nOutputPortIndex]->semval);
-  
+
       tsem_up(omx_audio_mixer_component_Private->flush_all_condition);
       tsem_down(omx_audio_mixer_component_Private->flush_condition);
     }
-    
+
     if(omx_audio_mixer_component_Private->state == OMX_StateLoaded || omx_audio_mixer_component_Private->state == OMX_StateInvalid) {
       DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Buffer Management Thread is exiting\n",__func__);
       break;
     }
 
     /*No buffer to process. So wait here*/
-    for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++){ 
-      if((isBufferNeeded[i]==OMX_TRUE && pSem[i]->semval==0) && 
+    for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++){
+      if((isBufferNeeded[i]==OMX_TRUE && pSem[i]->semval==0) &&
         (omx_audio_mixer_component_Private->state != OMX_StateLoaded && omx_audio_mixer_component_Private->state != OMX_StateInvalid) &&
         PORT_IS_ENABLED(pPort[i]) && !PORT_IS_BEING_FLUSHED(pPort[i])) {
         //Signalled from EmptyThisBuffer or FillThisBuffer or some thing else
         DEBUG(DEB_LEV_FULL_SEQ, "Waiting for next input/output buffer\n");
         tsem_down(omx_audio_mixer_component_Private->bMgmtSem);
-      
+
       }
       /*Don't wait for buffers, if any port is flushing*/
       if(checkAnyPortBeingFlushed(omx_audio_mixer_component_Private)) {
@@ -451,7 +452,7 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
       }
     }
 
-    for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++){ 
+    for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts;i++){
       DEBUG(DEB_LEV_SIMPLE_SEQ, "Waiting for buffer %i semval=%d \n",(int)i,pSem[i]->semval);
       if(pSem[i]->semval>0 && isBufferNeeded[i]==OMX_TRUE && PORT_IS_ENABLED(pPort[i])) {
         tsem_down(pSem[i]);
@@ -467,14 +468,14 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
     }
 
     if(isBufferNeeded[nOutputPortIndex]==OMX_FALSE) {
-       
+
       if(omx_audio_mixer_component_Private->pMark.hMarkTargetComponent != NULL){
         pBuffer[nOutputPortIndex]->hMarkTargetComponent = omx_audio_mixer_component_Private->pMark.hMarkTargetComponent;
         pBuffer[nOutputPortIndex]->pMarkData            = omx_audio_mixer_component_Private->pMark.pMarkData;
         omx_audio_mixer_component_Private->pMark.hMarkTargetComponent = NULL;
         omx_audio_mixer_component_Private->pMark.pMarkData            = NULL;
       }
-      for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++){ 
+      for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++){
         if(isBufferNeeded[i]==OMX_FALSE && PORT_IS_ENABLED(pPort[i])) {
 
           if(isBufferNeeded[i]==OMX_FALSE) {
@@ -521,9 +522,9 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
             isBufferNeeded[i] = OMX_TRUE;
           }
         }
-      }      
-      
-      if(omx_audio_mixer_component_Private->state==OMX_StatePause && 
+      }
+
+      if(omx_audio_mixer_component_Private->state==OMX_StatePause &&
         !(checkAnyPortBeingFlushed(omx_audio_mixer_component_Private))) {
         /*Waiting at paused state*/
         tsem_wait(omx_audio_mixer_component_Private->bStateSem);
@@ -540,14 +541,14 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
 
     DEBUG(DEB_LEV_FULL_SEQ, "Input buffer arrived\n");
 
-    if(omx_audio_mixer_component_Private->state==OMX_StatePause && 
+    if(omx_audio_mixer_component_Private->state==OMX_StatePause &&
       !(checkAnyPortBeingFlushed(omx_audio_mixer_component_Private))) {
       /*Waiting at paused state*/
       tsem_wait(omx_audio_mixer_component_Private->bStateSem);
     }
 
     /*Input Buffer has been completely consumed. So, return input buffer*/
-    for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++){ 
+    for(i=0;i<omx_audio_mixer_component_Private->sPortTypesParam[OMX_PortDomainAudio].nPorts-1;i++){
       if(isBufferNeeded[i] == OMX_TRUE && pBuffer[i]!=NULL && PORT_IS_ENABLED(pPort[i])) {
         pPort[i]->ReturnBufferFunction(pPort[i],pBuffer[i]);
         pBuffer[i]=NULL;

@@ -93,7 +93,6 @@ void display_help() {
   printf("\n");
   printf("       dirname: dirname from where audio files to be played\n");
   printf("       -s: Disable Seek\n");
-  printf("       -t: Disable Tunnelling\n");
   printf("       -h: Displays this help\n");
   printf("\n");
   exit(1);
@@ -132,9 +131,9 @@ int main(int argc, char** argv) {
         case 's':
           seek = 0;
           break;
-        case 't':
-          flagSetupTunnel = 0;
-          break;
+        //case 't':
+        //  flagSetupTunnel = 0;
+        //  break;
         default:
           display_help();
         }
@@ -199,7 +198,7 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_ERR, "FileReader Component Not Found\n");
       exit(1);
     }  
-    err = OMX_GetExtensionIndex(appPriv->filereaderhandle,"OMX.ST.index.param.filereader.inputfilename",&eIndexParamFilename);
+    err = OMX_GetExtensionIndex(appPriv->filereaderhandle,"OMX.ST.index.param.inputfilename",&eIndexParamFilename);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
 			exit(1);
@@ -391,9 +390,15 @@ int main(int argc, char** argv) {
         DEBUG(DEB_LEV_ERR,"file reader port disable failed\n");
 			  exit(1);
       }
-      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortDisable, 0, NULL);
+      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortDisable, OMX_ALL, NULL);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"audio decoder port disable failed\n");
+			  exit(1);
+      }
+
+      err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandPortDisable, 0, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"audio sink port disable failed\n");
 			  exit(1);
       }
       
@@ -402,6 +407,12 @@ int main(int argc, char** argv) {
       tsem_down(appPriv->filereaderEventSem);
       DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Disable State Idle\n");
       /*Wait for Audio Decoder Ports Disable Event*/
+      tsem_down(appPriv->decoderEventSem);
+      tsem_down(appPriv->decoderEventSem);
+
+      tsem_down(appPriv->volumeEventSem);
+
+      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
       tsem_down(appPriv->decoderEventSem);
     }
 
@@ -427,14 +438,23 @@ int main(int argc, char** argv) {
     if (flagUsingFFMpeg) {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"Sending Port Enable Command State Idle\n");
 
+      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
+      tsem_down(appPriv->decoderEventSem);
+
       err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandPortEnable, 0, NULL);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"file reader port enable failed\n");
 			  exit(1);
       }
-      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortEnable, 0, NULL);
+      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortEnable, OMX_ALL, NULL);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR,"audio decoder port enable failed\n");
+			  exit(1);
+      }
+
+      err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandPortEnable, 0, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"audio sink port enable failed\n");
 			  exit(1);
       }
       
@@ -444,6 +464,11 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Disable State Idle\n");
       /*Wait for Audio Decoder Ports Disable Event*/
       tsem_down(appPriv->decoderEventSem);
+      tsem_down(appPriv->decoderEventSem);
+      
+      tsem_down(appPriv->volumeEventSem);
+
+      
     }
 
     if(flagUsingFFMpeg) {
@@ -455,11 +480,6 @@ int main(int argc, char** argv) {
       /*Wait for File reader state change to executing*/
       tsem_down(appPriv->filereaderEventSem);
       DEBUG(DEFAULT_MESSAGES,"File reader executing state \n");
-
-      /*Wait for File Reader Ports Setting Changed Event. Since File Reader Always detect the stream
-      Always ports setting change event will be received*/
-      tsem_down(appPriv->filereaderEventSem);
-      DEBUG(DEFAULT_MESSAGES,"File reader Port Settings Changed event \n");
     }
 
     err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
@@ -661,9 +681,6 @@ OMX_ERRORTYPE filereaderEventHandler(
   OMX_OUT OMX_U32 Data2,
   OMX_OUT OMX_PTR pEventData)
 {
-  OMX_PTR pExtraData;
-  OMX_INDEXTYPE eIndexExtraData;
-  OMX_ERRORTYPE err;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
 
   if(eEvent == OMX_EventCmdComplete) {
@@ -701,36 +718,13 @@ OMX_ERRORTYPE filereaderEventHandler(
     }
   }else if(eEvent == OMX_EventPortSettingsChanged) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Setting Changed event\n");
-    if(flagUsingFFMpeg) {
-      err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.config.audioextradata",&eIndexExtraData);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
-			  exit(1);
-      } else {
-        pExtraData = malloc(extradata_size);
-        err = OMX_GetConfig(appPriv->filereaderhandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n file reader Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
-				  exit(1);
-        }
-        DEBUG(DEB_LEV_SIMPLE_SEQ,"Setting ExtraData\n");
-        err = OMX_SetConfig(appPriv->audiodechandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n audio decoder Set Config Failed error=%08x\n",err);
-				  exit(1);
-        }
-        free(pExtraData);
-      }
-    }
-    /*Signal Port Setting Changed*/
-    tsem_up(appPriv->filereaderEventSem);
   }else if(eEvent == OMX_EventPortFormatDetected) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Port Format Detected %x\n", __func__,(int)Data1);
   } else if(eEvent == OMX_EventBufferFlag) {
     DEBUG(DEFAULT_MESSAGES, "In %s OMX_BUFFERFLAG_EOS\n", __func__);
     if((int)Data2 == OMX_BUFFERFLAG_EOS) {
       bEOS=OMX_TRUE;
-      //tsem_up(appPriv->eofSem);
+      tsem_up(appPriv->eofSem);
     }
   } else {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "Param1 is %i\n", (int)Data1);

@@ -38,8 +38,6 @@
 /** Maximum Number of Video Source Instance*/
 static OMX_U32 noViderSrcInstance=0;
 
-#define DEFAULT_FILENAME_LENGTH 256
-
 #define CLEAR(x) memset (&(x), 0, sizeof (x))
 
 static unsigned int n_buffers = 0;
@@ -445,9 +443,6 @@ OMX_ERRORTYPE omx_videosrc_component_GetParameter(
       return OMX_ErrorBadPortIndex;
     }
     break;  
-  case OMX_IndexVendorFileReadInputFilename : 
-    strcpy((char *)ComponentParameterStructure, "still no filename");
-    break;
   default: /*Call the base component function*/
     return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }

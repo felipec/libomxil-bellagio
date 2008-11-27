@@ -545,7 +545,7 @@ int main(int argc, char** argv) {
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
     /** setting the input audio format in file reader */
-    err = OMX_GetExtensionIndex(appPriv->filereaderhandle,"OMX.ST.index.param.filereader.inputfilename",&eIndexParamFilename);
+    err = OMX_GetExtensionIndex(appPriv->filereaderhandle,"OMX.ST.index.param.inputfilename",&eIndexParamFilename);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
       exit(1);
@@ -639,22 +639,6 @@ int main(int argc, char** argv) {
       tsem_down(appPriv->volumeEventSem);
       tsem_down(appPriv->sinkEventSem);
     }
-  }
-
-  if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
-    err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
-    if(err != OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR,"file reader state executing failed\n");
-      exit(1);
-    }
-    /*Wait for File reader state change to executing*/
-    tsem_down(appPriv->filereaderEventSem);
-    DEBUG(DEFAULT_MESSAGES,"File reader executing state \n");
-
-    /*Wait for File Reader Ports Setting Changed Event. Since File Reader Always detect the stream
-    Always ports setting change event will be received*/
-    tsem_down(appPriv->filereaderEventSem);
-    DEBUG(DEFAULT_MESSAGES,"File reader Port Settings Changed event \n");
   }
 
   /*Send State Change Idle command to Audio Decoder*/
@@ -751,6 +735,18 @@ int main(int argc, char** argv) {
       DEBUG(DEB_LEV_SIMPLE_SEQ,"audio sink state idle\n");
     }
   }
+
+  if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
+    err = OMX_SendCommand(appPriv->filereaderhandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
+    if(err != OMX_ErrorNone) {
+      DEBUG(DEB_LEV_ERR,"file reader state executing failed\n");
+      exit(1);
+    }
+    /*Wait for File reader state change to executing*/
+    tsem_down(appPriv->filereaderEventSem);
+    DEBUG(DEFAULT_MESSAGES,"File reader executing state \n");
+  }
+
 
   err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
   if(err != OMX_ErrorNone) {
@@ -983,9 +979,6 @@ OMX_ERRORTYPE filereaderEventHandler(
   OMX_OUT OMX_U32 Data2,
   OMX_OUT OMX_PTR pEventData)
 {
-  OMX_PTR pExtraData;
-  OMX_INDEXTYPE eIndexExtraData;
-  OMX_ERRORTYPE err;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
 
   if(eEvent == OMX_EventCmdComplete) {
@@ -1022,30 +1015,7 @@ OMX_ERRORTYPE filereaderEventHandler(
       DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Received Event Event=%d Data1=%d,Data2=%d\n",__func__,eEvent,(int)Data1,(int)Data2);
     }
   } else if(eEvent == OMX_EventPortSettingsChanged) {
-    DEBUG(DEB_LEV_SIMPLE_SEQ,"File reader Port Setting Changed event\n");
-    if(flagUsingFFMpeg) {
-      err = OMX_GetExtensionIndex(appPriv->audiodechandle,"OMX.ST.index.config.audioextradata",&eIndexExtraData);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
-        exit(1);
-      } else {
-        pExtraData = malloc(extradata_size);
-        err = OMX_GetConfig(appPriv->filereaderhandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n file reader Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
-          exit(1);
-        }
-        DEBUG(DEB_LEV_SIMPLE_SEQ,"Setting ExtraData\n");
-        err = OMX_SetConfig(appPriv->audiodechandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n audio decoder Set Config Failed error=%08x\n",err);
-          exit(1);
-        }
-        free(pExtraData);
-      }
-    }
-    /*Signal Port Setting Changed*/
-    tsem_up(appPriv->filereaderEventSem);
+    DEBUG(DEB_LEV_ERR,"File reader Port Setting Changed event\n");
   } else if(eEvent == OMX_EventPortFormatDetected) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Port Format Detected %x\n", __func__,(int)Data1);
   } else if(eEvent == OMX_EventBufferFlag) {

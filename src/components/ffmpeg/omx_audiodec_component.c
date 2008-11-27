@@ -100,6 +100,19 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   pPort->sPortParam.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
   pPort->sPortParam.nBufferSize            = DEFAULT_OUT_BUFFER_SIZE;
 
+  //output is pcm mode for all decoders - so generalise it
+  setHeader(&omx_audiodec_component_Private->pAudioPcmMode,sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
+  omx_audiodec_component_Private->pAudioPcmMode.nPortIndex = 1;
+  omx_audiodec_component_Private->pAudioPcmMode.nChannels = 2;
+  omx_audiodec_component_Private->pAudioPcmMode.eNumData = OMX_NumericalDataSigned;
+  omx_audiodec_component_Private->pAudioPcmMode.eEndian = OMX_EndianLittle;
+  omx_audiodec_component_Private->pAudioPcmMode.bInterleaved = OMX_TRUE;
+  omx_audiodec_component_Private->pAudioPcmMode.nBitPerSample = 16;
+  omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = 44100;
+  omx_audiodec_component_Private->pAudioPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
+  omx_audiodec_component_Private->pAudioPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
+  omx_audiodec_component_Private->pAudioPcmMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
+
   // now it's time to know the audio coding type of the component
   if(!strcmp(cComponentName, AUDIO_DEC_MP3_NAME))   // MP3 format decoder
     omx_audiodec_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
@@ -135,6 +148,7 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   omx_audiodec_component_Private->avcodecReady = OMX_FALSE;
   omx_audiodec_component_Private->extradata = NULL;
   omx_audiodec_component_Private->extradata_size = 0;
+  omx_audiodec_component_Private->isFirstBuffer = OMX_TRUE;
 
   omx_audiodec_component_Private->BufferMgmtCallback = omx_audiodec_component_BufferMgmtCallback;
 
@@ -147,10 +161,8 @@ OMX_ERRORTYPE omx_audiodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   omx_audiodec_component_Private->destructor = omx_audiodec_component_Destructor;
   openmaxStandComp->SetParameter = omx_audiodec_component_SetParameter;
   openmaxStandComp->GetParameter = omx_audiodec_component_GetParameter;
-  openmaxStandComp->SetConfig    = omx_audiodec_component_SetConfig;
   openmaxStandComp->ComponentRoleEnum = omx_audiodec_component_ComponentRoleEnum;
-  openmaxStandComp->GetExtensionIndex = omx_audiodec_component_GetExtensionIndex;
-
+  
   noAudioDecInstance++;
 
   if(noAudioDecInstance>MAX_COMPONENT_AUDIODEC)
@@ -204,7 +216,7 @@ OMX_ERRORTYPE omx_audiodec_component_Destructor(OMX_COMPONENTTYPE *openmaxStandC
 OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_PrivateType* omx_audiodec_component_Private) {
   OMX_U32 target_codecID;  // id of FFmpeg codec to be used for different audio formats
 
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "FFMpeg Library/codec iniited\n");
+  DEBUG(DEB_LEV_FULL_SEQ, "FFMpeg Library/codec iniited\n");
 
   switch(omx_audiodec_component_Private->audio_coding_type){
   case OMX_AUDIO_CodingMP3 :
@@ -252,7 +264,6 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
   omx_audiodec_component_Private->avCodecContext->flags |= CODEC_FLAG_EMU_EDGE;
   omx_audiodec_component_Private->avCodecContext->workaround_bugs |= FF_BUG_AUTODETECT;
 
-  tsem_up(omx_audiodec_component_Private->avCodecSyncSem);
   DEBUG(DEB_LEV_SIMPLE_SEQ, "done\n");
   return OMX_ErrorNone;
 }
@@ -270,19 +281,6 @@ void omx_audiodec_component_ffmpegLibDeInit(omx_audiodec_component_PrivateType* 
 void omx_audiodec_component_SetInternalParameters(OMX_COMPONENTTYPE *openmaxStandComp) {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
   omx_base_audio_PortType *pPort = (omx_base_audio_PortType *) omx_audiodec_component_Private->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
-
-  //output is pcm mode for all decoders - so generalise it
-  setHeader(&omx_audiodec_component_Private->pAudioPcmMode,sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-  omx_audiodec_component_Private->pAudioPcmMode.nPortIndex = 1;
-  omx_audiodec_component_Private->pAudioPcmMode.nChannels = 2;
-  omx_audiodec_component_Private->pAudioPcmMode.eNumData = OMX_NumericalDataSigned;
-  omx_audiodec_component_Private->pAudioPcmMode.eEndian = OMX_EndianLittle;
-  omx_audiodec_component_Private->pAudioPcmMode.bInterleaved = OMX_TRUE;
-  omx_audiodec_component_Private->pAudioPcmMode.nBitPerSample = 16;
-  omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate = 44100;
-  omx_audiodec_component_Private->pAudioPcmMode.ePCMMode = OMX_AUDIO_PCMModeLinear;
-  omx_audiodec_component_Private->pAudioPcmMode.eChannelMapping[0] = OMX_AUDIO_ChannelLF;
-  omx_audiodec_component_Private->pAudioPcmMode.eChannelMapping[1] = OMX_AUDIO_ChannelRF;
 
   if (omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3) {
 
@@ -393,8 +391,47 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 {
   omx_audiodec_component_PrivateType* omx_audiodec_component_Private = openmaxStandComp->pComponentPrivate;
   int output_length, len;
+  OMX_ERRORTYPE err;
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n",__func__);
+
+  if(omx_audiodec_component_Private->isFirstBuffer == OMX_TRUE) {
+    omx_audiodec_component_Private->isFirstBuffer = OMX_FALSE;
+    
+    if(pInputBuffer->nFlags == OMX_BUFFERFLAG_CODECCONFIG) {
+      omx_audiodec_component_Private->extradata_size = pInputBuffer->nFilledLen;
+      if(omx_audiodec_component_Private->extradata_size > 0) {
+        if(omx_audiodec_component_Private->extradata) {
+          free(omx_audiodec_component_Private->extradata);
+        }
+        omx_audiodec_component_Private->extradata = malloc(pInputBuffer->nFilledLen);
+        memcpy(omx_audiodec_component_Private->extradata, pInputBuffer->pBuffer,pInputBuffer->nFilledLen);
+      }
+
+      DEBUG(DEB_ALL_MESS, "In %s Received First Buffer Extra Data Size=%d\n",__func__,(int)pInputBuffer->nFilledLen);
+      pInputBuffer->nFlags = 0x0;
+      pInputBuffer->nFilledLen = 0;
+    }
+
+    if (!omx_audiodec_component_Private->avcodecReady) {
+      err = omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Private);
+      if (err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s omx_audiodec_component_ffmpegLibInit Failed\n",__func__);
+        return;
+      }
+      omx_audiodec_component_Private->avcodecReady = OMX_TRUE;
+    }    
+    
+    if(pInputBuffer->nFilledLen == 0) {
+      return;
+    }
+  }
+
+  if(omx_audiodec_component_Private->avcodecReady == OMX_FALSE) {
+    DEBUG(DEB_LEV_ERR, "In %s avcodec Not Ready \n",__func__);
+    return;
+  }
+
 
   if(omx_audiodec_component_Private->isNewBuffer) {
     omx_audiodec_component_Private->isNewBuffer = 0;
@@ -416,8 +453,14 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
                               pInputBuffer->pBuffer,
                               pInputBuffer->nFilledLen);
 #endif
+
+  DEBUG(DEB_LEV_FULL_SEQ, "In %s chl=%d sRate=%d \n", __func__, 
+    (int)omx_audiodec_component_Private->pAudioPcmMode.nChannels, 
+    (int)omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate);
+
+
   if((omx_audiodec_component_Private->pAudioPcmMode.nSamplingRate != omx_audiodec_component_Private->avCodecContext->sample_rate) ||
-     ( omx_audiodec_component_Private->pAudioPcmMode.nChannels!=omx_audiodec_component_Private->avCodecContext->channels)) {
+     ( omx_audiodec_component_Private->pAudioPcmMode.nChannels != omx_audiodec_component_Private->avCodecContext->channels)) {
     DEBUG(DEB_LEV_FULL_SEQ, "Sending Port Settings Change Event\n");
     /* has MP3 dependency--requires modification */
     //switch for different audio formats---parameter settings accordingly
@@ -763,13 +806,7 @@ OMX_ERRORTYPE omx_audiodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
 
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateExecuting ) && (omx_audiodec_component_Private->state == OMX_StateIdle)) {
-      if (!omx_audiodec_component_Private->avcodecReady /* &&  omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingMP3 */) {
-        err = omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Private);
-        if (err != OMX_ErrorNone) {
-          return OMX_ErrorNotReady;
-        }
-        omx_audiodec_component_Private->avcodecReady = OMX_TRUE;
-      }
+      omx_audiodec_component_Private->isFirstBuffer = OMX_TRUE;
     }
     else if ((message->messageParam == OMX_StateIdle ) && (omx_audiodec_component_Private->state == OMX_StateLoaded)) {
       err = omx_audiodec_component_Init(openmaxStandComp);
@@ -817,61 +854,6 @@ OMX_ERRORTYPE omx_audiodec_component_ComponentRoleEnum(
 }
 
 
-OMX_ERRORTYPE omx_audiodec_component_SetConfig(
-  OMX_HANDLETYPE hComponent,
-  OMX_INDEXTYPE nIndex,
-  OMX_PTR pComponentConfigStructure) {
-
-  OMX_ERRORTYPE err = OMX_ErrorNone;
-  OMX_VENDOR_EXTRADATATYPE* pExtradata;
-
-  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
-  omx_audiodec_component_PrivateType* omx_audiodec_component_Private = (omx_audiodec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
-  if (pComponentConfigStructure == NULL) {
-    return OMX_ErrorBadParameter;
-  }
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "   Getting configuration %i\n", nIndex);
-  /* Check which structure we are being fed and fill its header */
-  switch (nIndex) {
-    case OMX_IndexVendorAudioExtraData :
-      pExtradata = (OMX_VENDOR_EXTRADATATYPE*)pComponentConfigStructure;
-      if (pExtradata->nPortIndex <= 1) {
-        /** copy the extradata in the codec context private structure */
-        omx_audiodec_component_Private->extradata_size = (OMX_U32)pExtradata->nDataSize;
-        if(omx_audiodec_component_Private->extradata_size > 0) {
-          if(omx_audiodec_component_Private->extradata) {
-            free(omx_audiodec_component_Private->extradata);
-          }
-          omx_audiodec_component_Private->extradata = malloc((int)pExtradata->nDataSize);
-          memcpy(omx_audiodec_component_Private->extradata, pExtradata->pData,pExtradata->nDataSize);
-        } else {
-            DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");
-        }
-      } else {
-          return OMX_ErrorBadPortIndex;
-      }
-      break;
-
-    default: // delegate to superclass
-      return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return err;
-}
-
-OMX_ERRORTYPE omx_audiodec_component_GetExtensionIndex(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_STRING cParameterName,
-  OMX_OUT OMX_INDEXTYPE* pIndexType) {
-
-  DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
-
-  if(strcmp(cParameterName,"OMX.ST.index.config.audioextradata") == 0) {
-    *pIndexType = OMX_IndexVendorAudioExtraData;
-  } else {
-    return OMX_ErrorBadParameter;
-  }
-  return OMX_ErrorNone;
-}
 
 
 

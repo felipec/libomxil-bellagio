@@ -63,7 +63,7 @@
  * @param avformatparameters is the ffmpeg video format related parameters 
  * @param avinputformat is the ffmpeg video format related settings 
  * @param pTmpInputBuffer is a temporary buffer to hold the data from av_read_frame 
- * @param sInputFileName is the input filename provided by client 
+ * @param sOutputFileName is the output filename provided by client 
  * @param video_coding_type is the coding type determined by input file 
  * @param audio_coding_type is the coding type determined by input file 
  * @param semaphore for avformat syncrhonization 
@@ -79,7 +79,7 @@ DERIVEDCLASS(omx_mux_component_PrivateType, omx_base_sink_PrivateType)
   AVFormatContext                     *avformatcontext; \
   AVFormatParameters                  *avformatparameters; \
   OMX_BUFFERHEADERTYPE*               pTmpInputBuffer; \
-  OMX_STRING                          sInputFileName; \
+  OMX_STRING                          sOutputFileName; \
   OMX_U32                             video_coding_type; \
   OMX_U32                             audio_coding_type; \
   tsem_t*                             avformatSyncSem; \

@@ -884,7 +884,7 @@ int main(int argc, char** argv) {
  }
 
   /** setting the input format in parser3gp */
-  err = OMX_GetExtensionIndex(appPriv->parser3gphandle,"OMX.ST.index.param.parser3gp.inputfilename",&eIndexParamFilename);
+  err = OMX_GetExtensionIndex(appPriv->parser3gphandle,"OMX.ST.index.param.inputfilename",&eIndexParamFilename);
   if(err != OMX_ErrorNone) {
      DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
     exit(1);
@@ -1908,8 +1908,6 @@ OMX_ERRORTYPE parser3gpEventHandler(
   OMX_OUT OMX_U32 Data2,
   OMX_OUT OMX_PTR pEventData)
 {
-  OMX_PTR pExtraData;
-  OMX_INDEXTYPE eIndexExtraData;
   OMX_ERRORTYPE err;
   DEBUG(DEB_LEV_SIMPLE_SEQ, "Hi there, I am in the %s callback\n", __func__);
 
@@ -1951,49 +1949,6 @@ OMX_ERRORTYPE parser3gpEventHandler(
     }
   }else if(eEvent == OMX_EventPortSettingsChanged) {
     DEBUG(DEB_LEV_SIMPLE_SEQ,"Parser3gp Port Setting Changed event\n");
-
-    /* Passing the extra data to the video/audio decoder */
-    if(Data2==0) { /* video port */
-      err = OMX_GetExtensionIndex(appPriv->parser3gphandle,"OMX.ST.index.config.videoextradata",&eIndexExtraData);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"\n 1 error in get extension index\n");
-                          exit(1);
-      } else {
-        pExtraData = malloc(extradata_size);
-        err = OMX_GetConfig(appPriv->parser3gphandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n parser 3gp Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
-                                  exit(1);
-        }
-        DEBUG(DEB_LEV_SIMPLE_SEQ,"Setting ExtraData\n");
-        err = OMX_SetConfig(appPriv->videodechandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n video decoder Set Config Failed error=%08x\n",err);
-                                  exit(1);
-        }
-        free(pExtraData);
-      }    
-    } else if (Data2==1) { /*audio port*/    
-      err = OMX_GetExtensionIndex(appPriv->parser3gphandle,"OMX.ST.index.config.audioextradata",&eIndexExtraData);
-      if(err != OMX_ErrorNone) {
-        DEBUG(DEB_LEV_ERR,"\n 1 error in get extension index\n");
-                          exit(1);
-      } else {
-        pExtraData = malloc(extradata_size);
-        err = OMX_GetConfig(appPriv->parser3gphandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n parser 3gp Get Param Failed error =%08x index=%08x\n",err,eIndexExtraData);
-                                  exit(1);
-        }
-        DEBUG(DEB_LEV_SIMPLE_SEQ,"Setting ExtraData\n");
-        err = OMX_SetConfig(appPriv->audiodechandle, eIndexExtraData, pExtraData);
-        if(err != OMX_ErrorNone) {
-          DEBUG(DEB_LEV_ERR,"\n video decoder Set Config Failed error=%08x\n",err);
-                                  exit(1);
-        }
-        free(pExtraData);
-      }
-   }
 
    /* In tunneled case disabling the ports of all the tunneled components */
    if (flagSetupTunnel) {
@@ -2109,18 +2064,12 @@ OMX_ERRORTYPE parser3gpFillBufferDone(
         if(inBufferVideoDec[0]->pBuffer == pBuffer->pBuffer) {
           inBufferVideoDec[0]->nFilledLen = pBuffer->nFilledLen;
           inBufferVideoDec[0]->nTimeStamp = pBuffer->nTimeStamp;
-          if(pBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-            inBufferVideoDec[0]->nFlags = pBuffer->nFlags;
-            pBuffer->nFlags             = 0;
-          }
+          inBufferVideoDec[0]->nFlags = pBuffer->nFlags;
           err = OMX_EmptyThisBuffer(appPriv->videodechandle, inBufferVideoDec[0]);
         } else {
           inBufferVideoDec[1]->nFilledLen = pBuffer->nFilledLen;
           inBufferVideoDec[1]->nTimeStamp = pBuffer->nTimeStamp;
-          if(pBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-            inBufferVideoDec[1]->nFlags = pBuffer->nFlags;
-            pBuffer->nFlags             = 0;
-          }
+          inBufferVideoDec[1]->nFlags = pBuffer->nFlags;
           err = OMX_EmptyThisBuffer(appPriv->videodechandle, inBufferVideoDec[1]);
         }
         if(err != OMX_ErrorNone) {
@@ -2130,6 +2079,7 @@ OMX_ERRORTYPE parser3gpFillBufferDone(
           DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Calling Empty This Buffer\n", __func__,(int)pBuffer->nFlags);
           bEOS=OMX_TRUE;
         }
+        pBuffer->nFlags = 0;
       } else {
         DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Empty This Buffer\n", __func__,(int)pBuffer->nFlags);
       }
@@ -2139,18 +2089,12 @@ OMX_ERRORTYPE parser3gpFillBufferDone(
          if(inBufferAudioDec[0]->pBuffer == pBuffer->pBuffer) {
            inBufferAudioDec[0]->nFilledLen = pBuffer->nFilledLen;
            inBufferAudioDec[0]->nTimeStamp = pBuffer->nTimeStamp;
-          if(pBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-            inBufferAudioDec[0]->nFlags = pBuffer->nFlags;
-            pBuffer->nFlags             = 0;
-          }
+           inBufferAudioDec[0]->nFlags = pBuffer->nFlags;
            err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec[0]);
          } else {
            inBufferAudioDec[1]->nFilledLen = pBuffer->nFilledLen;
            inBufferAudioDec[1]->nTimeStamp = pBuffer->nTimeStamp;
-          if(pBuffer->nFlags == OMX_BUFFERFLAG_STARTTIME) {
-            inBufferAudioDec[1]->nFlags = pBuffer->nFlags;
-            pBuffer->nFlags             = 0;
-          }
+           inBufferAudioDec[1]->nFlags = pBuffer->nFlags;
            err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec[1]);
          }
          if(err != OMX_ErrorNone) {
@@ -2160,6 +2104,7 @@ OMX_ERRORTYPE parser3gpFillBufferDone(
            DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Calling Empty This Buffer\n", __func__,(int)pBuffer->nFlags);
            bEOS=OMX_TRUE;
          }
+         pBuffer->nFlags  = 0;
        } else {
          DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s: eos=%x Dropping Empty This Buffer\n", __func__,(int)pBuffer->nFlags);
        }

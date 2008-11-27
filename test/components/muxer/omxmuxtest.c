@@ -650,7 +650,7 @@ int main(int argc, char** argv) {
   }
 
   /** setting the input format in mux */
-  err = OMX_GetExtensionIndex(appPriv->muxhandle,"OMX.ST.index.param.mux.inputfilename",&eIndexParamFilename);
+  err = OMX_GetExtensionIndex(appPriv->muxhandle,"OMX.ST.index.param.outputfilename",&eIndexParamFilename);
   if(err != OMX_ErrorNone) {
      DEBUG(DEB_LEV_ERR,"\n error in get extension index\n");
     exit(1);

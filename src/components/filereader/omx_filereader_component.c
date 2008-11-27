@@ -108,12 +108,13 @@ OMX_ERRORTYPE omx_filereader_component_Constructor(OMX_COMPONENTTYPE *openmaxSta
   openmaxStandComp->SetParameter  = omx_filereader_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_filereader_component_GetParameter;
   openmaxStandComp->SetConfig     = omx_filereader_component_SetConfig;
-  openmaxStandComp->GetConfig     = omx_filereader_component_GetConfig;
   openmaxStandComp->GetExtensionIndex = omx_filereader_component_GetExtensionIndex;
 
   /* Write in the default paramenters */
 
   omx_filereader_component_Private->avformatReady = OMX_FALSE;
+  omx_filereader_component_Private->isFirstBuffer = OMX_TRUE;
+
   if(!omx_filereader_component_Private->avformatSyncSem) {
     omx_filereader_component_Private->avformatSyncSem = calloc(1,sizeof(tsem_t));
     if(omx_filereader_component_Private->avformatSyncSem == NULL) return OMX_ErrorInsufficientResources;
@@ -163,8 +164,7 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
 
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
   int error;
-  OMX_VENDOR_EXTRADATATYPE *pExtraData;
-
+  
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 
   avcodec_init();
@@ -212,12 +212,7 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
   /** send callback regarding codec context extradata which will be required to
     * open the codec in the audio decoder component
     */
-  /* filling up the OMX_VENDOR_EXTRADATATYPE structure */
-  pExtraData = calloc(1,sizeof(OMX_VENDOR_EXTRADATATYPE));
-  pExtraData->nPortIndex = 0; //output port index
-  pExtraData->nDataSize = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
-  pExtraData->pData =  omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
-
+  
   (*(omx_filereader_component_Private->callbacks->EventHandler))
     (openmaxStandComp,
     omx_filereader_component_Private->callbackData,
@@ -232,13 +227,13 @@ OMX_ERRORTYPE omx_filereader_component_Init(OMX_COMPONENTTYPE *openmaxStandComp)
     OMX_EventPortSettingsChanged, /* The command was completed */
     OMX_IndexParamCommonExtraQuantData, /* port settings changed */
     0, /* This is the output port index - only one port*/
-    pExtraData);
+    NULL);  
 
   omx_filereader_component_Private->avformatReady = OMX_TRUE;
+  omx_filereader_component_Private->isFirstBuffer = OMX_TRUE;
   /*Indicate that avformat is ready*/
   tsem_up(omx_filereader_component_Private->avformatSyncSem);
 
-  free(pExtraData);
   return OMX_ErrorNone;
 }
 
@@ -278,6 +273,23 @@ void omx_filereader_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStand
       return;
     }
   }
+
+  if(omx_filereader_component_Private->isFirstBuffer == OMX_TRUE) {
+    omx_filereader_component_Private->isFirstBuffer = OMX_FALSE;
+
+    if(omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size > 0) {
+      memcpy(pOutputBuffer->pBuffer, 
+             omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata, 
+             omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size);
+      pOutputBuffer->nFilledLen = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
+      pOutputBuffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
+
+      DEBUG(DEB_LEV_ERR, "In %s Sending First Buffer Extra Data Size=%d\n",__func__,(int)pOutputBuffer->nFilledLen);
+
+      return;
+    }
+  }
+
 
   pOutputBuffer->nFilledLen = 0;
   pOutputBuffer->nOffset = 0;
@@ -362,7 +374,7 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
       break;
     }
     break;
-  case OMX_IndexVendorFileReadInputFilename :
+  case OMX_IndexVendorInputFilename : 
     nFileNameLength = strlen((char *)ComponentParameterStructure) + 1;
     if(nFileNameLength > DEFAULT_FILENAME_LENGTH) {
       free(omx_filereader_component_Private->sInputFileName);
@@ -441,8 +453,7 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
     } else {
       return OMX_ErrorBadPortIndex;
     }
-    break;
-  case OMX_IndexVendorFileReadInputFilename :
+  case OMX_IndexVendorInputFilename : 
     strcpy((char *)ComponentParameterStructure, "still no filename");
     break;
   default: /*Call the base component function*/
@@ -522,29 +533,6 @@ OMX_ERRORTYPE omx_filereader_component_SetConfig(
   return OMX_ErrorNone;
 }
 
-/** setting configurations */
-OMX_ERRORTYPE omx_filereader_component_GetConfig(
-  OMX_HANDLETYPE hComponent,
-  OMX_INDEXTYPE nIndex,
-  OMX_PTR pComponentConfigStructure) {
-
-  OMX_VENDOR_EXTRADATATYPE sExtraData;
-  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
-  omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
-
-  switch (nIndex) {
-    case OMX_IndexVendorAudioExtraData:
-      sExtraData.nPortIndex = 0;
-      sExtraData.nDataSize  = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata_size;
-      sExtraData.pData      = omx_filereader_component_Private->avformatcontext->streams[0]->codec->extradata;
-      memcpy(pComponentConfigStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
-      break;
-    default: // delegate to superclass
-      return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return OMX_ErrorNone;
-}
-
 OMX_ERRORTYPE omx_filereader_component_GetExtensionIndex(
   OMX_HANDLETYPE hComponent,
   OMX_STRING cParameterName,
@@ -552,10 +540,8 @@ OMX_ERRORTYPE omx_filereader_component_GetExtensionIndex(
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
-  if(strcmp(cParameterName,"OMX.ST.index.param.filereader.inputfilename") == 0) {
-    *pIndexType = OMX_IndexVendorFileReadInputFilename;
-  } else if(strcmp(cParameterName,"OMX.ST.index.config.audioextradata") == 0) {
-    *pIndexType = OMX_IndexVendorAudioExtraData;
+  if(strcmp(cParameterName,"OMX.ST.index.param.inputfilename") == 0) {
+    *pIndexType = OMX_IndexVendorInputFilename;  
   } else {
     return OMX_ErrorBadParameter;
   }

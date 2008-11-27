@@ -150,7 +150,7 @@ OMX_ERRORTYPE omx_mux_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp,
     if(omx_mux_component_Private->avformatSyncSem == NULL) return OMX_ErrorInsufficientResources;
     tsem_init(omx_mux_component_Private->avformatSyncSem, 0);
   }
-  omx_mux_component_Private->sInputFileName = malloc(DEFAULT_FILENAME_LENGTH);
+  omx_mux_component_Private->sOutputFileName = malloc(DEFAULT_FILENAME_LENGTH);
   /*Default Coding type*/
   omx_mux_component_Private->video_coding_type = OMX_VIDEO_CodingAVC;
   omx_mux_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3; 
@@ -173,9 +173,9 @@ OMX_ERRORTYPE omx_mux_component_Destructor(OMX_COMPONENTTYPE *openmaxStandComp) 
     omx_mux_component_Private->avformatSyncSem=NULL;
   }
 
-  if(omx_mux_component_Private->sInputFileName) {
-    free(omx_mux_component_Private->sInputFileName);
-    omx_mux_component_Private->sInputFileName = NULL;
+  if(omx_mux_component_Private->sOutputFileName) {
+    free(omx_mux_component_Private->sOutputFileName);
+    omx_mux_component_Private->sOutputFileName = NULL;
   }
 
   if(omx_mux_component_Private->pTmpInputBuffer) {
@@ -210,7 +210,7 @@ OMX_ERRORTYPE omx_mux_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   DEBUG(DEB_LEV_FUNCTION_NAME,"In %s \n",__func__);
 
   /* auto detect the output format from the name. default is 3gp. */
-  omx_mux_component_Private->avoutputformat = guess_format(NULL, (char*)omx_mux_component_Private->sInputFileName, NULL);
+  omx_mux_component_Private->avoutputformat = guess_format(NULL, (char*)omx_mux_component_Private->sOutputFileName, NULL);
   if (!omx_mux_component_Private->avoutputformat) {
       printf("Could not deduce output format from file extension: using MPEG.\n");
       omx_mux_component_Private->avoutputformat = guess_format("mpeg", NULL, NULL);
@@ -227,7 +227,7 @@ OMX_ERRORTYPE omx_mux_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
       return OMX_ErrorBadParameter;
   }
   omx_mux_component_Private->avformatcontext->oformat = omx_mux_component_Private->avoutputformat;
-  snprintf(omx_mux_component_Private->avformatcontext->filename, sizeof(omx_mux_component_Private->avformatcontext->filename), "%s", (char*)omx_mux_component_Private->sInputFileName);
+  snprintf(omx_mux_component_Private->avformatcontext->filename, sizeof(omx_mux_component_Private->avformatcontext->filename), "%s", (char*)omx_mux_component_Private->sOutputFileName);
 
   /* add the audio and video streams using the default format codecs
      and initialize the codecs */
@@ -291,12 +291,12 @@ OMX_ERRORTYPE omx_mux_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
       return OMX_ErrorBadParameter;
   }
 
-  dump_format(omx_mux_component_Private->avformatcontext, 0, (char*)omx_mux_component_Private->sInputFileName, 1);
+  dump_format(omx_mux_component_Private->avformatcontext, 0, (char*)omx_mux_component_Private->sOutputFileName, 1);
 
   /* open the output file, if needed */
   if (!(omx_mux_component_Private->avoutputformat->flags & AVFMT_NOFILE)) {
-    if (url_fopen(&omx_mux_component_Private->avformatcontext->pb, (char*)omx_mux_component_Private->sInputFileName, URL_WRONLY) < 0) {
-      DEBUG(DEB_LEV_ERR, "Could not open '%s'\n", (char*)omx_mux_component_Private->sInputFileName);
+    if (url_fopen(&omx_mux_component_Private->avformatcontext->pb, (char*)omx_mux_component_Private->sOutputFileName, URL_WRONLY) < 0) {
+      DEBUG(DEB_LEV_ERR, "Could not open '%s'\n", (char*)omx_mux_component_Private->sOutputFileName);
       return OMX_ErrorBadParameter;
     }
   }
@@ -518,13 +518,13 @@ OMX_ERRORTYPE omx_mux_component_SetParameter(
       err = OMX_ErrorBadPortIndex;
     }
     break;
-  case OMX_IndexVendorParser3gpInputFilename : 
+  case OMX_IndexVendorOutputFilename : 
     nFileNameLength = strlen((char *)ComponentParameterStructure) * sizeof(char) + 1;
     if(nFileNameLength > DEFAULT_FILENAME_LENGTH) {
-      free(omx_mux_component_Private->sInputFileName);
-      omx_mux_component_Private->sInputFileName = malloc(nFileNameLength);
+      free(omx_mux_component_Private->sOutputFileName);
+      omx_mux_component_Private->sOutputFileName = malloc(nFileNameLength);
     }
-    strcpy(omx_mux_component_Private->sInputFileName, (char *)ComponentParameterStructure);
+    strcpy(omx_mux_component_Private->sOutputFileName, (char *)ComponentParameterStructure);
     break;
   case OMX_IndexParamAudioAmr:  
     pAudioAmr = (OMX_AUDIO_PARAM_AMRTYPE*) ComponentParameterStructure;
@@ -704,7 +704,7 @@ OMX_ERRORTYPE omx_mux_component_GetParameter(
     }
     memcpy(pVideoMpeg4, &omx_mux_component_Private->pVideoMpeg4, sizeof(OMX_VIDEO_PARAM_MPEG4TYPE));
     break;
-  case  OMX_IndexVendorParser3gpInputFilename:
+  case  OMX_IndexVendorOutputFilename:
     strcpy((char *)ComponentParameterStructure, "still no filename");
     break;
   default: /*Call the base component function*/
@@ -795,8 +795,8 @@ OMX_ERRORTYPE omx_mux_component_GetExtensionIndex(
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
-  if(strcmp(cParameterName,"OMX.ST.index.param.mux.inputfilename") == 0) {
-    *pIndexType = OMX_IndexVendorParser3gpInputFilename;
+  if(strcmp(cParameterName,"OMX.ST.index.param.outputfilename") == 0) {
+    *pIndexType = OMX_IndexVendorOutputFilename;
   } else {
     return OMX_ErrorBadParameter;
   }

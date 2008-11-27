@@ -159,10 +159,8 @@ OMX_ERRORTYPE omx_videodec_component_Constructor(OMX_COMPONENTTYPE *openmaxStand
   omx_videodec_component_Private->destructor = omx_videodec_component_Destructor;
   openmaxStandComp->SetParameter = omx_videodec_component_SetParameter;
   openmaxStandComp->GetParameter = omx_videodec_component_GetParameter;
-  openmaxStandComp->SetConfig    = omx_videodec_component_SetConfig;
   openmaxStandComp->ComponentRoleEnum = omx_videodec_component_ComponentRoleEnum;
-  openmaxStandComp->GetExtensionIndex = omx_videodec_component_GetExtensionIndex;
-
+  
   noVideoDecInstance++;
 
   if(noVideoDecInstance > MAX_COMPONENT_VIDEODEC) {
@@ -253,7 +251,6 @@ OMX_ERRORTYPE omx_videodec_component_ffmpegLibInit(omx_videodec_component_Privat
     DEBUG(DEB_LEV_ERR, "Could not open codec\n");
     return OMX_ErrorInsufficientResources;
   }
-  tsem_up(omx_videodec_component_Private->avCodecSyncSem);
   DEBUG(DEB_LEV_SIMPLE_SEQ, "done\n");
 
   return OMX_ErrorNone;
@@ -361,7 +358,7 @@ OMX_ERRORTYPE omx_videodec_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) {
   /** Temporary First Output buffer size */
   omx_videodec_component_Private->inputCurrBuffer = NULL;
   omx_videodec_component_Private->inputCurrLength = 0;
-  omx_videodec_component_Private->isFirstBuffer = 1;
+  omx_videodec_component_Private->isFirstBuffer = OMX_TRUE;
   omx_videodec_component_Private->isNewBuffer = 1;
 
   return eError;
@@ -417,6 +414,39 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   int internalOutputFilled=0;
   int nSize;
   struct SwsContext *imgConvertYuvCtx = NULL;
+  OMX_ERRORTYPE err;
+
+  if(omx_videodec_component_Private->isFirstBuffer == OMX_TRUE) {
+    omx_videodec_component_Private->isFirstBuffer = OMX_FALSE;
+    
+    if(pInputBuffer->nFlags == OMX_BUFFERFLAG_CODECCONFIG) {
+      omx_videodec_component_Private->extradata_size = pInputBuffer->nFilledLen;
+      if(omx_videodec_component_Private->extradata_size > 0) {
+        if(omx_videodec_component_Private->extradata) {
+          free(omx_videodec_component_Private->extradata);
+        }
+        omx_videodec_component_Private->extradata = malloc(pInputBuffer->nFilledLen);
+        memcpy(omx_videodec_component_Private->extradata, pInputBuffer->pBuffer,pInputBuffer->nFilledLen);
+      }
+
+      DEBUG(DEB_ALL_MESS, "In %s Received First Buffer Extra Data Size=%d\n",__func__,(int)pInputBuffer->nFilledLen);
+      pInputBuffer->nFlags = 0x0;
+      pInputBuffer->nFilledLen = 0;
+    }
+
+    if (!omx_videodec_component_Private->avcodecReady) {
+      err = omx_videodec_component_ffmpegLibInit(omx_videodec_component_Private);
+      if (err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s omx_videodec_component_ffmpegLibInit Failed\n",__func__);
+        return;
+      }
+      omx_videodec_component_Private->avcodecReady = OMX_TRUE;
+    }    
+    
+    if(pInputBuffer->nFilledLen == 0) {
+      return;
+    }
+  }
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s\n", __func__);
   /** Fill up the current input buffer when a new buffer has arrived */
@@ -432,10 +462,6 @@ void omx_videodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
   pOutputBuffer->nOffset = 0;
 
   while (!nOutputFilled) {
-    if (omx_videodec_component_Private->isFirstBuffer) {
-      tsem_down(omx_videodec_component_Private->avCodecSyncSem);
-      omx_videodec_component_Private->isFirstBuffer = 0;
-    }
     omx_videodec_component_Private->avCodecContext->frame_number++;
 
     nLen = avcodec_decode_video(omx_videodec_component_Private->avCodecContext,
@@ -777,13 +803,7 @@ OMX_ERRORTYPE omx_videodec_component_MessageHandler(OMX_COMPONENTTYPE* openmaxSt
 
   if (message->messageType == OMX_CommandStateSet){
     if ((message->messageParam == OMX_StateExecuting ) && (omx_videodec_component_Private->state == OMX_StateIdle)) {
-      if (!omx_videodec_component_Private->avcodecReady) {
-        err = omx_videodec_component_ffmpegLibInit(omx_videodec_component_Private);
-        if (err != OMX_ErrorNone) {
-          return OMX_ErrorNotReady;
-        }
-        omx_videodec_component_Private->avcodecReady = OMX_TRUE;
-      }
+      omx_videodec_component_Private->isFirstBuffer = OMX_TRUE;
     }
     else if ((message->messageParam == OMX_StateIdle ) && (omx_videodec_component_Private->state == OMX_StateLoaded)) {
       err = omx_videodec_component_Init(openmaxStandComp);
@@ -827,59 +847,4 @@ OMX_ERRORTYPE omx_videodec_component_ComponentRoleEnum(
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE omx_videodec_component_SetConfig(
-  OMX_HANDLETYPE hComponent,
-  OMX_INDEXTYPE nIndex,
-  OMX_PTR pComponentConfigStructure) {
-
-  OMX_ERRORTYPE err = OMX_ErrorNone;
-  OMX_VENDOR_EXTRADATATYPE* pExtradata;
-
-  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
-  omx_videodec_component_PrivateType* omx_videodec_component_Private = (omx_videodec_component_PrivateType*)openmaxStandComp->pComponentPrivate;
-  if (pComponentConfigStructure == NULL) {
-    return OMX_ErrorBadParameter;
-  }
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "   Getting configuration %i\n", nIndex);
-  /* Check which structure we are being fed and fill its header */
-  switch (nIndex) {
-    case OMX_IndexVendorVideoExtraData :
-      pExtradata = (OMX_VENDOR_EXTRADATATYPE*)pComponentConfigStructure;
-      if (pExtradata->nPortIndex <= 1) {
-        /** copy the extradata in the codec context private structure */
-        omx_videodec_component_Private->extradata_size = (OMX_U32)pExtradata->nDataSize;
-        if(omx_videodec_component_Private->extradata_size > 0) {
-          if(omx_videodec_component_Private->extradata) {
-            free(omx_videodec_component_Private->extradata);
-          }
-          omx_videodec_component_Private->extradata = malloc((int)pExtradata->nDataSize*sizeof(char));
-          memcpy(omx_videodec_component_Private->extradata, (unsigned char *)pExtradata->pData,pExtradata->nDataSize);
-        } else {
-                  DEBUG(DEB_LEV_SIMPLE_SEQ,"extradata size is 0 !!!\n");
-        }
-      } else {
-          return OMX_ErrorBadPortIndex;
-      }
-      break;
-
-    default: // delegate to superclass
-      return omx_base_component_SetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return err;
-}
-
-OMX_ERRORTYPE omx_videodec_component_GetExtensionIndex(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_STRING cParameterName,
-  OMX_OUT OMX_INDEXTYPE* pIndexType) {
-
-  DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
-
-  if(strcmp(cParameterName,"OMX.ST.index.config.videoextradata") == 0) {
-    *pIndexType = OMX_IndexVendorVideoExtraData;
-  } else {
-    return OMX_ErrorBadParameter;
-  }
-  return OMX_ErrorNone;
-}
 

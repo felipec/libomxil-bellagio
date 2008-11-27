@@ -134,7 +134,6 @@ OMX_ERRORTYPE omx_parser3gp_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
   openmaxStandComp->SetParameter  = omx_parser3gp_component_SetParameter;
   openmaxStandComp->GetParameter  = omx_parser3gp_component_GetParameter;
   openmaxStandComp->SetConfig     = omx_parser3gp_component_SetConfig;
-  openmaxStandComp->GetConfig     = omx_parser3gp_component_GetConfig;
   openmaxStandComp->GetExtensionIndex = omx_parser3gp_component_GetExtensionIndex;
 
   /* Write in the default paramenters */
@@ -145,7 +144,10 @@ OMX_ERRORTYPE omx_parser3gp_component_Constructor(OMX_COMPONENTTYPE *openmaxStan
   omx_parser3gp_component_Private->pTmpOutputBuffer->nAllocLen=DEFAULT_OUT_BUFFER_SIZE;
   omx_parser3gp_component_Private->pTmpOutputBuffer->nOffset=0;
  
-  omx_parser3gp_component_Private->avformatReady = OMX_FALSE;
+  omx_parser3gp_component_Private->avformatReady      = OMX_FALSE;
+  omx_parser3gp_component_Private->isFirstBufferAudio = OMX_TRUE;
+  omx_parser3gp_component_Private->isFirstBufferVideo = OMX_TRUE;
+
   if(!omx_parser3gp_component_Private->avformatSyncSem) {
     omx_parser3gp_component_Private->avformatSyncSem = calloc(1,sizeof(tsem_t));
     if(omx_parser3gp_component_Private->avformatSyncSem == NULL) return OMX_ErrorInsufficientResources;
@@ -325,7 +327,10 @@ OMX_ERRORTYPE omx_parser3gp_component_Init(OMX_COMPONENTTYPE *openmaxStandComp) 
     NULL);  
 
   omx_parser3gp_component_Private->avformatReady = OMX_TRUE;
-/*Indicate that avformat is ready*/
+  omx_parser3gp_component_Private->isFirstBufferAudio = OMX_TRUE;
+  omx_parser3gp_component_Private->isFirstBufferVideo = OMX_TRUE;
+
+  /*Indicate that avformat is ready*/
   tsem_up(omx_parser3gp_component_Private->avformatSyncSem);
 
   return OMX_ErrorNone;
@@ -370,6 +375,38 @@ void omx_parser3gp_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandC
       /*wait for avformat to be ready*/
       tsem_down(omx_parser3gp_component_Private->avformatSyncSem);
     } else {
+      return;
+    }
+  }
+
+  if(omx_parser3gp_component_Private->isFirstBufferAudio == OMX_TRUE && pOutputBuffer->nOutputPortIndex==AUDIO_PORT_INDEX  ) {
+    omx_parser3gp_component_Private->isFirstBufferAudio = OMX_FALSE;
+
+    if(omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata_size > 0) {
+      memcpy(pOutputBuffer->pBuffer, 
+             omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata, 
+             omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata_size);
+      pOutputBuffer->nFilledLen = omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata_size;
+      pOutputBuffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
+
+      DEBUG(DEB_ALL_MESS, "In %s Sending Audio First Buffer Extra Data Size=%d\n",__func__,(int)pOutputBuffer->nFilledLen);
+
+      return;
+    }
+  }
+
+  if(omx_parser3gp_component_Private->isFirstBufferVideo == OMX_TRUE && pOutputBuffer->nOutputPortIndex==VIDEO_PORT_INDEX  ) {
+    omx_parser3gp_component_Private->isFirstBufferVideo = OMX_FALSE;
+
+    if(omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata_size > 0) {
+      memcpy(pOutputBuffer->pBuffer, 
+             omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata, 
+             omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata_size);
+      pOutputBuffer->nFilledLen = omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata_size;
+      pOutputBuffer->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
+
+      DEBUG(DEB_ALL_MESS, "In %s Sending Video First Buffer Extra Data Size=%d\n",__func__,(int)pOutputBuffer->nFilledLen);
+
       return;
     }
   }
@@ -545,7 +582,7 @@ OMX_ERRORTYPE omx_parser3gp_component_SetParameter(
       break;
     }
     break;
-  case OMX_IndexVendorParser3gpInputFilename : 
+  case OMX_IndexVendorInputFilename : 
     nFileNameLength = strlen((char *)ComponentParameterStructure) * sizeof(char) + 1;
     if(nFileNameLength > DEFAULT_FILENAME_LENGTH) {
       free(omx_parser3gp_component_Private->sInputFileName);
@@ -567,7 +604,6 @@ OMX_ERRORTYPE omx_parser3gp_component_GetParameter(
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_PORT_PARAM_TYPE *pVideoPortParam, *pAudioPortParam;
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
-  OMX_VENDOR_EXTRADATATYPE sExtraData;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
 
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
@@ -622,20 +658,8 @@ OMX_ERRORTYPE omx_parser3gp_component_GetParameter(
       return OMX_ErrorBadPortIndex;
     }
     break;
-  case  OMX_IndexVendorParser3gpInputFilename:
+  case  OMX_IndexVendorInputFilename:
     strcpy((char *)ComponentParameterStructure, "still no filename");
-    break;
-  case OMX_IndexVendorVideoExtraData:
-    sExtraData.nPortIndex = VIDEO_PORT_INDEX;
-    sExtraData.nDataSize  = omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata_size;  
-    sExtraData.pData      = omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata;
-    memcpy(ComponentParameterStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
-    break;
-  case OMX_IndexVendorAudioExtraData:
-    sExtraData.nPortIndex = AUDIO_PORT_INDEX;
-    sExtraData.nDataSize  = omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata_size;  
-    sExtraData.pData      = omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata;
-    memcpy(ComponentParameterStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
     break;
   default: /*Call the base component function*/
     return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -718,35 +742,6 @@ OMX_ERRORTYPE omx_parser3gp_component_SetConfig(
   return OMX_ErrorNone;
 }
 
-/** getting configurations */
-OMX_ERRORTYPE omx_parser3gp_component_GetConfig(
-  OMX_IN  OMX_HANDLETYPE hComponent,
-  OMX_IN  OMX_INDEXTYPE nIndex,
-  OMX_IN  OMX_PTR pComponentConfigStructure) {
-
-  OMX_VENDOR_EXTRADATATYPE sExtraData;
-  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
-  omx_parser3gp_component_PrivateType* omx_parser3gp_component_Private = openmaxStandComp->pComponentPrivate;
-
-  switch (nIndex) {
-    case OMX_IndexVendorVideoExtraData:
-      sExtraData.nPortIndex = VIDEO_PORT_INDEX;
-      sExtraData.nDataSize  = omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata_size;
-      sExtraData.pData      = omx_parser3gp_component_Private->avformatcontext->streams[VIDEO_STREAM]->codec->extradata;
-      memcpy(pComponentConfigStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
-      break;
-    case OMX_IndexVendorAudioExtraData:
-      sExtraData.nPortIndex = AUDIO_PORT_INDEX;
-      sExtraData.nDataSize  = omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata_size;
-      sExtraData.pData      = omx_parser3gp_component_Private->avformatcontext->streams[AUDIO_STREAM]->codec->extradata;
-      memcpy(pComponentConfigStructure, &sExtraData, sizeof(OMX_VENDOR_EXTRADATATYPE));
-      break;
-    default: // delegate to superclass
-      return omx_base_component_GetConfig(hComponent, nIndex, pComponentConfigStructure);
-  }
-  return OMX_ErrorNone;
-}
-
 OMX_ERRORTYPE omx_parser3gp_component_GetExtensionIndex(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_STRING cParameterName,
@@ -754,12 +749,8 @@ OMX_ERRORTYPE omx_parser3gp_component_GetExtensionIndex(
 
   DEBUG(DEB_LEV_FUNCTION_NAME,"In  %s \n",__func__);
 
-  if(strcmp(cParameterName,"OMX.ST.index.param.parser3gp.inputfilename") == 0) {
-    *pIndexType = OMX_IndexVendorParser3gpInputFilename;
-  } else if(strcmp(cParameterName,"OMX.ST.index.config.videoextradata") == 0) {
-    *pIndexType = OMX_IndexVendorVideoExtraData;
-  } else if(strcmp(cParameterName,"OMX.ST.index.config.audioextradata") == 0) {
-    *pIndexType = OMX_IndexVendorAudioExtraData;
+  if(strcmp(cParameterName,"OMX.ST.index.param.inputfilename") == 0) {
+    *pIndexType = OMX_IndexVendorInputFilename;
   } else {
     return OMX_ErrorBadParameter;
   }

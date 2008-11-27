@@ -70,6 +70,8 @@
  * @param avformatReady boolean flag that is true when the video format has been initialized 
  * @param xScale the scale of the media clock
  * @param pkt is the ffmpeg packet structure for data delivery 
+ * @param isFirstBufferAudio Field that the buffer is the first buffer of Audio Stream
+ * @param isFirstBufferVideo Field that the buffer is the first buffer of Video Stream
  */
 DERIVEDCLASS(omx_parser3gp_component_PrivateType, omx_base_source_PrivateType)
 #define omx_parser3gp_component_PrivateType_FIELDS omx_base_source_PrivateType_FIELDS \
@@ -84,7 +86,9 @@ DERIVEDCLASS(omx_parser3gp_component_PrivateType, omx_base_source_PrivateType)
   tsem_t*                             avformatSyncSem; \
   OMX_BOOL                            avformatReady; \
   OMX_S32                             xScale; \
-  AVPacket                            pkt;
+  AVPacket                            pkt; \
+  OMX_S32                             isFirstBufferAudio; \
+  OMX_S32                             isFirstBufferVideo;
 ENDCLASS(omx_parser3gp_component_PrivateType)
 
 /* Component private entry points declaration */

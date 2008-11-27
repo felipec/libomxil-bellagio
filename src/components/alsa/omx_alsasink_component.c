@@ -536,8 +536,9 @@ void omx_alsasink_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
 
   /* Feed it to ALSA */
   frameSize = (omx_alsasink_component_Private->sPCMModeParam.nChannels * omx_alsasink_component_Private->sPCMModeParam.nBitPerSample) >> 3;
-  DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d bufSize=%d\n",
-  (int)frameSize, (int)omx_alsasink_component_Private->sPCMModeParam.nChannels, (int)inputbuffer->nFilledLen);
+  DEBUG(DEB_LEV_FULL_SEQ, "Framesize is %u chl=%d sRate=%d bufSize=%d \n", 
+    (int)frameSize, (int)omx_alsasink_component_Private->sPCMModeParam.nChannels, 
+    (int)omx_alsasink_component_Private->sPCMModeParam.nSamplingRate , (int)inputbuffer->nFilledLen);
 
   if(inputbuffer->nFilledLen < frameSize){
     DEBUG(DEB_LEV_ERR, "Ouch!! In %s input buffer filled len(%d) less than frame size(%d)\n",__func__, (int)inputbuffer->nFilledLen, (int)frameSize);

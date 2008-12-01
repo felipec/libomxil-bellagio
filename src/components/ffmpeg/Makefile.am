@@ -5,6 +5,7 @@ omxffmpeg_LTLIBRARIES = libomxffmpeg.la
 libomxffmpeg_la_SOURCES = omx_audiodec_component.c omx_audiodec_component.h \
                           omx_videodec_component.c omx_videodec_component.h \
                           omx_videoenc_component.c omx_videoenc_component.h \
+                          omx_audioenc_component.c omx_audioenc_component.h \
                           omx_ffmpeg_colorconv_component.c omx_ffmpeg_colorconv_component.h \
                           library_entry_point.c
 

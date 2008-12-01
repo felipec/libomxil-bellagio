@@ -1,4 +1,4 @@
-check_PROGRAMS = omxaudiodectest audio_use_case audio_use_case_tunnel omxaudiocapnplay omxvoicexchange
+check_PROGRAMS = omxaudiodectest audio_use_case audio_use_case_tunnel omxaudiocapnplay omxvoicexchange omxaudioenctest
 
 bellagio_LDADD = $(top_builddir)/src/libomxil-bellagio.la
 bellagio_CFLAGS = -I$(top_srcdir)/include
@@ -24,4 +24,8 @@ audio_use_case_tunnel_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)
 omxvoicexchange_SOURCES = omxvoicexchange.c omxvoicexchange.h 
 omxvoicexchange_LDADD =  $(bellagio_LDADD) $(common_LDADD) -lpthread 
 omxvoicexchange_CFLAGS= $(bellagio_CFLAGS) $(common_CFLAGS)
+
+omxaudioenctest_SOURCES = omxaudioenctest.c omxaudioenctest.h
+omxaudioenctest_LDADD = $(bellagio_LDADD) $(common_LDADD) -lpthread
+omxaudioenctest_CFLAGS = $(bellagio_CFLAGS) $(common_CFLAGS)
 

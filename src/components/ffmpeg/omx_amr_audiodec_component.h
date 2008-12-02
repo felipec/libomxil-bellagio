@@ -51,10 +51,10 @@
 #include <ffmpeg/avformat.h>
 #endif
 
-#define AMR_AUDIO_DEC_BASE_NAME "OMX.st.audio_decoder.amrnb"
-#define AUDIO_DEC_AMR_NAME      "OMX.st.audio_decoder.amrnb"
+#define AUDIO_DEC_AMR_BASE_NAME "OMX.st.audio_decoder.amr"
+#define AUDIO_DEC_AMR_NAME      "OMX.st.audio_decoder.amr"
 
-#define AUDIO_DEC_AMR_ROLE      "audio_decoder.amrnb"
+#define AUDIO_DEC_AMR_ROLE      "audio_decoder.amr"
 
 /** AudioDec component private structure.
  */

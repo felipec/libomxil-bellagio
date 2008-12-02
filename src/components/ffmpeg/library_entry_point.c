@@ -35,6 +35,7 @@
 #include <st_static_component_loader.h>
 #include <config.h>
 #include <omx_audiodec_component.h>
+#include <omx_audioenc_component.h>
 #include <omx_amr_audiodec_component.h>
 #include <omx_amr_audioenc_component.h>
 #include <omx_videodec_component.h>
@@ -61,9 +62,9 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   if (stComponents == NULL) {
     DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
 #ifdef DE_AMR_SUPPORT
-    return 6; // Return Number of Components - one for audio, two for video
+    return 7; // Return Number of Components - one for audio, two for video
 #else
-    return 4;
+    return 5;
 #endif
   }
 
@@ -208,9 +209,7 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   strcpy(stComponents[3]->name_specific[0], "OMX.st.video_encoder.mpeg4");
   strcpy(stComponents[3]->role_specific[0], "video_encoder.mpeg4");
 
-#ifdef DE_AMR_SUPPORT
-
-  /** component 5 - amr audio encoder */
+  /** component 5 - audio encoder */
   stComponents[4]->componentVersion.s.nVersionMajor = 1;
   stComponents[4]->componentVersion.s.nVersionMinor = 1;
   stComponents[4]->componentVersion.s.nRevision = 1;
@@ -221,8 +220,8 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     return OMX_ErrorInsufficientResources;
   }
   strcpy(stComponents[4]->name, "OMX.st.audio_encoder");
-  stComponents[4]->name_specific_length = 2;
-  stComponents[4]->constructor = omx_amr_audioenc_component_Constructor;
+  stComponents[4]->name_specific_length = 3;
+  stComponents[4]->constructor = omx_audioenc_component_Constructor;
 
   stComponents[4]->name_specific = calloc(stComponents[4]->name_specific_length,sizeof(char *));
   stComponents[4]->role_specific = calloc(stComponents[4]->name_specific_length,sizeof(char *));
@@ -240,12 +239,17 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     }
   }
 
-  strcpy(stComponents[4]->name_specific[0], "OMX.st.audio_encoder.amrnb");
-  strcpy(stComponents[4]->name_specific[1], "OMX.st.audio_encoder.amrwb");
-  strcpy(stComponents[4]->role_specific[0], "audio_encoder.amrnb");
-  strcpy(stComponents[4]->role_specific[1], "audio_encoder.amrwb");
+  strcpy(stComponents[4]->name_specific[0], "OMX.st.audio_encoder.mp3");
+  strcpy(stComponents[4]->name_specific[1], "OMX.st.audio_encoder.aac");
+  strcpy(stComponents[4]->name_specific[2], "OMX.st.audio_encoder.g726");
+  
+  strcpy(stComponents[4]->role_specific[0], "audio_encoder.mp3");
+  strcpy(stComponents[4]->role_specific[1], "audio_encoder.aac");
+  strcpy(stComponents[4]->role_specific[2], "audio_encoder.g726");
+  
+#ifdef DE_AMR_SUPPORT
 
-  /** component 6 - amr audio decoder */
+  /** component 6 - amr audio encoder */
   stComponents[5]->componentVersion.s.nVersionMajor = 1;
   stComponents[5]->componentVersion.s.nVersionMinor = 1;
   stComponents[5]->componentVersion.s.nRevision = 1;
@@ -255,9 +259,9 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
   if (stComponents[5]->name == NULL) {
     return OMX_ErrorInsufficientResources;
   }
-  strcpy(stComponents[5]->name, "OMX.st.audio_decoder.amrnb");
+  strcpy(stComponents[5]->name, "OMX.st.audio_encoder.amr");
   stComponents[5]->name_specific_length = 1;
-  stComponents[5]->constructor = omx_amr_audiodec_component_Constructor;
+  stComponents[5]->constructor = omx_amr_audioenc_component_Constructor;
 
   stComponents[5]->name_specific = calloc(stComponents[5]->name_specific_length,sizeof(char *));
   stComponents[5]->role_specific = calloc(stComponents[5]->name_specific_length,sizeof(char *));
@@ -275,14 +279,47 @@ int omx_component_library_Setup(stLoaderComponentType **stComponents) {
     }
   }
 
-  strcpy(stComponents[5]->name_specific[0], "OMX.st.audio_decoder.amrnb");
-  strcpy(stComponents[5]->role_specific[0], "audio_decoder.amrnb");
+  strcpy(stComponents[5]->name_specific[0], "OMX.st.audio_encoder.amr");
+  strcpy(stComponents[5]->name_specific[0], "OMX.st.audio_encoder.amr");
+  
+  /** component 7 - amr audio decoder */
+  stComponents[6]->componentVersion.s.nVersionMajor = 1;
+  stComponents[6]->componentVersion.s.nVersionMinor = 1;
+  stComponents[6]->componentVersion.s.nRevision = 1;
+  stComponents[6]->componentVersion.s.nStep = 1;
 
+  stComponents[6]->name = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+  if (stComponents[6]->name == NULL) {
+    return OMX_ErrorInsufficientResources;
+  }
+  strcpy(stComponents[6]->name, "OMX.st.audio_decoder.amr");
+  stComponents[6]->name_specific_length = 1;
+  stComponents[6]->constructor = omx_amr_audiodec_component_Constructor;
+
+  stComponents[6]->name_specific = calloc(stComponents[6]->name_specific_length,sizeof(char *));
+  stComponents[6]->role_specific = calloc(stComponents[6]->name_specific_length,sizeof(char *));
+
+  for(i=0;i<stComponents[6]->name_specific_length;i++) {
+    stComponents[6]->name_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[6]->name_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+  for(i=0;i<stComponents[6]->name_specific_length;i++) {
+    stComponents[6]->role_specific[i] = calloc(1, OMX_MAX_STRINGNAME_SIZE);
+    if (stComponents[6]->role_specific[i] == NULL) {
+      return OMX_ErrorInsufficientResources;
+    }
+  }
+
+  strcpy(stComponents[6]->name_specific[0], "OMX.st.audio_decoder.amr");
+  strcpy(stComponents[6]->role_specific[0], "audio_decoder.amr");
+  
   DEBUG(DEB_LEV_FUNCTION_NAME, "Out of %s \n",__func__);
 
-  return 6; 
+  return 7; 
 #else
-  return 4;
+  return 5;
 #endif
 
 }

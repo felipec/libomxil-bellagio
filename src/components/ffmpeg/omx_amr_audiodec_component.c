@@ -196,6 +196,11 @@ OMX_ERRORTYPE omx_amr_audiodec_component_ffmpegLibInit(omx_amr_audiodec_componen
   switch(omx_amr_audiodec_component_Private->audio_coding_type){
   case OMX_AUDIO_CodingAMR :
     target_codecID = CODEC_ID_AMR_NB;
+    if(omx_amr_audiodec_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeNB7) {
+      target_codecID = CODEC_ID_AMR_NB;
+    } else if(omx_amr_audiodec_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeWB8) {
+      target_codecID = CODEC_ID_AMR_WB;
+    } 
     break;
   default :
     DEBUG(DEB_LEV_ERR, "Audio format other than not supported\nCodec not found\n");
@@ -212,9 +217,9 @@ OMX_ERRORTYPE omx_amr_audiodec_component_ffmpegLibInit(omx_amr_audiodec_componen
   omx_amr_audiodec_component_Private->avCodecContext->extradata = omx_amr_audiodec_component_Private->extradata;
   omx_amr_audiodec_component_Private->avCodecContext->extradata_size = (int)omx_amr_audiodec_component_Private->extradata_size;
 
-  omx_amr_audiodec_component_Private->avCodecContext->channels = 1;
-  omx_amr_audiodec_component_Private->avCodecContext->bit_rate = 12200;
-  omx_amr_audiodec_component_Private->avCodecContext->sample_rate = 8000;
+  //omx_amr_audiodec_component_Private->avCodecContext->channels = 1;
+  //omx_amr_audiodec_component_Private->avCodecContext->bit_rate = 12200;
+  //omx_amr_audiodec_component_Private->avCodecContext->sample_rate = 8000;
   //omx_amr_audiodec_component_Private->avCodecContext->strict_std_compliance = FF_COMPLIANCE_INOFFICIAL;
 
   //DEBUG(DEB_LEV_ERR, "Extra Data Size=%d\n",(int)omx_amr_audiodec_component_Private->extradata_size);

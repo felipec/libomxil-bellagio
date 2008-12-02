@@ -94,7 +94,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_Constructor(OMX_COMPONENTTYPE *openmaxS
   base_audio_port_Constructor(openmaxStandComp, &omx_amr_audioenc_component_Private->ports[1], 1, OMX_FALSE);
 
   // now it's time to know the audio coding type of the component
-  if(!strcmp(cComponentName, AUDIO_ENC_AMR_NB_NAME) || !strcmp(cComponentName, AUDIO_ENC_AMR_WB_NAME))  // AMR format encoder
+  if(!strcmp(cComponentName, AUDIO_ENC_AMR_NAME))  // AMR format encoder
     omx_amr_audioenc_component_Private->audio_coding_type = OMX_AUDIO_CodingAMR;
   /** Domain specific section for the ports. */  
   else  // IL client specified an invalid component name
@@ -184,6 +184,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_ffmpegLibInit(omx_amr_audioenc_componen
       target_codecID = CODEC_ID_AMR_NB;
     } else if(omx_amr_audioenc_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeWB8) {
       target_codecID = CODEC_ID_AMR_WB;
+      omx_amr_audioenc_component_Private->pAudioPcmMode.nSamplingRate = 16000; /*AMR - WB Support only 16k Sample Rate*/
     } 
     break;
   default :
@@ -191,7 +192,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_ffmpegLibInit(omx_amr_audioenc_componen
     return OMX_ErrorComponentNotFound;
   }
   
-  DEBUG(DEB_LEV_FULL_SEQ, "Opening Codec %x ch=%d,rate=%d,sr=%d Band Mode=%d bps=%d\n",(int)target_codecID,
+  DEBUG(DEB_ALL_MESS, "Opening Codec %x ch=%d,rate=%d,sr=%d Band Mode=%d bps=%d\n",(int)target_codecID,
     (int)omx_amr_audioenc_component_Private->pAudioAmr.nChannels,
     (int)omx_amr_audioenc_component_Private->pAudioAmr.nBitRate,
     (int)omx_amr_audioenc_component_Private->pAudioPcmMode.nSamplingRate,
@@ -208,7 +209,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_ffmpegLibInit(omx_amr_audioenc_componen
   /* put sample parameters */
   switch(omx_amr_audioenc_component_Private->audio_coding_type) {
   case OMX_AUDIO_CodingAMR :
-    omx_amr_audioenc_component_Private->avCodecContext->channels = omx_amr_audioenc_component_Private->pAudioAmr.nChannels;
+    omx_amr_audioenc_component_Private->avCodecContext->channels = omx_amr_audioenc_component_Private->pAudioPcmMode.nChannels;
     omx_amr_audioenc_component_Private->avCodecContext->bit_rate = (int)omx_amr_audioenc_component_Private->pAudioAmr.nBitRate;
     omx_amr_audioenc_component_Private->avCodecContext->sample_rate = omx_amr_audioenc_component_Private->pAudioPcmMode.nSamplingRate;
     break;
@@ -358,8 +359,6 @@ void omx_amr_audioenc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxSta
 
   DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s\n",__func__);
 
-  
-
   if((omx_amr_audioenc_component_Private->isFirstBuffer == 1) && (omx_amr_audioenc_component_Private->audio_coding_type == OMX_AUDIO_CodingAMR)) {
     if(omx_amr_audioenc_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeNB7) {
       memcpy(pOutputBuffer->pBuffer,AMR_header,6);
@@ -403,10 +402,12 @@ void omx_amr_audioenc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxSta
 
       if (nLen < 0) {
         DEBUG(DEB_LEV_ERR, "----> A general error or simply frame not encoded?\n");
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s nBit Rate =%d\n",__func__,(int)omx_amr_audioenc_component_Private->avCodecContext->bit_rate);
       }
 
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Consumed 2 frame_length=%d,pInputBuffer->nFilledLen=%d nLen=%d\n",
-      __func__,(int)omx_amr_audioenc_component_Private->frame_length,(int)pInputBuffer->nFilledLen,nLen);
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Consumed 2 frame_length=%d,frame_size=%d,pInputBuffer->nFilledLen=%d nLen=%d\n",
+      __func__,(int)omx_amr_audioenc_component_Private->frame_length,
+      (int)omx_amr_audioenc_component_Private->avCodecContext->frame_size,(int)pInputBuffer->nFilledLen,nLen);
     
       if ( nLen >= 0) {
         pOutputBuffer->nFilledLen += nLen;
@@ -447,12 +448,14 @@ void omx_amr_audioenc_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxSta
 
       if (nLen < 0) {
         DEBUG(DEB_LEV_ERR, "----> A general error or simply frame not encoded?\n");
+        DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s nBit Rate =%d\n",__func__,(int)omx_amr_audioenc_component_Private->avCodecContext->bit_rate);
       }
 
       pInputBuffer->nFilledLen -= omx_amr_audioenc_component_Private->frame_length;
 
-      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Consumed 1 frame_length=%d,pInputBuffer->nFilledLen=%d nLen=%d\n",
-        __func__,(int)omx_amr_audioenc_component_Private->frame_length,(int)pInputBuffer->nFilledLen,(int)nLen);
+      DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Consumed 1 frame_length=%d,frame_size=%d pInputBuffer->nFilledLen=%d nLen=%d\n",
+        __func__,(int)omx_amr_audioenc_component_Private->frame_length,
+        (int)omx_amr_audioenc_component_Private->avCodecContext->frame_size,(int)pInputBuffer->nFilledLen,(int)nLen);
     
       if ( nLen >= 0) {
         pOutputBuffer->nFilledLen += nLen;
@@ -520,7 +523,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_SetParameter(
       port = (omx_base_audio_PortType *) omx_amr_audioenc_component_Private->ports[portIndex];
       memcpy(&port->sAudioParam,pAudioPortFormat,sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
-      return OMX_ErrorBadPortIndex;
+      err = OMX_ErrorBadPortIndex;
     }
     break;  
 
@@ -533,21 +536,37 @@ OMX_ERRORTYPE omx_amr_audioenc_component_SetParameter(
       DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
       break;
     } 
-    if(pAudioPcmMode->nPortIndex == 0)
+    if(pAudioPcmMode->nPortIndex == 0) {
+      if((pAudioPcmMode->nSamplingRate != 8000 && 
+         pAudioPcmMode->nSamplingRate != 16000 ) ||
+         pAudioPcmMode->nChannels != 1) {
+        DEBUG(DEB_LEV_ERR, "AMR-NB Support only 8000Hz Mono \n AMR-WB Support only 16000Hz Mono\n");
+        err = OMX_ErrorBadParameter;
+        break;
+      }
       memcpy(&omx_amr_audioenc_component_Private->pAudioPcmMode,pAudioPcmMode,sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
-    else
-      return OMX_ErrorBadPortIndex;
+    } else {
+      err = OMX_ErrorBadPortIndex;
+    }
     break;
 
   case OMX_IndexParamAudioAmr:  
     pAudioAmr = (OMX_AUDIO_PARAM_AMRTYPE*) ComponentParameterStructure;
     portIndex = pAudioAmr->nPortIndex;
+
     err = omx_base_component_ParameterSanityCheck(hComponent,portIndex,pAudioAmr,sizeof(OMX_AUDIO_PARAM_AMRTYPE));
     if(err!=OMX_ErrorNone) { 
       DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err); 
       break;
     } 
     if (pAudioAmr->nPortIndex == 1) {
+
+      if(pAudioAmr->nChannels != 1) {
+        DEBUG(DEB_LEV_ERR, "AMR-NB/WB Support only Mono\n");
+        err = OMX_ErrorBadParameter;
+        break;
+      }
+
       switch(pAudioAmr->eAMRBandMode) {
       case OMX_AUDIO_AMRBandModeNB0:                 /**< AMRNB Mode 0 =  4750 bps */
         pAudioAmr->nBitRate = 4750; 
@@ -565,7 +584,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_SetParameter(
         pAudioAmr->nBitRate = 7400;
         break;
       case OMX_AUDIO_AMRBandModeNB5:                 /**< AMRNB Mode 5 =  7950 bps */
-        pAudioAmr->nBitRate = 7900;
+        pAudioAmr->nBitRate = 7950;
         break;
       case OMX_AUDIO_AMRBandModeNB6:                 /**< AMRNB Mode 6 = 10200 bps */
         pAudioAmr->nBitRate = 10200;
@@ -608,16 +627,17 @@ OMX_ERRORTYPE omx_amr_audioenc_component_SetParameter(
 
       memcpy(&omx_amr_audioenc_component_Private->pAudioAmr,pAudioAmr,sizeof(OMX_AUDIO_PARAM_AMRTYPE));
     } else {
-      return OMX_ErrorBadPortIndex;
+      err = OMX_ErrorBadPortIndex;
     }
     break;
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
-    if (!strcmp((char*)pComponentRole->cRole, AUDIO_ENC_AMR_NB_ROLE) || !strcmp((char*)pComponentRole->cRole, AUDIO_ENC_AMR_WB_ROLE)) {
+    if (!strcmp((char*)pComponentRole->cRole, AUDIO_ENC_AMR_ROLE)) {
       omx_amr_audioenc_component_Private->audio_coding_type = OMX_AUDIO_CodingAMR;
     } else {
-      return OMX_ErrorBadParameter;
+      err = OMX_ErrorBadParameter;
+      break;
     }
     omx_amr_audioenc_component_SetInternalParameters(openmaxStandComp);
     break;
@@ -696,12 +716,9 @@ OMX_ERRORTYPE omx_amr_audioenc_component_GetParameter(
       break;
     }
 
-    if (omx_amr_audioenc_component_Private->audio_coding_type == OMX_AUDIO_CodingAMR) {
-      if(omx_amr_audioenc_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeNB7) {
-        strcpy((char*)pComponentRole->cRole, AUDIO_ENC_AMR_NB_ROLE);
-      } else if(omx_amr_audioenc_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeWB8) {
-        strcpy((char*)pComponentRole->cRole, AUDIO_ENC_AMR_WB_ROLE);
-      } 
+    if (omx_amr_audioenc_component_Private->audio_coding_type == OMX_AUDIO_CodingAMR && 
+        omx_amr_audioenc_component_Private->pAudioAmr.eAMRBandMode <= OMX_AUDIO_AMRBandModeNB7) {
+        strcpy((char*)pComponentRole->cRole, AUDIO_ENC_AMR_ROLE);
     } else {
       strcpy((char*)pComponentRole->cRole,"\0");;
     }
@@ -765,9 +782,7 @@ OMX_ERRORTYPE omx_amr_audioenc_component_ComponentRoleEnum(
   OMX_IN OMX_U32 nIndex)
 {
   if (nIndex == 0) {
-    strcpy((char*)cRole, AUDIO_ENC_AMR_NB_ROLE);
-  } else if (nIndex == 1) {
-    strcpy((char*)cRole, AUDIO_ENC_AMR_WB_ROLE);
+    strcpy((char*)cRole, AUDIO_ENC_AMR_ROLE);
   } else {
     return OMX_ErrorUnsupportedIndex;
   }

@@ -46,13 +46,10 @@
 #include <ffmpeg/avformat.h>
 #endif
 
-#define AUDIO_ENC_BASE_NAME    "OMX.st.audio_encoder"
+#define AUDIO_ENC_AMR_BASE_NAME    "OMX.st.audio_encoder.amr"
 
-#define AUDIO_ENC_AMR_NB_NAME     "OMX.st.audio_encoder.amrnb"
-#define AUDIO_ENC_AMR_WB_NAME     "OMX.st.audio_encoder.amrwb"
-
-#define AUDIO_ENC_AMR_NB_ROLE    "audio_encoder.amrnb"
-#define AUDIO_ENC_AMR_WB_ROLE    "audio_encoder.amrwb"
+#define AUDIO_ENC_AMR_NAME      "OMX.st.audio_encoder.amr"
+#define AUDIO_ENC_AMR_ROLE      "audio_decoder.amr"
 
 /** AudioDec component private structure.
  */

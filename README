@@ -374,9 +374,9 @@ This version has been tested on:
 
 To Develop FFMpeg based AMR-NB/WB Component we used a tar ball from(This is may be replaced with a stable ffmpeg release in future). Using AMR will make FFMpeg non-free and unredistributable.
 
-AMR NB/WB - http://rpmfind.net/linux/rpm2html/search.php?query=amr
+AMR NB/WB(libamrnb,libamrwb) - http://rpmfind.net/linux/rpm2html/search.php?query=amr
 
-FFmpeg    - http://www.filewatcher.com/m/ffmpeg-0.4.9-p20080326.tar.bz2.2505113.0.0.html
+FFmpeg (libavcodec,libavformat,libavutils,libswscale etc)   - http://www.filewatcher.com/m/ffmpeg-0.4.9-p20080326.tar.bz2.2505113.0.0.html
 
 FFmpegConfigure Option Used:- 
 ./configure --arch=x86_32 --extra-cflags="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables" --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libfaad --enable-libfaac --enable-libgsm --enable-libxvid --enable-libx264 --enable-liba52 --enable-liba52bin --disable-static --enable-shared --enable-gpl --disable-debug --disable-optimizations --disable-stripping  --enable-libamr-nb --enable-nonfree --enable-libamr-wb

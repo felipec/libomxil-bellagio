@@ -495,7 +495,7 @@ int main(int argc, char** argv) {
   } else if (selectedType == G726_TYPE_SEL) {   
     strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".g726");
   } else if (selectedType == AMR_TYPE_SEL) {   
-    strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".amrnb");
+    strcpy(full_component_name+COMPONENT_NAME_BASE_LEN, ".amr");
   }
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
@@ -1015,7 +1015,63 @@ OMX_ERRORTYPE filereaderEventHandler(
       DEBUG(DEB_LEV_SIMPLE_SEQ,"In %s Received Event Event=%d Data1=%d,Data2=%d\n",__func__,eEvent,(int)Data1,(int)Data2);
     }
   } else if(eEvent == OMX_EventPortSettingsChanged) {
-    DEBUG(DEB_LEV_ERR,"File reader Port Setting Changed event\n");
+    OMX_AUDIO_PARAM_PORTFORMATTYPE sPortFormat;
+    OMX_AUDIO_PARAM_AMRTYPE sAmrParam;
+    OMX_ERRORTYPE err;
+
+    DEBUG(DEB_ALL_MESS,"File reader Port Setting Changed event\n");
+
+    setHeader(&sPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
+    sPortFormat.nPortIndex = 0;
+    err = OMX_GetParameter(appPriv->filereaderhandle,OMX_IndexParamAudioPortFormat, &sPortFormat);
+
+    if (!flagSetupTunnel && sPortFormat.eEncoding == OMX_AUDIO_CodingAMR) {
+
+      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortDisable, 0, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"Audio Decoder port disable failed\n");
+        exit(1);
+      }
+
+      err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec1);
+      err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec2);
+
+      /*Wait for Decoder Ports Disable Event*/
+      tsem_down(appPriv->decoderEventSem);
+
+      setHeader(&sAmrParam, sizeof(OMX_AUDIO_PARAM_AMRTYPE));
+      sAmrParam.nPortIndex = 0;
+      err = OMX_GetParameter(appPriv->filereaderhandle,OMX_IndexParamAudioAmr, &sAmrParam);
+
+      DEBUG(DEB_ALL_MESS,"In %s nChannels =%d, nBitRate = %d eAMRBandMode=%x\n",
+        __func__,(int)sAmrParam.nChannels,(int)sAmrParam.nBitRate,(int)sAmrParam.eAMRBandMode);
+      
+      err = OMX_SetParameter(appPriv->audiodechandle, OMX_IndexParamAudioAmr, &sAmrParam);
+      if(err!=OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"Error %08x In OMX_SetParameter 0 \n",err);
+      }
+
+      err = OMX_SendCommand(appPriv->audiodechandle, OMX_CommandPortEnable, 0, NULL);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR,"ALSA Decoder port disable failed\n");
+        exit(1);
+      }
+
+      /** the output buffers of file reader component will be used 
+      *  in the audio decoder component as input buffers 
+      */ 
+      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec1, 0, NULL, buffer_out_size, outBufferFileRead1->pBuffer);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s Unable to use the file read comp allocate buffer 1\n",__func__);
+        exit(1);
+      }
+      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec2, 0, NULL, buffer_out_size, outBufferFileRead2->pBuffer);
+      if(err != OMX_ErrorNone) {
+        DEBUG(DEB_LEV_ERR, "In %s Unable to use the file read comp allocate buffer 2\n",__func__);
+        exit(1);
+      }
+      tsem_down(appPriv->decoderEventSem);
+    }
   } else if(eEvent == OMX_EventPortFormatDetected) {
     DEBUG(DEB_LEV_SIMPLE_SEQ, "In %s Port Format Detected %x\n", __func__,(int)Data1);
   } else if(eEvent == OMX_EventBufferFlag) {

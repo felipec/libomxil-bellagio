@@ -398,7 +398,7 @@ int main(int argc, char** argv) {
   char cAudioComponentName[OMX_MAX_STRINGNAME_SIZE];
 
 
-  strcpy(&cAudioComponentName[0],"OMX.st.audio_encoder.amrnb");
+  strcpy(&cAudioComponentName[0],"OMX.st.audio_encoder.amr");
 
   if(argc < 2){
     display_help();
@@ -477,7 +477,7 @@ int main(int argc, char** argv) {
           if(strncmp(str,"NB",2)==0) {
             bandmode += 1;
           } else if(strncmp(str,"WB",2)==0) {
-            strcpy(&cAudioComponentName[0],"OMX.st.audio_encoder.amrwb");
+            strcpy(&cAudioComponentName[0],"OMX.st.audio_encoder.amr");
             bandmode += 9;
           }
           DEBUG(DEFAULT_MESSAGES, "Band Mode %d\n", bandmode);

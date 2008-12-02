@@ -432,7 +432,7 @@ int main(int argc, char** argv) {
           sAudioAmr.nBitRate = 7400;
           break;
         case OMX_AUDIO_AMRBandModeNB5:                 /**< AMRNB Mode 5 =  7950 bps */
-          sAudioAmr.nBitRate = 7900;
+          sAudioAmr.nBitRate = 7950;
           break;
         case OMX_AUDIO_AMRBandModeNB6:                 /**< AMRNB Mode 6 = 10200 bps */
           sAudioAmr.nBitRate = 10200;

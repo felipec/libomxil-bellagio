@@ -316,7 +316,8 @@ if test "x$with_ffmpeg" = "xyes"; then
         # Check for FFmpeg audio decoder API version
 	AC_CHECK_LIB([avcodec], [avcodec_decode_audio2],
 		     [AC_DEFINE([FFMPEG_DECODER_VERSION], [2], [FFmpeg audio2 decoder API])],
-                     [AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API ])])
+                     [AC_DEFINE([FFMPEG_DECODER_VERSION], [1], [FFmpeg audio deocder API ])],
+	             [-lavutil -lm])
 
 	# Check for location of FFmpeg library headers. These were moved
 	# in FFmpeg r12194 (2008-02-25). For example, instead of

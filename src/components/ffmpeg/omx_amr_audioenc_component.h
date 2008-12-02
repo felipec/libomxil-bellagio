@@ -29,6 +29,10 @@
 #ifndef _OMX_AMR_AUDIOENC_COMPONENT_H_
 #define _OMX_AMR_AUDIOENC_COMPONENT_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <OMX_Types.h>
 #include <OMX_Component.h>
 #include <OMX_Core.h>

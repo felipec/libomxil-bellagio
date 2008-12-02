@@ -15,7 +15,9 @@ libomxil_bellagio_la_SOURCES = component_loader.h \
 			       omx_comp_debug_levels.h \
 			       tsemaphore.c tsemaphore.h \
 			       queue.c queue.h \
-			       common.c common.h
+			       common.c common.h \
+			       content_pipe_inet.c content_pipe_inet.h \
+			       content_pipe_file.c content_pipe_file.h
 
 libomxil_bellagio_la_CFLAGS = -I$(top_srcdir)/include -I$(srcdir)/base -DINSTALL_PATH_STR=\"$(plugindir)\"
 libomxil_bellagio_la_LIBADD = base/libomxbase.la

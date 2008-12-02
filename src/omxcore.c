@@ -40,9 +40,13 @@
 #include <assert.h>
 
 #include <OMX_Core.h>
+#include <OMX_ContentPipe.h>
 
 #include "omxcore.h"
 #include "omx_create_loaders.h"
+
+extern CPresult file_pipe_Constructor(CP_PIPETYPE* pPipe, CPstring szURI);
+extern CPresult inet_pipe_Constructor(CP_PIPETYPE* pPipe, CPstring szURI);
 
 /** The static field initialized is equal to 0 if the core is not initialized.
  * It is equal to 1 whern the OMX_Init has been called
@@ -216,10 +220,10 @@ OMX_ERRORTYPE OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComponent)
  * list, with a common index. This implementation orders the loaders and the
  * related list of components.
  */
-OMX_ERRORTYPE
-OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
-                      OMX_IN OMX_U32 nNameLength,
-                      OMX_IN OMX_U32 nIndex)
+OMX_ERRORTYPE OMX_ComponentNameEnum(
+		OMX_STRING cComponentName,
+		OMX_U32 nNameLength,
+		OMX_U32 nIndex)
 {
   OMX_ERRORTYPE err = OMX_ErrorNone;
   int i = 0;
@@ -263,10 +267,10 @@ OMX_ComponentNameEnum(OMX_OUT OMX_STRING cComponentName,
  * or OMX_ErrorNone if the tunnel has been established
  */
 OMX_ERRORTYPE OMX_SetupTunnel(
-  OMX_IN  OMX_HANDLETYPE hOutput,
-  OMX_IN  OMX_U32 nPortOutput,
-  OMX_IN  OMX_HANDLETYPE hInput,
-  OMX_IN  OMX_U32 nPortInput) {
+  OMX_HANDLETYPE hOutput,
+  OMX_U32 nPortOutput,
+  OMX_HANDLETYPE hInput,
+  OMX_U32 nPortInput) {
 
   OMX_ERRORTYPE err;
   OMX_COMPONENTTYPE* component;
@@ -326,9 +330,9 @@ OMX_ERRORTYPE OMX_SetupTunnel(
 /** @brief the OMX_GetRolesOfComponent standard function
  */
 OMX_ERRORTYPE OMX_GetRolesOfComponent (
-  OMX_IN      OMX_STRING CompName,
-  OMX_INOUT   OMX_U32 *pNumRoles,
-  OMX_OUT     OMX_U8 **roles) {
+  OMX_STRING CompName,
+  OMX_U32 *pNumRoles,
+  OMX_U8 **roles) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
   int i;
 
@@ -358,9 +362,9 @@ OMX_ERRORTYPE OMX_GetRolesOfComponent (
  *
  */
 OMX_ERRORTYPE OMX_GetComponentsOfRole (
-  OMX_IN      OMX_STRING role,
-  OMX_INOUT   OMX_U32 *pNumComps,
-  OMX_INOUT   OMX_U8  **compNames) {
+  OMX_STRING role,
+  OMX_U32 *pNumComps,
+  OMX_U8  **compNames) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
   int i,j;
   int only_number_requested = 0, full_number=0;
@@ -413,11 +417,23 @@ OMX_ERRORTYPE OMX_GetComponentsOfRole (
 }
 
 
-OMX_API OMX_ERRORTYPE   OMX_GetContentPipe(
-    OMX_OUT OMX_HANDLETYPE *hPipe,
-    OMX_IN OMX_STRING szURI) {
-    (void)hPipe;
-    (void)szURI;
-  return OMX_ErrorUndefined;
+OMX_ERRORTYPE OMX_GetContentPipe(
+    OMX_HANDLETYPE *hPipe,
+    OMX_STRING szURI) {
+	  OMX_ERRORTYPE err = OMX_ErrorContentPipeCreationFailed;
+	  CPresult res;
+
+	  if(strncmp(szURI, "file", 4) == 0) {
+	    res = file_pipe_Constructor((CP_PIPETYPE*) hPipe, szURI);
+	    if(res == 0x00000000)
+	      err = OMX_ErrorNone;
+	  }
+
+	  else if(strncmp(szURI, "inet", 4) == 0) {
+	    res = inet_pipe_Constructor((CP_PIPETYPE*) hPipe, szURI);
+	    if(res == 0x00000000)
+	      err = OMX_ErrorNone;
+	  }
+	  return err;
 }
 

@@ -43,7 +43,7 @@
 #include <OMX_Types.h>
 #include <OMX_ContentPipe.h>
 
-#include <bellagio/omx_comp_debug_levels.h>
+#include "omx_comp_debug_levels.h"
 
 #define SOCKET_ERROR        -1
 #define QUEUE_SIZE          1

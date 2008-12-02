@@ -510,6 +510,16 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
               pBuffer[nOutputPortIndex]->nFlags, /* The state has been changed in message->messageParam2 */
               NULL);
           }
+
+          if(omx_audio_mixer_component_Private->state != OMX_StateExecuting && 
+             omx_audio_mixer_component_Private->state != OMX_StateInvalid && 
+             omx_audio_mixer_component_Private->transientState != OMX_TransStateExecutingToIdle && 
+            !checkAnyPortBeingFlushed(omx_audio_mixer_component_Private)) {
+
+            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_audio_mixer_component_Private->state);
+            tsem_wait(omx_audio_mixer_component_Private->bStateSem);
+          }
+
           //TBD: Tobe verified
           if (omx_audio_mixer_component_Private->BufferMgmtCallback && pBuffer[i]->nFilledLen != 0) {
             (*(omx_audio_mixer_component_Private->BufferMgmtCallback))(openmaxStandComp, pBuffer[i], pBuffer[nOutputPortIndex]);

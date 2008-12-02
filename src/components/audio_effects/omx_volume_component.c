@@ -41,6 +41,8 @@
 /** Maximum Number of Volume Component Instance*/
 static OMX_U32 noVolumeCompInstance = 0;
 
+#define VOLUME_COMP_ROLE "volume.component"
+
 
 OMX_ERRORTYPE omx_volume_component_Constructor(OMX_COMPONENTTYPE *openmaxStandComp, OMX_STRING cComponentName) {
   OMX_ERRORTYPE err = OMX_ErrorNone;
@@ -207,6 +209,7 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
 
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
+  OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
   OMX_U32 portIndex;
   omx_base_audio_PortType *port;
 
@@ -234,6 +237,22 @@ OMX_ERRORTYPE omx_volume_component_SetParameter(
         err = OMX_ErrorBadPortIndex;
       }
       break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+
+      if (omx_volume_component_Private->state != OMX_StateLoaded && omx_volume_component_Private->state != OMX_StateWaitForResources) {
+        DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_volume_component_Private->state,__LINE__);
+        return OMX_ErrorIncorrectStateOperation;
+      }
+
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+
+      if (strcmp( (char*) pComponentRole->cRole, VOLUME_COMP_ROLE)) {
+        return OMX_ErrorBadParameter;
+      }
+      break;
     default:
       err = omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
@@ -247,6 +266,7 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
 
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
+  OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
   OMX_ERRORTYPE err = OMX_ErrorNone;
   omx_base_audio_PortType *port;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
@@ -291,6 +311,13 @@ OMX_ERRORTYPE omx_volume_component_GetParameter(
       pAudioPcmMode->nBitPerSample = 16;
       pAudioPcmMode->nSamplingRate = 0;
       pAudioPcmMode->ePCMMode = OMX_AUDIO_PCMModeLinear;
+      break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+      strcpy( (char*) pComponentRole->cRole, VOLUME_COMP_ROLE);
       break;
     default:
       err = omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);

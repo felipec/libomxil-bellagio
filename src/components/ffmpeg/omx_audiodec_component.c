@@ -246,6 +246,29 @@ OMX_ERRORTYPE omx_audiodec_component_ffmpegLibInit(omx_audiodec_component_Privat
   omx_audiodec_component_Private->avCodecContext->extradata = omx_audiodec_component_Private->extradata;
   omx_audiodec_component_Private->avCodecContext->extradata_size = (int)omx_audiodec_component_Private->extradata_size;
 
+  if(omx_audiodec_component_Private->audio_coding_type == OMX_AUDIO_CodingG726) {
+    omx_audiodec_component_Private->avCodecContext->channels = 1;
+    omx_audiodec_component_Private->avCodecContext->sample_rate = 8000;
+
+    switch(omx_audiodec_component_Private->pAudioG726.eG726Mode) {
+    case OMX_AUDIO_G726Mode16 :          /**< 16 kbps */
+      omx_audiodec_component_Private->avCodecContext->bit_rate = 16000;
+      break;
+    case OMX_AUDIO_G726Mode24 :          /**< 24 kbps */
+      omx_audiodec_component_Private->avCodecContext->bit_rate = 24000;
+      break;
+    case OMX_AUDIO_G726Mode32 :          /**< 32 kbps, most common rate, also G721 */
+      omx_audiodec_component_Private->avCodecContext->bit_rate = 32000;
+      break;
+    case OMX_AUDIO_G726Mode40 :
+      omx_audiodec_component_Private->avCodecContext->bit_rate = 40000;
+      break;
+    default:
+      omx_audiodec_component_Private->avCodecContext->bit_rate = 16000;
+      break;
+    }
+  }
+
   //omx_audiodec_component_Private->avCodecContext->channels = 1;
   //omx_audiodec_component_Private->avCodecContext->bit_rate = 12200;
   //omx_audiodec_component_Private->avCodecContext->sample_rate = 8000;

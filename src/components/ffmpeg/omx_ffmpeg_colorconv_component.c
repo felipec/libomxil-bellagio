@@ -33,6 +33,8 @@
 /** Maximum Number of Video Color Converter Component Instance*/
 #define MAX_COMPONENT_VIDEOCOLORCONV 2
 
+#define COLOR_CONV_ROLE "video_colorconv.ffmpeg"
+
 /** Counter of Video Component Instance*/
 static OMX_U32 noVideoColorConvInstance = 0;
 
@@ -1044,6 +1046,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_PARAM_PORTDEFINITIONTYPE *pPortDef;
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
+  OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_U32 portIndex;
 
   /* Check which structure we are being fed and make control its header */
@@ -1108,6 +1111,22 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;  //  No support for slices yet
       pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
       break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+
+      if (omx_ffmpeg_colorconv_component_Private->state != OMX_StateLoaded && omx_ffmpeg_colorconv_component_Private->state != OMX_StateWaitForResources) {
+        DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_ffmpeg_colorconv_component_Private->state,__LINE__);
+        return OMX_ErrorIncorrectStateOperation;
+      }
+
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+
+      if(strcmp( (char*) pComponentRole->cRole, COLOR_CONV_ROLE)) {
+        return OMX_ErrorBadParameter;
+      }
+      break;
     default: /*Call the base component function*/
       return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
@@ -1120,6 +1139,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
   OMX_PTR ComponentParameterStructure) {
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
+  OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_ffmpeg_colorconv_component_PrivateType* omx_ffmpeg_colorconv_component_Private = openmaxStandComp->pComponentPrivate;
@@ -1148,6 +1168,13 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_GetParameter(
       } else {
         return OMX_ErrorBadPortIndex;
       }
+      break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+      strcpy((char*) pComponentRole->cRole, COLOR_CONV_ROLE);
       break;
     default: /*Call the base component function*/
       return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);

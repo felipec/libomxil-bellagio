@@ -577,6 +577,16 @@ OMX_ERRORTYPE omx_vorbisdec_component_SetParameter(
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+
+    if (omx_vorbisdec_component_Private->state != OMX_StateLoaded && omx_vorbisdec_component_Private->state != OMX_StateWaitForResources) {
+      DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_vorbisdec_component_Private->state,__LINE__);
+      return OMX_ErrorIncorrectStateOperation;
+    }
+
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+      break;
+    }
+
     if (!strcmp( (char*) pComponentRole->cRole, AUDIO_DEC_VORBIS_ROLE)) {
       omx_vorbisdec_component_Private->audio_coding_type = OMX_AUDIO_CodingVORBIS;
     } else {

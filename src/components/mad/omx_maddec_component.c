@@ -618,6 +618,16 @@ OMX_ERRORTYPE omx_maddec_component_SetParameter(
 
   case OMX_IndexParamStandardComponentRole:
     pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+
+    if (omx_maddec_component_Private->state != OMX_StateLoaded && omx_maddec_component_Private->state != OMX_StateWaitForResources) {
+      DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_maddec_component_Private->state,__LINE__);
+      return OMX_ErrorIncorrectStateOperation;
+    }
+
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+      break;
+    }
+
     if (!strcmp( (char*) pComponentRole->cRole, AUDIO_DEC_MP3_ROLE)) {
       omx_maddec_component_Private->audio_coding_type = OMX_AUDIO_CodingMP3;
     }  else {
@@ -656,7 +666,7 @@ OMX_ERRORTYPE omx_maddec_component_GetParameter(
 
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
   OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
-  OMX_PARAM_COMPONENTROLETYPE * pComponentRole;
+  OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
   OMX_AUDIO_PARAM_MP3TYPE *pAudioMp3;
   omx_base_audio_PortType *port;
   OMX_ERRORTYPE err = OMX_ErrorNone;

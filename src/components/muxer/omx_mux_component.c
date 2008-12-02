@@ -817,7 +817,7 @@ static AVStream *add_video_stream(OMX_COMPONENTTYPE* openmaxStandComp,AVFormatCo
   st = av_new_stream(oc, 0);
   if (!st) {
       fprintf(stderr, "Could not alloc stream\n");
-      exit(1);
+      return NULL;
   }
 
   c = st->codec;
@@ -868,7 +868,7 @@ static AVStream *add_audio_stream(OMX_COMPONENTTYPE* openmaxStandComp,AVFormatCo
   st = av_new_stream(oc, 1);
   if (!st) {
       fprintf(stderr, "Could not alloc stream\n");
-      exit(1);
+      return NULL;
   }
 
   c = st->codec;

@@ -333,7 +333,6 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
 
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
-  OMX_AUDIO_PARAM_MP3TYPE * pAudioMp3;
   OMX_U32 portIndex;
   OMX_U32 i;
   OMX_U32 nFileNameLength;
@@ -356,24 +355,17 @@ OMX_ERRORTYPE omx_filereader_component_SetParameter(
     /*Check Structure Header and verify component state*/
     err = omx_base_component_ParameterSanityCheck(hComponent, portIndex, pAudioPortFormat, sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     if(err!=OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
+      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x PortIndex =%x\n",__func__,err,(unsigned int)portIndex);
       break;
     }
     if (portIndex < 1) {
       memcpy(&pPort->sAudioParam,pAudioPortFormat,sizeof(OMX_AUDIO_PARAM_PORTFORMATTYPE));
     } else {
+      DEBUG(DEB_LEV_ERR, "In %s Bad PortIndex =%x\n",__func__,(int)portIndex);
       return OMX_ErrorBadPortIndex;
     }
     break;
-  case OMX_IndexParamAudioMp3:
-    pAudioMp3 = (OMX_AUDIO_PARAM_MP3TYPE*)ComponentParameterStructure;
-    /*Check Structure Header and verify component state*/
-    err = omx_base_component_ParameterSanityCheck(hComponent, pAudioMp3->nPortIndex, pAudioMp3, sizeof(OMX_AUDIO_PARAM_MP3TYPE));
-    if(err!=OMX_ErrorNone) {
-      DEBUG(DEB_LEV_ERR, "In %s Parameter Check Error=%x\n",__func__,err);
-      break;
-    }
-    break;
+
   case OMX_IndexVendorInputFilename : 
     nFileNameLength = strlen((char *)ComponentParameterStructure) + 1;
     if(nFileNameLength > DEFAULT_FILENAME_LENGTH) {
@@ -426,6 +418,7 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
 
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
+  OMX_AUDIO_PARAM_AMRTYPE *pAudioAmr;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE*)hComponent;
   omx_filereader_component_PrivateType* omx_filereader_component_Private = openmaxStandComp->pComponentPrivate;
   omx_base_audio_PortType *pPort = (omx_base_audio_PortType *) omx_filereader_component_Private->ports[OMX_BASE_SOURCE_OUTPUTPORT_INDEX];
@@ -453,6 +446,85 @@ OMX_ERRORTYPE omx_filereader_component_GetParameter(
     } else {
       return OMX_ErrorBadPortIndex;
     }
+    break;
+  case OMX_IndexParamAudioAmr:
+    pAudioAmr = (OMX_AUDIO_PARAM_AMRTYPE*)ComponentParameterStructure;
+    if (pAudioAmr->nPortIndex != 0) {
+      return OMX_ErrorBadPortIndex;
+    }
+    if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_AUDIO_PARAM_AMRTYPE))) != OMX_ErrorNone) { 
+      break;
+    }
+    if(omx_filereader_component_Private->avformatcontext) {
+      pAudioAmr->nChannels = omx_filereader_component_Private->avformatcontext->streams[0]->codec->channels;    
+      pAudioAmr->nBitRate = omx_filereader_component_Private->avformatcontext->streams[0]->codec->bit_rate;
+      switch(pAudioAmr->nBitRate) {
+      case 4750 :                 /**< AMRNB Mode 0 =  4750 bps */
+        pAudioAmr->eAMRBandMode = OMX_AUDIO_AMRBandModeNB0; 
+        break;
+      case 5150:                 /**< AMRNB Mode 1 =  5150 bps */
+        pAudioAmr->eAMRBandMode = OMX_AUDIO_AMRBandModeNB1;
+        break;
+      case 5900:                 /**< AMRNB Mode 2 =  5900 bps */
+        pAudioAmr->eAMRBandMode = OMX_AUDIO_AMRBandModeNB2;
+        break;
+      case 6700:                 /**< AMRNB Mode 3 =  6700 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeNB3;
+        break;
+      case 7400:                 /**< AMRNB Mode 4 =  7400 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeNB4;
+        break;
+      case 7900:                 /**< AMRNB Mode 5 =  7950 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeNB5;
+        break;
+      case 10200:                 /**< AMRNB Mode 6 = 10200 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeNB6;
+        break;
+      case 12200:                /**< AMRNB Mode 7 = 12200 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeNB7;
+        break;
+      case 6600:                 /**< AMRWB Mode 0 =  6600 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB0; 
+        break;
+      case 8850:                 /**< AMRWB Mode 1 =  8850 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB1;
+        break;
+      case 12650:                 /**< AMRWB Mode 2 =  12650 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB2;
+        break;
+      case 14250:                 /**< AMRWB Mode 3 =  14250 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB3;
+        break;
+      case 15850:                 /**< AMRWB Mode 4 =  15850 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB4;
+        break;
+      case 18250:                 /**< AMRWB Mode 5 =  18250 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB5;
+        break;
+      case 19850:                 /**< AMRWB Mode 6 = 19850 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB6;
+        break;
+      case 23050:                /**< AMRWB Mode 7 = 23050 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB7;
+        break;
+      case 23850:                /**< AMRWB Mode 8 = 23850 bps */
+        pAudioAmr->eAMRBandMode =  OMX_AUDIO_AMRBandModeWB8;
+        break;
+      default:
+        if(omx_filereader_component_Private->avformatcontext->streams[0]->codec->codec_id == CODEC_ID_AMR_NB) {
+          pAudioAmr->eAMRBandMode = OMX_AUDIO_AMRBandModeNB0;
+        } else if(omx_filereader_component_Private->avformatcontext->streams[0]->codec->codec_id == CODEC_ID_AMR_WB) {
+          pAudioAmr->eAMRBandMode = OMX_AUDIO_AMRBandModeWB0;
+        } else {
+          pAudioAmr->eAMRBandMode = OMX_AUDIO_AMRBandModeUnused;
+        }
+        DEBUG(DEB_LEV_ERR, "In %s AMR Band Mode %x Unused\n",__func__,pAudioAmr->eAMRBandMode); 
+        break;
+      }
+      pAudioAmr->eAMRDTXMode = OMX_AUDIO_AMRDTXModeOff;
+      pAudioAmr->eAMRFrameFormat = OMX_AUDIO_AMRFrameFormatConformance;
+    }
+    break;
   case OMX_IndexVendorInputFilename : 
     strcpy((char *)ComponentParameterStructure, "still no filename");
     break;

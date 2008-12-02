@@ -36,6 +36,8 @@
 /** height offset - reqd tadjust the display position - at the centre of upper half of screen */
 #define HEIGHT_OFFSET 10
 
+#define FBDEV_SINK_COMP_ROLE "fbdev.fbdev_sink"
+
 /** we assume, frame rate = 25 fps ; so one frame processing time = 40000 us */
 static OMX_U32 nFrameProcessTime = 40000; // in micro second
 
@@ -1354,6 +1356,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_PARAM_PORTDEFINITIONTYPE *pPortDef;
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
+  OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
   OMX_U32 portIndex;
 
   /* Check which structure we are being fed and make control its header */
@@ -1434,6 +1437,22 @@ OMX_ERRORTYPE omx_fbdev_sink_component_SetParameter(
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;  //  No support for slices yet
       break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+
+      if (omx_fbdev_sink_component_Private->state != OMX_StateLoaded && omx_fbdev_sink_component_Private->state != OMX_StateWaitForResources) {
+        DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_fbdev_sink_component_Private->state,__LINE__);
+        return OMX_ErrorIncorrectStateOperation;
+      }
+
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+
+      if (strcmp( (char*) pComponentRole->cRole, FBDEV_SINK_COMP_ROLE)) {
+        return OMX_ErrorBadParameter;
+      }
+      break;
     default: /*Call the base component function*/
       return omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
@@ -1447,6 +1466,7 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
   OMX_PTR ComponentParameterStructure) {
 
   OMX_VIDEO_PARAM_PORTFORMATTYPE *pVideoPortFormat;
+  OMX_PARAM_COMPONENTROLETYPE *pComponentRole;
   OMX_ERRORTYPE err = OMX_ErrorNone;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
   omx_fbdev_sink_component_PrivateType* omx_fbdev_sink_component_Private = openmaxStandComp->pComponentPrivate;
@@ -1479,6 +1499,13 @@ OMX_ERRORTYPE omx_fbdev_sink_component_GetParameter(
       } else {
         return OMX_ErrorBadPortIndex;
       }
+      break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+      strcpy( (char*) pComponentRole->cRole, FBDEV_SINK_COMP_ROLE);
       break;
     default: /*Call the base component function*/
       return omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);

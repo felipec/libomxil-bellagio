@@ -48,7 +48,8 @@
 #define VIDEO_DEC_H264_ROLE       "video_decoder.avc"
 #define AUDIO_DEC_MP3_ROLE        "audio_decoder.mp3"
 #define AUDIO_DEC_AAC_ROLE        "audio_decoder.aac"
-#define VIDEO_SINK                "OMX.st.fbdev.fbdev_sink"
+#define VIDEO_SINK_FRAME_BUFFER   "OMX.st.fbdev.fbdev_sink"
+#define VIDEO_SINK_X_VIDEO        "OMX.st.video.xvideo_sink"
 #define COLOR_CONV                "OMX.st.video_colorconv.ffmpeg"
 #define AUDIO_SINK                "OMX.st.alsa.alsasink"
 #define AUDIO_EFFECT              "OMX.st.volume.component"
@@ -153,6 +154,7 @@ int flagInputReceived;
 int flagIsDisplayRequested;     /* If Display is ON - volume, color & video scheduler components are chosen by default */
 int flagSetupTunnel;
 int flagAVsync;                 /* to select the AVsync option 1 = AV sync ON, clock component selected, 0 = no clock component selected*/
+int flagIsXVideoSinkRequested;   /* requested X-video sink*/ 
 
 static void setHeader(OMX_PTR header, OMX_U32 size) {
   OMX_VERSIONTYPE* ver = (OMX_VERSIONTYPE*)(header + sizeof(OMX_U32));
@@ -316,10 +318,16 @@ int SetPortParametersVideo() {
       DEBUG(DEB_LEV_ERR,"\n bad parameter of input color format - exiting\n");
       exit(1);
     }
-    /** setting output RGB color format of the color converter component */
+    /** setting output color format of the color converter component */
+    /* if Xvideo sink called then output color format is same as the video decoder color format i.e. yuv */
+    /* if framebuffer sink called then output color format is rgb */
     omx_colorconvPortDefinition.nPortIndex = 1;
     err = OMX_GetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
-    omx_colorconvPortDefinition.format.video.eColorFormat = COLOR_CONV_OUT_RGB_FORMAT;
+    if(flagIsXVideoSinkRequested){
+       omx_colorconvPortDefinition.format.video.eColorFormat = paramPortVideo.format.video.eColorFormat;
+    }
+    else
+       omx_colorconvPortDefinition.format.video.eColorFormat = COLOR_CONV_OUT_RGB_FORMAT;
     err = OMX_SetParameter(appPriv->colorconv_handle, OMX_IndexParamPortDefinition, &omx_colorconvPortDefinition);
     if(err==OMX_ErrorBadParameter) {
       DEBUG(DEB_LEV_ERR,"\n bad parameter of output color format setting- exiting\n");
@@ -377,7 +385,10 @@ void display_help() {
   printf("\n");
   printf("       -c: clock component selected AVsync ON\n");
   printf("\n");
+  printf("       -x: invokes x-video sink as the video sink component\n");
+  printf("\n");
   printf("       -d: Uses the video and alsa sink component to display the video and play the audio output \n");
+  printf("           Default video sink is frame buffer unless '-x' option given\n");
   printf("       input_filename is the user specified input file name\n");
   printf("\n");
   printf("       -t: Tunneling option - if this option is selected then by default the color converter, \n");
@@ -570,6 +581,7 @@ int main(int argc, char** argv) {
     flagSetupTunnel = 0;
     flagIsDisplayRequested = 0;
     flagAVsync             =0;
+    flagIsXVideoSinkRequested = 0;
 
     argn_dec = 1;
     while (argn_dec < argc) {
@@ -590,6 +602,9 @@ int main(int argc, char** argv) {
           break;
         case 'c':
           flagAVsync = 1;
+          break;
+        case 'x' :
+          flagIsXVideoSinkRequested = 1;
           break;
         case 'a' :
           if(*(argv[argn_dec] + 2)=='o'){
@@ -813,7 +828,11 @@ int main(int argc, char** argv) {
     }
 
     /** getting video sink component handle */
-    err = OMX_GetHandle(&appPriv->videosinkhandle, VIDEO_SINK, NULL, &fbdev_sink_callbacks);
+    if(flagIsXVideoSinkRequested)
+       err = OMX_GetHandle(&appPriv->videosinkhandle, VIDEO_SINK_X_VIDEO, NULL, &fbdev_sink_callbacks);
+    else
+       err = OMX_GetHandle(&appPriv->videosinkhandle, VIDEO_SINK_FRAME_BUFFER, NULL, &fbdev_sink_callbacks);
+
     if(err != OMX_ErrorNone){
       DEBUG(DEB_LEV_ERR, "No video sink component component found. Exiting...\n");
        exit(1);

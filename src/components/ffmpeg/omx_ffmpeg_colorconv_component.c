@@ -1075,6 +1075,8 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
       pPort->sPortParam.format.video.nBitrate = pPortDef->format.video.nBitrate;
       pPort->sPortParam.format.video.xFramerate = pPortDef->format.video.xFramerate;
       pPort->sPortParam.format.video.bFlagErrorConcealment = pPortDef->format.video.bFlagErrorConcealment;
+      pPort->sVideoParam.eColorFormat             = pPortDef->format.video.eColorFormat;
+      pPort->sPortParam.format.video.eColorFormat = pPortDef->format.video.eColorFormat;
       //  Figure out stride, slice height, min buffer size
       pPort->sPortParam.format.video.nStride = calcStride(pPort->sPortParam.format.video.nFrameWidth, pPort->sVideoParam.eColorFormat);
       pPort->sPortParam.format.video.nSliceHeight = pPort->sPortParam.format.video.nFrameHeight;  //  No support for slices yet
@@ -1082,6 +1084,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
       pPort->sPortParam.nBufferSize = (OMX_U32) abs(pPort->sPortParam.format.video.nStride) * pPort->sPortParam.format.video.nSliceHeight;
       pPort->omxConfigCrop.nWidth = pPort->sPortParam.format.video.nFrameWidth;
       pPort->omxConfigCrop.nHeight = pPort->sPortParam.format.video.nFrameHeight;
+      pPort->ffmpeg_pxlfmt = find_ffmpeg_pxlfmt(pPort->sVideoParam.eColorFormat);
       break;
     case OMX_IndexParamVideoPortFormat:
       //  FIXME: How do we handle the nIndex member?
@@ -1099,6 +1102,7 @@ OMX_ERRORTYPE omx_ffmpeg_colorconv_component_SetParameter(
       }
       pPort->sVideoParam.eCompressionFormat = pVideoPortFormat->eCompressionFormat;
       pPort->sVideoParam.eColorFormat = pVideoPortFormat->eColorFormat;
+      pPort->sPortParam.format.video.eColorFormat = pVideoPortFormat->eColorFormat;
       pPort->ffmpeg_pxlfmt = find_ffmpeg_pxlfmt(pPort->sVideoParam.eColorFormat);
 
       if(pPort->ffmpeg_pxlfmt == PIX_FMT_NONE) {

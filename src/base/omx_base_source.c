@@ -158,16 +158,15 @@ void* omx_base_source_BufferMgmtFunction (void* param) {
         DEBUG(DEB_LEV_FULL_SEQ, "Pass Mark. This is a Source!!\n");
       }
 
-      if(omx_base_source_Private->state != OMX_StateExecuting && !PORT_IS_BEING_FLUSHED(pOutPort)) {
-        DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_source_Private->state);
-        tsem_wait(omx_base_source_Private->bStateSem);
-      }
-
-      if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer->nFilledLen == 0) {
-        (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer);
+      if(omx_base_source_Private->state == OMX_StateExecuting)  {
+        if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer->nFilledLen == 0) {
+          (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer);
+        } else {
+          /*It no buffer management call back then don't produce any output buffer*/
+          pOutputBuffer->nFilledLen = 0;
+        }
       } else {
-        /*It no buffer management call back then don't produce any output buffer*/
-        pOutputBuffer->nFilledLen = 0;
+        DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_source_Private->state);
       }
       if(omx_base_source_Private->state == OMX_StatePause && !PORT_IS_BEING_FLUSHED(pOutPort)) {
         /*Waiting at paused state*/
@@ -355,18 +354,16 @@ void* omx_base_source_twoport_BufferMgmtFunction (void* param) {
             DEBUG(DEB_LEV_FULL_SEQ, "Pass Mark. This is a Source!!\n");
           }
 
-          if(omx_base_source_Private->state != OMX_StateExecuting && !(PORT_IS_BEING_FLUSHED(pOutPort[0]) || PORT_IS_BEING_FLUSHED(pOutPort[1]))) {
-            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_source_Private->state);
-            tsem_wait(omx_base_source_Private->bStateSem);
-          }
-
-
-          if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer[i]->nFilledLen == 0) {
-            //(*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[0], pOutputBuffer[1]);
-            (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[i]);
+          if(omx_base_source_Private->state == OMX_StateExecuting)  {
+            if (omx_base_source_Private->BufferMgmtCallback && pOutputBuffer[i]->nFilledLen == 0) {
+              //(*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[0], pOutputBuffer[1]);
+              (*(omx_base_source_Private->BufferMgmtCallback))(openmaxStandComp, pOutputBuffer[i]);
+            } else {
+              /*If no buffer management call back then don't produce any output buffer*/
+              pOutputBuffer[i]->nFilledLen = 0;
+            }
           } else {
-            /*If no buffer management call back then don't produce any output buffer*/
-            pOutputBuffer[i]->nFilledLen = 0;
+            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_source_Private->state);
           }
 
           if(pOutputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS && pOutputBuffer[i]->nFilledLen==0) {

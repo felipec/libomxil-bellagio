@@ -158,17 +158,21 @@ void* omx_base_sink_BufferMgmtFunction (void* param) {
         DEBUG(DEB_LEV_FULL_SEQ, "Can't Pass Mark. This is a Sink!!\n");
       }
 
-      if(omx_base_sink_Private->state != OMX_StateExecuting && !PORT_IS_BEING_FLUSHED(pInPort)) {
-        DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_sink_Private->state);
-        tsem_wait(omx_base_sink_Private->bStateSem);
-      }
-
-      if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer->nFilledLen > 0) {
-        (*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer);
-      }
-      else {
-        /*If no buffer management call back the explicitly consume input buffer*/
-        pInputBuffer->nFilledLen = 0;
+      if(omx_base_sink_Private->state == OMX_StateExecuting)  {
+        if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer->nFilledLen > 0) {
+          (*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer);
+        }
+        else {
+          /*If no buffer management call back the explicitly consume input buffer*/
+          pInputBuffer->nFilledLen = 0;
+        }
+      } else {
+        DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x) TrState (%x)\n", 
+          __func__, (int)omx_base_sink_Private->state,
+          (int)omx_base_component_Private->transientState);
+        if(OMX_TransStateExecutingToIdle == omx_base_component_Private->transientState) {
+          pInputBuffer->nFilledLen = 0;
+        }
       }
       /*Input Buffer has been completely consumed. So, get new input buffer*/
 
@@ -341,16 +345,20 @@ void* omx_base_sink_twoport_BufferMgmtFunction (void* param) {
             DEBUG(DEB_LEV_FULL_SEQ, "Pass Mark. This is a Source!!\n");
           }
 
-          if(omx_base_sink_Private->state != OMX_StateExecuting && !(PORT_IS_BEING_FLUSHED(pInPort[0]) || PORT_IS_BEING_FLUSHED(pInPort[1]))) {
-            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_sink_Private->state);
-            tsem_wait(omx_base_sink_Private->bStateSem);
-          }
-          if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer[i]->nFilledLen > 0) {
-            //(*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer[0], pInputBuffer[1]);
-            (*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer[i]);
+          if(omx_base_sink_Private->state == OMX_StateExecuting)  {
+            if (omx_base_sink_Private->BufferMgmtCallback && pInputBuffer[i]->nFilledLen > 0) {
+              //(*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer[0], pInputBuffer[1]);
+              (*(omx_base_sink_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer[i]);
+            } else {
+              /*If no buffer management call back then don't produce any Input buffer*/
+              pInputBuffer[i]->nFilledLen = 0;
+            }
           } else {
-            /*If no buffer management call back then don't produce any Input buffer*/
-            pInputBuffer[i]->nFilledLen = 0;
+            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_sink_Private->state);
+
+            if(OMX_TransStateExecutingToIdle == omx_base_component_Private->transientState) {
+              pInputBuffer[i]->nFilledLen = 0;
+            }
           }
 
           if(pInputBuffer[i]->nFlags==OMX_BUFFERFLAG_EOS && pInputBuffer[i]->nFilledLen==0) {

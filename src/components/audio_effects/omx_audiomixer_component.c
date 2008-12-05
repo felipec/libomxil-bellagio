@@ -42,6 +42,8 @@
 /* Max allowable audio_mixer component instance */
 #define MAX_COMPONENT_AUDIO_MIXER 1
 
+#define MIXER_COMP_ROLE "audio.mixer"
+
 /** Maximum Number of AudioMixer Component Instance*/
 static OMX_U32 noAudioMixerCompInstance = 0;
 
@@ -235,10 +237,10 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetConfig(
   OMX_IN  OMX_HANDLETYPE hComponent,
   OMX_IN  OMX_INDEXTYPE nIndex,
   OMX_INOUT OMX_PTR pComponentConfigStructure) {
-  OMX_AUDIO_CONFIG_VOLUMETYPE* pVolume;
+  OMX_AUDIO_CONFIG_VOLUMETYPE           *pVolume;
   OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
-  omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
-  omx_audio_mixer_component_PortType * pPort;
+  omx_audio_mixer_component_PrivateType *omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
+  omx_audio_mixer_component_PortType    *pPort;
   OMX_ERRORTYPE err = OMX_ErrorNone;
 
   switch (nIndex) {
@@ -262,9 +264,10 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_IN  OMX_PTR ComponentParameterStructure) {
 
-  OMX_ERRORTYPE err = OMX_ErrorNone;
-  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
-  OMX_U32 portIndex;
+  OMX_ERRORTYPE                   err = OMX_ErrorNone;
+  OMX_AUDIO_PARAM_PORTFORMATTYPE  *pAudioPortFormat;
+  OMX_PARAM_COMPONENTROLETYPE     *pComponentRole;
+  OMX_U32                         portIndex;
   omx_audio_mixer_component_PortType *port;
 
   /* Check which structure we are being fed and make control its header */
@@ -291,6 +294,22 @@ OMX_ERRORTYPE omx_audio_mixer_component_SetParameter(
         err = OMX_ErrorBadPortIndex;
       }
       break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+
+      if (omx_audio_mixer_component_Private->state != OMX_StateLoaded && omx_audio_mixer_component_Private->state != OMX_StateWaitForResources) {
+        DEBUG(DEB_LEV_ERR, "In %s Incorrect State=%x lineno=%d\n",__func__,omx_audio_mixer_component_Private->state,__LINE__);
+        return OMX_ErrorIncorrectStateOperation;
+      }
+
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+
+      if (strcmp( (char*) pComponentRole->cRole, MIXER_COMP_ROLE)) {
+        return OMX_ErrorBadParameter;
+      }
+      break;
     default:
       err = omx_base_component_SetParameter(hComponent, nParamIndex, ComponentParameterStructure);
   }
@@ -302,12 +321,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
   OMX_IN  OMX_INDEXTYPE nParamIndex,
   OMX_INOUT OMX_PTR ComponentParameterStructure) {
 
-  OMX_AUDIO_PARAM_PORTFORMATTYPE *pAudioPortFormat;
-  OMX_AUDIO_PARAM_PCMMODETYPE *pAudioPcmMode;
-  OMX_ERRORTYPE err = OMX_ErrorNone;
-  omx_audio_mixer_component_PortType *port;
-  OMX_COMPONENTTYPE *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
-  omx_audio_mixer_component_PrivateType* omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
+  OMX_AUDIO_PARAM_PORTFORMATTYPE  *pAudioPortFormat;
+  OMX_AUDIO_PARAM_PCMMODETYPE     *pAudioPcmMode;
+  OMX_PARAM_COMPONENTROLETYPE     *pComponentRole;
+  OMX_ERRORTYPE                   err = OMX_ErrorNone;
+  omx_audio_mixer_component_PortType    *port;
+  OMX_COMPONENTTYPE                     *openmaxStandComp = (OMX_COMPONENTTYPE *)hComponent;
+  omx_audio_mixer_component_PrivateType *omx_audio_mixer_component_Private = openmaxStandComp->pComponentPrivate;
   if (ComponentParameterStructure == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -344,6 +364,13 @@ OMX_ERRORTYPE omx_audio_mixer_component_GetParameter(
       } else {
         err = OMX_ErrorBadPortIndex;
       }
+      break;
+    case OMX_IndexParamStandardComponentRole:
+      pComponentRole = (OMX_PARAM_COMPONENTROLETYPE*)ComponentParameterStructure;
+      if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_PARAM_COMPONENTROLETYPE))) != OMX_ErrorNone) {
+        break;
+      }
+      strcpy( (char*) pComponentRole->cRole, MIXER_COMP_ROLE);
       break;
     default:
       err = omx_base_component_GetParameter(hComponent, nParamIndex, ComponentParameterStructure);
@@ -511,22 +538,21 @@ void* omx_audio_mixer_BufferMgmtFunction (void* param) {
               NULL);
           }
 
-          if(omx_audio_mixer_component_Private->state != OMX_StateExecuting && 
-             omx_audio_mixer_component_Private->state != OMX_StateInvalid && 
-             omx_audio_mixer_component_Private->transientState != OMX_TransStateExecutingToIdle && 
-            !checkAnyPortBeingFlushed(omx_audio_mixer_component_Private)) {
-
-            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_audio_mixer_component_Private->state);
-            tsem_wait(omx_audio_mixer_component_Private->bStateSem);
-          }
-
           //TBD: Tobe verified
-          if (omx_audio_mixer_component_Private->BufferMgmtCallback && pBuffer[i]->nFilledLen != 0) {
-            (*(omx_audio_mixer_component_Private->BufferMgmtCallback))(openmaxStandComp, pBuffer[i], pBuffer[nOutputPortIndex]);
+          if(omx_audio_mixer_component_Private->state == OMX_StateExecuting)  {
+            if (omx_audio_mixer_component_Private->BufferMgmtCallback && pBuffer[i]->nFilledLen != 0) {
+              (*(omx_audio_mixer_component_Private->BufferMgmtCallback))(openmaxStandComp, pBuffer[i], pBuffer[nOutputPortIndex]);
+            } else {
+              /*It no buffer management call back the explicitly consume input buffer*/
+              pBuffer[i]->nFilledLen = 0;
+            }
           } else {
-            /*It no buffer management call back the explicitly consume input buffer*/
-            pBuffer[i]->nFilledLen = 0;
+            DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_audio_mixer_component_Private->state);
+            if(OMX_TransStateExecutingToIdle == omx_audio_mixer_component_Private->transientState) {
+              pBuffer[i]->nFilledLen = 0;
+            }
           }
+
           /*Input Buffer has been completely consumed. So, get new input buffer*/
           if(pBuffer[i]->nFilledLen==0) {
             isBufferNeeded[i] = OMX_TRUE;

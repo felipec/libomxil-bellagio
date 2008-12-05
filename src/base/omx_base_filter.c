@@ -210,16 +210,17 @@ void* omx_base_filter_BufferMgmtFunction (void* param) {
          pInputBuffer->nFlags = 0;
       }
 
-      if(omx_base_filter_Private->state != OMX_StateExecuting && !(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
+      if(omx_base_filter_Private->state == OMX_StateExecuting)  {
+        if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen > 0) {
+          (*(omx_base_filter_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer, pOutputBuffer);
+        } else {
+          /*It no buffer management call back the explicitly consume input buffer*/
+          pInputBuffer->nFilledLen = 0;
+        }
+      } else if(!(PORT_IS_BEING_FLUSHED(pInPort) || PORT_IS_BEING_FLUSHED(pOutPort))) {
         DEBUG(DEB_LEV_ERR, "In %s Received Buffer in non-Executing State(%x)\n", __func__, (int)omx_base_filter_Private->state);
-        tsem_wait(omx_base_filter_Private->bStateSem);
-      }
-
-      if (omx_base_filter_Private->BufferMgmtCallback && pInputBuffer->nFilledLen > 0) {
-        (*(omx_base_filter_Private->BufferMgmtCallback))(openmaxStandComp, pInputBuffer, pOutputBuffer);
       } else {
-        /*It no buffer management call back the explicitly consume input buffer*/
-        pInputBuffer->nFilledLen = 0;
+          pInputBuffer->nFilledLen = 0;
       }
 
       if(pInputBuffer->nFlags==OMX_BUFFERFLAG_EOS && pInputBuffer->nFilledLen==0) {

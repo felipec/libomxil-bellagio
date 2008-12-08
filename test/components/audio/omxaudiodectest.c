@@ -48,10 +48,10 @@
 
 appPrivateType* appPriv;
 
-OMX_BUFFERHEADERTYPE *outBufferFileRead1, *outBufferFileRead2;
-OMX_BUFFERHEADERTYPE *inBufferAudioDec1, *inBufferAudioDec2,*outBufferAudioDec1, *outBufferAudioDec2;
-OMX_BUFFERHEADERTYPE *inBufferVolume1, *inBufferVolume2,*outBufferVolume1, *outBufferVolume2;
-OMX_BUFFERHEADERTYPE *inBufferSink1, *inBufferSink2;
+OMX_BUFFERHEADERTYPE *outBufferFileRead[2];
+OMX_BUFFERHEADERTYPE *inBufferAudioDec[2],*outBufferAudioDec[2];
+OMX_BUFFERHEADERTYPE *inBufferVolume[2],*outBufferVolume[2];
+OMX_BUFFERHEADERTYPE *inBufferSink[2];
 int buffer_in_size = BUFFER_IN_SIZE; 
 int buffer_out_size = BUFFER_OUT_SIZE;
 static OMX_BOOL bEOS=OMX_FALSE;
@@ -598,12 +598,12 @@ int main(int argc, char** argv) {
       err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
     }
     if( !flagUsingFFMpeg && !flagIsMadUsingFileReader) {
-      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec1, 0, NULL, buffer_in_size);
+      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec[0], 0, NULL, buffer_in_size);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Unable to allocate buffer\n");
         exit(1);
       }
-      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec2, 0, NULL, buffer_in_size);
+      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec[1], 0, NULL, buffer_in_size);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Unable to allocate buffer\n");
         exit(1);
@@ -612,16 +612,16 @@ int main(int argc, char** argv) {
   }
 
   if (!flagSetupTunnel && ( flagUsingFFMpeg || flagIsMadUsingFileReader)) {
-    outBufferFileRead1 = outBufferFileRead2 = NULL;
+    outBufferFileRead[0] = outBufferFileRead[1] = NULL;
     /** allocation of file reader component's output buffers
     * these two will be used as input buffers of the audio decoder component 
     */
-    err = OMX_AllocateBuffer(appPriv->filereaderhandle, &outBufferFileRead1, 0, NULL, buffer_out_size);
+    err = OMX_AllocateBuffer(appPriv->filereaderhandle, &outBufferFileRead[0], 0, NULL, buffer_out_size);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to allocate buffer 1 in file read\n");
       exit(1);
     }
-    err = OMX_AllocateBuffer(appPriv->filereaderhandle, &outBufferFileRead2, 0, NULL, buffer_out_size);
+    err = OMX_AllocateBuffer(appPriv->filereaderhandle, &outBufferFileRead[1], 0, NULL, buffer_out_size);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to allocate buffer 2 in file read\n");
       exit(1);
@@ -649,36 +649,36 @@ int main(int argc, char** argv) {
     *  in the audio decoder component as input buffers 
     */ 
     if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
-      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec1, 0, NULL, buffer_out_size, outBufferFileRead1->pBuffer);
+      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec[0], 0, NULL, buffer_out_size, outBufferFileRead[0]->pBuffer);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Unable to use the file read comp allocate buffer\n");
         exit(1);
       }
-      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec2, 0, NULL, buffer_out_size, outBufferFileRead2->pBuffer);
+      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec[1], 0, NULL, buffer_out_size, outBufferFileRead[1]->pBuffer);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Unable to use the file read comp allocate buffer\n");
         exit(1);
       }
     }
     else {
-      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec1, 0, NULL, buffer_in_size);
+      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec[0], 0, NULL, buffer_in_size);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Unable to allocate buffer\n");
         exit(1);
       }
-      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec2, 0, NULL, buffer_in_size);
+      err = OMX_AllocateBuffer(appPriv->audiodechandle, &inBufferAudioDec[1], 0, NULL, buffer_in_size);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "Unable to allocate buffer\n");
         exit(1);
       }
     }
 
-    err = OMX_AllocateBuffer(appPriv->audiodechandle, &outBufferAudioDec1, 1, NULL, buffer_out_size);
+    err = OMX_AllocateBuffer(appPriv->audiodechandle, &outBufferAudioDec[0], 1, NULL, buffer_out_size);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to allocate buffer in audio dec\n");
       exit(1);
     }
-    err = OMX_AllocateBuffer(appPriv->audiodechandle, &outBufferAudioDec2, 1, NULL, buffer_out_size);
+    err = OMX_AllocateBuffer(appPriv->audiodechandle, &outBufferAudioDec[1], 1, NULL, buffer_out_size);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to allocate buffer in audio dec\n");
       exit(1);
@@ -691,23 +691,23 @@ int main(int argc, char** argv) {
   if ((flagPlaybackOn) && (!flagSetupTunnel)) {
     err = OMX_SendCommand(appPriv->volumehandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 
-    err = OMX_UseBuffer(appPriv->volumehandle, &inBufferVolume1, 0, NULL, buffer_out_size, outBufferAudioDec1->pBuffer);
+    err = OMX_UseBuffer(appPriv->volumehandle, &inBufferVolume[0], 0, NULL, buffer_out_size, outBufferAudioDec[0]->pBuffer);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to use the allocated buffer\n");
       exit(1);
     }
-    err = OMX_UseBuffer(appPriv->volumehandle, &inBufferVolume2, 0, NULL, buffer_out_size, outBufferAudioDec2->pBuffer);
+    err = OMX_UseBuffer(appPriv->volumehandle, &inBufferVolume[1], 0, NULL, buffer_out_size, outBufferAudioDec[1]->pBuffer);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to use the allocated buffer\n");
       exit(1);
     }
 
-    err = OMX_AllocateBuffer(appPriv->volumehandle, &outBufferVolume1, 1, NULL, buffer_out_size);
+    err = OMX_AllocateBuffer(appPriv->volumehandle, &outBufferVolume[0], 1, NULL, buffer_out_size);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to allocate buffer in volume 1\n");
       exit(1);
     }
-    err = OMX_AllocateBuffer(appPriv->volumehandle, &outBufferVolume2, 1, NULL, buffer_out_size);
+    err = OMX_AllocateBuffer(appPriv->volumehandle, &outBufferVolume[1], 1, NULL, buffer_out_size);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to allocate buffer in volume 2\n");
       exit(1);
@@ -720,12 +720,12 @@ int main(int argc, char** argv) {
 
     err = OMX_SendCommand(appPriv->audiosinkhandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 
-    err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink1, 0, NULL, buffer_out_size, outBufferVolume1->pBuffer);
+    err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink[0], 0, NULL, buffer_out_size, outBufferVolume[0]->pBuffer);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to use the allocated buffer\n");
       exit(1);
     }
-    err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink2, 0, NULL, buffer_out_size, outBufferVolume2->pBuffer);
+    err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink[1], 0, NULL, buffer_out_size, outBufferVolume[1]->pBuffer);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "Unable to use the allocated buffer\n");
       exit(1);
@@ -777,13 +777,13 @@ int main(int argc, char** argv) {
   
   DEBUG(DEB_LEV_SIMPLE_SEQ,"All Component state changed to Executing\n");
   if (!flagSetupTunnel && (flagUsingFFMpeg || flagIsMadUsingFileReader)) {
-    err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead1);
+    err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead[0]);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer File Reader\n", __func__,err);
       exit(1);
     }
-    DEBUG(DEB_LEV_PARAMS, "Fill reader second buffer %x\n", (int)outBufferFileRead1);
-    err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead2);
+    DEBUG(DEB_LEV_PARAMS, "Fill reader second buffer %x\n", (int)outBufferFileRead[0]);
+    err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead[1]);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer File Reader\n", __func__,err);
       exit(1);
@@ -791,13 +791,13 @@ int main(int argc, char** argv) {
   }
 
   if (!flagSetupTunnel && flagPlaybackOn) {
-    err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume1);
+    err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume[0]);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
       exit(1);
     }
-    DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferVolume2);
-    err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume2);
+    DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferVolume[1]);
+    err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume[1]);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
       exit(1);
@@ -805,28 +805,28 @@ int main(int argc, char** argv) {
   }
 
   if(!flagUsingFFMpeg && !flagIsMadUsingFileReader) {
-    data_read = fread(inBufferAudioDec1->pBuffer, 1, buffer_in_size, fd);
-    inBufferAudioDec1->nFilledLen = data_read;
-    inBufferAudioDec1->nOffset = 0;
+    data_read = fread(inBufferAudioDec[0]->pBuffer, 1, buffer_in_size, fd);
+    inBufferAudioDec[0]->nFilledLen = data_read;
+    inBufferAudioDec[0]->nOffset = 0;
 
-    data_read = fread(inBufferAudioDec2->pBuffer, 1, buffer_in_size, fd);
-    inBufferAudioDec2->nFilledLen = data_read;
-    inBufferAudioDec2->nOffset = 0;
+    data_read = fread(inBufferAudioDec[1]->pBuffer, 1, buffer_in_size, fd);
+    inBufferAudioDec[1]->nFilledLen = data_read;
+    inBufferAudioDec[1]->nOffset = 0;
 
-    DEBUG(DEB_LEV_PARAMS, "Empty first  buffer %x\n", (int)inBufferAudioDec1);
-    err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec1);
-    DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", (int)inBufferAudioDec2);
-    err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec2);
+    DEBUG(DEB_LEV_PARAMS, "Empty first  buffer %x\n", (int)inBufferAudioDec[0]);
+    err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec[0]);
+    DEBUG(DEB_LEV_PARAMS, "Empty second buffer %x\n", (int)inBufferAudioDec[1]);
+    err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec[1]);
   }
   /* Call FillThisBuffer now, to ensure that first two input buffers has already been sent to the component*/
   if (!flagSetupTunnel) {
-    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec1);
+    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec[0]);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
       exit(1);
     }
-    DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferAudioDec2);
-    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec2);
+    DEBUG(DEB_LEV_PARAMS, "Fill decoder second buffer %x\n", (int)outBufferAudioDec[1]);
+    err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec[1]);
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer Audio Dec\n", __func__,err);
       exit(1);
@@ -873,28 +873,28 @@ int main(int argc, char** argv) {
 
   /*Free buffers is components are not tunnelled*/
   if (!flagSetupTunnel || (!flagUsingFFMpeg && !flagIsMadUsingFileReader )) {
-    err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec1);
-    err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec2);
+    err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec[0]);
+    err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec[1]);
   }
   DEBUG(DEB_LEV_PARAMS, "Free Audio dec output ports\n");
   if (!flagSetupTunnel) {
-    err = OMX_FreeBuffer(appPriv->audiodechandle, 1, outBufferAudioDec1);
-    err = OMX_FreeBuffer(appPriv->audiodechandle, 1, outBufferAudioDec2);
+    err = OMX_FreeBuffer(appPriv->audiodechandle, 1, outBufferAudioDec[0]);
+    err = OMX_FreeBuffer(appPriv->audiodechandle, 1, outBufferAudioDec[1]);
   }
 
   if (!flagSetupTunnel && (flagUsingFFMpeg || flagIsMadUsingFileReader)) {
-    err = OMX_FreeBuffer(appPriv->filereaderhandle, 0, outBufferFileRead1);
-    err = OMX_FreeBuffer(appPriv->filereaderhandle, 0, outBufferFileRead2);
+    err = OMX_FreeBuffer(appPriv->filereaderhandle, 0, outBufferFileRead[0]);
+    err = OMX_FreeBuffer(appPriv->filereaderhandle, 0, outBufferFileRead[1]);
   }
 
   if ((flagPlaybackOn) && (!flagSetupTunnel)) {
-    err = OMX_FreeBuffer(appPriv->volumehandle, 0, inBufferVolume1);
-    err = OMX_FreeBuffer(appPriv->volumehandle, 0, inBufferVolume2);
-    err = OMX_FreeBuffer(appPriv->volumehandle, 1, outBufferVolume1);
-    err = OMX_FreeBuffer(appPriv->volumehandle, 1, outBufferVolume2);
+    err = OMX_FreeBuffer(appPriv->volumehandle, 0, inBufferVolume[0]);
+    err = OMX_FreeBuffer(appPriv->volumehandle, 0, inBufferVolume[1]);
+    err = OMX_FreeBuffer(appPriv->volumehandle, 1, outBufferVolume[0]);
+    err = OMX_FreeBuffer(appPriv->volumehandle, 1, outBufferVolume[1]);
 
-    err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink1);
-    err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink2);
+    err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink[0]);
+    err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink[1]);
   }
 
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
@@ -1033,8 +1033,8 @@ OMX_ERRORTYPE filereaderEventHandler(
         exit(1);
       }
 
-      err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec1);
-      err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec2);
+      err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec[0]);
+      err = OMX_FreeBuffer(appPriv->audiodechandle, 0, inBufferAudioDec[1]);
 
       /*Wait for Decoder Ports Disable Event*/
       tsem_down(appPriv->decoderEventSem);
@@ -1060,12 +1060,12 @@ OMX_ERRORTYPE filereaderEventHandler(
       /** the output buffers of file reader component will be used 
       *  in the audio decoder component as input buffers 
       */ 
-      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec1, 0, NULL, buffer_out_size, outBufferFileRead1->pBuffer);
+      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec[0], 0, NULL, buffer_out_size, outBufferFileRead[0]->pBuffer);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Unable to use the file read comp allocate buffer 1\n",__func__);
         exit(1);
       }
-      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec2, 0, NULL, buffer_out_size, outBufferFileRead2->pBuffer);
+      err = OMX_UseBuffer(appPriv->audiodechandle, &inBufferAudioDec[1], 0, NULL, buffer_out_size, outBufferFileRead[1]->pBuffer);
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Unable to use the file read comp allocate buffer 2\n",__func__);
         exit(1);
@@ -1096,12 +1096,14 @@ OMX_ERRORTYPE filereaderFillBufferDone(
 
   if(pBuffer != NULL){
     if(!bEOS) {
-      if(inBufferAudioDec1->pBuffer == pBuffer->pBuffer) {
-        inBufferAudioDec1->nFilledLen = pBuffer->nFilledLen;
-        err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec1);
+      if(inBufferAudioDec[0]->pBuffer == pBuffer->pBuffer) {
+        inBufferAudioDec[0]->nFilledLen = pBuffer->nFilledLen;
+        inBufferAudioDec[0]->nFlags     = pBuffer->nFlags;
+        err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec[0]);
       } else {
-        inBufferAudioDec2->nFilledLen = pBuffer->nFilledLen;
-        err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec2);
+        inBufferAudioDec[1]->nFilledLen = pBuffer->nFilledLen;
+        inBufferAudioDec[1]->nFlags     = pBuffer->nFlags;
+        err = OMX_EmptyThisBuffer(appPriv->audiodechandle, inBufferAudioDec[1]);
       }
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
@@ -1183,8 +1185,8 @@ OMX_ERRORTYPE audiodecEventHandler(
           exit(1);
         }
 
-        err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink1);
-        err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink2);
+        err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink[0]);
+        err = OMX_FreeBuffer(appPriv->audiosinkhandle, 0, inBufferSink[1]);
 
         /*Wait for sink Ports Disable Event*/
         tsem_down(appPriv->sinkEventSem);
@@ -1201,12 +1203,12 @@ OMX_ERRORTYPE audiodecEventHandler(
           exit(1);
         }
 
-        err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink1, 0, NULL, buffer_out_size, outBufferVolume1->pBuffer);
+        err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink[0], 0, NULL, buffer_out_size, outBufferVolume[0]->pBuffer);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR, "Unable to use the allocated buffer\n");
           exit(1);
         }
-        err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink2, 0, NULL, buffer_out_size, outBufferVolume2->pBuffer);
+        err = OMX_UseBuffer(appPriv->audiosinkhandle, &inBufferSink[1], 0, NULL, buffer_out_size, outBufferVolume[1]->pBuffer);
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR, "Unable to use the allocated buffer\n");
           exit(1);
@@ -1291,12 +1293,12 @@ OMX_ERRORTYPE audiodecEmptyBufferDone(
   if(flagUsingFFMpeg || flagIsMadUsingFileReader) {
     if(pBuffer != NULL){
       if(!bEOS) {
-        if(outBufferFileRead1->pBuffer == pBuffer->pBuffer) {
-          outBufferFileRead1->nFilledLen=0;
-          err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead1);
+        if(outBufferFileRead[0]->pBuffer == pBuffer->pBuffer) {
+          outBufferFileRead[0]->nFilledLen=0;
+          err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead[0]);
         } else {
-          outBufferFileRead2->nFilledLen=0;
-          err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead2);
+          outBufferFileRead[1]->nFilledLen=0;
+          err = OMX_FillThisBuffer(appPriv->filereaderhandle, outBufferFileRead[1]);
         }
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
@@ -1378,12 +1380,12 @@ OMX_ERRORTYPE audiodecFillBufferDone(
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
       }
     } else if ((!flagSetupTunnel) && (flagPlaybackOn))  { //playback on, redirect to ALSA sink, if it is not tunneled
-      if(inBufferVolume1->pBuffer == pBuffer->pBuffer) {
-        inBufferVolume1->nFilledLen = pBuffer->nFilledLen;
-        err = OMX_EmptyThisBuffer(appPriv->volumehandle, inBufferVolume1);
+      if(inBufferVolume[0]->pBuffer == pBuffer->pBuffer) {
+        inBufferVolume[0]->nFilledLen = pBuffer->nFilledLen;
+        err = OMX_EmptyThisBuffer(appPriv->volumehandle, inBufferVolume[0]);
       } else {
-        inBufferVolume2->nFilledLen = pBuffer->nFilledLen;
-        err = OMX_EmptyThisBuffer(appPriv->volumehandle, inBufferVolume2);
+        inBufferVolume[1]->nFilledLen = pBuffer->nFilledLen;
+        err = OMX_EmptyThisBuffer(appPriv->volumehandle, inBufferVolume[1]);
       }
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling EmptyThisBuffer\n", __func__,err);
@@ -1460,12 +1462,12 @@ OMX_ERRORTYPE volumeEmptyBufferDone(
 
   if(pBuffer != NULL){
     if(!bEOS) {
-      if(outBufferAudioDec1->pBuffer == pBuffer->pBuffer) {
-        outBufferAudioDec1->nFilledLen=0;
-        err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec1);
+      if(outBufferAudioDec[0]->pBuffer == pBuffer->pBuffer) {
+        outBufferAudioDec[0]->nFilledLen=0;
+        err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec[0]);
       } else {
-        outBufferAudioDec2->nFilledLen=0;
-        err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec2);
+        outBufferAudioDec[1]->nFilledLen=0;
+        err = OMX_FillThisBuffer(appPriv->audiodechandle, outBufferAudioDec[1]);
       }
       if(err != OMX_ErrorNone) {
         DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);
@@ -1522,12 +1524,12 @@ OMX_ERRORTYPE volumeFillBufferDone(
       }
     } else if ((!flagSetupTunnel) && (flagPlaybackOn))  { //playback on, redirect to ALSA sink, if it is not tunneled
       if(!bEOS) {
-        if(inBufferSink1->pBuffer == pBuffer->pBuffer) {
-          inBufferSink1->nFilledLen = pBuffer->nFilledLen;
-          err = OMX_EmptyThisBuffer(appPriv->audiosinkhandle, inBufferSink1);
+        if(inBufferSink[0]->pBuffer == pBuffer->pBuffer) {
+          inBufferSink[0]->nFilledLen = pBuffer->nFilledLen;
+          err = OMX_EmptyThisBuffer(appPriv->audiosinkhandle, inBufferSink[0]);
         } else {
-          inBufferSink2->nFilledLen = pBuffer->nFilledLen;
-          err = OMX_EmptyThisBuffer(appPriv->audiosinkhandle, inBufferSink2);
+          inBufferSink[1]->nFilledLen = pBuffer->nFilledLen;
+          err = OMX_EmptyThisBuffer(appPriv->audiosinkhandle, inBufferSink[1]);
         }
         if(err != OMX_ErrorNone) {
           DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling EmptyThisBuffer\n", __func__,err);
@@ -1604,12 +1606,12 @@ OMX_ERRORTYPE audiosinkEmptyBufferDone(
 
   DEBUG(DEB_LEV_PARAMS, "Empty buffer %x\n", (int)pBuffer);
   if(!bEOS) {
-    if(outBufferVolume1->pBuffer == pBuffer->pBuffer) {
-      outBufferVolume1->nFilledLen=0;
-      err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume1);
+    if(outBufferVolume[0]->pBuffer == pBuffer->pBuffer) {
+      outBufferVolume[0]->nFilledLen=0;
+      err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume[0]);
     } else {
-      outBufferVolume2->nFilledLen=0;
-      err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume2);
+      outBufferVolume[1]->nFilledLen=0;
+      err = OMX_FillThisBuffer(appPriv->volumehandle, outBufferVolume[1]);
     }
     if(err != OMX_ErrorNone) {
       DEBUG(DEB_LEV_ERR, "In %s Error %08x Calling FillThisBuffer\n", __func__,err);

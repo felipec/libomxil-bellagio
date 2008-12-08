@@ -429,6 +429,10 @@ void omx_audiodec_component_BufferMgmtCallback(OMX_COMPONENTTYPE *openmaxStandCo
         }
         omx_audiodec_component_Private->extradata = malloc(pInputBuffer->nFilledLen);
         memcpy(omx_audiodec_component_Private->extradata, pInputBuffer->pBuffer,pInputBuffer->nFilledLen);
+
+        omx_audiodec_component_Private->avCodecContext->extradata = omx_audiodec_component_Private->extradata;
+        omx_audiodec_component_Private->avCodecContext->extradata_size = (int)omx_audiodec_component_Private->extradata_size;
+
       }
 
       DEBUG(DEB_ALL_MESS, "In %s Received First Buffer Extra Data Size=%d\n",__func__,(int)pInputBuffer->nFilledLen);
